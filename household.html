@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aderrig Neighbourhood Watch – Household & volunteers</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand">
+    <div class="logo">ANW</div>
+    <div class="brand-text">
+      <h1>Aderrig Neighbourhood Watch</h1>
+      <p class="muted">Adamstown · Community-led · Ireland</p>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="report.html">Report</a>
+    <a href="alerts.html">Community Alerts</a>
+    <a href="projects.html">Community Projects</a>
+    <a href="login.html">Login / Register</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="household.html" class="active">Household</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="card">
+    <h2>Household & volunteer activities</h2>
+    <p class="tiny muted">
+      Here you can manage household volunteers and see volunteer tasks available for your area.
+    </p>
+
+    <!-- SUB-ABAS DENTRO DE HOUSEHOLD -->
+    <div class="actions" style="margin:1rem 0; justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
+      <button type="button" class="btn btn-line small hh-tab active" data-target="hhVolunteersPane">
+        Household volunteers
+      </button>
+      <button type="button" class="btn btn-line small hh-tab" data-target="hhTasksPane">
+        Volunteer tasks
+      </button>
+    </div>
+
+    <!-- PANE 1: CADASTRO / HOUSEHOLD VOLUNTEERS -->
+    <div id="hhVolunteersPane">
+      <h3>Other household volunteers</h3>
+
+      <!-- Quando NÃO estiver logado -->
+      <div id="notLogged" style="display:none;">
+        <p class="tiny muted">
+          You are not logged in. Please log in to manage household volunteers.
+        </p>
+      </div>
+
+      <!-- Quando estiver logado -->
+      <div id="hhArea" style="display:none;">
+
+        <p class="tiny muted">
+          Here you can add other adult members of your household who are willing to help with
+          Aderrig Neighbourhood Watch activities.
+        </p>
+
+        <div class="field"
+             style="display:flex; flex-wrap:wrap; gap:8px; align-items:flex-start; margin-top:0.75rem;">
+
+          <!-- Name -->
+          <div class="field" style="flex:1 1 180px; min-width:160px;">
+            <label>Name</label>
+            <input id="hhName" type="text" placeholder="Full name">
+          </div>
+
+          <!-- Relationship -->
+          <div class="field" style="flex:0 0 160px; min-width:150px;">
+            <label>Relationship</label>
+            <select id="hhRelationship">
+              <option value="">Select relationship</option>
+              <option value="Spouse/partner">Spouse / partner</option>
+              <option value="Adult child">Adult child</option>
+              <option value="Parent">Parent</option>
+              <option value="Other relative">Other relative</option>
+              <option value="Housemate">Housemate</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <!-- Email -->
+          <div class="field" style="flex:1 1 220px; min-width:180px;">
+            <label>Email</label>
+            <input id="hhEmail" type="email" placeholder="email@example.com">
+          </div>
+
+          <!-- Volunteer roles em coluna -->
+          <div class="field" style="flex:0 0 220px; min-width:200px;">
+            <label>Volunteer roles</label>
+            <div id="hhRoles" style="display:flex; flex-direction:column; gap:2px;">
+              <label class="chk tiny">
+                <input type="checkbox" value="Street watch / patrols">
+                <span>Street watch / patrols</span>
+              </label>
+              <label class="chk tiny">
+                <input type="checkbox" value="Distribute leaflets">
+                <span>Distribute leaflets</span>
+              </label>
+              <label class="chk tiny">
+                <input type="checkbox" value="Tech support">
+                <span>Tech support</span>
+              </label>
+              <label class="chk tiny">
+                <input type="checkbox" value="Elderly checks">
+                <span>Elderly checks</span>
+              </label>
+              <label class="chk tiny">
+                <input type="checkbox" value="Meeting organiser">
+                <span>Meeting organiser</span>
+              </label>
+              <label class="chk tiny">
+                <input type="checkbox" value="Translation">
+                <span>Translation</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:0.5rem;">
+          <button class="btn small" id="btnAddHouseholdVolunteer">Add household volunteer</button>
+        </div>
+
+        <!-- Mensagem de erro/sucesso -->
+        <p id="hhMsg" class="tiny muted" style="margin-top:0.25rem;"></p>
+
+        <!-- Lista em formato de tabela -->
+        <div class="field" style="margin-top:0.75rem;">
+          <label>People already added</label>
+          <div id="hhEmpty" class="tiny muted">No household volunteers registered.</div>
+          <div id="hhList"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PANE 2: VOLUNTEER TASKS (RESIDENTE) -->
+    <div id="hhTasksPane" style="display:none;">
+      <h3>Volunteer tasks</h3>
+
+      <div id="volNotLogged" style="display:none;">
+        <p class="muted tiny">
+          Please <a href="login.html">log in</a> with an active household account
+          to see volunteer tasks for your area.
+        </p>
+      </div>
+
+      <div id="volNotVolunteer" style="display:none;">
+        <p class="muted tiny">
+          Your household is not marked as volunteer yet.
+          You can opt in under the <strong>Profile</strong> tab in your dashboard
+          by enabling volunteer roles.
+        </p>
+      </div>
+
+      <div id="volContent" style="display:none;">
+
+        <div class="card" id="volTasksCard" style="background:#f9fafb; margin-bottom:0.75rem;">
+          <p id="volSummaryLine" class="tiny muted" style="margin:0;">
+            Volunteer tasks summary for your household.
+          </p>
+          <p class="tiny" id="volTasksMessage" style="margin-top:0.25rem;">
+            <!-- message filled by JS -->
+          </p>
+          <p class="tiny" style="margin-top:0.25rem;">
+            <strong>Available:</strong> <span id="volAvailCount">0</span> ·
+            <strong>Active:</strong> <span id="volActiveCount">0</span> ·
+            <strong>Completed:</strong> <span id="volCompletedCount">0</span>
+          </p>
+        </div>
+
+        <!-- Available tasks -->
+        <h4>Available tasks</h4>
+        <p class="tiny muted">
+          These are open volunteer tasks created by the admin team.
+        </p>
+        <p id="volAvailEmpty" class="tiny muted" style="margin-top:0.5rem; display:none;">
+          There are currently no open tasks that match your area and volunteer roles.
+        </p>
+        <div id="volAvailList" class="tiny" style="margin-top:0.25rem;"></div>
+
+        <hr style="margin:1rem 0;">
+
+        <!-- Active tasks -->
+        <h4>Active tasks</h4>
+        <p class="tiny muted">
+          Tasks that someone in your household has accepted and not yet marked as completed.
+        </p>
+        <p id="volActiveEmpty" class="tiny muted" style="margin-top:0.5rem; display:none;">
+          You have no active volunteer tasks at the moment.
+        </p>
+        <div id="volActiveList" class="tiny" style="margin-top:0.25rem;"></div>
+
+        <hr style="margin:1rem 0;">
+
+        <!-- Completed tasks -->
+        <h4>Completed tasks</h4>
+        <p class="tiny muted">
+          Tasks that were completed by your household.
+        </p>
+        <p id="volHistoryEmpty" class="tiny muted" style="margin-top:0.5rem; display:none;">
+          No completed tasks yet.
+        </p>
+        <div id="volHistoryList" class="tiny" style="margin-top:0.25rem;"></div>
+
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<!-- MODAIS DE TAREFAS (ACEITAR / COMPLETAR) -->
+<!-- MODAL: ACCEPT TASK -->
+<div id="taskAcceptModal" class="modal">
+  <div class="backdrop"></div>
+  <div class="dialog">
+    <div class="header">
+      <h3 style="margin:0;">Accept volunteer task</h3>
+    </div>
+    <div class="body">
+      <div id="taskAcceptDetails" class="tiny" style="margin-bottom:0.75rem;"></div>
+
+      <div class="field">
+        <label>Who will do this task? (household)</label>
+        <div id="taskAcceptHousehold" class="tiny" style="display:flex; flex-direction:column; gap:4px;"></div>
+      </div>
+
+      <div class="field">
+        <label for="taskAcceptPhone">Phone number</label>
+        <input id="taskAcceptPhone" type="tel" placeholder="+353…">
+      </div>
+
+      <div class="field">
+        <label for="taskAcceptPlannedDate">Planned date</label>
+        <input id="taskAcceptPlannedDate" type="date">
+      </div>
+    </div>
+    <div class="footer" style="display:flex; justify-content:flex-end; gap:0.5rem;">
+      <button type="button" class="btn-line small" id="btnTaskAcceptCancel">Cancel</button>
+      <button type="button" class="btn small" id="btnTaskAcceptConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: COMPLETE TASK -->
+<div id="taskCompleteModal" class="modal">
+  <div class="backdrop"></div>
+  <div class="dialog">
+    <div class="header">
+      <h3 style="margin:0;">Complete volunteer task</h3>
+    </div>
+    <div class="body">
+      <div id="taskCompleteSummary" class="tiny" style="margin-bottom:0.75rem;"></div>
+
+      <div class="field">
+        <label for="taskCompleteDate">Completion date</label>
+        <input id="taskCompleteDate" type="date">
+      </div>
+
+      <div class="field">
+        <label for="taskCompleteComment">Comment (optional)</label>
+        <textarea id="taskCompleteComment" rows="3"
+          placeholder="Any notes about how the visit / task went."></textarea>
+      </div>
+    </div>
+    <div class="footer" style="display:flex; justify-content:flex-end; gap:0.5rem;">
+      <button type="button" class="btn-line small" id="btnTaskCompleteCancel">Cancel</button>
+      <button type="button" class="btn small" id="btnTaskCompleteConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/app-core.js"></script>
+
+<!-- SCRIPT ORIGINAL DE HOUSEHOLD (CADASTRO) -->
+<script>
+(function () {
+  'use strict';
+
+  const KEY_USERS  = ANW_KEYS.USERS;
+  const KEY_LOGGED = ANW_KEYS.LOGGED;
+
+  function loadUsers() {
+    try { return JSON.parse(/*local*/null || '[]') || []; }
+    catch { return []; }
+  }
+
+  function saveUsers(users) {
+    await anwSave(KEY_USERS, users || []);
+  }
+
+  function esc(text) {
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function getLoggedUser() {
+    const email = anwGetLoggedEmail();
+    if (!email) return null;
+
+    const users = loadUsers();
+    const index = users.findIndex(u => (u.email || '').toLowerCase() === email.toLowerCase());
+    if (index === -1) return null;
+
+    return {
+      index,
+      user: users[index],
+      list: users,
+    };
+  }
+
+  const notLogged   = document.getElementById('notLogged');
+  const hhArea      = document.getElementById('hhArea');
+  const hhName      = document.getElementById('hhName');
+  const hhRelationship = document.getElementById('hhRelationship');
+  const hhEmail     = document.getElementById('hhEmail');
+  const hhRolesBox  = document.getElementById('hhRoles');
+  const hhList      = document.getElementById('hhList');
+  const hhEmpty     = document.getElementById('hhEmpty');
+  const hhMsg       = document.getElementById('hhMsg');
+  const btnAddHH    = document.getElementById('btnAddHouseholdVolunteer');
+
+  function setHHMsg(message, type) {
+    if (!hhMsg) return;
+    hhMsg.textContent = message || '';
+    hhMsg.className = 'tiny ' + (type || 'muted');
+  }
+
+  function refreshHouseholdUI() {
+    const info = getLoggedUser();
+
+    if (!info || !info.user) {
+      if (notLogged) notLogged.style.display = 'block';
+      if (hhArea)    hhArea.style.display    = 'none';
+      return;
+    }
+
+    if (notLogged) notLogged.style.display = 'none';
+    if (hhArea)    hhArea.style.display    = 'block';
+
+    const user = info.user;
+    if (!Array.isArray(user.householdVolunteers)) {
+      user.householdVolunteers = [];
+    }
+
+    renderHouseholdVolunteers();
+  }
+
+  function renderHouseholdVolunteers() {
+    const info = getLoggedUser();
+    if (!info || !info.user || !hhList || !hhEmpty) return;
+
+    const user = info.user;
+    const volunteers = Array.isArray(user.householdVolunteers) ? user.householdVolunteers : [];
+
+    if (!volunteers.length) {
+      hhList.innerHTML = '';
+      hhEmpty.style.display = 'block';
+      return;
+    }
+
+    hhEmpty.style.display = 'none';
+
+    let html = '<table class="tiny" style="width:100%; border-collapse:collapse;">';
+    html += '<thead><tr>';
+    html += '<th>Name</th><th>Relationship</th><th>Email</th><th>Roles</th><th></th>';
+    html += '</tr></thead><tbody>';
+
+    volunteers.forEach((h, idx) => {
+      const roles = Array.isArray(h.volunteerRoles) ? h.volunteerRoles.join(', ') : '';
+
+      html += '<tr>';
+      html += '<td>' + esc(h.name || '') + '</td>';
+      html += '<td>' + esc(h.relationship || '') + '</td>';
+      html += '<td>' + esc(h.email || '') + '</td>';
+      html += '<td>' + esc(roles) + '</td>';
+      html += '<td><button type="button" class="btn tiny" data-hh-remove="' + idx + '">Remove</button></td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    hhList.innerHTML = html;
+
+    const removeButtons = hhList.querySelectorAll('[data-hh-remove]');
+    removeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-hh-remove'), 10);
+        removeHouseholdVolunteer(idx);
+      });
+    });
+  }
+
+  function removeHouseholdVolunteer(idx) {
+    const info = getLoggedUser();
+    if (!info || !info.user) return;
+
+    const users = info.list;
+    const user  = info.user;
+
+    if (!Array.isArray(user.householdVolunteers)) {
+      user.householdVolunteers = [];
+    }
+
+    if (idx < 0 || idx >= user.householdVolunteers.length) return;
+
+    user.householdVolunteers.splice(idx, 1);
+    users[info.index] = user;
+    saveUsers(users);
+
+    setHHMsg('Household volunteer removed.', 'muted');
+    renderHouseholdVolunteers();
+  }
+
+  function getSelectedRoles() {
+    if (!hhRolesBox) return [];
+    const checks = hhRolesBox.querySelectorAll('input[type="checkbox"]');
+    const roles = [];
+    checks.forEach(chk => {
+      if (chk.checked) {
+        roles.push(chk.value || chk.dataset.value || '');
+      }
+    });
+    return roles.filter(Boolean);
+  }
+
+  if (btnAddHH) {
+    btnAddHH.addEventListener('click', () => {
+      setHHMsg('', 'muted');
+
+      const info = getLoggedUser();
+      if (!info || !info.user) {
+        setHHMsg('You must be logged in to add household volunteers.', 'error');
+        return;
+      }
+
+      const users = info.list;
+      const user  = info.user;
+
+      const name  = (hhName && hhName.value || '').trim();
+      const rel   = (hhRelationship && hhRelationship.value || '').trim();
+      const email = (hhEmail && hhEmail.value || '').trim();
+      const roles = getSelectedRoles();
+
+      if (!name) {
+        setHHMsg('Please enter a name.', 'error');
+        return;
+      }
+      if (!rel) {
+        setHHMsg('Please choose a relationship.', 'error');
+        return;
+      }
+      if (!email) {
+        setHHMsg('Please enter an email.', 'error');
+        return;
+      }
+
+      if (!Array.isArray(user.householdVolunteers)) {
+        user.householdVolunteers = [];
+      }
+
+      user.householdVolunteers.push({
+        name,
+        relationship: rel,
+        email,
+        volunteerRoles: roles,
+      });
+
+      users[info.index] = user;
+      saveUsers(users);
+
+      if (hhName)          hhName.value = '';
+      if (hhRelationship)  hhRelationship.value = '';
+      if (hhEmail)         hhEmail.value = '';
+      if (hhRolesBox) {
+        const checks = hhRolesBox.querySelectorAll('input[type="checkbox"]');
+        checks.forEach(chk => { chk.checked = false; });
+      }
+
+      renderHouseholdVolunteers();
+
+      setHHMsg('Household volunteer added.', 'muted');
+    });
+  }
+
+  refreshHouseholdUI();
+
+})();
+</script>
+
+<!-- SCRIPT PARA AS SUB-ABAS (HOUSEHOLD / TASKS) -->
+<script>
+(function () {
+  'use strict';
+
+  const tabButtons = document.querySelectorAll('.hh-tab');
+  const paneVols   = document.getElementById('hhVolunteersPane');
+  const paneTasks  = document.getElementById('hhTasksPane');
+
+  function showHouseholdTab(targetId) {
+    if (paneVols)  paneVols.style.display  = (targetId === 'hhVolunteersPane') ? 'block' : 'none';
+    if (paneTasks) paneTasks.style.display = (targetId === 'hhTasksPane') ? 'block' : 'none';
+  }
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-target');
+      showHouseholdTab(target);
+      tabButtons.forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+
+  showHouseholdTab('hhVolunteersPane');
+})();
+</script>
+
+<!-- SCRIPT PARA VOLUNTEER TASKS (VISÃO RESIDENTE) -->
+<script>
+(function () {
+  'use strict';
+
+  const KEY_USERS  = ANW_KEYS.USERS;
+  const KEY_LOGGED = ANW_KEYS.LOGGED;
+  const KEY_TASKS  = ANW_KEYS.TASKS;
+
+  function loadUsers() {
+    try { return JSON.parse(/*local*/null || '[]') || []; }
+    catch { return []; }
+  }
+
+  function loadTasks(){
+    return anwLoad(KEY_TASKS, []);
+  }
+
+  async function saveTasks(tasks){
+    return await anwSave(KEY_TASKS, tasks);
+  }
+
+  function esc(text) {
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function normalizeEir(val) {
+    return (val || '').toUpperCase().replace(/\s+/g, '').trim();
+  }
+
+  function formatDate(d) {
+    if (!d) return '';
+    try {
+      const dt = new Date(d);
+      if (isNaN(dt)) return d;
+      const day   = String(dt.getDate()).padStart(2, '0');
+      const month = String(dt.getMonth() + 1).padStart(2, '0');
+      const year  = dt.getFullYear();
+      return day + '/' + month + '/' + year;
+    } catch (e) {
+      return d;
+    }
+  }
+
+  function parseListField(v) {
+    if (!v) return [];
+    if (Array.isArray(v)) return v;
+    return String(v)
+      .split(';')
+      .map(s => (s || '').trim())
+      .filter(Boolean);
+  }
+
+  function getResidentEir(u) {
+    return normalizeEir(u.eircode || u.eir || '');
+  }
+
+  function getResidentVolunteerRoles(u) {
+    let roles = [];
+    if (Array.isArray(u.volunteering)) {
+      roles = roles.concat(u.volunteering);
+    }
+    if (u.vol_roles && typeof u.vol_roles === 'object') {
+      if (u.vol_roles.streetWatch) roles.push('Street watch / patrols');
+      if (u.vol_roles.leaflets)    roles.push('Distribute leaflets');
+      if (u.vol_roles.tech)        roles.push('Tech support');
+      if (u.vol_roles.elderly)     roles.push('Elderly checks');
+      if (u.vol_roles.meetings)    roles.push('Meeting organiser');
+      if (u.vol_roles.translation) roles.push('Translation');
+    }
+    if (Array.isArray(u.householdVolunteers)) {
+      u.householdVolunteers.forEach(h => {
+        if (Array.isArray(h.volunteerRoles)) {
+          roles = roles.concat(h.volunteerRoles);
+        }
+      });
+    }
+    const set = {};
+    const out = [];
+    roles.forEach(r => {
+      const k = String(r || '').toLowerCase();
+      if (!k) return;
+      if (!set[k]) {
+        set[k] = true;
+        out.push(r);
+      }
+    });
+    return out;
+  }
+
+  const volTasksCard        = document.getElementById('volTasksCard');
+  const volTasksMessage     = document.getElementById('volTasksMessage');
+  const volAvailCountEl     = document.getElementById('volAvailCount');
+  const volActiveCountEl    = document.getElementById('volActiveCount');
+  const volCompletedCountEl = document.getElementById('volCompletedCount');
+
+  const volNotLogged    = document.getElementById('volNotLogged');
+  const volNotVolunteer = document.getElementById('volNotVolunteer');
+  const volContent      = document.getElementById('volContent');
+
+  const volAvailEmpty   = document.getElementById('volAvailEmpty');
+  const volActiveEmpty  = document.getElementById('volActiveEmpty');
+  const volHistoryEmpty = document.getElementById('volHistoryEmpty');
+
+  const volAvailList    = document.getElementById('volAvailList');
+  const volActiveList   = document.getElementById('volActiveList');
+  const volHistoryList  = document.getElementById('volHistoryList');
+
+  const taskAcceptModal        = document.getElementById('taskAcceptModal');
+  const taskAcceptDetails      = document.getElementById('taskAcceptDetails');
+  const taskAcceptHouseholdBox = document.getElementById('taskAcceptHousehold');
+  const taskAcceptPhoneInput   = document.getElementById('taskAcceptPhone');
+  const taskAcceptPlannedInput = document.getElementById('taskAcceptPlannedDate');
+  const btnTaskAcceptCancel    = document.getElementById('btnTaskAcceptCancel');
+  const btnTaskAcceptConfirm   = document.getElementById('btnTaskAcceptConfirm');
+
+  const taskCompleteModal      = document.getElementById('taskCompleteModal');
+  const taskCompleteSummary    = document.getElementById('taskCompleteSummary');
+  const taskCompleteDateInput  = document.getElementById('taskCompleteDate');
+  const taskCompleteComment    = document.getElementById('taskCompleteComment');
+  const btnTaskCompleteCancel  = document.getElementById('btnTaskCompleteCancel');
+  const btnTaskCompleteConfirm = document.getElementById('btnTaskCompleteConfirm');
+
+  if (!volContent) {
+    return;
+  }
+
+  function openModal(el)  { if (el) el.style.display = 'block'; }
+  function closeModal(el) { if (el) el.style.display = 'none'; }
+
+  let users = loadUsers();
+  let tasks = loadTasks();
+  let user  = null;
+
+  const email = anwGetLoggedEmail();
+
+  if (!email) {
+    if (volNotLogged)    volNotLogged.style.display    = 'block';
+    if (volNotVolunteer) volNotVolunteer.style.display = 'none';
+    if (volContent)      volContent.style.display      = 'none';
+    if (volTasksCard)    volTasksCard.style.display    = 'none';
+    return;
+  }
+
+  const index = users.findIndex(u => (u.email || '').toLowerCase() === email.toLowerCase());
+  if (index === -1) {
+    if (volNotLogged)    volNotLogged.style.display    = 'block';
+    if (volNotVolunteer) volNotVolunteer.style.display = 'none';
+    if (volContent)      volContent.style.display      = 'none';
+    if (volTasksCard)    volTasksCard.style.display    = 'none';
+    return;
+  }
+
+  user = users[index];
+
+  function getHouseholdEmails() {
+    const emails = [];
+    const mainEmail = (user.email || '').toLowerCase();
+    if (mainEmail) emails.push(mainEmail);
+
+    if (Array.isArray(user.householdVolunteers)) {
+      user.householdVolunteers.forEach(h => {
+        const em = (h.email || '').toLowerCase();
+        if (em) emails.push(em);
+      });
+    }
+    return emails;
+  }
+
+  function isTaskOwnedByHousehold(task) {
+    const emails = getHouseholdEmails();
+    const taskEmail = (task.volunteerEmail || '').toLowerCase();
+    if (!taskEmail) return false;
+    return emails.indexOf(taskEmail) !== -1;
+  }
+
+  function matchesResident(task, u) {
+    const residentEir = getResidentEir(u);
+    const type = (task.type || '').toLowerCase();
+
+    const taskEircodes = parseListField(task.eircodes).map(normalizeEir);
+    const taskStreets  = parseListField(task.streets);
+
+    let match = false;
+
+    if (!type || type === 'eircode' || type === 'eircode(s)') {
+      if (!taskEircodes.length) {
+        match = true;
+      } else if (residentEir && taskEircodes.indexOf(residentEir) !== -1) {
+        match = true;
+      }
+    } else if (type === 'street' || type === 'street(s)') {
+      if (!taskStreets.length) {
+        match = true;
+      } else {
+        match = true; // por enquanto, rua = geral em Aderrig
+      }
+    } else {
+      match = true;
+    }
+
+    const residentRoles = getResidentVolunteerRoles(u);
+    const suitableRoles = parseListField(task.suitableRoles);
+    if (match && suitableRoles.length && residentRoles.length) {
+      const rLower = residentRoles.map(r => (r || '').toLowerCase());
+      const sLower = suitableRoles.map(r => (r || '').toLowerCase());
+      const intersects = sLower.some(sr => rLower.indexOf(sr) !== -1);
+      if (!intersects) match = false;
+    }
+
+    return match;
+  }
+
+  function getAllTasksForResident() {
+    tasks = loadTasks();
+    if (!Array.isArray(tasks) || !tasks.length) return [];
+    return tasks.filter(t => matchesResident(t, user));
+  }
+
+  function renderTable(container, rows, emptyEl, type) {
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!rows.length) {
+      if (emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    const table = document.createElement('table');
+    table.className = 'tiny';
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    ['Code', 'Title', 'Area', 'Due', 'Status', 'Actions'].forEach(label => {
+      const th = document.createElement('th');
+      th.textContent = label;
+      th.style.textAlign = 'left';
+      th.style.padding = '2px 4px';
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+
+    rows.forEach(task => {
+      const tr = document.createElement('tr');
+
+      const area = task.area || (task.type || '').toLowerCase();
+      const due  = task.dueDate ? formatDate(task.dueDate) : '';
+      const status = (task.status || '').toUpperCase();
+
+      function addCell(text) {
+        const td = document.createElement('td');
+        td.style.padding = '2px 4px';
+        td.style.verticalAlign = 'top';
+        td.textContent = text || '';
+        tr.appendChild(td);
+      }
+
+      addCell(task.code || '');
+      addCell(task.title || '');
+      addCell(area || '');
+      addCell(due || '');
+      addCell(status);
+
+      const tdActions = document.createElement('td');
+      tdActions.style.padding = '2px 4px';
+      tdActions.style.verticalAlign = 'top';
+
+      if (type === 'available') {
+        const btn = document.createElement('button');
+        btn.className = 'btn tiny';
+        btn.textContent = 'Accept';
+        btn.addEventListener('click', () => openAcceptTaskModal(task.id));
+        tdActions.appendChild(btn);
+      } else if (type === 'active') {
+        const btn = document.createElement('button');
+        btn.className = 'btn tiny';
+        btn.textContent = 'Complete';
+        btn.addEventListener('click', () => openCompleteTaskModal(task.id));
+        tdActions.appendChild(btn);
+      } else {
+        tdActions.textContent = '';
+      }
+
+      tr.appendChild(tdActions);
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    container.appendChild(table);
+  }
+
+  let currentAcceptTaskId   = null;
+  let currentCompleteTaskId = null;
+
+  function getHouseholdMembersForTasks() {
+    const members = [];
+
+    const mainName  = user.name || 'Account holder';
+    const mainEmail = user.email || '';
+    const mainPhone = user.phone || '';
+    members.push({
+      key: 'account',
+      label: mainName + ' – account holder',
+      email: mainEmail,
+      phone: mainPhone
+    });
+
+    if (Array.isArray(user.householdVolunteers)) {
+      user.householdVolunteers.forEach(h => {
+        const nm = h.name || '';
+        const em = h.email || '';
+        const ph = h.phone || '';
+        if (!nm && !em) return;
+        members.push({
+          key: 'hh_' + nm,
+          label: nm + ' – household member',
+          email: em,
+          phone: ph
+        });
+      });
+    }
+    return members;
+  }
+
+  function refreshVolunteerTasksUI() {
+    const all = getAllTasksForResident();
+
+    const available = all.filter(t =>
+      (t.status || 'open').toLowerCase() === 'open'
+    );
+    const active = all.filter(t =>
+      (t.status || '').toLowerCase() === 'assigned' && isTaskOwnedByHousehold(t)
+    );
+    const completed = all.filter(t =>
+      (t.status || '').toLowerCase() === 'completed' && isTaskOwnedByHousehold(t)
+    );
+
+    if (volAvailCountEl)     volAvailCountEl.textContent     = String(available.length);
+    if (volActiveCountEl)    volActiveCountEl.textContent    = String(active.length);
+    if (volCompletedCountEl) volCompletedCountEl.textContent = String(completed.length);
+
+    renderTable(volAvailList,  available, volAvailEmpty,  'available');
+    renderTable(volActiveList, active,    volActiveEmpty, 'active');
+    renderTable(volHistoryList, completed, volHistoryEmpty, 'completed');
+
+    const hasVolunteerFlag =
+      user.isVolunteer || user.volunteer ||
+      (Array.isArray(user.householdVolunteers) && user.householdVolunteers.length > 0);
+
+    if (volTasksCard) {
+      volTasksCard.style.display = hasVolunteerFlag ? 'block' : 'none';
+      if (hasVolunteerFlag) {
+        if (available.length > 0) {
+          volTasksMessage.textContent = 'You have volunteer tasks available in your area.';
+        } else {
+          volTasksMessage.textContent = 'No new volunteer tasks in your area at the moment.';
+        }
+      }
+    }
+
+    if (!hasVolunteerFlag) {
+      if (volNotLogged)    volNotLogged.style.display    = 'none';
+      if (volNotVolunteer) volNotVolunteer.style.display = 'block';
+      if (volContent)      volContent.style.display      = 'none';
+      return;
+    }
+
+    if (volNotLogged)    volNotLogged.style.display    = 'none';
+    if (volNotVolunteer) volNotVolunteer.style.display = 'none';
+    if (volContent)      volContent.style.display      = 'block';
+  }
+
+  function openAcceptTaskModal(taskId) {
+    tasks = loadTasks();
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) {
+      alert('This task could not be found. It may have been updated or removed by admin.');
+      refreshVolunteerTasksUI();
+      return;
+    }
+    if ((task.status || 'open').toLowerCase() !== 'open') {
+      alert('This task is no longer open.');
+      refreshVolunteerTasksUI();
+      return;
+    }
+
+    currentAcceptTaskId = taskId;
+
+    const code = task.code || '';
+    const area = task.area || (task.type || '').toLowerCase();
+    const due  = task.dueDate ? formatDate(task.dueDate) : '';
+
+    let html = '';
+    html += '<p><strong>Task code:</strong> ' + esc(code) + '</p>';
+    html += '<p><strong>Title:</strong> ' + esc(task.title || '') + '</p>';
+    html += '<p><strong>Description:</strong> ' + esc(task.description || '') + '</p>';
+    html += '<p><strong>Area:</strong> ' + esc(area || 'General') + '</p>';
+    html += '<p><strong>Preferred completion date:</strong> ' + esc(due || 'Not specified') + '</p>';
+
+    if (taskAcceptDetails) {
+      taskAcceptDetails.innerHTML = html;
+    }
+
+    const members = getHouseholdMembersForTasks();
+    if (taskAcceptHouseholdBox) {
+      taskAcceptHouseholdBox.innerHTML = '';
+      members.forEach((m, idx) => {
+        const id = 'taskVol_' + idx;
+        const label = document.createElement('label');
+        label.className = 'chk tiny';
+        label.style.marginBottom = '2px';
+
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'taskVolunteerChoice';
+        radio.id = id;
+        radio.value = m.key;
+        radio.dataset.email = m.email || '';
+        radio.dataset.phone = m.phone || '';
+
+        radio.addEventListener('change', () => {
+          if (radio.checked) {
+            if (taskAcceptPhoneInput) {
+              taskAcceptPhoneInput.value = radio.dataset.phone || user.phone || '';
+            }
+          }
+        });
+
+        const span = document.createElement('span');
+        span.textContent = m.label;
+
+        label.appendChild(radio);
+        label.appendChild(span);
+        taskAcceptHouseholdBox.appendChild(label);
+      });
+    }
+
+    if (taskAcceptPlannedInput) {
+      const today = new Date().toISOString().slice(0, 10);
+      taskAcceptPlannedInput.value = today;
+    }
+    if (taskAcceptPhoneInput) {
+      taskAcceptPhoneInput.value = user.phone || '';
+    }
+
+    openModal(taskAcceptModal);
+  }
+
+  function openCompleteTaskModal(taskId) {
+    tasks = loadTasks();
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) {
+      alert('This task could not be found. It may have been updated or removed by admin.');
+      refreshVolunteerTasksUI();
+      return;
+    }
+    if ((task.status || '').toLowerCase() !== 'assigned') {
+      alert('This task is not marked as Assigned.');
+      refreshVolunteerTasksUI();
+      return;
+    }
+
+    currentCompleteTaskId = taskId;
+
+    const code = task.code || '';
+    const area = task.area || (task.type || '').toLowerCase();
+    const html = [
+      '<p><strong>Task code:</strong> ' + esc(code) + '</p>',
+      '<p><strong>Title:</strong> ' + esc(task.title || '') + '</p>',
+      '<p><strong>Area:</strong> ' + esc(area || 'General') + '</p>'
+    ].join('');
+
+    if (taskCompleteSummary) {
+      taskCompleteSummary.innerHTML = html;
+    }
+
+    if (taskCompleteDateInput) {
+      const today = new Date().toISOString().slice(0, 10);
+      taskCompleteDateInput.value = today;
+    }
+    if (taskCompleteComment) {
+      taskCompleteComment.value = '';
+    }
+
+    openModal(taskCompleteModal);
+  }
+
+  if (btnTaskAcceptCancel) {
+    btnTaskAcceptCancel.addEventListener('click', () => {
+      currentAcceptTaskId = null;
+      closeModal(taskAcceptModal);
+    });
+  }
+
+  if (btnTaskAcceptConfirm) {
+    btnTaskAcceptConfirm.addEventListener('click', () => {
+      if (!currentAcceptTaskId) {
+        closeModal(taskAcceptModal);
+        return;
+      }
+      tasks = loadTasks();
+      const task = tasks.find(t => t.id === currentAcceptTaskId);
+      if (!task) {
+        alert('This task could not be found. It may have been updated or removed by admin.');
+        closeModal(taskAcceptModal);
+        refreshVolunteerTasksUI();
+        return;
+      }
+
+      const status = (task.status || 'open').toLowerCase();
+      if (status !== 'open') {
+        alert('This task is no longer open.');
+        closeModal(taskAcceptModal);
+        refreshVolunteerTasksUI();
+        return;
+      }
+
+      const selected = (taskAcceptHouseholdBox || document).querySelector('input[name="taskVolunteerChoice"]:checked');
+      if (!selected) {
+        alert('Please select who will do this task.');
+        return;
+      }
+
+      const phone   = taskAcceptPhoneInput ? taskAcceptPhoneInput.value.trim() : '';
+      const planned = taskAcceptPlannedInput ? taskAcceptPlannedInput.value : '';
+
+      if (!planned) {
+        alert('Please choose a planned date.');
+        return;
+      }
+
+      task.status         = 'assigned';
+      task.volunteerEmail = selected.dataset.email || user.email || '';
+      task.volunteerPhone = phone;
+      task.plannedDate    = planned;
+      task.assignedAt     = Date.now();
+
+      await saveTasks(tasks);
+      currentAcceptTaskId = null;
+      closeModal(taskAcceptModal);
+      refreshVolunteerTasksUI();
+    });
+  }
+
+  if (btnTaskCompleteCancel) {
+    btnTaskCompleteCancel.addEventListener('click', () => {
+      currentCompleteTaskId = null;
+      closeModal(taskCompleteModal);
+    });
+  }
+
+  if (btnTaskCompleteConfirm) {
+    btnTaskCompleteConfirm.addEventListener('click', () => {
+      if (!currentCompleteTaskId) {
+        closeModal(taskCompleteModal);
+        return;
+      }
+      tasks = loadTasks();
+      const task = tasks.find(t => t.id === currentCompleteTaskId);
+      if (!task) {
+        alert('This task could not be found. It may have been updated or removed by admin.');
+        closeModal(taskCompleteModal);
+        refreshVolunteerTasksUI();
+        return;
+      }
+
+      const status = (task.status || '').toLowerCase();
+      if (status !== 'assigned') {
+        alert('This task is not currently marked as Assigned.');
+        closeModal(taskCompleteModal);
+        refreshVolunteerTasksUI();
+        return;
+      }
+
+      const completionDate = taskCompleteDateInput ? taskCompleteDateInput.value : '';
+      if (!completionDate) {
+        alert('Please choose a completion date.');
+        return;
+      }
+      const comment = taskCompleteComment ? taskCompleteComment.value.trim() : '';
+
+      task.status        = 'completed';
+      task.completedDate = completionDate;
+      task.completedAt   = Date.now();
+      if (comment) task.volunteerNote = comment;
+
+      await saveTasks(tasks);
+      currentCompleteTaskId = null;
+      closeModal(taskCompleteModal);
+      refreshVolunteerTasksUI();
+
+      alert('Thank you for completing this volunteer task.');
+    });
+  }
+
+  refreshVolunteerTasksUI();
+
+})();
+</script>
+
+</body>
+</html>
