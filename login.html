@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login / Register — Aderrig NW</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="brand">
+    <div class="logo">ANW</div>
+    <div class="brand-text">
+      <h1>Aderrig Neighbourhood Watch</h1>
+      <p class="muted">Adamstown · Community-led · Ireland</p>
+    </div>
+  </div>
+  <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="report.html">Report</a>
+      <a href="alerts.html">Community Alerts</a>
+      <a href="projects.html">Community Projects</a>
+      <a href="login.html" class="active">Login / Register</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="household.html">Household</a>
+      <a href="admin.html">Admin</a></nav>
+</header>
+
+<main class="wrap">
+  <div class="grid">
+
+    <!-- LOGIN -->
+    <section id="login" class="card">
+      <h2>Login</h2>
+      <p id="loggedBanner" class="muted" style="margin-bottom:0.75rem; display:none;"></p>
+
+      <div class="field">
+        <label>Email</label>
+        <input id="loginEmail" type="email" autocomplete="email">
+      </div>
+
+      <div class="field">
+        <label>Eircode</label>
+        <input id="loginEir" type="text" placeholder="e.g., K78XXXX" autocomplete="postal-code">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input id="loginPass" type="password" autocomplete="current-password">
+      </div>
+
+      <div class="actions" style="justify-content:space-between">
+        <span></span>
+        <div>
+          <button id="btnShow" class="btn btn-line" type="button">Show</button>
+          <button id="btnLogin" class="btn" type="button">Enter</button>
+          <!-- Logout button: only visible when someone is logged in -->
+          <button id="btnLogout" class="btn btn-line" type="button" style="display:none; margin-left:0.5rem;">
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <div id="loginMsg" class="msg"></div>
+      <p class="muted tiny" style="margin-top:4px;">
+        <a href="#" id="lnkForgot" class="link">I forgot my password</a>
+      </p>
+
+      <div id="resetBlock" style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); display:none;">
+        <h3 class="h3" style="margin-bottom:6px;">Reset your password</h3>
+        <p class="muted tiny" style="margin-bottom:8px;">
+          Confirm your registered email and Eircode, then choose a new password.
+          In the live system, you would receive a secure reset link by email.
+        </p>
+
+        <div class="field">
+          <label>Email</label>
+          <input id="resetEmail" type="email" autocomplete="email">
+        </div>
+
+        <div class="field">
+          <label>Eircode</label>
+          <input id="resetEir" type="text" placeholder="e.g., K78XXXX" autocomplete="postal-code">
+        </div>
+
+        <div class="field">
+          <label>New password</label>
+          <input id="resetPass1" type="password" autocomplete="new-password">
+        </div>
+
+        <div class="field">
+          <label>Confirm new password</label>
+          <input id="resetPass2" type="password" autocomplete="new-password">
+        </div>
+
+        <div class="actions" style="justify-content:flex-end; gap:8px;">
+          <button id="btnCancelReset" type="button" class="btn">Cancel</button>
+          <button id="btnResetPass" type="button" class="btn">Save new password</button>
+        </div>
+
+        <div id="resetMsg" class="msg tiny"></div>
+      </div>
+
+    </section>
+
+    <!-- REGISTER -->
+    <section id="register" class="card">
+      <h2>Create account</h2>
+
+      <div class="field">
+        <label>Full name</label>
+        <input id="regName" type="text" autocomplete="name">
+      </div>
+
+      <div class="field">
+        <label>Email</label>
+        <input id="regEmail" type="email" autocomplete="email">
+      </div>
+
+      <div class="field">
+        <label>Eircode</label>
+        <input id="regEir" type="text" placeholder="e.g., K78XXXX" autocomplete="postal-code">
+      </div>
+
+      <div class="field">
+        <label>Phone number (+country code)</label>
+        <input id="regPhone" type="tel" placeholder="+353851234567 (international format)" autocomplete="tel" style="width:100%;">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input id="regPass" type="password" autocomplete="new-password">
+      </div>
+
+      <div class="field">
+        <label>Confirm password</label>
+        <input id="regPass2" type="password" autocomplete="new-password">
+      </div>
+
+      <div class="field">
+        <label>Resident type</label>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+          <label class="chk" style="margin-right:8px;">
+            <input type="radio" name="regTypeRadio" value="owner">
+            <span>Owner</span>
+          </label>
+          <label class="chk">
+            <input type="radio" name="regTypeRadio" value="tenant">
+            <span>Tenant</span>
+          </label>
+        </div>
+        <select id="regType" style="display:none;">
+          <option value="">--select--</option>
+          <option value="owner">Owner</option>
+          <option value="tenant">Tenant</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Management company</label>
+        <input id="regMgmt" type="text" placeholder="Management company name">
+      </div>
+
+      <label class="chk">
+        <input id="regCoord" type="checkbox">
+        <span>I want to be a Street Coordinator</span>
+      </label>
+
+      <label class="chk">
+        <input id="regVolunteer" type="checkbox">
+        <span>I want to be a Volunteer</span>
+      </label>
+
+      <div id="volunteerOptions" style="display:none; margin:0.5rem 0 0 1.25rem;">
+        <p class="muted" style="margin-bottom:0.25rem;">Volunteer roles (choose one or more):</p>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+          <label class="chk"><input id="volStreetWatch" type="checkbox"> Street watch</label>
+          <label class="chk"><input id="volLeaflets" type="checkbox"> Leaflets</label>
+          <label class="chk"><input id="volTech" type="checkbox"> Tech support</label>
+          <label class="chk"><input id="volElderly" type="checkbox"> Elderly checks</label>
+          <label class="chk"><input id="volMeetings" type="checkbox"> Meetings</label>
+          <label class="chk"><input id="volTranslation" type="checkbox"> Translation</label>
+        </div>
+      </div>
+
+      <label class="chk" style="margin-top:0.75rem;">
+        <input id="regTerms" type="checkbox">
+        <span>I agree with the <a href="privacy.html" class="link" target="_blank">Privacy Policy</a></span>
+      </label>
+
+      <div class="actions" style="justify-content:flex-end">
+        <button id="btnRegister" class="btn" type="button">Create account</button>
+      </div>
+
+      <div id="regMsg" class="msg"></div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div style="text-align:center;">
+    © 2025 Aderrig NW · All rights reserved · <a href="privacy.html">Privacy Policy</a>
+  </div>
+</footer>
+
+  <script src="assets/app-core.js"></script>
+<script>
+(async function () {
+  await anwInitStore();  const KEY_USERS  = ANW_KEYS.USERS;
+  const KEY_LOGGED = ANW_KEYS.LOGGED;
+
+  function loadUsers() {
+    return anwLoad(KEY_USERS, []);
+  }
+
+  async function saveUsers(users) {
+    return await anwSave(KEY_USERS, users);
+  }
+
+
+  function normalizeEir(val) {
+    return (val || '').toUpperCase().replace(/\s+/g, '').trim();
+  }
+
+  function isValidEir(e) {
+    return /^[A-Z0-9]{7,8}$/.test(e);
+  }
+
+  function normalizePhone(val) {
+    return (val || '').replace(/\s+/g, '').trim();
+  }
+
+  function isValidPhone(p) {
+    return /^\+\d+$/.test(p);
+  }
+
+
+  const registerSection = document.getElementById('register');
+  const loggedBanner    = document.getElementById('loggedBanner');
+  const btnLogout       = document.getElementById('btnLogout');
+
+  // ------------ Top banner + hide registration once approved ------------
+  function showLoggedBannerIfAny() {
+    const loggedEmail = (anwGetLoggedEmail() || '').toLowerCase();
+    const users = loadUsers();
+
+    if (!loggedEmail) {
+      loggedBanner.style.display = 'none';
+      if (btnLogout) btnLogout.style.display = 'none';
+      if (registerSection) registerSection.style.display = 'block';
+      return;
+    }
+
+    const u = users.find(x => (x.email || '').toLowerCase() === loggedEmail);
+
+    if (!u) {
+      loggedBanner.style.display = 'none';
+      if (btnLogout) btnLogout.style.display = 'none';
+      if (registerSection) registerSection.style.display = 'block';
+      return;
+    }
+
+    const status = (u.status || 'pending').toLowerCase();
+    let statusLabel =
+      status === 'active' ? 'active' :
+      status === 'suspended' ? 'blocked' :
+      'pending approval';
+
+    loggedBanner.innerHTML =
+      'You are logged in as <strong>' + (u.name || loggedEmail) + '</strong>' +
+      ' (Eircode: ' + (u.eircode || '') + '). ' +
+      'Your registration is <strong>' + statusLabel + '</strong>. ' +
+      '<a href="dashboard.html" class="link">Open your dashboard</a>.';
+
+    loggedBanner.style.display = 'block';
+
+    if (btnLogout) btnLogout.style.display = 'inline-block';
+
+    // 👉 Business rule: once approved, hide new registration block
+    // If the resident is already APPROVED (active), do not show the new registration block.
+    if (registerSection) {
+      if (status === 'active') {
+        registerSection.style.display = 'none';
+      } else {
+        registerSection.style.display = 'block';
+      }
+    }
+  }
+
+  // ------------ LOGIN ------------
+  const loginEmail = document.getElementById('loginEmail');
+  const loginEir   = document.getElementById('loginEir');
+  const loginPass  = document.getElementById('loginPass');
+  const btnShow    = document.getElementById('btnShow');
+  const btnLogin   = document.getElementById('btnLogin');
+  const loginMsg   = document.getElementById('loginMsg');
+
+  btnShow.addEventListener('click', () => {
+    const isPwd = loginPass.type === 'password';
+    loginPass.type = isPwd ? 'text' : 'password';
+    btnShow.textContent = isPwd ? 'Hide' : 'Show';
+  });
+
+  btnLogin.addEventListener('click', async () => {
+    loginMsg.textContent = '';
+    loginMsg.className = 'msg';
+
+    const email = loginEmail.value.trim().toLowerCase();
+    const eir   = normalizeEir(loginEir.value);
+    const pass  = loginPass.value.trim();
+
+    if (!email || !eir || !pass) {
+      loginMsg.textContent = 'Please fill all fields.';
+      loginMsg.className = 'msg error';
+      return;
+    }
+
+    let users = loadUsers();
+    const u = users.find(x =>
+      (x.email || '').toLowerCase() === email &&
+      normalizeEir(x.eircode || '') === eir
+    );
+
+    if (!u) {
+      loginMsg.textContent = 'Account not found.';
+      loginMsg.className = 'msg error';
+      return;
+    }
+
+    const status = (u.status || 'pending').toLowerCase();
+
+    if (status === 'suspended') {
+      loginMsg.textContent = 'Your account is blocked.';
+      loginMsg.className = 'msg error';
+      await anwSave(KEY_LOGGED, null);
+      return;
+    }
+
+    if (status !== 'active') {
+      loginMsg.textContent = 'Your registration is pending approval by an ANW admin.';
+      loginMsg.className = 'msg error';
+      await anwSave(KEY_LOGGED, null);
+      return;
+    }
+
+    if (u.password && u.password !== pass) {
+      loginMsg.textContent = 'Incorrect password.';
+      loginMsg.className = 'msg error';
+      return;
+    }
+
+    await anwSave(KEY_LOGGED, u.email);
+
+    loginMsg.textContent = 'Login successful. Redirecting...';
+    loginMsg.className = 'msg ok';
+
+    setTimeout(() => {
+      window.location.href = 'dashboard.html';
+    }, 600);
+  });
+
+  // ------------ LOGOUT ------------
+  if (btnLogout) {
+    btnLogout.addEventListener('click', async () => {
+      await anwSave(KEY_LOGGED, null);
+      if (loginEmail) loginEmail.value = '';
+      if (loginEir)   loginEir.value   = '';
+      if (loginPass)  loginPass.value  = '';
+      if (loginMsg) {
+        loginMsg.textContent = 'You have been logged out.';
+        loginMsg.className = 'msg';
+      }
+      showLoggedBannerIfAny();
+    });
+  }
+
+  // ------------ REGISTER ------------
+  const regTypeSelect = document.getElementById('regType');
+  const typeRadios = document.querySelectorAll('input[name="regTypeRadio"]');
+  typeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      regTypeSelect.value = radio.value;
+    });
+  });
+
+  const volMaster = document.getElementById('regVolunteer');
+  const volBox    = document.getElementById('volunteerOptions');
+
+  volMaster.addEventListener('change', () => {
+    volBox.style.display = volMaster.checked ? 'block' : 'none';
+    if (!volMaster.checked) {
+      volBox.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+  });
+
+  const btnRegister = document.getElementById('btnRegister');
+
+  btnRegister.addEventListener('click', async () => {
+    const name  = regName.value.trim();
+    const email = regEmail.value.trim();
+    const eir   = normalizeEir(regEir.value);
+    const phone = normalizePhone(regPhone.value);
+    const pass  = regPass.value;
+    const pass2 = regPass2.value;
+    const type  = regTypeSelect.value;
+    const mgmt  = regMgmt.value.trim();
+    const coord = regCoord.checked;
+    const terms = regTerms.checked;
+
+    regMsg.textContent = '';
+    regMsg.className = 'msg';
+
+    if (!name || !email || !eir || !phone || !pass || !pass2 || !type) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    if (!isValidEir(eir)) {
+      alert('Please enter a valid Eircode (letters and numbers only, no spaces or symbols).');
+      return;
+    }
+
+    if (!isValidPhone(phone)) {
+      alert('Please enter a valid phone in international format, e.g. +353851234567.');
+      return;
+    }
+
+    if (pass !== pass2) {
+      alert('Passwords do not match.');
+      return;
+    }
+
+    if (!terms) {
+      alert('You must agree with the Privacy Policy.');
+      return;
+    }
+
+    let users = loadUsers();
+
+    if (users.some(x => x.email.toLowerCase() === email.toLowerCase())) {
+      alert('This email is already registered.');
+      return;
+    }
+
+    const vr = {
+      streetWatch: volStreetWatch.checked,
+      leaflets:    volLeaflets.checked,
+      tech:        volTech.checked,
+      elderly:     volElderly.checked,
+      meetings:    volMeetings.checked,
+      translation: volTranslation.checked
+    };
+
+    const volList = [];
+    if (vr.streetWatch) volList.push('Street watch');
+    if (vr.leaflets)    volList.push('Leaflets');
+    if (vr.tech)        volList.push('Tech support');
+    if (vr.elderly)     volList.push('Elderly checks');
+    if (vr.meetings)    volList.push('Meetings');
+    if (vr.translation) volList.push('Translation');
+
+    const now = new Date().toISOString();
+
+    const newUser = {
+      name: name,
+      email: email,
+      eircode: eir,
+      phone: phone,
+      password: pass,
+
+      type: type,
+      residentType: type,
+
+      mgt: mgmt,
+      managementCompany: mgmt,
+
+      coordinator: coord,
+      isCoordinator: coord,
+
+      volunteer: volMaster.checked,
+      isVolunteer: volMaster.checked,
+
+      vol_roles: vr,
+      volunteering: volList,
+      roles: volList,
+
+      status: 'pending',
+      createdAt: now,
+      regDate:   now
+    };
+
+    users.push(newUser);
+    await saveUsers(users);
+
+    // Do not keep user logged in after registration; account stays pending
+    await anwSave(KEY_LOGGED, null);
+
+    regMsg.textContent =
+      'Account created! Your registration is pending admin approval.';
+    regMsg.className = 'msg ok';
+
+    regName.value = '';
+    regEmail.value = '';
+    regEir.value = '';
+    regPhone.value = '';
+    regPass.value = '';
+    regPass2.value = '';
+    regMgmt.value = '';
+    regCoord.checked = false;
+    regVolunteer.checked = false;
+    regTypeSelect.value = '';
+    typeRadios.forEach(r => r.checked = false);
+    volBox.style.display = 'none';
+    volBox.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    regTerms.checked = false;
+
+    // After showing the message briefly, redirect to the home page as a guest
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 1500);
+  });
+
+  
+  // ------------ PASSWORD RESET ------------
+  const lnkForgot     = document.getElementById('lnkForgot');
+  const resetBlock    = document.getElementById('resetBlock');
+  const resetEmail    = document.getElementById('resetEmail');
+  const resetEir      = document.getElementById('resetEir');
+  const resetPass1    = document.getElementById('resetPass1');
+  const resetPass2    = document.getElementById('resetPass2');
+  const btnResetPass  = document.getElementById('btnResetPass');
+  const btnCancelReset= document.getElementById('btnCancelReset');
+  const resetMsg      = document.getElementById('resetMsg');
+
+  if (lnkForgot && resetBlock) {
+    lnkForgot.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      // Prefill with current login values, if any
+      if (resetEmail && loginEmail) {
+        resetEmail.value = loginEmail.value.trim();
+      }
+      if (resetEir && loginEir) {
+        resetEir.value = loginEir.value.trim();
+      }
+      if (resetPass1) resetPass1.value = '';
+      if (resetPass2) resetPass2.value = '';
+      if (resetMsg) {
+        resetMsg.textContent = '';
+        resetMsg.className = 'msg tiny';
+      }
+      resetBlock.style.display = 'block';
+      if (resetEmail) {
+        resetEmail.focus();
+      }
+      resetBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  if (btnCancelReset && resetBlock) {
+    btnCancelReset.addEventListener('click', () => {
+      resetBlock.style.display = 'none';
+      if (resetMsg) {
+        resetMsg.textContent = '';
+        resetMsg.className = 'msg tiny';
+      }
+    });
+  }
+
+  if (btnResetPass && resetMsg) {
+    btnResetPass.addEventListener('click', async () => {
+      resetMsg.textContent = '';
+      resetMsg.className = 'msg tiny';
+
+      const email = (resetEmail && resetEmail.value || '').trim().toLowerCase();
+      const eir   = normalizeEir(resetEir && resetEir.value || '');
+      const p1    = (resetPass1 && resetPass1.value || '').trim();
+      const p2    = (resetPass2 && resetPass2.value || '').trim();
+
+      if (!email || !eir || !p1 || !p2) {
+        resetMsg.textContent = 'Please fill in all fields.';
+        resetMsg.className = 'msg error tiny';
+        return;
+      }
+
+      if (!isValidEir(eir)) {
+        resetMsg.textContent = 'Please enter a valid Eircode for password reset.';
+        resetMsg.className = 'msg error tiny';
+        if (resetEir) resetEir.focus();
+        resetMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      if (p1 !== p2) {
+        resetMsg.textContent = 'Passwords do not match. Please re-enter your new password.';
+        resetMsg.className = 'msg error tiny';
+        if (resetPass1) resetPass1.focus();
+        resetMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      let users = loadUsers();
+      if (!Array.isArray(users)) users = [];
+
+      const u = users.find(x =>
+        (x.email || '').toLowerCase() === email &&
+        normalizeEir(x.eircode || '') === eir
+      );
+
+      if (!u) {
+        resetMsg.textContent = 'We could not find an account for this email and Eircode. Please check your details or register a new account.';
+        resetMsg.className = 'msg error tiny';
+        resetMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      u.password = p1;
+      await saveUsers(users);
+
+      if (loginPass) {
+        loginPass.value = '';
+      }
+
+      resetMsg.textContent = 'Your password has been updated. In the live system, you would receive a confirmation email. You can now log in with your new password.';
+      resetMsg.className = 'msg ok tiny';
+      resetMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+
+
+  // primeira carga
+  showLoggedBannerIfAny();
+})();
+</script>
+
+</body>
+</html>

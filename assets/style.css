@@ -1,0 +1,226 @@
+:root{--bg:#f7faf8;--card:#ffffff;--ink:#202625;--muted:#657072;--brand:#2f7d5b;--brand-2:#d6b676;--line:#e8ecea;--radius:16px;--shadow:0 6px 24px rgba(0,0,0,.06)}
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+h1,h2,h3{margin:.2rem 0 .6rem 0;line-height:1.2}h1{font-size:1.4rem}h2{font-size:1.2rem}h3{font-size:1.05rem}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.muted{color:var(--muted)}.tiny{font-size:.85rem}.justify{text-align:justify}
+.site-header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.brand{display:flex;gap:12px;align-items:center;padding:12px 16px}
+.logo{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--brand),#3f9d73);display:grid;place-items:center;color:#fff;font-weight:700}
+.brand-text h1{margin:0;font-size:1.05rem}
+.nav{display:flex;flex-wrap:wrap;gap:10px;padding:0 16px 12px 16px}
+.nav a{padding:8px 10px;border-radius:10px}
+.nav a.active,.nav a:hover{background:rgba(47,125,91,.08)}
+.container{max-width:1050px;margin:20px auto;padding:0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:16px}
+.grid{display:grid;gap:12px}.cols-3{grid-template-columns:2fr 3fr auto}@media (max-width:860px){.cols-3{grid-template-columns:1fr}}
+.input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.btn{border:0;background:var(--brand);color:#fff;padding:10px 14px;border-radius:12px;cursor:pointer;box-shadow:var(--shadow);height:42px;align-self:stretch}
+.btn:hover{filter:brightness(1.03)}.btn.ghost{background:transparent;color:var(--brand);border:1px solid var(--brand)}
+.tile{display:block;background:#fff;border:1px solid var(--line);padding:14px;border-radius:12px;box-shadow:var(--shadow)}
+.result{margin-top:12px;padding:12px;border:1px dashed var(--line);border-radius:12px;background:#fbfdfc}
+.site-footer{border-top:1px solid var(--line);padding:16px 0;margin-top:20px;background:#fff}
+.foot-grid{display:flex;justify-content:space-between;gap:12px;align-items:center}
+@media (max-width:720px){.foot-grid{flex-direction:column;align-items:flex-start}}
+
+/* show password pill */
+.pill-btn{border:2px solid #2f7d5b;background:#fff;color:#2f7d5b;border-radius:999px;padding:10px 16px;cursor:pointer;font-weight:700}
+/* checkbox line */
+.chk{display:flex;gap:10px;align-items:center;color:var(--muted)}
+/* nav pill active spacing/weight */
+.nav a.active{background:#eaf4ef;font-weight:800}
+
+/* modal */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:50}
+.modal.show{display:flex}
+.modal .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.25)}
+.modal .dialog{position:relative;background:#fff;border-radius:16px;box-shadow:var(--shadow);padding:20px;min-width:320px;max-width:480px;border:1px solid var(--line)}
+.modal .footer{display:flex;justify-content:flex-end;gap:12px;margin-top:12px}
+
+.hide{display:none !important}
+
+/* ===== Auth (Login/Register) layout ===== */
+.auth-wrap{max-width:1200px;margin:0 auto;padding:24px 16px}
+.auth-grid{display:grid;gap:40px}
+/* mobile default: 1 column */
+.auth-grid{grid-template-columns:1fr}
+/* desktop: 2 columns */
+@media (min-width: 900px){
+  .auth-grid{grid-template-columns:1fr 1fr}
+}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;border:1px solid var(--line)}
+.card h2{margin:0 0 18px 0;font-size:1.6rem}
+.field{margin:14px 0}
+.field label{display:block;font-weight:600;margin-bottom:6px}
+.field input[type=text],
+.field input[type=email],
+.field input[type=password],
+.field input[type=tel],
+.field input[type=datetime-local]{width:100%;padding:14px 16px;border-radius:14px;border:1px solid #e3e8e4;outline:none}
+.field input:focus{border-color:#cbd5ce;box-shadow:0 0 0 3px #eaf4ef}
+.actions{display:flex;gap:12px;align-items:center;margin-top:10px;justify-content:space-between}
+.pill-btn{border:2px solid #2f7d5b;background:#fff;color:#2f7d5b;border-radius:999px;padding:10px 16px;cursor:pointer;font-weight:700}
+a.link{color:#2f7d5b;text-decoration:underline}
+.chk{display:flex;gap:10px;align-items:center;color:var(--muted)}
+
+/* Auth (Login/Register) */
+.auth-wrap{max-width:1200px;margin:0 auto;padding:24px 16px}
+.auth-grid{display:grid;grid-template-columns:1fr;gap:40px}
+@media(min-width: 900px){ .auth-grid{grid-template-columns:1fr 1fr;} }
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;border:1px solid var(--line)}
+.field{margin:14px 0}
+.field label{display:block;font-weight:600;margin-bottom:6px}
+.field input[type=text],
+.field input[type=email],
+.field input[type=password],
+.field input[type=tel],
+.field input[type=datetime-local]{width:100%;padding:14px 16px;border-radius:14px;border:1px solid #e3e8e4;outline:none}
+.field input:focus{border-color:#cbd5ce;box-shadow:0 0 0 3px #eaf4ef}
+.actions{display:flex;gap:12px;align-items:center;margin-top:10px;justify-content:space-between}
+.pill-btn{border:2px solid #2f7d5b;background:#fff;color:#2f7d5b;border-radius:999px;padding:10px 16px;cursor:pointer;font-weight:700}
+a.link{color:#2f7d5b;text-decoration:underline}
+
+
+/* --- wrap/grid from legacy, kept for reliable 2-column layout --- */
+.wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:800px){ .grid{grid-template-columns:1fr} }
+.card{background:var(--card,#fff);border:1px solid var(--line,#e8ecea);border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.06);padding:22px}
+
+
+/* document page */
+.doc{line-height:1.7}
+.doc h1{margin-top:0;font-size:1.8rem}
+.doc h2{margin-top:1.2rem;font-size:1.3rem}
+.doc p{margin:.6rem 0}
+.doc ul{padding-left:1.2rem;margin:.5rem 0}
+.doc .muted{color:var(--muted)}
+.doc .toc{border:1px dashed var(--line);border-radius:12px;padding:12px;margin:10px 0 18px 0;background:#fbfdfc}
+.doc .toc a{color:#2f7d5b;text-decoration:underline}
+
+
+/* layout helpers for auth page */
+.wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:800px){ .grid{grid-template-columns:1fr} }
+.card{background:var(--card,#fff);border:1px solid var(--line,#e8ecea);border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.06);padding:22px}
+.field{margin:14px 0}
+.field label{display:block;font-weight:600;margin-bottom:6px}
+.field input[type=text],
+.field input[type=email],
+.field input[type=password],
+.field input[type=tel],
+.field input[type=datetime-local]{width:100%;padding:14px 16px;border-radius:14px;border:1px solid #e3e8e4;outline:none}
+.field input:focus{border-color:#cbd5ce;box-shadow:0 0 0 3px #eaf4ef}
+.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+a.link{text-decoration:underline}
+
+/* ================================
+   OVERRIDES — LOGIN/REGISTER ONLY
+   These adjustments do NOT affect other pages
+===================================*/
+
+.auth-wrap {
+  max-width: 1050px;      /* Align with the site-wide layout width */
+  margin: 32px auto;
+  padding: 24px 16px;
+}
+
+.auth-grid {
+  gap: 28px;              /* Slightly larger gap between Login and Create account */
+}
+
+/* Make login cards visually consistent with site cards */
+.auth-grid .card {
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  padding: 24px;
+  background: #fff;
+}
+
+/* Spacing adjustment for fields on the login/register grid */
+.auth-grid .field {
+  margin-bottom: 14px;
+}
+
+/* Tweak actions row (e.g., "Forgot password?" + login button) */
+.auth-grid .actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+/* Make <select> elements visually match other input fields */
+.field select {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #e3e8e4;
+  outline: none;
+  background: #fff;
+}
+
+/* Mesmo efeito de foco dos inputs */
+.field select:focus {
+  border-color: #cbd5ce;
+  box-shadow: 0 0 0 3px #eaf4ef;
+}
+
+
+/* ===== Tables (Admin + Team) ===== */
+.table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:0.9rem;
+}
+.table th,
+.table td{
+  padding:6px 4px;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+}
+.table th{
+  white-space:nowrap;
+}
+.table td{
+  vertical-align:top;
+}
+
+/* Team roles table (About page) */
+.team-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:0.9rem;
+}
+.team-table th,
+.team-table td{
+  padding:6px 4px;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+}
+
+/* Mobile tweaks for narrow screens */
+@media (max-width:720px){
+  .table{
+    font-size:0.8rem;
+  }
+  .table th,
+  .table td{
+    padding:4px 2px;
+  }
+  /* Hide some less critical admin columns on very small screens
+     to avoid horizontal scrolling as much as possible. */
+  .table .col-type,
+  .table .col-mgmt{
+    display:none;
+  }
+
+  .team-table{
+    font-size:0.8rem;
+  }
+  .team-table th,
+  .team-table td{
+    padding:4px 2px;
+  }
+}

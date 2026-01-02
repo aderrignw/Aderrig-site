@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard — Aderrig NW</title>
+  <link rel="stylesheet" href="assets/style.css" />
+
+  <style>
+    /* Align sub tabs like the rest of the site (avoid justified spacing) */
+    .dash-tabs{
+      display:flex;
+      gap:0.5rem;
+      flex-wrap:wrap;
+      justify-content:flex-start !important;
+      align-items:center;
+    }
+    .dash-tabs .btn{
+      flex:0 0 auto !important;
+      margin:0 !important;
+    }
+  </style>
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="brand">
+    <div class="logo">ANW</div>
+    <div class="brand-text">
+      <h1>Aderrig Neighbourhood Watch</h1>
+      <p class="muted">Adamstown · Community-led · Ireland</p>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="report.html">Report</a>
+    <a href="alerts.html">Community Alerts</a>
+    <a href="projects.html">Community Projects</a>
+    <a href="login.html">Login / Register</a>
+    <a href="dashboard.html" class="active">Dashboard</a>
+    <a href="household.html">Household</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <section class="card">
+    <h2>Resident dashboard</h2>
+    <p class="muted">Manage your profile, elections and interests.</p>
+
+    <div class="actions dash-tabs" style="margin-top:0.5rem;">
+      <button type="button" class="btn small dash-tab active" data-tab="tabProfile">Profile</button>
+      <button type="button" class="btn small dash-tab" data-tab="tabInterest">Interest</button>
+      <button type="button" class="btn small dash-tab" data-tab="tabElections">Elections</button>
+    </div>
+  </section>
+
+  <!-- ================= PROFILE TAB ================= -->
+  <section class="card dash-tab-content" id="tabProfile">
+    <h3>Profile</h3>
+
+    <div id="dbNotLogged" class="card" style="background:#f9fafb; display:none;">
+      <p class="tiny muted" style="margin:0;">
+        Please log in first to access your dashboard.
+      </p>
+    </div>
+
+    <div id="dbProfileArea" style="display:none;">
+      <p class="tiny muted" style="margin-top:0;">
+        Email and Eircode are protected and cannot be changed.
+      </p>
+
+      <div class="grid-2" style="gap:1rem;">
+        <div class="field">
+          <label>Registration No</label>
+          <input id="pfRegId" type="text" disabled>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <input id="pfStatus" type="text" disabled>
+        </div>
+      </div>
+
+      <div class="grid-2" style="gap:1rem;">
+        <div class="field">
+          <label>Full name</label>
+          <input id="pfName" type="text">
+        </div>
+        <div class="field">
+          <label>Phone</label>
+          <input id="pfPhone" type="text">
+        </div>
+      </div>
+
+      <div class="grid-2" style="gap:1rem;">
+        <div class="field">
+          <label>Email</label>
+          <input id="pfEmail" type="email" disabled>
+        </div>
+        <div class="field">
+          <label>Eircode</label>
+          <input id="pfEir" type="text" disabled>
+        </div>
+      </div>
+
+      <div class="grid-2" style="gap:1rem;">
+        <div class="field">
+          <label>Resident type</label>
+          <input id="pfType" type="text" disabled>
+        </div>
+        <div class="field">
+          <label>Management company</label>
+          <input id="pfMgmt" type="text" disabled>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Elected position</label>
+        <input id="pfElected" type="text" disabled>
+      </div>
+
+      <div class="field">
+        <label>Volunteer roles</label>
+        <ul id="pfVolRoles" class="tiny" style="margin:0; padding-left:18px;"></ul>
+      </div>
+
+      <p class="tiny muted" id="pfMsg" style="margin-top:0.5rem;"></p>
+
+      <div class="actions" style="justify-content:flex-end;">
+        <button class="btn" id="btnSaveProfile" type="button">Save</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= INTEREST TAB ================= -->
+  <section class="card dash-tab-content" id="tabInterest" style="display:none;">
+    <h3>Expression of Interest (Elections)</h3>
+    <p class="tiny muted" style="margin-top:0;">
+      Submit your interest for an elected role. Admin approval is required before your name appears for resident voting.
+    </p>
+
+    <div id="interestBlocked" class="card" style="background:#f9fafb; display:none;">
+      <p class="tiny muted" style="margin:0;">
+        Your registration must be approved before submitting interest.
+      </p>
+    </div>
+
+    <div id="interestArea" style="display:none;">
+      <div class="field">
+        <label>Role</label>
+        <select id="intRole">
+          <option value="">Select…</option>
+          <option value="area">Area Coordinator</option>
+          <option value="assistant">Assistant Area Coordinator</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Motivation / experience (visible to residents)</label>
+        <textarea id="intText" rows="6"></textarea>
+      </div>
+
+      <p id="intMeta" class="tiny muted"></p>
+
+      <div class="actions" style="justify-content:flex-end; gap:0.5rem;">
+        <button class="btn-line" id="btnWithdrawInterest" type="button" style="display:none;">Withdraw</button>
+        <button class="btn" id="btnSubmitInterest" type="button">Submit</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ELECTIONS TAB ================= -->
+  <section class="card dash-tab-content" id="tabElections" style="display:none;">
+    <h3>Elections</h3>
+    <p class="tiny muted" style="margin-top:0;">
+      View current election periods and your eligibility.
+    </p>
+
+    <div id="electionsArea" class="card" style="background:#f9fafb;">
+      <p class="tiny muted" style="margin:0;">
+        Election information will appear here when elections are created by an admin.
+      </p>
+    </div>
+
+    <div style="overflow-x:auto; margin-top:0.75rem;">
+      <table style="width:100%;">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Period</th>
+            <th>Status</th>
+            <th>Winner</th>
+          </tr>
+        </thead>
+        <tbody id="electionsBody"></tbody>
+      </table>
+    </div>
+
+    <p id="electionsEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">
+      No elections configured.
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  <div style="text-align:center;">
+    © 2025 Aderrig NW · All rights reserved · <a href="privacy.html">Privacy Policy</a>
+  </div>
+</footer>
+
+<script src="assets/app-core.js"></script>
+<script>
+(async function(){
+  await anwInitStore();
+  'use strict';
+
+  const KEY_USERS     = ANW_KEYS.USERS;
+  const KEY_LOGGED    = ANW_KEYS.LOGGED;
+  const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
+
+  /* ================= SESSION ================= */
+  const loggedEmail = anwGetLoggedEmail();
+  const users = anwLoad(KEY_USERS, []);
+  const me = users.find(u => anwNormEmail(u.email) === anwNormEmail(loggedEmail));
+
+  const notLoggedBox = document.getElementById('dbNotLogged');
+  const profileArea = document.getElementById('dbProfileArea');
+
+  if(!loggedEmail || !me){
+    notLoggedBox.style.display = 'block';
+    profileArea.style.display = 'none';
+  } else {
+    notLoggedBox.style.display = 'none';
+    profileArea.style.display = 'block';
+  }
+
+  /* ================= TABS ================= */
+  const tabBtns = document.querySelectorAll('.dash-tab');
+  const tabPanels = document.querySelectorAll('.dash-tab-content');
+
+  function showTab(id){
+    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+    tabPanels.forEach(p => p.style.display = (p.id === id ? 'block' : 'none'));
+  }
+  tabBtns.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+  /* ================= PROFILE ================= */
+  function electedLabelFromUser(u){
+    const r = String(u?.electedRole || '').toLowerCase();
+    if(r === 'assistant') return 'Assistant Area Coordinator';
+    if(r === 'area') return 'Area Coordinator';
+    return '—';
+  }
+
+  if(me){
+    document.getElementById('pfRegId').value = me.regId || '—';
+    document.getElementById('pfStatus').value = me.status || 'pending';
+    document.getElementById('pfName').value = me.name || '';
+    document.getElementById('pfPhone').value = me.phone || '';
+    document.getElementById('pfEmail').value = me.email || '';
+    document.getElementById('pfEir').value = me.eircode || '';
+    document.getElementById('pfType').value = me.type || '';
+    document.getElementById('pfMgmt').value = me.managementCompany || '';
+
+    // ✅ Elected position from USER profile (set by admin when closing election)
+    document.getElementById('pfElected').value = electedLabelFromUser(me);
+
+    // Volunteer roles (6)
+    const ul = document.getElementById('pfVolRoles');
+    ul.innerHTML = '';
+    const vr = me.vol_roles || {};
+    const labels = {
+      streetWatch:'Street watch / patrols',
+      leaflets:'Distribute leaflets',
+      tech:'Tech support',
+      elderly:'Elderly checks',
+      meetings:'Meeting organiser',
+      translation:'Translation'
+    };
+    Object.keys(labels).forEach(k=>{
+      if(vr[k]){
+        const li = document.createElement('li');
+        li.textContent = labels[k];
+        ul.appendChild(li);
+      }
+    });
+    if(!ul.children.length){
+      ul.innerHTML = '<li class="muted">No volunteer roles selected</li>';
+    }
+  }
+
+  document.getElementById('btnSaveProfile')?.addEventListener('click',()=>{
+    if(!me) return;
+
+    me.name = document.getElementById('pfName').value.trim();
+    me.phone = document.getElementById('pfPhone').value.trim();
+
+    anwSave(KEY_USERS, users);
+    document.getElementById('pfMsg').textContent = 'Profile updated.';
+  });
+
+  /* ================= INTEREST ================= */
+  const interestBlocked = document.getElementById('interestBlocked');
+  const interestArea = document.getElementById('interestArea');
+
+  // ✅ Allow approved OR active (your admin now uses active)
+  const allowed = !!(me && anwIsApproved(me));
+
+  if(!allowed){
+    interestBlocked.style.display = 'block';
+    interestArea.style.display = 'none';
+  } else {
+    interestBlocked.style.display = 'none';
+    interestArea.style.display = 'block';
+  }
+
+  const intRole = document.getElementById('intRole');
+  const intText = document.getElementById('intText');
+  const intMeta = document.getElementById('intMeta');
+  const btnSubmitInterest = document.getElementById('btnSubmitInterest');
+  const btnWithdrawInterest = document.getElementById('btnWithdrawInterest');
+
+  function renderInterest(){
+    if(!me) return;
+
+    if(me.interest){
+      intRole.value = me.interest.role || '';
+      intText.value = me.interest.text || '';
+      intMeta.textContent =
+        'Submitted on ' + (me.interest.date || '—') +
+        ' · Status: ' + (me.interest.status || 'pending');
+      btnWithdrawInterest.style.display = 'inline-block';
+      btnSubmitInterest.textContent = 'Update';
+    } else {
+      intRole.value = '';
+      intText.value = '';
+      intMeta.textContent = '';
+      btnWithdrawInterest.style.display = 'none';
+      btnSubmitInterest.textContent = 'Submit';
+    }
+  }
+  renderInterest();
+
+  btnSubmitInterest?.addEventListener('click',()=>{
+    if(!me) return;
+
+    if(!intRole.value || !intText.value.trim()){
+      intMeta.textContent = 'Please complete all fields.';
+      return;
+    }
+
+    // keep existing status if already approved/rejected by admin
+    const existingStatus = me.interest?.status || 'pending';
+
+    me.interest = {
+      role: intRole.value,
+      text: intText.value.trim(),
+      date: new Date().toISOString().slice(0,10),
+      status: existingStatus
+    };
+
+    anwSave(KEY_USERS, users);
+    renderInterest();
+    intMeta.textContent = 'Interest saved. Awaiting admin approval if pending.';
+  });
+
+  btnWithdrawInterest?.addEventListener('click',()=>{
+    if(!me) return;
+
+    // no confirm popup; keep UX consistent
+    delete me.interest;
+    anwSave(KEY_USERS, users);
+    renderInterest();
+    intMeta.textContent = 'Interest withdrawn.';
+  });
+
+  /* ================= ELECTIONS (VIEW) ================= */
+  const electionsBody = document.getElementById('electionsBody');
+  const electionsEmpty = document.getElementById('electionsEmpty');
+  const elections = anwLoad(KEY_ELECTIONS, []);
+
+  electionsBody.innerHTML = '';
+  if(!elections.length){
+    electionsEmpty.style.display = 'block';
+  } else {
+    electionsEmpty.style.display = 'none';
+    elections.forEach(e=>{
+      const tr = document.createElement('tr');
+      const roleLabel = (String(e.role||'').toLowerCase()==='assistant')
+        ? 'Assistant Area Coordinator'
+        : 'Area Coordinator';
+
+      const winner = e.electedName || e.winnerName || e.electedEmail || '—';
+
+      tr.innerHTML = `
+        <td>${roleLabel}</td>
+        <td>${e.start || '—'} → ${e.end || '—'}</td>
+        <td>${e.status || '—'}</td>
+        <td>${winner}</td>
+      `;
+      electionsBody.appendChild(tr);
+    });
+  }
+
+})();
+</script>
+
+</body>
+</html>
