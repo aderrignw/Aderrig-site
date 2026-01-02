@@ -74,17 +74,18 @@
       </div>
 
       <div style="display:flex; gap:0.5rem; align-items:flex-end;">
-        <button type="button" class="btn">Fit</button>
-        <button type="button" class="btn btn-line">Refresh</button>
+        <button type="button" class="btn" id="btnMapFit">Fit</button>
+        <button type="button" class="btn btn-line" id="btnMapRefresh">Refresh</button>
       </div>
     </div>
 
-    <div style="border-radius:18px; border:1px solid #e4e7eb; background:#f3f6fb; padding:32px; text-align:center; color:#6d7680; min-height:220px; display:flex; align-items:center; justify-content:center;">
-      <div class="tiny">
-        <strong>Admin / test view —</strong><br><br>
-        In the live system this interactive map will show
-        <strong>all incidents in Aderrig/Adamstown</strong>, with filters and export options.<br>
-        No personal data will be displayed.
+    <div style="border-radius:18px; border:1px solid #e4e7eb; background:#fff; height:520px; overflow:hidden;">
+      <div id="map" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+        <div class="tiny">
+          Loading map…<br><br>
+          If this never loads, make sure you set <strong>GOOGLE_MAPS_API_KEY</strong> in Netlify environment variables
+          and enable the <strong>Maps JavaScript API</strong> in Google Cloud.
+        </div>
       </div>
     </div>
   </section>
@@ -96,6 +97,249 @@
     <a href="privacy.html">Privacy Policy</a>
   </div>
 </footer>
+
+<script>
+/**
+ * Report Map — Google Maps (Netlify + GitHub ready)
+ *
+ * How it works:
+ * 1) Fetches GOOGLE_MAPS_API_KEY from /.netlify/functions/config (via /api/config redirect)
+ * 2) Loads Google Maps JS API dynamically
+ * 3) Reads incidents from Netlify Blobs store (key: anw_incidents) via /.netlify/functions/store
+ * 4) Plots markers. If an incident has no lat/lng, it tries to geocode its "location" text
+ *    using the Maps JS Geocoder, then writes lat/lng back to the incident list in KV.
+ *
+ * IMPORTANT: Google Maps keys are always visible client-side. Protect it with HTTP referrer
+ * restrictions in Google Cloud Console (recommended).
+ */
+
+(function () {
+  const btnFit = document.getElementById('btnMapFit');
+  const btnRefresh = document.getElementById('btnMapRefresh');
+  const selRange = document.getElementById('filterRange');
+
+  if (btnRefresh) btnRefresh.addEventListener('click', () => location.reload());
+
+  const MAPS_REGION_HINT = "Adamstown, Lucan, Co. Dublin, Ireland";
+  const FALLBACK_CENTER = { lat: 53.336, lng: -6.458 }; // approx Adamstown/Lucan area
+  const STORE_KEY = "anw_incidents";
+
+  let map, bounds, markers = [];
+  let geocoder;
+
+  function daysAgo(n){
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+  function toDateSafe(v){
+    try{
+      if(!v) return null;
+      const d = new Date(v);
+      return isNaN(d.getTime()) ? null : d;
+    }catch(_){ return null; }
+  }
+
+  async function fetchConfig(){
+    const r = await fetch('/api/config', { cache: 'no-store' });
+    if(!r.ok) throw new Error('Config fetch failed');
+    return r.json();
+  }
+
+  async function loadGoogleMaps(key){
+    return new Promise((resolve, reject) => {
+      if (window.google && window.google.maps) return resolve();
+      const s = document.createElement('script');
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly`;
+      s.async = true;
+      s.defer = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('Failed to load Google Maps script'));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function storeGet(key){
+    const r = await fetch('/.netlify/functions/store', {
+      method: 'POST',
+      headers: {'content-type':'application/json'},
+      body: JSON.stringify({ action:'get', key })
+    });
+    if(!r.ok) throw new Error('Store get failed');
+    return r.json();
+  }
+
+  async function storeSet(key, value){
+    const r = await fetch('/.netlify/functions/store', {
+      method: 'POST',
+      headers: {'content-type':'application/json'},
+      body: JSON.stringify({ action:'set', key, value })
+    });
+    if(!r.ok) throw new Error('Store set failed');
+    return r.json();
+  }
+
+  function clearMarkers(){
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+    bounds = new google.maps.LatLngBounds();
+  }
+
+  function addMarker(incident){
+    const pos = { lat: incident.lat, lng: incident.lng };
+    const mk = new google.maps.Marker({ position: pos, map });
+    const info = new google.maps.InfoWindow({
+      content: `
+        <div style="max-width:280px">
+          <div><strong>${escapeHtml(incident.type || 'Incident')}</strong></div>
+          <div style="margin-top:4px">${escapeHtml(incident.location || '')}</div>
+          <div style="margin-top:6px" class="tiny">
+            Status: <strong>${escapeHtml(incident.status || 'new')}</strong><br>
+            Date: ${escapeHtml(incident.date || '')}
+          </div>
+        </div>`
+    });
+    mk.addListener('click', () => info.open({ map, anchor: mk }));
+    markers.push(mk);
+    bounds.extend(pos);
+  }
+
+  function escapeHtml(str){
+    return String(str ?? '')
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'","&#039;");
+  }
+
+  async function geocodeMissing(incidents){
+    if(!geocoder) geocoder = new google.maps.Geocoder();
+    let changed = false;
+
+    for (const inc of incidents){
+      if (inc && typeof inc.lat === 'number' && typeof inc.lng === 'number') continue;
+      const loc = (inc?.location || '').trim();
+      if(!loc) continue;
+
+      const address = `${loc}, ${MAPS_REGION_HINT}`;
+      try{
+        const res = await geocoder.geocode({ address });
+        const hit = res.results?.[0];
+        if(hit?.geometry?.location){
+          const ll = hit.geometry.location;
+          inc.lat = typeof ll.lat === 'function' ? ll.lat() : ll.lat;
+          inc.lng = typeof ll.lng === 'function' ? ll.lng() : ll.lng;
+          changed = true;
+        }
+      }catch(_){
+        // ignore single failure
+      }
+    }
+
+    return changed;
+  }
+
+  async function render(){
+    const rangeDays = parseInt(selRange?.value || '30', 10);
+    const minDate = daysAgo(rangeDays);
+
+    const store = await storeGet(STORE_KEY);
+    const incidents = Array.isArray(store?.value) ? store.value : [];
+
+    // Filter by date range if possible
+    const filtered = incidents.filter(it => {
+      const d = toDateSafe(it?.date);
+      if(!d) return true; // keep if unknown
+      return d >= minDate;
+    });
+
+    // Ensure we have coordinates where possible
+    const changed = await geocodeMissing(filtered);
+    if(changed){
+      // write back full list (with updated coords). We update original list items by id where possible.
+      // best-effort: merge coords from filtered into incidents by id
+      const byId = new Map(filtered.filter(x=>x && x.id).map(x=>[x.id, x]));
+      for(const it of incidents){
+        if(it?.id && byId.has(it.id)){
+          const up = byId.get(it.id);
+          if(typeof up.lat === 'number' && typeof up.lng === 'number'){
+            it.lat = up.lat; it.lng = up.lng;
+          }
+        }
+      }
+      await storeSet(STORE_KEY, incidents);
+    }
+
+    clearMarkers();
+    filtered.forEach(inc => {
+      if(inc && typeof inc.lat === 'number' && typeof inc.lng === 'number'){
+        addMarker(inc);
+      }
+    });
+
+    if (markers.length){
+      map.fitBounds(bounds, 60);
+    } else {
+      map.setCenter(FALLBACK_CENTER);
+      map.setZoom(14);
+    }
+
+    if (btnFit){
+      btnFit.onclick = () => {
+        if (markers.length) map.fitBounds(bounds, 60);
+        else alert('No incidents with coordinates to fit yet.');
+      };
+    }
+  }
+
+  async function init(){
+    const mapEl = document.getElementById('map');
+    try{
+      const cfg = await fetchConfig();
+      const key = cfg?.googleMapsApiKey || '';
+      if(!key){
+        mapEl.innerHTML = `<div class="tiny" style="padding:16px;">
+          <strong>Google Maps key missing.</strong><br><br>
+          In Netlify, go to <em>Site settings → Environment variables</em> and add:<br>
+          <code>GOOGLE_MAPS_API_KEY</code> = your key<br><br>
+          Then redeploy.
+        </div>`;
+        return;
+      }
+
+      await loadGoogleMaps(key);
+
+      map = new google.maps.Map(mapEl, {
+        center: FALLBACK_CENTER,
+        zoom: 14,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true
+      });
+
+      if (selRange) selRange.addEventListener('change', render);
+
+      await render();
+    }catch(err){
+      mapEl.innerHTML = `<div class="tiny" style="padding:16px;">
+        <strong>Map failed to load.</strong><br><br>
+        ${escapeHtml(err?.message || String(err))}<br><br>
+        Checklist:
+        <ul style="margin:8px 0 0 18px;">
+          <li>Set <code>GOOGLE_MAPS_API_KEY</code> in Netlify env vars</li>
+          <li>Enable <em>Maps JavaScript API</em> in Google Cloud</li>
+          <li>Restrict key by HTTP referrer (Netlify site URL + your custom domain)</li>
+        </ul>
+      </div>`;
+    }
+  }
+
+  init();
+})();
+</script>
 
 </body>
 </html>

@@ -284,7 +284,8 @@
 
 <!-- SCRIPT ORIGINAL DE HOUSEHOLD (CADASTRO) -->
 <script>
-(function () {
+(async function () {
+  await anwInitStore();
   'use strict';
 
   const KEY_USERS  = ANW_KEYS.USERS;
@@ -295,9 +296,9 @@
     catch { return []; }
   }
 
-  function saveUsers(users) {
-    await anwSave(KEY_USERS, users || []);
-  }
+  async function saveUsers(users) {
+      try { await anwSave(KEY_USERS, users || []); } catch (e) {}
+    }
 
   function esc(text) {
     return String(text || '')

@@ -230,7 +230,8 @@
 
   <script src="assets/app-core.js"></script>
 <script>
-(function () {
+(async function () {
+  await anwInitStore();
   const KEY_ALERTS   = ANW_KEYS.ALERTS;
   const KEY_CONTACTS = ANW_KEYS.CONTACTS;
   const DEFAULT_ANW_EMAIL = 'aderrignw@gmail.com';
@@ -248,11 +249,10 @@
     catch (e) { return {}; }
   }
 
-  function saveContacts(obj) {
-    await anwSave(KEY_CONTACTS, obj);
+  async function saveContacts(obj) {
+    try { await anwSave(KEY_CONTACTS, obj || {}); } catch (e) {}
   }
-
-  // ---------- TABS ----------
+// ---------- TABS ----------
   const tabButtons   = document.querySelectorAll('.alert-tab');
   const tabSend      = document.getElementById('tab-send');
   const tabContacts  = document.getElementById('tab-contacts');

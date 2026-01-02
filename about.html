@@ -254,7 +254,8 @@
   <script src="assets/app-core.js"></script>
 <script src="assets/app-core.js"></script>
   <script>
-    (function() {
+    (async function () {
+  await anwInitStore();
       // Tab switching between About and Team
       const aboutTab = document.getElementById('tabAbout');
       const teamTab = document.getElementById('tabTeam');
@@ -314,18 +315,16 @@
         return anwLoad(KEY_USERS, []);
       }
 
-      function saveUsers(users) {
-        await anwSave(KEY_USERS, users || []);
-        catch (e) {}
+      async function saveUsers(users) {
+        try { await anwSave(KEY_USERS, users || []); } catch (e) {}
       }
 
       function loadVotes() {
         return anwLoad(KEY_VOTES, []);
       }
 
-      function saveVotes(votes) {
-        await anwSave(KEY_VOTES, votes || []);
-        catch (e) {}
+      async function saveVotes(votes) {
+        try { await anwSave(KEY_VOTES, votes || []); } catch (e) {}
       }
 
       function loadElectionSettings() {

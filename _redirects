@@ -10,3 +10,5 @@
 /privacy      /privacy.html      200
 
 /api/store    /.netlify/functions/store    200
+
+/api/config   /.netlify/functions/config   200

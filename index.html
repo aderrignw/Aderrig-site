@@ -88,9 +88,10 @@
   <script>
     window.ANW = window.ANW || {};
 
-    (function () {
+    (async function () {
+  await anwInitStore();
       // ✅ fonte única (app-core.js)
-      const KEY_USERS = "users";
+      const KEY_USERS = ANW_KEYS.USERS;
       const EIRCODE_ADDR = {
         'K78XXXX': 'Aderrig Park, Adamstown, Co. Dublin',
         'K78T3X1': 'Aderrig Lane, Adamstown, Co. Dublin',

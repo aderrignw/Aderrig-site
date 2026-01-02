@@ -463,20 +463,59 @@
   <section class="card admin-tab-content" id="tabReports" style="display:none;">
     <h3>Reports</h3>
     <p class="tiny muted" style="margin-top:0;">
-      Reports are submitted in the Report section. This admin page does not modify report design.
+      View and manage incident reports submitted via the <a href="report.html">Report</a> page.
     </p>
-    <div class="card" style="background:#f9fafb;">
-      <p class="tiny muted" style="margin:0;">
-        Open <a href="report.html">Report</a> to view submissions. (If you use localStorage for reports, keep it consistent there.)
-      </p>
+
+    <div class="actions" style="justify-content:flex-start; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem;">
+      <div class="field" style="min-width:220px; margin:0;">
+        <label class="tiny muted" for="repStatusFilter">Status</label>
+        <select id="repStatusFilter" class="input" style="width:100%;">
+          <option value="all">All</option>
+          <option value="submitted">Submitted</option>
+          <option value="in_review">In review</option>
+          <option value="sent_to_garda">Sent to Gardaí</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+
+      <div class="field" style="min-width:280px; margin:0;">
+        <label class="tiny muted" for="repSearch">Search (ID / email / location)</label>
+        <input id="repSearch" type="text" placeholder="e.g., RPT-0003 or someone@email.com" />
+      </div>
+
+      <div style="display:flex; gap:0.5rem; align-items:flex-end;">
+        <button type="button" class="btn" id="btnRepRefresh">Refresh</button>
+        <button type="button" class="btn btn-line" id="btnRepExport">Export reports (JSON)</button>
+      </div>
     </div>
+
+    <p id="repMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
+
+    <div style="overflow-x:auto; margin-top:0.75rem;">
+      <table style="width:100%;">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Created</th>
+            <th>Category</th>
+            <th>Location</th>
+            <th>Reporter email</th>
+            <th>Status</th>
+            <th style="width:260px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="repBody"></tbody>
+      </table>
+    </div>
+
+    <p id="repEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No reports found.</p>
   </section>
 
   <!-- ================= TOOLS ================= -->
   <section class="card admin-tab-content" id="tabTools" style="display:none;">
     <h3>Tools</h3>
     <p class="tiny muted" style="margin-top:0;">
-      Maintenance tools for localStorage. Use carefully.
+      Maintenance tools for Netlify storage (Netlify Blobs/KV). Use carefully.
     </p>
 
     <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
@@ -508,6 +547,7 @@
   const KEY_USERS = ANW_KEYS.USERS;
   const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
   const KEY_VOTES = ANW_KEYS.VOTES;
+  const KEY_INCIDENTS = ANW_KEYS.INCIDENTS;
 
   function loadUsers(){ return anwLoad(KEY_USERS, []); }
   function saveUsers(list){ anwSave(KEY_USERS, list); }
@@ -515,6 +555,8 @@
   function saveElections(list){ anwSave(KEY_ELECTIONS, list); }
   function loadVotes(){ return anwLoad(KEY_VOTES, {}); }
   function saveVotes(v){ anwSave(KEY_VOTES, v); }
+  function loadIncidents(){ return anwLoad(KEY_INCIDENTS, []); }
+  function saveIncidents(list){ anwSave(KEY_INCIDENTS, list); }
 
   function isApprovedStatus(st){
     const s = String(st||'').toLowerCase();
@@ -1167,6 +1209,170 @@
     renderResults();
   }
 
+  /* ---------------- Reports ---------------- */
+  const repBody = document.getElementById('repBody');
+  const repEmpty = document.getElementById('repEmpty');
+  const repMsg = document.getElementById('repMsg');
+  const repStatusFilter = document.getElementById('repStatusFilter');
+  const repSearch = document.getElementById('repSearch');
+
+  function fmtDateShort(iso){
+    const s = String(iso||'');
+    return s ? s.slice(0,10) : '—';
+  }
+
+  function renderReports(){
+    if(!repBody) return;
+    const incidents = loadIncidents();
+    const st = String(repStatusFilter.value||'all');
+    const q = String(repSearch.value||'').trim().toLowerCase();
+
+    let list = incidents.slice();
+    if(st !== 'all') list = list.filter(r => String(r.status||'submitted') === st);
+    if(q){
+      list = list.filter(r => {
+        const hay = [r.id, r.reporterEmail, r.location, r.category].map(x=>String(x||'').toLowerCase()).join(' | ');
+        return hay.includes(q);
+      });
+    }
+
+    list.sort((a,b)=> String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+
+    repBody.innerHTML = '';
+    if(!list.length){
+      repEmpty.style.display = 'block';
+      repMsg.textContent = incidents.length ? 'No reports match the filters.' : 'No reports submitted yet.';
+      return;
+    }
+    repEmpty.style.display = 'none';
+    repMsg.textContent = `Showing ${list.length} of ${incidents.length} total report(s).`;
+
+    list.forEach(r=>{
+      const tr = document.createElement('tr');
+      const status = String(r.status||'submitted');
+      tr.innerHTML = `
+        <td>${r.id || '—'}</td>
+        <td>${fmtDateShort(r.createdAt) || '—'}</td>
+        <td>${r.category || '—'}</td>
+        <td>${r.location || '—'}</td>
+        <td>${r.reporterEmail || '—'}</td>
+        <td>
+          <select class="input" data-role="status" data-id="${r.id}" style="min-width:140px;">
+            <option value="submitted" ${status==='submitted'?'selected':''}>submitted</option>
+            <option value="in_review" ${status==='in_review'?'selected':''}>in_review</option>
+            <option value="sent_to_garda" ${status==='sent_to_garda'?'selected':''}>sent_to_garda</option>
+            <option value="closed" ${status==='closed'?'selected':''}>closed</option>
+          </select>
+        </td>
+        <td>
+          <button type="button" class="btn-line small" data-act="view" data-id="${r.id}">View</button>
+          <button type="button" class="btn-line small" data-act="copy" data-id="${r.id}" style="margin-left:6px;">Copy email</button>
+          <button type="button" class="btn-line small" data-act="del" data-id="${r.id}" style="margin-left:6px;">Delete</button>
+        </td>
+      `;
+      repBody.appendChild(tr);
+    });
+  }
+
+  async function refreshReports(){
+    await anwInitStore();
+    renderReports();
+  }
+
+  // Filters
+  if(repStatusFilter) repStatusFilter.addEventListener('change', renderReports);
+  if(repSearch) repSearch.addEventListener('input', ()=>{ window.clearTimeout(window.__repT); window.__repT=setTimeout(renderReports, 150); });
+  const btnRepRefresh = document.getElementById('btnRepRefresh');
+  if(btnRepRefresh) btnRepRefresh.addEventListener('click', refreshReports);
+
+  const btnRepExport = document.getElementById('btnRepExport');
+  if(btnRepExport) btnRepExport.addEventListener('click', ()=>{
+    const list = loadIncidents();
+    toolsArea.value = JSON.stringify({ [KEY_INCIDENTS]: list }, null, 2);
+    toolsMsg.textContent = 'Exported reports into the text area.';
+    showAdminTab('tabTools');
+  });
+
+  // Status change
+  if(repBody) repBody.addEventListener('change', async (e)=>{
+    const sel = e.target.closest('select[data-role="status"]');
+    if(!sel) return;
+    const id = sel.dataset.id;
+    const incidents = loadIncidents();
+    const idx = incidents.findIndex(r => r.id === id);
+    if(idx < 0) return;
+    incidents[idx].status = sel.value;
+    incidents[idx].updatedAt = new Date().toISOString();
+    await saveIncidents(incidents);
+    repMsg.textContent = `Updated ${id} to ${sel.value}.`;
+  });
+
+  // Row actions
+  if(repBody) repBody.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    const act = btn.dataset.act;
+    const id = btn.dataset.id;
+    const incidents = loadIncidents();
+    const r = incidents.find(x => x.id === id);
+    if(!r) return;
+
+    if(act === 'view'){
+      const lines = [
+        `ID: ${r.id}`,
+        `Created: ${r.createdAt || '—'}`,
+        `Status: ${r.status || 'submitted'}`,
+        `Date/Time: ${(r.date||'—')} ${(r.time||'')}`.trim(),
+        `Category: ${r.category || '—'}`,
+        `Location: ${r.location || '—'}`,
+        `Reporter: ${r.reporterName || '—'}`,
+        `Email: ${r.reporterEmail || '—'}`,
+        `Phone: ${r.reporterPhone || '—'}`,
+        '',
+        'Description:',
+        String(r.description||'—')
+      ];
+      toolsArea.value = lines.join('\n');
+      toolsMsg.textContent = `Opened ${id} in the text area (Tools tab).`;
+      showAdminTab('tabTools');
+      return;
+    }
+
+    if(act === 'copy'){
+      const subject = `ANW Incident report ${r.id} — ${r.category || 'Incident'}`;
+      const body = [
+        'Aderrig Neighbourhood Watch — Incident report',
+        '',
+        `Report ID: ${r.id}`,
+        `Date/Time: ${r.date || '—'} ${r.time || ''}`.trim(),
+        `Category: ${r.category || '—'}`,
+        `Location: ${r.location || '—'}`,
+        '',
+        'Description:',
+        String(r.description||'—'),
+        '',
+        'Reporter (optional):',
+        `Name: ${r.reporterName || '—'}`,
+        `Email: ${r.reporterEmail || '—'}`,
+        `Phone: ${r.reporterPhone || '—'}`
+      ].join('\n');
+      try{
+        await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`);
+        repMsg.textContent = `Copied email for ${id}.`;
+      }catch(err){
+        repMsg.textContent = `Copy failed for ${id}.`;
+      }
+      return;
+    }
+
+    if(act === 'del'){
+      if(!confirm(`Delete ${id}? This cannot be undone.`)) return;
+      const next = incidents.filter(x => x.id !== id);
+      await saveIncidents(next);
+      renderReports();
+    }
+  });
+
   /* ---------------- Tools ---------------- */
   const toolsArea = document.getElementById('toolsArea');
   const toolsMsg = document.getElementById('toolsMsg');
@@ -1175,7 +1381,8 @@
     const dump = {
       [KEY_USERS]: loadUsers(),
       [KEY_ELECTIONS]: loadElections(),
-      [KEY_VOTES]: loadVotes()
+      [KEY_VOTES]: loadVotes(),
+      [KEY_INCIDENTS]: loadIncidents()
     };
     toolsArea.value = JSON.stringify(dump, null, 2);
     toolsMsg.textContent = 'Exported into the text area.';
@@ -1184,17 +1391,19 @@
   document.getElementById('btnImport').addEventListener('click', ()=>{
     const raw = toolsArea.value.trim();
     if(!raw) { toolsMsg.textContent = 'Paste JSON first.'; return; }
-    if(!confirm('Import will overwrite current data for users, elections and votes. Continue?')) return;
+    if(!confirm('Import will overwrite current data for users, elections, votes and reports. Continue?')) return;
     try{
       const obj = JSON.parse(raw);
       if(obj && obj[KEY_USERS]) saveUsers(obj[KEY_USERS]);
       if(obj && obj[KEY_ELECTIONS]) saveElections(obj[KEY_ELECTIONS]);
       if(obj && obj[KEY_VOTES]) saveVotes(obj[KEY_VOTES]);
+      if(obj && obj[KEY_INCIDENTS]) saveIncidents(obj[KEY_INCIDENTS]);
       toolsMsg.textContent = 'Imported.';
       renderResidents();
       renderElections();
       renderCandidates();
       renderResults();
+      renderReports();
     }catch(e){
       toolsMsg.textContent = 'Invalid JSON.';
     }
@@ -1210,11 +1419,13 @@
     await anwSave(KEY_USERS, null);
     await anwSave(KEY_ELECTIONS, null);
     await anwSave(KEY_VOTES, null);
+    await anwSave(KEY_INCIDENTS, null);
     toolsMsg.textContent = 'All data reset.';
     renderResidents();
     renderElections();
     renderCandidates();
     renderResults();
+    renderReports();
   });
 
   /* ---------------- Init ---------------- */
@@ -1222,6 +1433,7 @@
   renderElections();
   renderCandidates();
   renderResults();
+  renderReports();
 
   showElectSub('subManage');
 })();

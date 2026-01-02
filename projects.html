@@ -218,8 +218,11 @@
 <div class="toast-wrap" id="toastWrap" aria-live="polite" aria-atomic="true"></div>
 <script type="application/json" id="templates-json">{"project1": {"title": "AED & Responders (Aderrig/Adamstown)", "category": "Safety & Security", "sections": {"executive": "This programme proposes a community-led Automated External Defibrillator (AED) and First Responder network to strengthen emergency readiness across Aderrig & Adamstown. It combines accessible AED placement, volunteer training, and a clear governance model to improve response outcomes while working in alignment with HSE guidance and local stakeholders.", "background": "Aderrig & Adamstown are growing residential areas with increasing population density and a strong need for community resilience. In time-critical cardiac events, early defibrillation and CPR significantly improve survival outcomes. Establishing locally accessible AEDs and trained volunteers supports faster intervention while emergency services are en route.", "design": "The programme is designed around: (1) mapped AED locations with 24/7 access where feasible, (2) volunteer recruitment and accredited training (CPR/AED), (3) an escalation protocol and communications pathway, and (4) ongoing equipment maintenance and refresher training.", "technical": "AED units will be CE-marked medical devices, installed in appropriate cabinets with signage and location mapping. Maintenance includes regular checks, battery/pad replacement schedules, and a register of devices and trained responders.", "governance": "A steering group will oversee delivery, including community representatives and nominated liaisons (as appropriate) with relevant services. Governance covers procurement, placement approvals, maintenance responsibilities, training records and incident reporting.", "implementation": "Phase 1: needs assessment and mapping; Phase 2: procurement and installation; Phase 3: training cohorts and launch; Phase 4: operational stabilisation and review. A milestone plan with owners, timelines and budget tracking will be used.", "engagement": "Engagement will include resident briefings, volunteer sign-ups, training promotions, and clear guidance on how and when to use AEDs. Partnerships with local groups will support recruitment and awareness.", "kpis": "KPIs include number of trained responders, AED coverage density, training completion rates, device uptime, maintenance compliance, community awareness reach, and post-incident review completeness (where applicable).", "annexes": "Annexes may include location maps, training plan, device specifications, maintenance checklist, communications plan, and governance terms of reference."}}, "project2": {"title": "Smart Safety & CCTV (Aderrig/Adamstown)", "category": "Safety & Security", "sections": {"executive": "This programme sets out a structured, community-governed approach to improving neighbourhood safety using responsible environmental design and, where justified, GDPR-compliant CCTV. It prioritises prevention, clear governance, and transparent community communication, with monitoring focused on measurable outcomes and resident confidence.", "background": "As communities grow, issues such as anti-social behaviour, vandalism and opportunistic crime can increase in specific hotspots. A combined approach—improved lighting and environmental design alongside proportionate, compliant surveillance—can deter incidents and support effective reporting and follow-up.", "design": "The approach uses a risk-based map of locations, prioritising prevention measures first (lighting, sightlines, signage, reporting channels). CCTV is considered only where there is a clear, documented need and a lawful basis.", "technical": "Any CCTV deployment must be GDPR-compliant, with a documented lawful basis, DPIA where required, clear signage, retention controls, secure storage, and controlled access logs. Camera placement will avoid private areas and minimise intrusion.", "governance": "Governance will define the data controller role, access permissions, request handling, incident escalation, audit procedures, retention and disclosure. Policies will cover breach response and periodic review.", "implementation": "Phase 1: hotspot assessment and prevention measures; Phase 2: governance pack (policies, DPIA, signage plan); Phase 3: procurement and installation; Phase 4: operational go-live and review.", "engagement": "Residents will be informed throughout via updates and consultation. Clear guidance will be provided on reporting routes, how footage requests are handled, and how privacy is protected.", "kpis": "KPIs include incident reduction in hotspots, response/reporting metrics, lighting fault resolution times, community sentiment indicators, and compliance metrics (access logs, retention adherence, review completion).", "annexes": "Annexes may include hotspot map summary, CCTV policy pack, DPIA summary, signage plan, vendor specs, and operating procedures."}}}</script>
 
+  <script src="assets/app-core.js"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await anwInitStore();
   function showToast(message, detail) {
     const wrap = document.getElementById('toastWrap');
     if(!wrap) return;
@@ -788,7 +791,7 @@ function fillFromTemplate(key) {
     setPane('panePublished');
   });
 
-  function renderPublished() {
+  async function renderPublished() {
     let store = await loadStore();
     if(!store.projects.length) {
       publishedList.innerHTML = '<div class="card" style="padding:14px;"><span class="muted">No projects saved yet.</span></div>';
@@ -816,7 +819,7 @@ function fillFromTemplate(key) {
     publishedList.querySelectorAll('[data-del]').forEach(btn => btn.addEventListener('click', () => deleteProject(btn.getAttribute('data-del'))));
   }
 
-  function editProject(id) {
+  async function editProject(id) {
     let store = await loadStore();
     const p = store.projects.find(x => x.id === id);
     if(!p) return;
@@ -857,7 +860,7 @@ function fillFromTemplate(key) {
     showToast('Edit mode', 'Update project will overwrite the existing project (no duplicates).');
   }
 
-  function deleteProject(id) {
+  async function deleteProject(id) {
     let store = await loadStore();
     store.projects = store.projects.filter(p => p.id !== id);
     await saveStore(store);
@@ -867,7 +870,7 @@ function fillFromTemplate(key) {
     showToast('Project deleted', 'Removed from Published projects.');
   }
 
-  function sendProject(id) {
+  async function sendProject(id) {
     let store = await loadStore();
     const p = store.projects.find(x => x.id === id);
     if(!p) return;
@@ -935,7 +938,7 @@ function fillFromTemplate(key) {
     showToast('Project sent', `Registered ${recs.length} recipient(s) in Monitoring.`);
   }
 
-  function renderMonitoring() {
+  async function renderMonitoring() {
     let store = await loadStore();
     const items = Array.isArray(store.monitoring) ? store.monitoring : [];
 
