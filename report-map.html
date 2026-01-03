@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aderrig Neighbourhood Watch — Report</title>
+
+  <!-- Try multiple CSS locations so the page stays styled even if your style.css is not in the site root -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/style.css">
+
+  <style>
+    /* Minimal safe layout so the map is always visible even if CSS fails */
+    .rm-container{max-width:1200px;margin:0 auto;padding:16px;}
+    .rm-toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:12px 0 16px;}
+    .rm-toolbar label{display:flex;flex-direction:column;gap:6px;font-size:14px}
+    .rm-toolbar select,.rm-toolbar button{padding:8px 10px;font-size:14px}
+    #map{width:100%;height:70vh;min-height:420px;border-radius:12px;overflow:hidden;background:#eee}
+    .rm-status{margin:8px 0 0;font-size:14px}
+    .rm-error{margin:12px 0;padding:10px 12px;border:1px solid #f3b3b3;background:#fff3f3;border-radius:8px;display:none;white-space:pre-wrap}
+    .rm-nav a{margin-right:10px}
+  </style>
+</head>
+
+<body>
+  <!-- Keep your existing header/nav (works even without CSS) -->
+  <div class="rm-container">
+    <div class="rm-header">
+      <div class="rm-brand">
+        <a href="index.html" style="text-decoration:none;">
+          <strong>ANW</strong>
+        </a>
+        <div>
+          <div><strong>Aderrig Neighbourhood Watch</strong> Adamstown · Community-led · Ireland</div>
+          <div class="rm-nav">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="report-map.html">Report</a>
+            <a href="alerts.html">Community Alerts</a>
+            <a href="projects.html">Community Projects</a>
+            <a href="login.html">Login / Register</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="admin.html">Admin</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rm-toolbar">
+      <label>
+        Category
+        <select id="category">
+          <option value="all" selected>All</option>
+        </select>
+      </label>
+
+      <label>
+        Period
+        <select id="period">
+          <option value="all" selected>All</option>
+          <option value="24h">Last 24h</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+        </select>
+      </label>
+
+      <button id="btnFit" type="button">Fit</button>
+      <button id="btnRefresh" type="button">Refresh</button>
+    </div>
+
+    <div class="rm-status">
+      Loaded <span id="count">0</span> incidents.
+      <button id="btnReload" type="button">Reload</button>
+    </div>
+
+    <div id="error" class="rm-error"></div>
+    <div id="map"></div>
+  </div>
+
+<script>
+/**
+ * This page expects:
+ *  - /.netlify/functions/store?key=incidents  (GET) -> { key, value }
+ *    where value is either:
+ *      - null
+ *      - an array
+ *      - a JSON string of an array
+ *  - (optional) /.netlify/functions/config -> { apiKey } (or { key } / { GOOGLE_MAPS_API_KEY })
+ */
+
+const elError = document.getElementById("error");
+const elCount = document.getElementById("count");
+const elCategory = document.getElementById("category");
+const elPeriod = document.getElementById("period");
+
+let map;
+let markers = [];
+let infoWindow;
+
+function showError(msg){
+  elError.style.display = "block";
+  elError.textContent = msg;
+}
+function clearError(){
+  elError.style.display = "none";
+  elError.textContent = "";
+}
+
+function clearMarkers(){
+  for(const m of markers){ m.setMap(null); }
+  markers = [];
+}
+
+function parseIncidents(raw){
+  if(raw == null) return [];
+  if(Array.isArray(raw)) return raw;
+  if(typeof raw === "string"){
+    try { return JSON.parse(raw) || []; } catch { return []; }
+  }
+  // Sometimes KV stores wrap as {items:[...]} etc.
+  if(raw.items && Array.isArray(raw.items)) return raw.items;
+  return [];
+}
+
+function filterIncidents(incidents){
+  const cat = elCategory.value;
+  const per = elPeriod.value;
+
+  let out = incidents;
+
+  if(cat && cat !== "all"){
+    out = out.filter(x => (x.category || x.type || "").toLowerCase() === cat.toLowerCase());
+  }
+
+  if(per && per !== "all"){
+    const now = Date.now();
+    const ms = per === "24h" ? 24*60*60*1000 : per === "7d" ? 7*24*60*60*1000 : 30*24*60*60*1000;
+    out = out.filter(x => {
+      const t = x.createdAt || x.created_at || x.timestamp || x.time || x.date;
+      const d = t ? new Date(t).getTime() : NaN;
+      return Number.isFinite(d) ? (now - d) <= ms : true;
+    });
+  }
+
+  return out;
+}
+
+function updateCategoryOptions(incidents){
+  const cats = new Set();
+  for(const x of incidents){
+    const c = x.category || x.type;
+    if(c) cats.add(String(c));
+  }
+  // preserve current selection
+  const current = elCategory.value;
+  // reset
+  elCategory.innerHTML = '<option value="all">All</option>';
+  [...cats].sort().forEach(c=>{
+    const opt = document.createElement("option");
+    opt.value = c;
+    opt.textContent = c;
+    elCategory.appendChild(opt);
+  });
+  // restore selection if still exists
+  if([...elCategory.options].some(o=>o.value===current)) elCategory.value = current;
+}
+
+function getLatLng(x){
+  // common field names
+  const lat = x.lat ?? x.latitude ?? (x.location && x.location.lat);
+  const lng = x.lng ?? x.lon ?? x.longitude ?? (x.location && x.location.lng) ?? (x.location && x.location.lon);
+  if(typeof lat === "number" && typeof lng === "number") return {lat, lng};
+  if(typeof lat === "string" && typeof lng === "string"){
+    const la = parseFloat(lat), ln = parseFloat(lng);
+    if(Number.isFinite(la) && Number.isFinite(ln)) return {lat: la, lng: ln};
+  }
+  return null;
+}
+
+function markerContent(x){
+  const title = x.title || x.category || x.type || "Incident";
+  const desc = x.description || x.details || "";
+  const when = x.createdAt || x.created_at || x.timestamp || "";
+  const where = x.address || x.locationName || "";
+  return `
+    <div style="min-width:220px">
+      <div style="font-weight:700;margin-bottom:6px">${escapeHtml(String(title))}</div>
+      ${where ? `<div><strong>Where:</strong> ${escapeHtml(String(where))}</div>` : ""}
+      ${when ? `<div><strong>When:</strong> ${escapeHtml(String(when))}</div>` : ""}
+      ${desc ? `<div style="margin-top:6px">${escapeHtml(String(desc))}</div>` : ""}
+    </div>
+  `;
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function loadIncidents(){
+  clearError();
+
+  const res = await fetch("/.netlify/functions/store?key=incidents", { method: "GET" });
+  if(!res.ok){
+    const txt = await res.text().catch(()=> "");
+    throw new Error(`Store error ${res.status}: ${txt}`);
+  }
+  const data = await res.json();
+  const incidents = parseIncidents(data.value);
+
+  updateCategoryOptions(incidents);
+
+  const filtered = filterIncidents(incidents);
+  elCount.textContent = String(filtered.length);
+
+  renderIncidents(filtered);
+}
+
+function renderIncidents(incidents){
+  if(!map) return;
+  clearMarkers();
+
+  const bounds = new google.maps.LatLngBounds();
+  let any = false;
+
+  for(const x of incidents){
+    const ll = getLatLng(x);
+    if(!ll) continue;
+
+    const m = new google.maps.Marker({ position: ll, map });
+    m.addListener("click", ()=>{
+      infoWindow.setContent(markerContent(x));
+      infoWindow.open(map, m);
+    });
+
+    markers.push(m);
+    bounds.extend(ll);
+    any = true;
+  }
+
+  if(any){
+    map.fitBounds(bounds, 60);
+  } else {
+    // Default view (Dublin) if no incidents/coords
+    map.setCenter({lat: 53.3498, lng: -6.2603});
+    map.setZoom(11);
+  }
+}
+
+async function getApiKey(){
+  // 1) Try config function if you have one
+  try{
+    const r = await fetch("/.netlify/functions/config", { cache: "no-store" });
+    if(r.ok){
+      const j = await r.json();
+      return j.apiKey || j.key || j.GOOGLE_MAPS_API_KEY || j.googleMapsApiKey || null;
+    }
+  }catch(e){}
+  // 2) As last resort, allow setting window.GOOGLE_MAPS_API_KEY in the HTML
+  return window.GOOGLE_MAPS_API_KEY || null;
+}
+
+function loadGoogleMapsScript(apiKey){
+  return new Promise((resolve, reject)=>{
+    if(window.google && window.google.maps) return resolve();
+    const s = document.createElement("script");
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly`;
+    s.async = true;
+    s.defer = true;
+    s.onload = ()=> resolve();
+    s.onerror = ()=> reject(new Error("Failed to load Google Maps script"));
+    document.head.appendChild(s);
+  });
+}
+
+async function init(){
+  try{
+    const apiKey = await getApiKey();
+    if(!apiKey){
+      showError("Missing GOOGLE_MAPS_API_KEY. Set it in Netlify environment variables (or provide /.netlify/functions/config).");
+      return;
+    }
+
+    await loadGoogleMapsScript(apiKey);
+
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: {lat: 53.3498, lng: -6.2603},
+      zoom: 11,
+      mapTypeControl: true,
+      fullscreenControl: true,
+      streetViewControl: false
+    });
+
+    infoWindow = new google.maps.InfoWindow();
+
+    await loadIncidents();
+  }catch(err){
+    showError(String(err && err.message ? err.message : err));
+  }
+}
+
+// Buttons
+document.getElementById("btnReload").addEventListener("click", ()=> init());
+document.getElementById("btnRefresh").addEventListener("click", ()=> loadIncidents().catch(e=>showError(e.message)));
+document.getElementById("btnFit").addEventListener("click", ()=>{
+  if(map && markers.length){
+    const b = new google.maps.LatLngBounds();
+    for(const m of markers) b.extend(m.getPosition());
+    map.fitBounds(b, 60);
+  }
+});
+
+elCategory.addEventListener("change", ()=> loadIncidents().catch(e=>showError(e.message)));
+elPeriod.addEventListener("change", ()=> loadIncidents().catch(e=>showError(e.message)));
+
+init();
+</script>
+</body>
+</html>
