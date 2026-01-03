@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Report Map</title>
+<link rel="stylesheet" href="/assets/style.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; }
+    #top { padding: 12px 16px; border-bottom: 1px solid #eee; display:flex; gap:12px; align-items:center; }
+    #status { color: #444; font-size: 14px; }
+    #map { height: calc(100vh - 54px); width: 100%; }
+    .bad { color: #b00020; }
+    .good { color: #0b6b2d; }
+  </style>
+<style>
+/* map sizing */
+#map { width: 100%; height: min(70vh, 720px); border-radius: 12px; overflow: hidden; }
+@media (max-width: 768px){ #map{ height: 60vh; } }
+</style>
+</head>
+<body>
+  <div id="top">
+    <strong>Report Map</strong>
+    <span id="status">Loading…</span>
+    <button id="reload">Reload</button>
+  </div>
+  <div id="map"></div>
+
+  <script>
+    // ✅ TROQUE AQUI se seu projeto usa outro nome de key no store
+    const STORE_KEY = "incidents";
+
+    const statusEl = document.getElementById("status");
+    const setStatus = (msg, ok=true) => {
+      statusEl.textContent = msg;
+      statusEl.className = ok ? "good" : "bad";
+    };
+
+    async function getConfig() {
+      // seu projeto já tinha um request "config" no Network,
+      // então este arquivo assume que existe a function /config
+      const r = await fetch("/.netlify/functions/config");
+      if (!r.ok) throw new Error("config failed: " + r.status);
+      return await r.json();
+    }
+
+    function loadGoogleMaps(apiKey) {
+      return new Promise((resolve, reject) => {
+        if (window.google && window.google.maps) return resolve();
+
+        const s = document.createElement("script");
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly`;
+        s.async = true;
+        s.defer = true;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error("Failed to load Google Maps JS"));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function storeGet(key) {
+      const r = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+        method: "GET",
+        headers: { "content-type": "application/json" }
+      });
+      if (!r.ok) throw new Error("store GET failed: " + r.status);
+      return await r.json();
+    }
+
+    function normalizeIncidents(value) {
+      // Espera array de itens tipo:
+      // [{ lat: 53.3, lng: -6.2, title: "..." }, ...]
+      // Se vier null => vazio
+      if (!value) return [];
+      if (Array.isArray(value)) return value;
+      // se vier objeto com {items:[]}
+      if (Array.isArray(value.items)) return value.items;
+      return [];
+    }
+
+    let map;
+
+    async function boot() {
+      setStatus("Loading config…");
+      const config = await getConfig();
+
+      const apiKey = config?.GOOGLE_MAPS_API_KEY || config?.googleMapsApiKey || config?.mapsKey;
+      if (!apiKey) throw new Error("GOOGLE_MAPS_API_KEY not found in /config response");
+
+      setStatus("Loading Google Maps…");
+      await loadGoogleMaps(apiKey);
+
+      setStatus("Loading incidents from store…");
+      const { value } = await storeGet(STORE_KEY);
+      const incidents = normalizeIncidents(value);
+
+      setStatus(`Loaded ${incidents.length} incidents`, true);
+
+      // cria mapa
+      const center = incidents[0] ? { lat: Number(incidents[0].lat), lng: Number(incidents[0].lng) } : { lat: 53.3498, lng: -6.2603 };
+      map = new google.maps.Map(document.getElementById("map"), {
+        center,
+        zoom: incidents.length ? 12 : 10,
+      });
+
+      // markers
+      incidents.forEach((it) => {
+        const lat = Number(it.lat);
+        const lng = Number(it.lng);
+        if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+        const marker = new google.maps.Marker({
+          position: { lat, lng },
+          map,
+          title: it.title || it.name || "Incident",
+        });
+
+        if (it.description || it.desc) {
+          const infowindow = new google.maps.InfoWindow({
+            content: `<div style="max-width:240px"><strong>${marker.getTitle()}</strong><br>${(it.description || it.desc)}</div>`
+          });
+          marker.addListener("click", () => infowindow.open({ anchor: marker, map }));
+        }
+      });
+    }
+
+    document.getElementById("reload").addEventListener("click", () => location.reload());
+
+    boot().catch((e) => {
+      console.error(e);
+      setStatus(String(e.message || e), false);
+      document.getElementById("map").innerHTML = `
+        <div style="padding:16px">
+          <h3 style="margin:0 0 8px 0">Map failed to load</h3>
+          <div style="color:#b00020">${String(e.message || e)}</div>
+          <div style="margin-top:8px;color:#555">Check console for details.</div>
+        </div>`;
+    });
+  </script>
+</body>
+</html>
