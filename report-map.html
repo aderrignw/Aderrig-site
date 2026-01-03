@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aderrig Neighbourhood Watch — Report Map</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="page-report-map">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">
+        <div class="logo-badge">ANW</div>
+        <div class="brand-title">
+          <strong>Aderrig Neighbourhood Watch</strong>
+          <span>Adamstown · Community-led · Ireland</span>
+        </div>
+      </a>
+
+      <nav class="nav" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a class="active" href="report-map.html">Report</a>
+        <a href="alerts.html">Community Alerts</a>
+        <a href="projects.html">Community Projects</a>
+        <a href="login.html">Login / Register</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="admin.html">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container page-grid">
+      <section class="card card-pad" aria-label="Filters">
+        <div class="filters">
+          <div class="field">
+            <label for="category">Category</label>
+            <select id="category">
+              <option value="all">All</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="period">Period</label>
+            <select id="period">
+              <option value="all">All</option>
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="365">Last 12 months</option>
+            </select>
+          </div>
+
+          <button id="fitBtn" class="btn">Fit</button>
+          <button id="reloadBtn" class="btn secondary">Refresh</button>
+        </div>
+      </section>
+
+      <section class="card map-card" aria-label="Map">
+        <div class="map-topbar">
+          <div class="status" id="statusText">Loading map…</div>
+          <button class="btn secondary" id="reloadTopBtn" type="button">Reload</button>
+        </div>
+        <div id="map" role="application" aria-label="Incidents map"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // -------- Helpers --------
+    const $ = (id) => document.getElementById(id);
+
+    function setStatus(msg){
+      $("statusText").textContent = msg;
+    }
+
+    async function fetchJSON(url, opts){
+      const res = await fetch(url, opts);
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch(_) {}
+      if(!res.ok){
+        const err = (data && (data.error || data.message)) ? (data.error || data.message) : text;
+        throw new Error(err || ("HTTP " + res.status));
+      }
+      return data;
+    }
+
+    async function getGoogleMapsKey(){
+      // Try a serverless config endpoint (recommended) and a couple of common property names.
+      // If you don't have /.netlify/functions/config, create it to return { GOOGLE_MAPS_API_KEY: "..." }.
+      const cfg = await fetchJSON("/.netlify/functions/config").catch(() => null);
+      if(!cfg) return null;
+
+      return (
+        cfg.GOOGLE_MAPS_API_KEY ||
+        cfg.googleMapsApiKey ||
+        cfg.google_maps_api_key ||
+        cfg.key ||
+        null
+      );
+    }
+
+    async function loadGoogleMaps(apiKey){
+      if(window.google && window.google.maps) return;
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(apiKey) + "&v=weekly";
+        s.async = true;
+        s.onerror = () => reject(new Error("Failed to load Google Maps script"));
+        s.onload = () => resolve();
+        document.head.appendChild(s);
+      });
+    }
+
+    function daysAgoToDate(days){
+      const d = new Date();
+      d.setDate(d.getDate() - days);
+      return d;
+    }
+
+    // -------- Map logic --------
+    let map;
+    let markers = [];
+
+    function clearMarkers(){
+      for(const m of markers){ m.setMap(null); }
+      markers = [];
+    }
+
+    function fitToMarkers(){
+      if(!markers.length || !map) return;
+      const bounds = new google.maps.LatLngBounds();
+      for(const m of markers){ bounds.extend(m.getPosition()); }
+      map.fitBounds(bounds, 60);
+    }
+
+    function parseIncidents(raw){
+      // Accept: array OR JSON string OR { incidents: [...] }
+      if(!raw) return [];
+      let v = raw;
+      if(typeof v === "string"){
+        try { v = JSON.parse(v); } catch(_) { return []; }
+      }
+      if(Array.isArray(v)) return v;
+      if(v && Array.isArray(v.incidents)) return v.incidents;
+      return [];
+    }
+
+    function applyFilters(incidents){
+      const cat = $("category").value;
+      const period = $("period").value;
+
+      let out = incidents.slice();
+
+      if(cat && cat !== "all"){
+        out = out.filter(i => (i.category || i.type || "").toLowerCase() === cat.toLowerCase());
+      }
+      if(period && period !== "all"){
+        const since = daysAgoToDate(Number(period));
+        out = out.filter(i => {
+          const t = i.date || i.createdAt || i.timestamp;
+          const dt = t ? new Date(t) : null;
+          return dt && !isNaN(dt.getTime()) ? dt >= since : true;
+        });
+      }
+      return out;
+    }
+
+    function rebuildCategoryOptions(incidents){
+      const cats = new Set();
+      for(const i of incidents){
+        const c = (i.category || i.type || "").trim();
+        if(c) cats.add(c);
+      }
+      const sel = $("category");
+      const current = sel.value || "all";
+      sel.innerHTML = '<option value="all">All</option>' + [...cats].sort().map(c => `<option value="${c}">${c}</option>`).join("");
+      if([...sel.options].some(o => o.value === current)) sel.value = current;
+    }
+
+    async function loadIncidents(){
+      // Stored in Netlify Blobs KV via /.netlify/functions/store
+      // Convention used here: key="incidents"
+      const resp = await fetchJSON("/.netlify/functions/store?key=incidents");
+      return parseIncidents(resp ? resp.value : null);
+    }
+
+    async function render(){
+      setStatus("Loading…");
+
+      // 1) Load maps script
+      const apiKey = await getGoogleMapsKey();
+      if(!apiKey){
+        setStatus("Missing Google Maps API key (check /.netlify/functions/config).");
+        return;
+      }
+      await loadGoogleMaps(apiKey);
+
+      // 2) Init map
+      if(!map){
+        map = new google.maps.Map($("map"), {
+          center: { lat: 53.3498, lng: -6.2603 }, // Dublin
+          zoom: 11,
+          mapTypeControl: true,
+          fullscreenControl: true,
+          streetViewControl: false,
+        });
+      }
+
+      // 3) Load incidents and build markers
+      const all = await loadIncidents().catch((e) => {
+        console.error(e);
+        setStatus("Failed to load incidents.");
+        return [];
+      });
+
+      rebuildCategoryOptions(all);
+
+      const filtered = applyFilters(all);
+
+      clearMarkers();
+      for(const i of filtered){
+        const lat = Number(i.lat ?? i.latitude);
+        const lng = Number(i.lng ?? i.longitude);
+        if(!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+
+        const title = i.title || i.category || i.type || "Incident";
+        const desc = i.description || "";
+        const when = i.date || i.createdAt || "";
+
+        const marker = new google.maps.Marker({
+          position: { lat, lng },
+          map,
+          title,
+        });
+
+        const info = new google.maps.InfoWindow({
+          content: `
+            <div style="max-width:260px">
+              <div style="font-weight:800;margin-bottom:4px">${escapeHtml(title)}</div>
+              ${when ? `<div style="color:#6b7280;font-size:12px;margin-bottom:8px">${escapeHtml(String(when))}</div>` : ""}
+              ${desc ? `<div style="font-size:13px;line-height:1.35">${escapeHtml(desc)}</div>` : ""}
+            </div>
+          `
+        });
+
+        marker.addListener("click", () => info.open({ anchor: marker, map }));
+        markers.push(marker);
+      }
+
+      if(markers.length){
+        fitToMarkers();
+        setStatus(`Loaded ${markers.length} incident(s).`);
+      }else{
+        setStatus("Loaded 0 incidents.");
+      }
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, (m) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[m]));
+    }
+
+    // Events
+    $("fitBtn").addEventListener("click", fitToMarkers);
+    $("reloadBtn").addEventListener("click", render);
+    $("reloadTopBtn").addEventListener("click", render);
+    $("category").addEventListener("change", render);
+    $("period").addEventListener("change", render);
+
+    // Start
+    render().catch((e) => {
+      console.error(e);
+      setStatus("Map failed to load.");
+    });
+  </script>
+</body>
+</html>
