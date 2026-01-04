@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Report Map • Aderrig Neighbourhood Watch</title>
+
+  <!-- Same stylesheet path as the rest of the site -->
+  <link rel="stylesheet" href="assets/style.css" />
+
+  <style>
+    .map-card{ margin-top: 1rem; overflow:hidden; border-radius: 14px; background:#fff; border:1px solid rgba(0,0,0,0.08); }
+    .map-toolbar{ display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; justify-content:space-between; padding: .75rem 1rem; border-bottom:1px solid rgba(0,0,0,0.08); }
+    .map-toolbar .left{ display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+    #map{ height: 70vh; min-height: 460px; width: 100%; }
+    .status{ font-size: 0.95rem; opacity: .85; }
+    @media (max-width: 860px){ #map{ height: 65vh; min-height: 420px; } }
+  </style>
+</head>
+
+<body>
+<header class="site-header">
+  <div class="brand">
+    <img src="assets/logo.png" alt="Aderrig Neighbourhood Watch logo" class="logo" onerror="this.style.display='none'"/>
+    <div>
+      <div class="title">Aderrig Neighbourhood Watch</div>
+      <div class="subtitle">Adamstown · Community-led · Ireland</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="report.html">Report</a>
+    <a href="report-map.html" class="active">Report Map</a>
+    <a href="alerts.html">Community Alerts</a>
+    <a href="projects.html">Community Projects</a>
+    <a href="login.html">Login / Register</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="household.html">Household</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <h1 style="margin-top:0;">Incident Map</h1>
+  <p class="muted" style="margin-top:-0.5rem;">Incidents appear here automatically after a report is saved.</p>
+
+  <section class="map-card">
+    <div class="map-toolbar">
+      <div class="left">
+        <span class="status" id="statusText">Loading…</span>
+        <button class="btn btn-line" id="btnReload" type="button">Reload</button>
+        <button class="btn btn-line" id="btnFit" type="button">Fit</button>
+      </div>
+      <div class="status" id="countText">0 incidents</div>
+    </div>
+    <div id="map"></div>
+  </section>
+</main>
+
+<script>
+(async function(){
+  'use strict';
+
+  // Must match report.html (ANW_KEYS.INCIDENTS)
+  const STORE_KEY = 'anw_incidents';
+
+  const statusEl = document.getElementById('statusText');
+  const countEl = document.getElementById('countText');
+
+  function setStatus(msg){ statusEl.textContent = msg; }
+
+  async function fetchJSON(url, opts){
+    const r = await fetch(url, opts);
+    const t = await r.text();
+    let j = null;
+    try{ j = t ? JSON.parse(t) : null; }catch(_){}
+    if(!r.ok){
+      throw new Error((j && (j.error||j.message)) ? (j.error||j.message) : ('HTTP ' + r.status));
+    }
+    return j;
+  }
+
+  async function getMapsKey(){
+    const cfg = await fetchJSON('/.netlify/functions/config').catch(()=>null);
+    if(!cfg) return null;
+    return cfg.googleMapsApiKey || cfg.GOOGLE_MAPS_API_KEY || cfg.apiKey || null;
+  }
+
+  async function loadMaps(apiKey){
+    if(window.google && window.google.maps) return;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(apiKey) + '&v=weekly';
+      s.async = true; s.defer = true;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Failed to load Google Maps'));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function loadIncidents(){
+    const resp = await fetchJSON('/.netlify/functions/store?key=' + encodeURIComponent(STORE_KEY));
+    const value = resp ? resp.value : null;
+    if(!value) return [];
+    if(Array.isArray(value)) return value;
+    if(typeof value === 'object' && Array.isArray(value.incidents)) return value.incidents;
+    return [];
+  }
+
+  let map, markers = [];
+
+  function clearMarkers(){
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+  }
+
+  function fit(){
+    if(!markers.length) return;
+    const b = new google.maps.LatLngBounds();
+    markers.forEach(m => b.extend(m.getPosition()));
+    map.fitBounds(b, 60);
+  }
+
+  async function render(){
+    setStatus('Loading map…');
+    const key = await getMapsKey();
+    if(!key){ setStatus('Missing Google Maps API key.'); return; }
+    await loadMaps(key);
+
+    if(!map){
+      map = new google.maps.Map(document.getElementById('map'), { center:{lat:53.3498,lng:-6.2603}, zoom: 11 });
+    }
+
+    setStatus('Loading incidents…');
+    const incidents = await loadIncidents().catch(e => { console.error(e); return []; });
+
+    clearMarkers();
+
+    incidents.forEach(i => {
+      const lat = Number(i.lat ?? i.latitude);
+      const lng = Number(i.lng ?? i.longitude);
+      if(!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+      const title = i.category || i.title || 'Incident';
+      const marker = new google.maps.Marker({ position:{lat,lng}, map, title });
+      markers.push(marker);
+    });
+
+    countEl.textContent = markers.length + ' incident(s)';
+    setStatus(markers.length ? 'Loaded.' : 'No incidents yet.');
+    if(markers.length) fit();
+  }
+
+  document.getElementById('btnReload').addEventListener('click', render);
+  document.getElementById('btnFit').addEventListener('click', fit);
+
+  render();
+})();
+</script>
+</body>
+</html>
