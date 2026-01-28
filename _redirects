@@ -1,7 +1,0 @@
-/admin        /admin.html        200
-/login        /login.html        200
-/dashboard    /dashboard.html    200
-
-/api/backups           /.netlify/functions/backup-list      200
-/api/backup/download   /.netlify/functions/backup-download  200
-/api/backup/now        /.netlify/functions/backup-now       200
