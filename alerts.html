@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="page:alerts" name="anw-acl-key"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Community Alerts — Aderrig NW</title>
+<link href="assets/style.css" rel="stylesheet"/>
+<style>
+</style>
+<style id="page-access-style">
+  /* Public/Private indicator: align with Home footer container */
+  footer.site-footer { position: relative; text-align: center; }
+  footer.site-footer .page-access { position: absolute; left: 0; color: green; font-weight: normal; }
+</style>
+</head>
+<body>
+<header class="site-header">
+<div class="brand">
+<a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
+<div class="brand-text">
+<h1>Aderrig NW</h1>
+<p class="muted">Adamstown</p>
+</div>
+</div>
+<nav class="nav">
+<a href="index.html">Home</a>
+<a href="about.html">About</a>
+<a href="report.html">Report</a>
+<a class="active" href="alerts.html">Community Alerts</a>
+<a href="projects.html">Community Projects</a>
+<a href="login.html">Login / Register</a>
+<a href="dashboard.html">Dashboard</a>
+<a href="household.html">Household</a>
+<a href="admin.html">Admin</a>
+</nav>
+</header>
+<main class="wrap" id="alertsMain">
+<section class="card" id="alertIntro">
+<h2>Community alerts</h2>
+<p class="muted">
+      This area is used to share important security and community information with Aderrig residents.
+      In this demo version, any visitor can create alerts and contact entries. In a live system,
+      permissions will be restricted to authorised Garda liaison and ANW admins.
+    </p>
+<p class="muted tiny" id="anwAccessNotice" style="margin-top:0.75rem; display:none;">
+      Community Alerts is available to registered members. Please <a href="login.html">log in</a> or
+      <a href="login.html#signup">register</a> to continue.
+    </p>
+<div class="actions" style="gap:0.5rem; justify-content:flex-start; flex-wrap:wrap; margin-top:0.75rem;">
+<button class="btn btn-line alert-tab active" data-acl-feature="action:alerts_send" data-requires-auth="1" data-tab="send" type="button">Send alert</button>
+<button class="btn btn-line alert-tab" data-acl-feature="alerts:tab_contacts" data-requires-auth="1" data-tab="contacts" type="button">Authorised contacts</button>
+</div>
+<p class="muted tiny" style="margin-top:0.75rem;">
+      In this demo, alerts are stored locally in this browser (access is still restricted by login/roles).
+    </p>
+</section>
+<!-- SEND TAB -->
+<section class="card" data-acl-feature="alerts:tab_send" id="tab-send">
+<div class="muted tiny" id="sendNotice" style="margin-bottom:0.75rem;"></div>
+<form autocomplete="off" class="stack" id="alertForm">
+<div class="field">
+<label for="alertSubject">Subject</label>
+<input class="input" id="alertSubject" maxlength="120" placeholder="Brief title of the alert"/>
+<div class="tiny muted">Subject limited to 120 characters to ensure compatibility with email providers.</div>
+</div>
+<div class="field">
+<label for="alertUrgency">Urgency</label>
+<select class="input" id="alertUrgency">
+<option>Info</option>
+<option>Important</option>
+<option>Urgent</option>
+</select>
+</div>
+<div class="field">
+<label>Delivery methods (simulation only)</label>
+<div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+<label style="display:flex; gap:0.5rem; align-items:center;"><input checked="" id="mEmail" type="checkbox"/> Email</label>
+<label style="display:flex; gap:0.5rem; align-items:center;"><input id="mSms" type="checkbox"/> SMS</label>
+<label style="display:flex; gap:0.5rem; align-items:center;"><input id="mPush" type="checkbox"/> Push / App</label>
+</div>
+<div class="tiny muted">Real email / SMS sending will be configured when the system is connected to a live service.</div>
+</div>
+<div class="field">
+<label for="alertAudience">Audience</label>
+<select class="input" id="alertAudience">
+<option>All registered residents</option>
+<option>Street coordinators only</option>
+<option>Volunteers only</option>
+</select>
+</div>
+<div class="field">
+<label for="alertReplyTo">Reply-to email</label>
+<input class="input" id="alertReplyTo" placeholder="your.name@example.com"/>
+<div class="tiny muted">In the live system this will default to the ANW coordinator contact.</div>
+</div>
+<div class="field">
+<label for="alertBody">Message</label>
+<textarea class="input" id="alertBody" placeholder="Write the alert message..." rows="6"></textarea>
+</div>
+<div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
+<button class="btn btn-line" id="btnPreview" type="button">Preview</button>
+<button class="btn" data-acl-feature="action:alerts_send" id="btnSendAlert" type="button">Send alert (local log)</button>
+</div>
+<div class="tiny muted" id="alertMsg" style="margin-top:0.5rem;"></div>
+</form>
+<div class="card" id="alertPreview" style="display:none; margin-top:1rem;">
+<h3 style="margin-top:0;">Preview</h3>
+<div class="muted" id="previewContent"></div>
+</div>
+<div class="card" style="margin-top:1rem;">
+<h3 style="margin-top:0;">Recent alerts (local)</h3>
+<div class="muted tiny" id="alertListEmpty">No alerts created in this browser yet.</div>
+<div id="alertList"></div>
+</div>
+</section>
+<!-- CONTACTS TAB -->
+<section class="card" id="tab-contacts" style="display:none;">
+<h2 style="margin-top:0;">Authorised contacts</h2>
+<p class="muted">
+      These contacts are the only approved senders in a live system. In this demo they are stored locally in this browser.
+    </p>
+<div class="grid" style="margin-top:0.75rem;">
+<div class="field">
+<label for="gardaName">Garda liaison name</label>
+<input class="input" id="gardaName" placeholder="Name"/>
+</div>
+<div class="field">
+<label for="gardaEmail">Garda liaison email</label>
+<input class="input" id="gardaEmail" placeholder="name@garda.ie"/>
+</div>
+<div class="field">
+<label for="gardaPhone">Garda liaison phone</label>
+<input class="input" id="gardaPhone" placeholder="+353..."/>
+</div>
+<div class="field">
+<label for="anwMainName">ANW main coordinator name</label>
+<input class="input" id="anwMainName" placeholder="Name"/>
+</div>
+<div class="field">
+<label for="anwMainEmail">ANW main coordinator email</label>
+<input class="input" id="anwMainEmail" placeholder="name@example.com"/>
+</div>
+<div class="field">
+<label for="anwMainPhone">ANW main coordinator phone</label>
+<input class="input" id="anwMainPhone" placeholder="+353..."/>
+</div>
+</div>
+<div class="card" style="margin-top:1rem;">
+<h3 style="margin-top:0;">Additional coordinators (optional)</h3>
+<div id="anwExtraList"></div>
+<div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:0.75rem;">
+<button class="btn btn-line" id="btnAddCoordinator" type="button">Add admin</button>
+<button class="btn" id="btnSaveContacts" type="button">Save contacts (local)</button>
+</div>
+<div class="tiny muted" id="contactsMsg" style="margin-top:0.5rem;"></div>
+</div>
+</section>
+</main>
+<!-- Friendly Gate modal (used only when window.ANW_FRIENDLY_GATE = true) -->
+<div id="anwGateModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35); align-items:center; justify-content:center; z-index:9999;">
+<div style="background:#fff; border-radius:14px; padding:18px 18px; max-width:560px; width:92%; box-shadow:0 10px 30px rgba(0,0,0,0.25);">
+<h3 style="margin:0 0 8px 0; font-size:1.15rem;">Access restricted</h3>
+<p style="margin:0; line-height:1.35;">This area is restricted.</p>
+<div id="anwGateButtons" style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+<a class="btn btn-primary" href="login.html" id="anwGateLogin" style="display:none; text-decoration:none; padding:10px 12px; border-radius:10px;">Log in</a>
+<a class="btn btn-ghost" href="login.html#signup" id="anwGateSignup" style="display:none; text-decoration:none; padding:10px 12px; border-radius:10px;">Register</a>
+<button class="btn btn-ghost" id="anwGateClose" style="border:0; background:#eee; color:#111; padding:10px 12px; border-radius:10px; cursor:pointer;" type="button">Close</button>
+</div>
+</div>
+</div>
+<footer class="site-footer">
+<span class="page-access">Private Page</span>
+<div style="text-align:center;">
+    © 2025 Aderrig NW · All rights reserved · <a href="privacy.html">Privacy Policy</a>
+</div>
+</footer>
+
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script><script src="assets/identity.js"></script><script src="assets/app-core.js"></script>
+<script>
+/* =========================
+   Tabs: Send / Contacts
+========================= */
+(function () {
+  const tabs = document.querySelectorAll('.alert-tab');
+  const tabSend = document.getElementById('tab-send');
+  const tabContacts = document.getElementById('tab-contacts');
+function setActive(which) {
+    tabs.forEach(b => b.classList.toggle('active', b.dataset.tab === which));
+
+    // Delegate panel visibility to access-control gate when available
+    if (typeof window.anwAlertsRequestTab === 'function') {
+      window.anwAlertsRequestTab(which);
+      return;
+    }
+
+    // Fallback (should not happen in production)
+    if (tabSend) tabSend.style.display = (which === 'send') ? '' : 'none';
+    if (tabContacts) tabContacts.style.display = (which === 'contacts') ? '' : 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  tabs.forEach(b => {
+    b.addEventListener('click', () => setActive(b.dataset.tab));
+  });
+
+  // Default
+  setActive('send');
+
+
+})();
+
+/* =========================
+   Demo logic (local)
+========================= */
+(function () {
+  'use strict';
+
+  // --- UI helpers (site-style modal/toast) ---
+  function anwToast(msg, type) {
+    try {
+      if (window.ANW && ANW.ui && typeof ANW.ui.toast === 'function') {
+        ANW.ui.toast(String(msg || ''), type || 'info');
+      }
+    } catch {}
+  }
+
+  function anwModal(msg, title) {
+    try {
+      if (window.ANW && ANW.ui && typeof ANW.ui.alert === 'function') {
+        ANW.ui.alert(String(msg || ''), { title: title || 'Message' });
+        return;
+      }
+    } catch {}
+    // Fallback (note: alert() is overridden by app-core.js anyway)
+    alert(msg);
+  }
+
+  function anwSetMsg(id, value, type, alsoModal) {
+    const el = document.getElementById(id);
+    const v = (value === undefined || value === null) ? '' : value;
+    if (el) {
+      el.textContent = (typeof v === 'string') ? v : String(v);
+    }
+    const s = (typeof v === 'string') ? v.trim() : String(v).trim();
+    if (s) {
+      anwToast(s, type);
+      if (alsoModal) {
+        const t = (type === 'error') ? 'Error' : (type === 'warn' ? 'Attention' : 'Message');
+        anwModal(s, t);
+      }
+    }
+  }
+
+
+  const KEY_ALERTS = 'anw_alerts';
+  const KEY_CONTACTS = 'anw_alert_contacts';
+
+  const $ = (id) => document.getElementById(id);
+
+  function safeParse(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function save(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  // Preview
+  const btnPreview = $('btnPreview');
+  const previewBox = $('alertPreview');
+  const previewContent = $('previewContent');
+
+  btnPreview && btnPreview.addEventListener('click', () => {
+    const subject = $('alertSubject')?.value || '';
+    const urgency = $('alertUrgency')?.value || 'Info';
+    const audience = $('alertAudience')?.value || '';
+    const replyTo = $('alertReplyTo')?.value || '';
+    const body = $('alertBody')?.value || '';
+
+    if (previewBox) previewBox.style.display = '';
+    if (previewContent) {
+      previewContent.innerHTML = `
+        <p><strong>${esc(subject)}</strong> <span class="tiny muted">(${esc(urgency)})</span></p>
+        <p class="tiny muted">Audience: ${esc(audience)} · Reply-to: ${esc(replyTo || 'n/a')}</p>
+        <hr style="border:none; border-top:1px solid #e4e7eb; margin:0.75rem 0;">
+        <p style="white-space:pre-wrap;">${esc(body)}</p>
+      `;
+    }
+  });
+
+  // Send (local log)
+  const btnSend = $('btnSendAlert');
+  const alertMsg = $('alertMsg');
+  const alertList = $('alertList');
+  const alertListEmpty = $('alertListEmpty');
+
+  function renderAlerts() {
+    const items = safeParse(KEY_ALERTS, []);
+    if (!alertList || !alertListEmpty) return;
+
+    if (!items.length) {
+      alertListEmpty.style.display = '';
+      alertList.innerHTML = '';
+      return;
+    }
+
+    alertListEmpty.style.display = 'none';
+    alertList.innerHTML = items.slice().reverse().map(a => `
+      <div class="card" style="padding:0.75rem; margin:0.5rem 0;">
+        <div style="display:flex; justify-content:space-between; gap:0.75rem; flex-wrap:wrap;">
+          <strong>${esc(a.subject)}</strong>
+          <span class="tiny muted">${esc(a.when)}</span>
+        </div>
+        <div class="tiny muted">Urgency: ${esc(a.urgency)} · Audience: ${esc(a.audience)}</div>
+        <div style="white-space:pre-wrap; margin-top:0.5rem;">${esc(a.body)}</div>
+      </div>
+    `).join('');
+  }
+
+  btnSend && btnSend.addEventListener('click', () => {
+    const subject = $('alertSubject')?.value.trim();
+    const body = $('alertBody')?.value.trim();
+
+    if (!subject || !body) {
+      if (alertMsg) alertMsg.textContent = 'Please enter a subject and a message.';
+      anwSetMsg('alertMsg', 'Please enter a subject and a message.', 'warn', true);
+      return;
+    }
+
+    const items = safeParse(KEY_ALERTS, []);
+    items.push({
+      subject,
+      urgency: $('alertUrgency')?.value || 'Info',
+      audience: $('alertAudience')?.value || 'All registered residents',
+      replyTo: $('alertReplyTo')?.value || '',
+      body,
+      when: new Date().toLocaleString()
+    });
+    save(KEY_ALERTS, items);
+
+    if (alertMsg) alertMsg.textContent = 'Saved locally (demo).';
+    anwToast('Alert saved locally (demo).', 'success');
+    renderAlerts();
+  });
+
+  renderAlerts();
+
+  // Contacts
+  const btnAdd = $('btnAddCoordinator');
+  const btnSave = $('btnSaveContacts');
+  const msgContacts = $('contactsMsg');
+  const extraList = $('anwExtraList');
+
+  function renderExtras(list) {
+    if (!extraList) return;
+    extraList.innerHTML = (list || []).map((x, i) => `
+      <div class="grid" style="margin:0.75rem 0;">
+        <div class="field">
+          <label class="tiny muted">Coordinator name</label>
+          <input class="input" data-extra="name" data-i="${i}" value="${esc(x.name || '')}">
+        </div>
+        <div class="field">
+          <label class="tiny muted">Coordinator email</label>
+          <input class="input" data-extra="email" data-i="${i}" value="${esc(x.email || '')}">
+        </div>
+        <div class="field">
+          <label class="tiny muted">Coordinator phone</label>
+          <input class="input" data-extra="phone" data-i="${i}" value="${esc(x.phone || '')}">
+        </div>
+      </div>
+    `).join('') || '<div class="tiny muted">No additional coordinators added.</div>';
+  }
+
+  function loadContacts() {
+    const c = safeParse(KEY_CONTACTS, null);
+    if (!c) return { extras: [] };
+
+    $('gardaName').value = c.gardaName || '';
+    $('gardaEmail').value = c.gardaEmail || '';
+    $('gardaPhone').value = c.gardaPhone || '';
+    $('anwMainName').value = c.anwMainName || '';
+    $('anwMainEmail').value = c.anwMainEmail || '';
+    $('anwMainPhone').value = c.anwMainPhone || '';
+    renderExtras(c.extras || []);
+    return c;
+  }
+
+  function collectExtras() {
+    const c = safeParse(KEY_CONTACTS, { extras: [] });
+    const extras = (c.extras || []).slice();
+
+    document.querySelectorAll('[data-extra]').forEach(inp => {
+      const i = Number(inp.getAttribute('data-i'));
+      const k = inp.getAttribute('data-extra');
+      extras[i] = extras[i] || {};
+      extras[i][k] = inp.value || '';
+    });
+
+    return extras;
+  }
+
+  btnAdd && btnAdd.addEventListener('click', () => {
+    const c = safeParse(KEY_CONTACTS, { extras: [] });
+    c.extras = c.extras || [];
+    c.extras.push({ name: '', email: '', phone: '' });
+    save(KEY_CONTACTS, c);
+    renderExtras(c.extras);
+    msgContacts && (msgContacts.textContent = 'Added a new coordinator row (demo).');
+    anwToast('Coordinator row added (demo).', 'info');
+  });
+
+  btnSave && btnSave.addEventListener('click', () => {
+    const payload = {
+      gardaName: $('gardaName')?.value || '',
+      gardaEmail: $('gardaEmail')?.value || '',
+      gardaPhone: $('gardaPhone')?.value || '',
+      anwMainName: $('anwMainName')?.value || '',
+      anwMainEmail: $('anwMainEmail')?.value || '',
+      anwMainPhone: $('anwMainPhone')?.value || '',
+      extras: collectExtras()
+    };
+    save(KEY_CONTACTS, payload);
+    msgContacts && (msgContacts.textContent = 'Contacts saved locally (demo).');
+    anwToast('Contacts saved locally (demo).', 'success');
+  });
+
+  loadContacts();
+})();
+</script>
+<script>
+/* =========================
+   Access Control (Dashboard Reference)
+   Community Alerts:
+   - Main page: visible to everyone (including not logged)
+   - Content panels: gated by login + registration + approval + role
+   - Shows inline message under header (like Dashboard); never hides the page; never redirects.
+========================= */
+(function(){
+  const notice = document.getElementById('anwAccessNotice');
+  const tabs = Array.from(document.querySelectorAll('.alert-tab'));
+  const tabSend = document.getElementById('tab-send');
+  const tabContacts = document.getElementById('tab-contacts');
+
+  const showNotice = (html) => {
+    if(!notice) return;
+    notice.style.display = 'block';
+    notice.innerHTML = html;
+  };
+  const hideNotice = () => { if(notice) notice.style.display = 'none'; };
+
+  const normalize = (s) => String(s||'').toLowerCase().replace(/[\s\-_]+/g,' ').replace(/[^a-z0-9 ]/g,'').trim();
+  const extractRoles = (profile) => {
+    const out = [];
+    const pushAny = (v)=>{
+      if(!v) return;
+      if(Array.isArray(v)) v.forEach(pushAny);
+      else out.push(String(v));
+    };
+    if(!profile) return out;
+    pushAny(profile.role);
+    pushAny(profile.roles);
+    pushAny(profile.position);
+    pushAny(profile.title);
+    pushAny(profile.access);
+    return out.map(normalize).filter(Boolean);
+  };
+  const hasAnyRole = (profile, allowed) => {
+    const mine = extractRoles(profile);
+    const allow = (allowed||[]).map(normalize);
+    return mine.some(r => allow.some(a => r===a || r.includes(a) || a.includes(r)));
+  };
+
+  const allowedSend = (p) => hasAnyRole(p, [
+    'street coordinator','auxiliar coordinator','assistant coordinator',
+    'owner','programmer support','admin support','support administrator'
+  ]);
+  const allowedContacts = (p) => hasAnyRole(p, [
+    'owner','support administrator','admin support'
+  ]);
+
+  const hidePanels = () => {
+    if(tabSend) tabSend.style.display = 'none';
+    if(tabContacts) tabContacts.style.display = 'none';
+  };
+  const showPanel = (which) => {
+    if(tabSend) tabSend.style.display = (which === 'send') ? '' : 'none';
+    if(tabContacts) tabContacts.style.display = (which === 'contacts') ? '' : 'none';
+  };
+
+  const ensureIdentityUser = async () => {
+    if(!window.netlifyIdentity) return null;
+    return await new Promise((resolve)=>{
+      let done=false;
+      const finish=(u)=>{ if(done) return; done=true; resolve(u||null); };
+      try { window.netlifyIdentity.on('init', (u)=>finish(u)); window.netlifyIdentity.init(); } catch(e) {}
+      setTimeout(()=>{
+        try { finish(window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser()); }
+        catch(e){ finish(null); }
+      }, 300);
+    });
+  };
+
+  const getRegistryProfile = async (user) => {
+    try { await window.anwInitStore?.(); } catch(e) {}
+    try {
+      const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
+      const email = String(user?.email||'').toLowerCase();
+      return (users||[]).find(u => String(u.email||'').toLowerCase() === email) || null;
+    } catch(e) { return null; }
+  };
+
+  const isApproved = (profile) => {
+    if(!profile) return false;
+    const status = String(profile.status || profile.accountStatus || '').toLowerCase();
+    return (profile.approved === true) || (profile.active === true) || status === 'active' || status === 'approved';
+  };
+
+  async function evaluate(which){
+    // Always keep tabs clickable/visible; only gate the panels
+    const user = await ensureIdentityUser();
+    if(!user){
+      hidePanels();
+      showNotice('Community Alerts is available to registered members. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to continue.');
+      return;
+    }
+
+    const profile = await getRegistryProfile(user);
+    if(!profile || !isApproved(profile)){
+      hidePanels();
+      showNotice('Your account is logged in, but you are not registered/approved yet. Please wait for approval.');
+      return;
+    }
+
+    if(which === 'send' && !allowedSend(profile)){
+      hidePanels();
+      showNotice('Access restricted. You do not have permission to send alerts.');
+      return;
+    }
+    if(which === 'contacts' && !allowedContacts(profile)){
+      hidePanels();
+      showNotice('Access restricted. You do not have permission to view authorised contacts.');
+      return;
+    }
+
+    // Allowed
+    hideNotice();
+    showPanel(which);
+  }
+
+  // Expose for the Tabs script
+  window.anwAlertsRequestTab = function(which){
+    // Keep the active tab highlight (already handled in Tabs script), just gate the panel
+    evaluate(which || 'send');
+  };
+
+  // Initial: do not show panels if not authorised; still keep header/tabs visible
+  hidePanels();
+  // If logged and allowed, this will open; otherwise it will show notice
+  window.anwAlertsRequestTab('send');
+})();
+</script>
+<script src="assets/acl-guard.js"></script>
+</body>
+</html>
