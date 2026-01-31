@@ -1,0 +1,31 @@
+# ADERRIG NW - Production-safe security headers
+# This version is designed to be SAFE for production while NOT breaking the current site
+# (it allows inline scripts/styles used across the HTML pages).
+#
+# When going live:
+# 1) Rename this file to: _headers
+# 2) Deploy to Netlify
+#
+# NOTE: Later, if you move inline scripts into external JS files, we can tighten CSP further.
+
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), camera=(), microphone=()
+  X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'self';
+    base-uri 'self';
+    object-src 'none';
+    frame-ancestors 'none';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://identity.netlify.com https://www.google.com https://maps.googleapis.com https://maps.gstatic.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    img-src 'self' data: blob: https://maps.gstatic.com https://maps.googleapis.com https://www.google.com;
+    font-src 'self' https://fonts.gstatic.com;
+    connect-src 'self' https://identity.netlify.com https://maps.googleapis.com;
+    frame-src https://identity.netlify.com https://www.google.com;
+    upgrade-insecure-requests;
+    block-all-mixed-content;
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
