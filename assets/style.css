@@ -680,50 +680,8 @@ nav a .anw-nav-badge{
   opacity:0.85;
 }
 
-/* =========================
-   HOME FIX (force layout)
-   Ensures Home matches approved desktop layout
-   ========================= */
-body.page-home .grid{ display:grid; gap:12px; }
-body.page-home .cols-3{
-  display:grid;
-  gap:12px;
-  grid-template-columns:2fr 3fr auto;
-  align-items:stretch;
-}
-@media (max-width:860px){
-  body.page-home .cols-3{ grid-template-columns:1fr; }
-}
-body.page-home .quick-links,
-body.page-home section.quick-links .grid,
-body.page-home .grid.cols-3{
-  display:grid;
-  gap:12px;
-  grid-template-columns:repeat(3,1fr);
-}
-@media (max-width:860px){
-  body.page-home .quick-links,
-  body.page-home section.quick-links .grid,
-  body.page-home .grid.cols-3{
-    grid-template-columns:1fr;
-  }
-}
-body.page-home .quick-links a,
-body.page-home a.tile,
-body.page-home .tile{
-  display:block;
-  background:#fff;
-  border:1px solid var(--border, #e4e7ea);
-  padding:14px;
-  border-radius:14px;
-  box-shadow:var(--shadow, 0 1px 2px rgba(0,0,0,.06));
-  color:var(--brand, #1f6f4a);
-  font-weight:700;
-  text-decoration:none;
-}
-body.page-home .quick-links a:hover,
-body.page-home a.tile:hover,
-body.page-home .tile:hover{
-  background:rgba(31,111,74,.04);
-  text-decoration:none;
-}
+
+/* --- Visibility helpers (defensive) --- */
+[hidden]{display:none !important;}
+#teamRosterModal[hidden],
+#teamMemberModal[hidden]{display:none !important;}
