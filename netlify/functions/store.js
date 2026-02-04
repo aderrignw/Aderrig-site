@@ -261,6 +261,106 @@ export default async (req, context) => {
 
   if (!key) return json({ error: "Missing ?key=" }, 400, corsHeaders);
 
+  // =========================
+  // SPECIAL: Nearby support lookup (Home page)
+  // - Public (no login): returns counts only
+  // - Logged-in + ACTIVE: returns names/phones + roles
+  // =========================
+  if (key === "nearby_support" && req.method === "POST") {
+    const storeName = context?.site?.id ? `kv_${context.site.id}` : "kv_default";
+    const store = getStore(storeName);
+
+    const body = await readBodyJson(req);
+    const eircode = normalizeEircode(body?.eircode || body?.eir || "");
+    if (!eircode) return json({ error: "Missing eircode" }, 400, corsHeaders);
+
+    const usersList = (await store.get("anw_users", { type: "json" })) || [];
+    const list = Array.isArray(usersList) ? usersList : [];
+
+    function commonPrefixLen(a, b) {
+      let n = 0;
+      for (let i = 0; i < Math.min(a.length, b.length); i++) {
+        if (a[i] !== b[i]) break;
+        n++;
+      }
+      return n;
+    }
+
+    const active = list.filter(u => isActiveStatus(u?.status || "pending"));
+    const scored = active.map(u => {
+      const ue = normalizeEircode(u?.eircode || u?.eir || "");
+      const score = commonPrefixLen(ue, eircode);
+      return { u, score };
+    }).filter(x => x.score >= 3);
+
+    scored.sort((a, b) => b.score - a.score);
+
+    const coords = [];
+    const vols = [];
+    for (const { u } of scored) {
+      const isCoord = !!(u?.isCoordinator ?? u?.coordinator);
+      const isVol   = !!(u?.isVolunteer ?? u?.volunteer);
+      if (isCoord) coords.push(u);
+      if (isVol)   vols.push(u);
+    }
+
+    const counts = { coordinators: coords.length, volunteers: vols.length };
+
+    // If not logged in (public): counts only
+    const user = context?.clientContext?.user;
+    if (!user) {
+      return json({ ok: true, mode: "public", eircode, counts }, 200, corsHeaders);
+    }
+
+    // Logged-in: only ACTIVE residents can see names/phones
+    const email = normalizeEmail(user.email);
+    const me = list.find(u => normalizeEmail(u?.email) === email);
+    const isApproved = !!me && isActiveStatus(me?.status || "pending");
+
+    if (!isApproved) {
+      return json({ ok: true, mode: "counts", eircode, counts }, 200, corsHeaders);
+    }
+
+    function volunteerRoleLabels(u) {
+      const vr = u?.volunteerRoles || u?.volunteer_roles || u?.volunteer || {};
+      const roles = [];
+      if (vr.streetWatch)  roles.push("Street watch");
+      if (vr.leaflets)     roles.push("Leaflets");
+      if (vr.techSupport)  roles.push("Tech support");
+      if (vr.elderly)      roles.push("Elderly checks");
+      if (vr.cleanUp)      roles.push("Community Clean-Up");
+      if (vr.parking)      roles.push("Parking Assistance");
+      if (vr.meetings)     roles.push("Meetings");
+      if (vr.translation)  roles.push("Translation");
+      return roles;
+    }
+
+    const coordinators = coords.map(u => ({
+      name: u?.name || "Coordinator",
+      phone: u?.phone || null,
+      role: "Street coordinator"
+    }));
+
+    const volunteers = vols.map(u => {
+      const roles = volunteerRoleLabels(u);
+      return {
+        name: u?.name || "Volunteer",
+        phone: u?.phone || null,
+        role: roles.length ? roles.join(", ") : "Volunteer"
+      };
+    });
+
+    return json({
+      ok: true,
+      mode: "details",
+      eircode,
+      counts,
+      coordinators,
+      volunteers
+    }, 200, corsHeaders);
+  }
+
+
   // --- Public reads (optional)
   if (req.method === "GET" && PUBLIC_READ_KEYS.has(key)) {
     const storeName = context?.site?.id ? `kv_${context.site.id}` : "kv_default";
