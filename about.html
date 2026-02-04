@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -37,7 +36,7 @@ main p {
 }
 </style>
 </head>
-<body class="page-about">
+<body>
 <header class="site-header">
 <div class="brand">
 <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
@@ -216,7 +215,7 @@ main p {
 </section>
 </div>
 <!-- Modal for approved roster (admin-approved roles) -->
-<div id="teamRosterModal" hidden style="position:fixed; inset:0; background:rgba(0,0,0,0.35); display:none; align-items:center; justify-content:center; z-index:21;">
+<div hidden="" id="teamRosterModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.35);  align-items:center; justify-content:center; z-index:21;">
 <div class="card" style="max-width:560px; width:92%; max-height:90vh; overflow:auto;">
 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
 <div>
@@ -241,7 +240,7 @@ main p {
 </div>
 </div>
 <!-- Modal for team member details (Team tab) -->
-<div id="teamMemberModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.35); display:none; align-items:center; justify-content:center; z-index:20;">
+<div hidden="" id="teamMemberModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.35);  align-items:center; justify-content:center; z-index:20;">
 <div class="card" style="max-width:520px; width:92%; max-height:90vh; overflow:auto;">
 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
 <div>
@@ -273,68 +272,44 @@ main p {
 </main>
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script><script src="assets/identity.js"></script><script src="assets/app-core.js"></script>
 <script>
-    (function () {
-    // Tabs must work even if store init fails.
-    function initTabs() {
+    (async function () {
+  await anwInitStore();
+      // Tab switching between About and Team
       const aboutTab = document.getElementById('tabAbout');
-      const teamTab  = document.getElementById('tabTeam');
+      const teamTab = document.getElementById('tabTeam');
       const btnAbout = document.getElementById('btnTabAbout');
-      const btnTeam  = document.getElementById('btnTabTeam');
-      if (!aboutTab || !teamTab || !btnAbout || !btnTeam) return;
+      const btnTeam = document.getElementById('btnTabTeam');
 
       function setActive(btn){
         btnAbout.classList.remove('active');
         btnTeam.classList.remove('active');
         btn.classList.add('active');
       }
-      function closeAllModals(){
-        ['teamRosterModal','teamMemberModal'].forEach(id=>{
-          const el = document.getElementById(id);
-          if(!el) return;
-          el.hidden = true;
-          el.style.display = 'none';
-        });
-      }
+
       function showAbout() {
+        if (!aboutTab || !teamTab || !btnAbout || !btnTeam) return;
         aboutTab.style.display = '';
         teamTab.style.display = 'none';
         setActive(btnAbout);
-        closeAllModals();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
+
       function showTeam() {
+        if (!aboutTab || !teamTab || !btnAbout || !btnTeam) return;
         aboutTab.style.display = 'none';
         teamTab.style.display = '';
         setActive(btnTeam);
-        closeAllModals();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
-      btnAbout.addEventListener('click', showAbout);
-      btnTeam.addEventListener('click', showTeam);
+      if (btnAbout && btnTeam) {
+        btnAbout.addEventListener('click', showAbout);
+        btnTeam.addEventListener('click', showTeam);
+        setActive(btnAbout); // initial state
+      }
+    })();
 
-      // initial state
-      showAbout();
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      // Force modals hidden on load (prevents stray "Close" blocks showing).
-      ['teamRosterModal','teamMemberModal'].forEach(id=>{
-        const el = document.getElementById(id);
-        if(!el) return;
-        el.hidden = true;
-        el.style.display = 'none';
-      });
-
-      initTabs();
-
-      // Try to init store, but do not block UI if it fails.
-      Promise.resolve()
-        .then(() => (window.anwInitStore ? anwInitStore() : null))
-        .catch(() => {});
-    });
-  })();
-(function() {
+    (function() {
       'use strict';
 
       const KEY_USERS  = (window.ANW && ANW.helpers && ANW.helpers.KEY_USERS) ? ANW.helpers.KEY_USERS : 'anw_users';
@@ -962,6 +937,14 @@ main p {
 
       // --- Roster modal close handling (fix) ---
       // Ensures Close button, backdrop click, and ESC always close the roster modal
+      // Force modals closed on load
+      document.addEventListener('DOMContentLoaded', () => {
+        const rm = document.getElementById('teamRosterModal');
+        const mm = document.getElementById('teamMemberModal');
+        if(rm){ rm.style.display = 'none'; rm.hidden = true; }
+        if(mm){ mm.style.display = 'none'; mm.hidden = true; }
+      });
+
       (function anwRosterCloseFix(){
         const rosterModal = document.getElementById('teamRosterModal');
         if(!rosterModal) return;
@@ -998,7 +981,7 @@ main p {
       if (btnClose) {
         btnClose.addEventListener('click', () => {
           const modal = document.getElementById('teamMemberModal');
-          if (modal) modal.style.display = 'none';
+          if (modal){ modal.style.display = 'none'; modal.hidden = true; }
         });
       }
 

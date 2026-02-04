@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -23,7 +22,7 @@
     line-height:1.25;
     display:inline-block;
   }
-  #volunteerOptions{display:none;}
+  #volunteerOptions[hidden]{display:none !important;}
   #volunteerOptions .chk{
     margin:0;
     padding:6px 8px;
@@ -75,16 +74,7 @@
   .msg.ok{ color:#0f5132; }
   .msg.error{ color:#b02a37; }
 
-
-/* --- Defensive hiding (prevents sections showing due to CSS conflicts) --- */
-#resetBlock[hidden], #volunteerOptions[hidden] { display:none !important; }
-
-/* --- Password manager icons: prevent floating locks/keys across the page --- */
-[data-lastpass-icon-root], .lp-icon, .lpform, .lpl-container,
-.com-1password-button, [data-1p-button],
-.bw-extension, [data-bw-extension], [data-bwignore] + div {
-  display: none !important;
-}
+#resetBlock[hidden]{display:none !important;}
 </style>
 <style id="page-access-style">
   footer.site-footer { position: relative; }
@@ -125,20 +115,20 @@
 <p class="muted" id="loggedBanner" style="margin-bottom:0.75rem; display:none;"></p>
 <div class="field">
 <label>Email</label>
-<input autocomplete="email" data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="loginEmail" type="email"/>
+<input autocomplete="email" id="loginEmail" type="email"/>
 </div>
 <div class="field">
 <label>Eircode</label>
-<input autocomplete="postal-code" data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="loginEir" placeholder="e.g., K78XXXX" type="text"/>
+<input autocomplete="postal-code" id="loginEir" placeholder="e.g., K78XXXX" type="text"/>
 </div>
 <div class="field" id="loginAddrWrap" style="display:none;">
 <label>Registered address</label>
-<input autocomplete="off" data-1p-ignore="true" data-bwignore="true" data-lpignore="true" disabled="" id="loginAddr" type="text"/>
+<input disabled="" id="loginAddr" type="text"/>
 <p class="tiny muted" style="margin-top:0.25rem;">Check this address matches your home before entering your password.</p>
 </div>
 <div class="field">
 <label>Password</label>
-<input autocomplete="current-password" data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="loginPass" type="password"/>
+<input autocomplete="current-password" id="loginPass" type="password"/>
 </div>
 <div class="actions" style="justify-content:space-between">
 <span></span>
@@ -152,14 +142,14 @@
 <p class="muted tiny" style="margin-top:4px;">
 <a class="link" href="#" id="lnkForgot">I forgot my password</a>
 </p>
-<div id="resetBlock" style="margin-top:10px; padding-top:10px; border-top:1px dashed rgba(17,24,39,.15); display:none;">
+<div hidden="" id="resetBlock" style="margin-top:10px; padding-top:10px; border-top:1px dashed rgba(17,24,39,.15);">
 <h3 class="h3" style="margin-bottom:6px;">Reset your password</h3>
 <p class="muted tiny" style="margin-bottom:8px;">
           Enter your email and we will send you a secure password reset link.
         </p>
 <div class="field">
 <label>Email</label>
-<input autocomplete="email" data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="resetEmail" type="email"/>
+<input autocomplete="email" id="resetEmail" type="email"/>
 </div>
 <div class="actions" style="justify-content:flex-end; gap:8px;">
 <button class="btn btn-line" id="btnCancelReset" type="button">Cancel</button>
@@ -173,31 +163,31 @@
 <h2>Create account</h2>
 <div class="field">
 <label>Full name</label>
-<input autocomplete="name" data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="regName" type="text"/>
+<input autocomplete="name" id="regName" type="text"/>
 </div>
 <div class="field">
 <label>Email</label>
-<input autocomplete="email" data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="regEmail" type="email"/>
+<input autocomplete="email" id="regEmail" type="email"/>
 </div>
 <div class="field">
 <label>Eircode</label>
-<input autocomplete="postal-code" data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="regEir" placeholder="e.g., K78XXXX" type="text"/>
+<input autocomplete="postal-code" id="regEir" placeholder="e.g., K78XXXX" type="text"/>
 </div>
 <div class="field">
 <label>Full address</label>
-<input autocomplete="street-address" data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="regAddress" placeholder="House number, street, area, county" type="text"/>
+<input autocomplete="street-address" id="regAddress" placeholder="House number, street, area, county" type="text"/>
 </div>
 <div class="field">
 <label>Phone number (+country code)</label>
-<input autocomplete="tel" data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="regPhone" placeholder="+353851234567 (international format)" style="width:100%;" type="tel"/>
+<input autocomplete="tel" id="regPhone" placeholder="+353851234567 (international format)" style="width:100%;" type="tel"/>
 </div>
 <div class="field">
 <label>Password</label>
-<input autocomplete="new-password" data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="regPass" type="password"/>
+<input autocomplete="new-password" id="regPass" type="password"/>
 </div>
 <div class="field">
 <label>Confirm password</label>
-<input autocomplete="new-password" data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="regPass2" type="password"/>
+<input autocomplete="new-password" id="regPass2" type="password"/>
 </div>
 <div class="field">
 <label for="regType">Resident type</label>
@@ -209,38 +199,38 @@
 </div>
 <div class="field">
 <label>Management company</label>
-<input autocomplete="off" data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="regMgmt" placeholder="Management company name" type="text"/>
+<input id="regMgmt" placeholder="Management company name" type="text"/>
 </div>
 <div class="role-grid">
 <label class="chk">
-<input data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="regCoord" type="checkbox"/>
+<input id="regCoord" type="checkbox"/>
 <span>I want to be a Street Coordinator</span>
 </label>
 <label class="chk">
-<input data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="regVolunteer" type="checkbox"/>
+<input id="regVolunteer" type="checkbox"/>
 <span>I want to be a Volunteer</span>
 </label>
 </div>
 <div class="volunteer-block" hidden="" id="volunteerOptions">
 <p class="muted" style="margin-bottom:0.25rem;">Volunteer roles (choose one or more):</p>
 <div class="role-grid">
-<label class="chk"><input data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="volStreetWatch" type="checkbox"/><span>Street watch</span></label>
-<label class="chk"><input data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="volLeaflets" type="checkbox"/><span>Leaflets</span></label>
-<label class="chk"><input data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="volTech" type="checkbox"/><span>Tech support</span></label>
-<label class="chk"><input data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="volElderly" type="checkbox"/><span>Elderly checks</span></label>
-<label class="chk"><input data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="volCleanup" type="checkbox"/><span>Community Clean-Up</span></label>
-<label class="chk"><input data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="volParking" type="checkbox"/><span>Parking Assistance</span></label>
-<label class="chk"><input data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="volMeetings" type="checkbox"/><span>Meetings</span></label>
-<label class="chk"><input data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="volTranslation" type="checkbox"/><span>Translation</span></label>
+<label class="chk"><input id="volStreetWatch" type="checkbox"/><span>Street watch</span></label>
+<label class="chk"><input id="volLeaflets" type="checkbox"/><span>Leaflets</span></label>
+<label class="chk"><input id="volTech" type="checkbox"/><span>Tech support</span></label>
+<label class="chk"><input id="volElderly" type="checkbox"/><span>Elderly checks</span></label>
+<label class="chk"><input id="volCleanup" type="checkbox"/><span>Community Clean-Up</span></label>
+<label class="chk"><input id="volParking" type="checkbox"/><span>Parking Assistance</span></label>
+<label class="chk"><input id="volMeetings" type="checkbox"/><span>Meetings</span></label>
+<label class="chk"><input id="volTranslation" type="checkbox"/><span>Translation</span></label>
 </div>
 </div>
 <div class="consent-block">
 <label class="chk" style="margin-top:0.75rem;">
-<input data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="regTerms" type="checkbox"/>
+<input id="regTerms" type="checkbox"/>
 <span>I agree to the Privacy Policy &amp; Terms.</span>
 </label>
 <label class="chk" style="margin:0;">
-<input data-1p-ignore="true" data-bwignore="true" data-lpignore="true" id="regAlertOptIn" type="checkbox"/>
+<input id="regAlertOptIn" type="checkbox"/>
 <span>Send me community alerts (Email/SMS/WhatsApp).</span>
 </label>
 </div>
@@ -403,33 +393,22 @@ const volMeetings    = document.getElementById('volMeetings');
   const btnSendReset   = document.getElementById('btnSendReset');
   const resetMsg       = document.getElementById('resetMsg');
 
+  // Force reset panel closed on load
+  if(resetBlock) resetBlock.hidden = true;
+
   const KEY_USERS = ANW_KEYS.USERS;
+
+  // Force volunteer options closed on load
+  if(volBox) volBox.hidden = true;
 
   // ---------- Volunteer options toggle ----------
   function setVolunteerVisible(on){
     if(!volBox) return;
-    // use the HTML 'hidden' attribute for a bulletproof hide/show (survives CSS conflicts)
     volBox.hidden = !on;
     if(!on){
       volBox.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
     }
   }
-  if(regVolunteer){
-    regVolunteer.addEventListener('change', () => setVolunteerVisible(!!regVolunteer.checked));
-    // initial state: always start closed unless user checked the box
-    setVolunteerVisible(!!regVolunteer.checked);
-  }
-
-  if(regCoord){
-    // optional: if user checks "Street Coordinator" only, keep volunteer roles closed
-    regCoord.addEventListener('change', () => {
-      if(regCoord.checked && regVolunteer && !regVolunteer.checked) setVolunteerVisible(false);
-    });
-  }
-
-  // ensure volunteer roles are closed on first load (defensive)
-  if(volBox) volBox.hidden = !(regVolunteer && regVolunteer.checked);
-
   if(regVolunteer){
     regVolunteer.addEventListener('change', () => setVolunteerVisible(!!regVolunteer.checked));
     setVolunteerVisible(!!regVolunteer.checked);
@@ -873,15 +852,17 @@ const volMeetings    = document.getElementById('volMeetings');
   if (lnkForgot && resetBlock) {
     lnkForgot.addEventListener('click', (ev) => {
       ev.preventDefault();
-      resetBlock.style.display = 'block';
-      if(resetEmail && loginEmail) resetEmail.value = (loginEmail.value || '').trim();
+      resetBlock.hidden = !resetBlock.hidden;
+      if(!resetBlock.hidden){
+if(resetEmail && loginEmail) resetEmail.value = (loginEmail.value || '').trim();
       setMsg(resetMsg, '', '');
       resetBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     });
   }
-  if(btnCancelReset && resetBlock){
+if(btnCancelReset && resetBlock){
     btnCancelReset.addEventListener('click', () => {
-      resetBlock.style.display = 'none';
+      resetBlock.hidden = true;
       setMsg(resetMsg, '', '');
     });
   }
