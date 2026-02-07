@@ -38,12 +38,60 @@
       text-decoration:none;
     }
     body.page-home .tile:hover{ background:rgba(31,111,74,.04); }
-    body.page-home .quick-links{ display:grid; gap:12px; grid-template-columns:repeat(3,1fr); }
+
+    /* ✅ Quick links: usa o layout certo */
+    body.page-home .quick-links{
+      display:grid;
+      gap:12px;
+      grid-template-columns:repeat(3,1fr);
+      align-items:stretch;
+    }
     @media (max-width:860px){
       body.page-home .quick-links{ grid-template-columns:1fr; }
     }
+
     body.page-home .btn{ height:44px; }
     body.page-home #coordResult:empty{ display:none; }
+
+    /* ✅ Logo do topo: impede ficar grande */
+    .site-logo .logo-img{
+      height: 44px;
+      width: auto;
+      display:block;
+      object-fit: contain;
+    }
+
+    /* ✅ Sponsors: impede imagem gigante + deixa alinhado */
+    .sponsors--footer{
+      margin-top: 14px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .sponsors-title{
+      margin: 0 0 8px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .sponsors-logos{
+      display:flex;
+      flex-wrap:wrap;
+      gap:14px;
+      justify-content:center;
+      align-items:center;
+    }
+    .sponsors-logos img{
+      max-height: 44px; /* ajuste aqui se quiser maior/menor */
+      width: auto;
+      object-fit: contain;
+      display:block;
+    }
+    .sponsors-logos .sponsor{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 6px 8px;
+      border-radius: 12px;
+    }
   </style>
 </head>
 
@@ -95,7 +143,8 @@
 
 <section class="card">
   <h3>Quick links</h3>
-  <div class="grid cols-3">
+  <!-- ✅ Troquei para quick-links (era grid cols-3) -->
+  <div class="quick-links">
     <a class="tile" href="/about.html">What is Neighbourhood Watch?</a>
     <a class="tile" href="/report.html">Report an Incident</a>
     <a class="tile" href="/alerts.html">Community Alerts</a>
@@ -109,9 +158,9 @@
 
   <div class="home-notice-bar" id="homeNoticeBar" style="display:none">
     <div class="home-notice-bar__icon">ℹ</div>
-    <button class="home-notice-btn" data-home-notice-prev>‹</button>
+    <button class="home-notice-btn" data-home-notice-prev type="button">‹</button>
     <div class="home-notice-bar__text" data-home-notice-text></div>
-    <button class="home-notice-btn" data-home-notice-next>›</button>
+    <button class="home-notice-btn" data-home-notice-next type="button">›</button>
   </div>
 
   <div class="sponsors sponsors--footer" id="sponsorsFooter"></div>
