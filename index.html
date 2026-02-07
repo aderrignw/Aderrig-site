@@ -7,7 +7,6 @@
 
   <title>Aderrig Neighbourhood Watch — Adamstown</title>
 
-  <!-- FORCE UPDATE (cache-busting) + absolute path -->
   <link rel="stylesheet" href="/assets/style.css?v=20260207"/>
 
   <meta name="description" content="Aderrig Neighbourhood Watch (Adamstown). Community-led safety, reporting and alerts aligned with Garda guidance."/>
@@ -19,6 +18,7 @@
     @media (max-width:860px){
       body.page-home .cols-3{ grid-template-columns:1fr; }
     }
+
     body.page-home .result{
       margin-top:12px;
       padding:12px 14px;
@@ -26,6 +26,7 @@
       border-radius:14px;
       background:#fbfdfc;
     }
+
     body.page-home .tile{
       display:block;
       background:#fff;
@@ -37,15 +38,15 @@
       font-weight:700;
       text-decoration:none;
     }
+
     body.page-home .tile:hover{ background:rgba(31,111,74,.04); }
 
-    /* ✅ Quick links: usa o layout certo */
     body.page-home .quick-links{
       display:grid;
       gap:12px;
       grid-template-columns:repeat(3,1fr);
-      align-items:stretch;
     }
+
     @media (max-width:860px){
       body.page-home .quick-links{ grid-template-columns:1fr; }
     }
@@ -53,44 +54,25 @@
     body.page-home .btn{ height:44px; }
     body.page-home #coordResult:empty{ display:none; }
 
-    /* ✅ Logo do topo: impede ficar grande */
-    .site-logo .logo-img{
-      height: 44px;
+    /* ===== LOGO FIX ===== */
+    .site-logo img {
+      max-height: 48px;
       width: auto;
-      display:block;
-      object-fit: contain;
     }
 
-    /* ✅ Sponsors: impede imagem gigante + deixa alinhado */
-    .sponsors--footer{
-      margin-top: 14px;
-      margin-bottom: 8px;
-      text-align: center;
+    /* ===== SPONSORS FIX ===== */
+    .sponsors--footer {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 16px;
     }
-    .sponsors-title{
-      margin: 0 0 8px;
-      font-weight: 700;
-      color: var(--muted);
-    }
-    .sponsors-logos{
-      display:flex;
-      flex-wrap:wrap;
-      gap:14px;
-      justify-content:center;
-      align-items:center;
-    }
-    .sponsors-logos img{
-      max-height: 44px; /* ajuste aqui se quiser maior/menor */
+
+    .sponsors--footer img {
+      max-height: 60px;
       width: auto;
       object-fit: contain;
-      display:block;
-    }
-    .sponsors-logos .sponsor{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding: 6px 8px;
-      border-radius: 12px;
     }
   </style>
 </head>
@@ -100,7 +82,7 @@
 <header class="site-header">
   <div class="brand">
     <a class="site-logo" href="/index.html">
-      <img src="/assets/logo/logo.png" class="logo-img" alt="Aderrig Neighbourhood Watch"/>
+      <img src="/assets/logo/logo.png" alt="Aderrig Neighbourhood Watch"/>
     </a>
   </div>
 
@@ -133,17 +115,10 @@
   </form>
 
   <div class="result" id="coordResult"></div>
-
-  <p class="tiny muted" style="margin-top:8px">
-    Guidance: Always call <strong>999/112</strong> in emergencies.
-    For crimes, contact <strong>Lucan Garda Station</strong>:
-    +353 (0)1 666 7300 · <a href="mailto:lucan.ds@garda.ie">lucan.ds@garda.ie</a>
-  </p>
 </section>
 
 <section class="card">
   <h3>Quick links</h3>
-  <!-- ✅ Troquei para quick-links (era grid cols-3) -->
   <div class="quick-links">
     <a class="tile" href="/about.html">What is Neighbourhood Watch?</a>
     <a class="tile" href="/report.html">Report an Incident</a>
@@ -155,20 +130,10 @@
 
 <footer class="site-footer">
   <span class="page-access">Public Page</span>
-
-  <div class="home-notice-bar" id="homeNoticeBar" style="display:none">
-    <div class="home-notice-bar__icon">ℹ</div>
-    <button class="home-notice-btn" data-home-notice-prev type="button">‹</button>
-    <div class="home-notice-bar__text" data-home-notice-text></div>
-    <button class="home-notice-btn" data-home-notice-next type="button">›</button>
-  </div>
-
   <div class="sponsors sponsors--footer" id="sponsorsFooter"></div>
-
   © 2025 Aderrig NW · <a href="/privacy.html">Privacy Policy</a>
 </footer>
 
-<!-- FORCE UPDATE JS -->
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script src="/assets/identity.js?v=20260207"></script>
 <script src="/assets/app-core.js?v=20260207"></script>
