@@ -61,23 +61,21 @@ table{ max-width:100%; }
 
   width:min(var(--container), calc(100% - 24px));
   margin:0 auto;
-  padding:6px 0;
+  padding:8px 0;
 
   display:grid;
   grid-template-columns:auto 1fr;
   align-items:center;
-  gap:12px;
+  gap:10px;
 }
 
 .brand{
   display:flex;
   align-items:center;
   gap:10px;
-  min-width:0;
-  flex:0 0 auto;
+  min-width:0; /* allows the nav to keep space */
 }
 
-/* (Legacy) */
 .logo{
   width:32px;
   height:32px;
@@ -110,28 +108,26 @@ table{ max-width:100%; }
   .brand-text p{ display:none; }
 }
 
-/* NAV (more compact so it doesn't disappear) */
 .nav{
   display:flex;
   align-items:center;
   justify-content:flex-end;
-  gap:6px;
+  gap:8px;
 
-  flex-wrap:nowrap;
-  overflow-x:auto;
+  flex-wrap:nowrap;          /* keep a single row */
+  overflow-x:auto;           /* allow scroll instead of wrapping */
   -webkit-overflow-scrolling:touch;
   scrollbar-width:thin;
-
   padding-bottom:2px;
 }
 
 .nav a{
   text-decoration:none;
   color:var(--brand);
-  padding:6px 9px;              /* slightly smaller */
+  padding:6px 10px;
   border-radius:999px;
   font-weight:650;
-  font-size:.86rem;             /* slightly smaller */
+  font-size:.90rem;
   white-space:nowrap;
   flex:0 0 auto;
 }
@@ -325,7 +321,7 @@ body.page-about p, body.page-about li{ font-size:1rem; }
 
 strong{ font-weight:650; }
 
-/* Keep secondary tab rows usable: single line with horizontal scroll */
+/* Keep secondary tab rows usable: single line with horizontal scroll (prevents missing buttons like "Incidents map") */
 .report-tabs, .dash-tabs, .resident-tabs, .proj-tabs, .alert-tabs, .admin-tabs{
   display:flex;
   gap:10px;
@@ -400,7 +396,7 @@ button.subtab.active, a.subtab.active{
   border-color:rgba(31,111,74,.45);
 }
 
-/* Stronger "active" state */
+/* Stronger "active" state so users clearly see where they are */
 button.proj-tab.active, button.alert-tab.active, button.admin-tab.active,
 button.dash-tab.active, button.resident-tab.active, button.elect-tab.active, button.elect-subtab.active,
 button.hh-tab.active, button.report-tab.active, button.subtab.active,
@@ -544,7 +540,9 @@ textarea{
 .anw-toast .x:hover{ background:rgba(17,24,39,.05); }
 
 /* =========================================================
-   LOGO IMAGE OVERRIDE (FIXED)
+   LOGO IMAGE OVERRIDE (keep existing layout; swap brand to image)
+   - Uses: <a class="site-logo"><img class="logo-img" src="assets/logo/logo.png"></a>
+   - Hides legacy .logo (ANW square) and .brand-text (Aderrig NW / Adamstown)
    ========================================================= */
 
 .site-logo{
@@ -553,17 +551,15 @@ textarea{
   gap:10px;
   flex:0 0 auto;
   text-decoration:none;
-  max-width:190px;                /* prevents logo from eating the nav */
 }
 
-/* IMPORTANT: force small logo (prevents huge header) */
+/* ✅ AJUSTE: tamanho “ideal” + limite de largura pra NÃO mastigar as abas */
 .logo-img{
-  height:26px !important;         /* desktop height (smaller) */
-  max-height:26px !important;
-  width:auto !important;
-  max-width:180px !important;
-  display:block !important;
-  object-fit:contain !important;
+  height:36px;          /* desktop ideal */
+  width:auto;
+  max-width:180px;      /* impede que o logo empurre o menu */
+  display:block;
+  object-fit:contain;
 }
 
 /* Hide old text + ANW block so header stays clean */
@@ -577,81 +573,91 @@ textarea{
 }
 
 @media (max-width: 768px){
-  .site-logo{ max-width:160px; }
   .logo-img{
-    height:22px !important;
-    max-height:22px !important;
-    max-width:150px !important;
+    height:32px;        /* mobile */
+    max-width:160px;
   }
 }
 
-/* =========================================================
-   HOME layout helpers (so Quick links always look like tiles)
-   ========================================================= */
-body.page-home .grid{ display:grid; gap:12px; }
-body.page-home .cols-3{ grid-template-columns:2fr 3fr auto; align-items:stretch; }
-@media (max-width:860px){
-  body.page-home .cols-3{ grid-template-columns:1fr; }
-}
+/* =========================
+   HOME PAGE: Quick links tiles alignment fix
+   ========================= */
 
+/* Faz os tiles ficarem alinhados e “com cara de card”, sem texto torto */
 body.page-home .tile{
-  display:block;
+  display:flex;
+  align-items:center;        /* centraliza verticalmente */
+  justify-content:flex-start;
+  gap:10px;
+
   background:#fff;
   border:1px solid var(--border);
-  padding:14px;
   border-radius:14px;
   box-shadow:var(--shadow);
+  padding:14px 16px;
+
   color:var(--brand);
-  font-weight:700;
+  font-weight:800;
   text-decoration:none;
+
+  min-height:56px;           /* evita caixas “gigantes” desproporcionais */
+  line-height:1.2;
 }
+
 body.page-home .tile:hover{
   background:rgba(31,111,74,.04);
   text-decoration:none;
 }
 
-/* =========================================================
-   Sponsors (FIXED sizing + layout)
-   ========================================================= */
+/* Garante que o grid não distorça os tiles */
+body.page-home .grid.cols-3{
+  align-items:stretch;
+}
+body.page-home .grid.cols-3 > .tile{
+  height:100%;
+}
+
+/* Mobile: tiles empilhados e bonitos */
+@media (max-width:860px){
+  body.page-home .grid.cols-3{
+    grid-template-columns:1fr !important;
+  }
+}
+
+/* =========================
+   Sponsors (footer/page) — LIMITAR TAMANHO dos logos
+   ========================= */
+
 .sponsors{
   margin: 10px 0 6px;
 }
 
 .sponsors-title{
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   font-weight: 800;
-  color: #374151;
+  color:#111827;
 }
 
+/* layout das logos */
 .sponsors-logos{
   display:flex;
-  gap:14px;
-  justify-content:center;
-  align-items:center;
   flex-wrap:wrap;
-}
-
-.sponsor{
-  display:inline-flex;
-  align-items:center;
   justify-content:center;
-  padding:6px 8px;
-  border-radius:12px;
+  align-items:center;
+  gap:14px;
 }
 
+/* ✅ evita logos gigantes */
 .sponsors-logos img{
-  height:34px !important;
-  width:auto !important;
-  max-width:160px !important;
-  object-fit:contain !important;
-  display:block;
+  max-height:34px;
+  width:auto;
+  height:auto;
+  object-fit:contain;
 }
 
-@media (max-width: 768px){
-  .sponsors-logos img{
-    height:28px !important;
-    max-width:140px !important;
-  }
+/* footer: um pouco menor */
+.sponsors--footer .sponsors-logos img{
+  max-height:30px;
 }
 
 /* =========================
