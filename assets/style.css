@@ -61,21 +61,23 @@ table{ max-width:100%; }
 
   width:min(var(--container), calc(100% - 24px));
   margin:0 auto;
-  padding:8px 0;
+  padding:6px 0;
 
   display:grid;
   grid-template-columns:auto 1fr;
   align-items:center;
-  gap:10px;
+  gap:12px;
 }
 
 .brand{
   display:flex;
   align-items:center;
   gap:10px;
-  min-width:0; /* allows the nav to keep space */
+  min-width:0;
+  flex:0 0 auto;
 }
 
+/* (Legacy) */
 .logo{
   width:32px;
   height:32px;
@@ -108,26 +110,28 @@ table{ max-width:100%; }
   .brand-text p{ display:none; }
 }
 
+/* NAV (more compact so it doesn't disappear) */
 .nav{
   display:flex;
   align-items:center;
   justify-content:flex-end;
-  gap:8px;
+  gap:6px;
 
-  flex-wrap:nowrap;          /* keep a single row */
-  overflow-x:auto;           /* allow scroll instead of wrapping */
+  flex-wrap:nowrap;
+  overflow-x:auto;
   -webkit-overflow-scrolling:touch;
   scrollbar-width:thin;
+
   padding-bottom:2px;
 }
 
 .nav a{
   text-decoration:none;
   color:var(--brand);
-  padding:6px 10px;
+  padding:6px 9px;              /* slightly smaller */
   border-radius:999px;
   font-weight:650;
-  font-size:.90rem;
+  font-size:.86rem;             /* slightly smaller */
   white-space:nowrap;
   flex:0 0 auto;
 }
@@ -540,7 +544,7 @@ textarea{
 .anw-toast .x:hover{ background:rgba(17,24,39,.05); }
 
 /* =========================================================
-   LOGO IMAGE OVERRIDE (keep existing layout; swap brand to image)
+   LOGO IMAGE OVERRIDE (FIXED)
    ========================================================= */
 
 .site-logo{
@@ -549,34 +553,105 @@ textarea{
   gap:10px;
   flex:0 0 auto;
   text-decoration:none;
+  max-width:190px;                /* prevents logo from eating the nav */
 }
 
-/* ✅ FIX 1: FORCE header logo size to stay small (prevents huge logo) */
-.site-header .site-logo{ max-width:260px; }
-.site-header .logo-img{
-  height:34px !important;
-  max-height:34px !important;
+/* IMPORTANT: force small logo (prevents huge header) */
+.logo-img{
+  height:26px !important;         /* desktop height (smaller) */
+  max-height:26px !important;
   width:auto !important;
-  max-width:260px !important;
-  display:block;
-  object-fit:contain;
+  max-width:180px !important;
+  display:block !important;
+  object-fit:contain !important;
 }
 
 /* Hide old text + ANW block so header stays clean */
 .logo{ display:none !important; }
 .brand-text{ display:none !important; }
 
-@media (max-width: 768px){
-  .site-header .logo-img{
-    height:28px !important;
-    max-height:28px !important;
-  }
-}
-
 /* If any nav item is hidden by access control, remove it from layout completely */
 .nav a[hidden],
 .nav button[hidden]{
   display:none !important;
+}
+
+@media (max-width: 768px){
+  .site-logo{ max-width:160px; }
+  .logo-img{
+    height:22px !important;
+    max-height:22px !important;
+    max-width:150px !important;
+  }
+}
+
+/* =========================================================
+   HOME layout helpers (so Quick links always look like tiles)
+   ========================================================= */
+body.page-home .grid{ display:grid; gap:12px; }
+body.page-home .cols-3{ grid-template-columns:2fr 3fr auto; align-items:stretch; }
+@media (max-width:860px){
+  body.page-home .cols-3{ grid-template-columns:1fr; }
+}
+
+body.page-home .tile{
+  display:block;
+  background:#fff;
+  border:1px solid var(--border);
+  padding:14px;
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  color:var(--brand);
+  font-weight:700;
+  text-decoration:none;
+}
+body.page-home .tile:hover{
+  background:rgba(31,111,74,.04);
+  text-decoration:none;
+}
+
+/* =========================================================
+   Sponsors (FIXED sizing + layout)
+   ========================================================= */
+.sponsors{
+  margin: 10px 0 6px;
+}
+
+.sponsors-title{
+  margin: 0 0 8px;
+  font-weight: 800;
+  color: #374151;
+}
+
+.sponsors-logos{
+  display:flex;
+  gap:14px;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.sponsor{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px 8px;
+  border-radius:12px;
+}
+
+.sponsors-logos img{
+  height:34px !important;
+  width:auto !important;
+  max-width:160px !important;
+  object-fit:contain !important;
+  display:block;
+}
+
+@media (max-width: 768px){
+  .sponsors-logos img{
+    height:28px !important;
+    max-width:140px !important;
+  }
 }
 
 /* =========================
@@ -675,85 +750,3 @@ nav a .anw-nav-badge{
 [hidden]{display:none !important;}
 #teamRosterModal[hidden],
 #teamMemberModal[hidden]{display:none !important;}
-
-/* =========================================================
-   ✅ FIX 2: Quick links tiles (even if HTML loses class="tile")
-   ========================================================= */
-
-/* Your home page uses: <section class="card"> ... <div class="grid cols-3"> <a ...> */
-body.page-home section.card .grid.cols-3{
-  display:grid;
-  gap:12px;
-  grid-template-columns:repeat(3, 1fr);
-}
-@media (max-width:860px){
-  body.page-home section.card .grid.cols-3{ grid-template-columns:1fr; }
-}
-
-/* Style the links inside Quick links area like tiles */
-body.page-home section.card .grid.cols-3 > a{
-  display:block;
-  background:#fff;
-  border:1px solid var(--border);
-  padding:14px;
-  border-radius:14px;
-  box-shadow:var(--shadow);
-  color:var(--brand);
-  font-weight:700;
-  text-decoration:none;
-}
-body.page-home section.card .grid.cols-3 > a:hover{
-  background:rgba(31,111,74,.04);
-  text-decoration:none;
-}
-
-/* =========================================================
-   ✅ FIX 3: Sponsors footer sizing + clean layout
-   ========================================================= */
-
-.sponsors{
-  margin-top:12px;
-}
-
-.sponsors-title{
-  margin: 10px 0 8px;
-  font-weight:800;
-  color:#374151;
-}
-
-/* grid of logos */
-.sponsors-logos{
-  display:flex;
-  gap:12px;
-  justify-content:center;
-  align-items:center;
-  flex-wrap:wrap;
-  padding:6px 0 2px;
-}
-
-/* each logo wrapper */
-.sponsor{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding:6px 8px;
-  border-radius:12px;
-}
-
-/* keep sponsor images small (this is what was missing) */
-.sponsors-logos img{
-  height:44px;          /* ✅ small size */
-  max-height:44px;
-  width:auto;
-  max-width:160px;
-  object-fit:contain;
-  display:block;
-}
-
-@media (max-width:768px){
-  .sponsors-logos img{
-    height:38px;
-    max-height:38px;
-    max-width:140px;
-  }
-}
