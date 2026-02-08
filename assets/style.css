@@ -41,7 +41,6 @@ body{
 a{ color:var(--brand); }
 a:hover{ text-decoration:underline; }
 
-
 /* Responsive helpers (safe defaults) */
 img, video{ max-width:100%; height:auto; }
 iframe{ max-width:100%; }
@@ -239,8 +238,6 @@ button:hover, .btn:hover{ filter:brightness(.98); }
   margin:12px 0 8px;
 }
 
-/* Projects / Alerts / Admin tabs — match site styling */
-
 /* -------------------- Login page: two columns (desktop only) -------------------- */
 body.page-login main.wrap .grid{
   display:grid;
@@ -282,7 +279,6 @@ body.page-about p, body.page-about li{ font-size:1rem; }
   }
 }
 
-
 /* -------------------- Projects: accordion sections -------------------- */
 .proj-accordion{
   border:1px solid rgba(17,24,39,.10);
@@ -318,8 +314,6 @@ body.page-about p, body.page-about li{ font-size:1rem; }
 
 .proj-accordion.open .proj-chevron{ transform:rotate(180deg); }
 
-
-
 /* Tab panes (content containers) */
 .tab-pane{
   margin-top:12px;
@@ -327,8 +321,7 @@ body.page-about p, body.page-about li{ font-size:1rem; }
 
 strong{ font-weight:650; }
 
-
-/* Keep secondary tab rows usable: single line with horizontal scroll (prevents missing buttons like "Incidents map") */
+/* Keep secondary tab rows usable: single line with horizontal scroll */
 .report-tabs, .dash-tabs, .resident-tabs, .proj-tabs, .alert-tabs, .admin-tabs{
   display:flex;
   gap:10px;
@@ -338,8 +331,6 @@ strong{ font-weight:650; }
   -webkit-overflow-scrolling:touch;
   padding-bottom:4px;
 }
-
-
 
 /* Harmonised tabs/buttons (scoped to clickable elements only) */
 button.proj-tab, a.proj-tab,
@@ -405,9 +396,7 @@ button.subtab.active, a.subtab.active{
   border-color:rgba(31,111,74,.45);
 }
 
-
-
-/* Stronger "active" state so users clearly see where they are */
+/* Stronger "active" state */
 button.proj-tab.active, button.alert-tab.active, button.admin-tab.active,
 button.dash-tab.active, button.resident-tab.active, button.elect-tab.active, button.elect-subtab.active,
 button.hh-tab.active, button.report-tab.active, button.subtab.active,
@@ -423,7 +412,6 @@ textarea{
   resize: none;
   overflow: hidden;
 }
-
 
 /* =========================================================
    ANW Custom Alerts / Modals / Toasts (matches site design)
@@ -553,8 +541,6 @@ textarea{
 
 /* =========================================================
    LOGO IMAGE OVERRIDE (keep existing layout; swap brand to image)
-   - Uses: <a class="site-logo"><img class="logo-img" src="assets/logo/logo.png"></a>
-   - Hides legacy .logo (ANW square) and .brand-text (Aderrig NW / Adamstown)
    ========================================================= */
 
 .site-logo{
@@ -565,11 +551,13 @@ textarea{
   text-decoration:none;
 }
 
-/* ✅ FIX: logo do TOPO menor (desktop e mobile) */
-.logo-img{
-  height:32px;
-  width:auto;
-  max-width:180px;
+/* ✅ FIX 1: FORCE header logo size to stay small (prevents huge logo) */
+.site-header .site-logo{ max-width:260px; }
+.site-header .logo-img{
+  height:34px !important;
+  max-height:34px !important;
+  width:auto !important;
+  max-width:260px !important;
   display:block;
   object-fit:contain;
 }
@@ -578,14 +566,17 @@ textarea{
 .logo{ display:none !important; }
 .brand-text{ display:none !important; }
 
+@media (max-width: 768px){
+  .site-header .logo-img{
+    height:28px !important;
+    max-height:28px !important;
+  }
+}
+
 /* If any nav item is hidden by access control, remove it from layout completely */
 .nav a[hidden],
 .nav button[hidden]{
   display:none !important;
-}
-
-@media (max-width: 768px){
-  .logo-img{ height:28px; }
 }
 
 /* =========================
@@ -663,7 +654,6 @@ textarea{
   font-weight: normal;
 }
 
-
 /* =========================
    ACL (Access Control) helpers
    ========================= */
@@ -681,43 +671,89 @@ nav a .anw-nav-badge{
   opacity:0.85;
 }
 
-
 /* --- Visibility helpers (defensive) --- */
 [hidden]{display:none !important;}
 #teamRosterModal[hidden],
 #teamMemberModal[hidden]{display:none !important;}
 
-/* =========================
-   Sponsors (footer) — FIX
-   ========================= */
+/* =========================================================
+   ✅ FIX 2: Quick links tiles (even if HTML loses class="tile")
+   ========================================================= */
+
+/* Your home page uses: <section class="card"> ... <div class="grid cols-3"> <a ...> */
+body.page-home section.card .grid.cols-3{
+  display:grid;
+  gap:12px;
+  grid-template-columns:repeat(3, 1fr);
+}
+@media (max-width:860px){
+  body.page-home section.card .grid.cols-3{ grid-template-columns:1fr; }
+}
+
+/* Style the links inside Quick links area like tiles */
+body.page-home section.card .grid.cols-3 > a{
+  display:block;
+  background:#fff;
+  border:1px solid var(--border);
+  padding:14px;
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  color:var(--brand);
+  font-weight:700;
+  text-decoration:none;
+}
+body.page-home section.card .grid.cols-3 > a:hover{
+  background:rgba(31,111,74,.04);
+  text-decoration:none;
+}
+
+/* =========================================================
+   ✅ FIX 3: Sponsors footer sizing + clean layout
+   ========================================================= */
 
 .sponsors{
-  margin-top: 10px;
+  margin-top:12px;
 }
 
 .sponsors-title{
-  margin: 0 0 10px;
-  font-weight: 700;
-  color: var(--muted);
+  margin: 10px 0 8px;
+  font-weight:800;
+  color:#374151;
 }
 
+/* grid of logos */
 .sponsors-logos{
   display:flex;
-  flex-wrap:wrap;
+  gap:12px;
   justify-content:center;
   align-items:center;
-  gap:16px;
+  flex-wrap:wrap;
+  padding:6px 0 2px;
 }
 
-/* ✅ FIX: controla tamanho das imagens no rodapé */
+/* each logo wrapper */
+.sponsor{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px 8px;
+  border-radius:12px;
+}
+
+/* keep sponsor images small (this is what was missing) */
 .sponsors-logos img{
-  max-height:56px;
+  height:44px;          /* ✅ small size */
+  max-height:44px;
   width:auto;
-  height:auto;
+  max-width:160px;
   object-fit:contain;
   display:block;
 }
 
-@media (max-width: 768px){
-  .sponsors-logos img{ max-height:44px; }
+@media (max-width:768px){
+  .sponsors-logos img{
+    height:38px;
+    max-height:38px;
+    max-width:140px;
+  }
 }
