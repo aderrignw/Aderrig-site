@@ -12,15 +12,20 @@
 
   <meta name="description" content="Aderrig Neighbourhood Watch (Adamstown). Community-led safety, reporting and alerts aligned with Garda guidance."/>
 
-  <!-- (Opcional) Se você quiser, pode remover esse <style> depois,
-       porque eu já coloquei tudo isso também no style.css -->
   <style>
     body.page-home .hero .help{ margin:0 0 12px; color:var(--muted); }
+
     body.page-home .grid{ display:grid; gap:12px; }
-    body.page-home .cols-3{ grid-template-columns:2fr 3fr auto; align-items:stretch; }
-    @media (max-width:860px){
-      body.page-home .cols-3{ grid-template-columns:1fr; }
+
+    /* ✅ FORM layout (only the form) */
+    body.page-home #eirForm{
+      grid-template-columns: 2fr 3fr auto;
+      align-items: stretch;
     }
+    @media (max-width:860px){
+      body.page-home #eirForm{ grid-template-columns:1fr; }
+    }
+
     body.page-home .result{
       margin-top:12px;
       padding:12px 14px;
@@ -28,18 +33,33 @@
       border-radius:14px;
       background:#fbfdfc;
     }
+
+    /* ✅ Quick links grid (3 equal cards) */
+    body.page-home .quick-links{
+      display:grid;
+      gap:12px;
+      grid-template-columns: repeat(3, 1fr);
+    }
+    @media (max-width:860px){
+      body.page-home .quick-links{ grid-template-columns:1fr; }
+    }
+
     body.page-home .tile{
-      display:block;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
       background:#fff;
       border:1px solid var(--border);
-      padding:14px;
+      padding:14px 16px;
       border-radius:14px;
       box-shadow:var(--shadow);
       color:var(--brand);
       font-weight:700;
       text-decoration:none;
+      min-height:56px; /* deixa todos alinhados e “bonitos” */
     }
     body.page-home .tile:hover{ background:rgba(31,111,74,.04); text-decoration:none; }
+
     body.page-home .btn{ height:44px; }
     body.page-home #coordResult:empty{ display:none; }
   </style>
@@ -49,12 +69,12 @@
 
 <header class="site-header">
   <div class="brand">
-    <a class="site-logo" href="/index.html" aria-label="Aderrig NW Home">
+    <a class="site-logo" href="/index.html">
       <img src="/assets/logo/logo.png" class="logo-img" alt="Aderrig Neighbourhood Watch"/>
     </a>
   </div>
 
-  <nav class="nav" aria-label="Main navigation">
+  <nav class="nav">
     <a class="active" href="/index.html">Home</a>
     <a href="/about.html">About</a>
     <a href="/report.html">Report</a>
@@ -73,7 +93,7 @@
     <h2>Find your street coordinator</h2>
     <p class="help">Enter your Eircode to see nearby support for your street.</p>
 
-    <form class="grid cols-3" id="eirForm"
+    <form class="grid" id="eirForm"
           onsubmit="return (window.ANW && ANW.handleFindCoordinator) ? ANW.handleFindCoordinator(event) : false">
       <input id="eircodeInput" class="input" maxlength="8" required
              autocomplete="postal-code"
@@ -93,7 +113,7 @@
 
   <section class="card">
     <h3>Quick links</h3>
-    <div class="grid cols-3">
+    <div class="quick-links">
       <a class="tile" href="/about.html">What is Neighbourhood Watch?</a>
       <a class="tile" href="/report.html">Report an Incident</a>
       <a class="tile" href="/alerts.html">Community Alerts</a>
@@ -107,9 +127,9 @@
 
   <div class="home-notice-bar" id="homeNoticeBar" style="display:none">
     <div class="home-notice-bar__icon">ℹ</div>
-    <button class="home-notice-btn" data-home-notice-prev type="button">‹</button>
+    <button class="home-notice-btn" data-home-notice-prev>‹</button>
     <div class="home-notice-bar__text" data-home-notice-text></div>
-    <button class="home-notice-btn" data-home-notice-next type="button">›</button>
+    <button class="home-notice-btn" data-home-notice-next>›</button>
   </div>
 
   <div class="sponsors sponsors--footer" id="sponsorsFooter"></div>
@@ -117,7 +137,6 @@
   © 2025 Aderrig NW · <a href="/privacy.html">Privacy Policy</a>
 </footer>
 
-<!-- FORCE UPDATE JS -->
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script src="/assets/identity.js?v=20260208"></script>
 <script src="/assets/app-core.js?v=20260208"></script>
