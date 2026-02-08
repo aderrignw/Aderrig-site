@@ -1,10 +1,10 @@
-/* ========================================================= 
+/* =========================================================
    ADERRIG NEIGHBOURHOOD WATCH — GLOBAL STYLES (Ireland)
-   Focus:
-   - Harmonised look across all pages
-   - Single-line main navigation
-   - Consistent, slightly smaller headings everywhere
-   - Login (left) + Register (right on the login page only 
+   Fixes included:
+   - Restore proper grids (eircode row + quick links row)
+   - Header logo sized to NOT eat nav
+   - Quick links tiles centered + proportional
+   - Sponsors logos constrained (no giant images)
    ========================================================= */
 
 /* -------------------- Reset -------------------- */
@@ -41,13 +41,30 @@ body{
 a{ color:var(--brand); }
 a:hover{ text-decoration:underline; }
 
-/* Responsive helpers (safe defaults) */
+/* Responsive helpers */
 img, video{ max-width:100%; height:auto; }
 iframe{ max-width:100%; }
 
-/* Wide-content wrappers (prevents mobile overflow) */
+/* Wide-content wrappers */
 .table-wrap, .ac-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
 table{ max-width:100%; }
+
+/* -------------------- GLOBAL GRID HELPERS (RESTORED) -------------------- */
+/* These are critical: they restore your 3-column eircode row
+   and your 3-column quick links row */
+.grid{ display:grid; gap:12px; }
+
+/* Default 3-col layout used on Home:
+   [eircode] [address] [continue button] */
+.cols-3{
+  grid-template-columns: 2fr 3fr auto;
+  align-items:stretch;
+}
+
+/* When narrow, stack */
+@media (max-width:860px){
+  .cols-3{ grid-template-columns: 1fr; }
+}
 
 /* -------------------- Header (single-line nav) -------------------- */
 .site-header{
@@ -73,15 +90,15 @@ table{ max-width:100%; }
   display:flex;
   align-items:center;
   gap:10px;
-  min-width:0; /* allows the nav to keep space */
+  min-width:0;
 }
 
+/* (Legacy block logo) */
 .logo{
   width:32px;
   height:32px;
   border-radius:10px;
   background:rgba(31,111,74,.12);
-  color:var(--brand-ink);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -90,20 +107,11 @@ table{ max-width:100%; }
   flex:0 0 auto;
 }
 
-.brand-text{
-  min-width:0;
-}
-.brand-text h1{
-  margin:0;
-  font-size:0.98rem;
-  line-height:1.1;
-}
-.brand-text p{
-  margin:2px 0 0;
-  font-size:.85rem;
-}
+/* (Legacy brand text) */
+.brand-text{ min-width:0; }
+.brand-text h1{ margin:0; font-size:0.98rem; line-height:1.1; }
+.brand-text p{ margin:2px 0 0; font-size:.85rem; }
 
-/* Keep the header compact by hiding the subtitle when space is tight */
 @media (max-width: 980px){
   .brand-text p{ display:none; }
 }
@@ -114,8 +122,8 @@ table{ max-width:100%; }
   justify-content:flex-end;
   gap:8px;
 
-  flex-wrap:nowrap;          /* keep a single row */
-  overflow-x:auto;           /* allow scroll instead of wrapping */
+  flex-wrap:nowrap;
+  overflow-x:auto;
   -webkit-overflow-scrolling:touch;
   scrollbar-width:thin;
   padding-bottom:2px;
@@ -152,13 +160,14 @@ table{ max-width:100%; }
   padding:18px 0 40px;
 }
 
-/* -------------------- Typography (uniform + smaller) -------------------- */
+/* -------------------- Typography -------------------- */
 h1{ font-size:28px; line-height:1.15; margin:0 0 12px; }
 h2{ font-size:20px; line-height:1.2;  margin:0 0 10px; }
 h3{ font-size:17px; line-height:1.25; margin:0 0 8px; }
 h4{ font-size:15px; line-height:1.3;  margin:0 0 8px; }
 
 p, li{ margin:0 0 12px; color:#374151; }
+strong{ font-weight:650; }
 
 /* -------------------- Cards -------------------- */
 .card{
@@ -183,7 +192,6 @@ input, select, textarea{
   color:#111827;
 }
 
-/* Checkboxes / radios should not inherit full-width text input styling */
 input[type="checkbox"],
 input[type="radio"]{
   width:auto;
@@ -194,7 +202,6 @@ input[type="radio"]{
   accent-color: var(--brand);
 }
 
-/* Checkbox label layout helper (used in Admin Notices, etc.) */
 .chk{
   display:flex;
   align-items:center;
@@ -220,6 +227,7 @@ button, .btn{
   border-radius:999px;
   cursor:pointer;
 }
+
 button:hover, .btn:hover{ filter:brightness(.98); }
 
 .btn-line{
@@ -229,28 +237,67 @@ button:hover, .btn:hover{ filter:brightness(.98); }
 }
 .btn-line:hover{ background:rgba(31,111,74,.08); }
 
-/* Sub-tabs / pill rows (About/Team etc.) */
-.actions{
+/* -------------------- Home page specifics (FIXES) -------------------- */
+body.page-home .hero .help{ margin:0 0 12px; color:var(--muted); }
+
+/* Keep the Continue button a normal button size */
+body.page-home .btn{ height:44px; }
+body.page-home .cols-3 .btn{
+  width:auto;
+  min-width:140px;
+  justify-self:end;          /* keep it to the right */
+}
+@media (max-width:860px){
+  body.page-home .cols-3 .btn{
+    justify-self:stretch;    /* full-width only on mobile */
+    min-width:0;
+  }
+}
+
+/* Result box */
+body.page-home .result{
+  margin-top:12px;
+  padding:12px 14px;
+  border:1px dashed rgba(17,24,39,.16);
+  border-radius:14px;
+  background:#fbfdfc;
+}
+body.page-home #coordResult:empty{ display:none; }
+
+/* Quick links tiles: 1 row, 3 columns, centered text */
+body.page-home .tile{
   display:flex;
   align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
-  margin:12px 0 8px;
+  justify-content:center;
+  text-align:center;
+
+  background:#fff;
+  border:1px solid var(--border);
+  padding:14px 16px;
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  color:var(--brand);
+  font-weight:800;
+  text-decoration:none;
+
+  min-height:56px;           /* makes borders proportional */
 }
 
-/* -------------------- Login page: two columns (desktop only) -------------------- */
-body.page-login main.wrap .grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:24px;
-  align-items:start;
-}
-@media (max-width: 900px){
-  body.page-login main.wrap .grid{ grid-template-columns:1fr; }
+body.page-home .tile:hover{
+  background:rgba(31,111,74,.04);
+  text-decoration:none;
 }
 
-/* About page: keep layout, just ensure text isn’t oversized */
-body.page-about p, body.page-about li{ font-size:1rem; }
+/* Ensure the quick links container is truly 3 columns on desktop */
+body.page-home .card .grid.cols-3{
+  grid-template-columns: repeat(3, 1fr);
+  align-items:stretch;
+}
+@media (max-width:860px){
+  body.page-home .card .grid.cols-3{
+    grid-template-columns: 1fr; /* stack only on mobile */
+  }
+}
 
 /* -------------------- Footer -------------------- */
 .site-footer{
@@ -264,7 +311,19 @@ body.page-about p, body.page-about li{ font-size:1rem; }
   font-size:.9rem;
 }
 
-/* -------------------- Mobile -------------------- */
+/* Footer Public/Private Page indicator */
+.site-footer, footer {
+  position: relative;
+  text-align: center;
+}
+.page-access{
+  position: absolute;
+  left: 0;
+  color: green;
+  font-weight: normal;
+}
+
+/* -------------------- Mobile header -------------------- */
 @media (max-width: 720px){
   .site-header{
     display:flex;
@@ -279,7 +338,7 @@ body.page-about p, body.page-about li{ font-size:1rem; }
   }
 }
 
-/* -------------------- Projects: accordion sections -------------------- */
+/* -------------------- Projects: accordion -------------------- */
 .proj-accordion{
   border:1px solid rgba(17,24,39,.10);
   border-radius:14px;
@@ -304,24 +363,17 @@ body.page-about p, body.page-about li{ font-size:1rem; }
   border-top:1px solid rgba(17,24,39,.08);
   display:none;
 }
-
 .proj-accordion.open .proj-acc-body{ display:block; }
 
 .proj-chevron{
   transition:transform .15s ease;
   opacity:.8;
 }
-
 .proj-accordion.open .proj-chevron{ transform:rotate(180deg); }
 
-/* Tab panes (content containers) */
-.tab-pane{
-  margin-top:12px;
-}
+.tab-pane{ margin-top:12px; }
 
-strong{ font-weight:650; }
-
-/* Keep secondary tab rows usable: single line with horizontal scroll (prevents missing buttons like "Incidents map") */
+/* Tabs rows */
 .report-tabs, .dash-tabs, .resident-tabs, .proj-tabs, .alert-tabs, .admin-tabs{
   display:flex;
   gap:10px;
@@ -332,7 +384,7 @@ strong{ font-weight:650; }
   padding-bottom:4px;
 }
 
-/* Harmonised tabs/buttons (scoped to clickable elements only) */
+/* Harmonised tabs/buttons */
 button.proj-tab, a.proj-tab,
 button.alert-tab, a.alert-tab,
 button.admin-tab, a.admin-tab,
@@ -353,6 +405,7 @@ button.subtab, a.subtab{
   transition: background .15s ease, border-color .15s ease;
   white-space:nowrap;
 }
+
 button.proj-tab:hover, a.proj-tab:hover,
 button.alert-tab:hover, a.alert-tab:hover,
 button.admin-tab:hover, a.admin-tab:hover,
@@ -365,6 +418,7 @@ button.report-tab:hover, a.report-tab:hover,
 button.subtab:hover, a.subtab:hover{
   background:rgba(31,111,74,.06);
 }
+
 button.proj-tab.active, a.proj-tab.active,
 button.alert-tab.active, a.alert-tab.active,
 button.admin-tab.active, a.admin-tab.active,
@@ -379,34 +433,16 @@ button.subtab.active, a.subtab.active{
   border-color:rgba(31,111,74,.45);
 }
 
-/* Sub-tab rows that use .btn (e.g. About/Team) */
-.actions button.btn, .actions a.btn{
-  background:#fff;
-  color:var(--brand);
-  border:1px solid rgba(31,111,74,.30);
-  padding:8px 14px;
-  border-radius:999px;
-  font-weight:700;
-}
-.actions button.btn:hover, .actions a.btn:hover{
-  background:rgba(31,111,74,.06);
-}
-.actions button.btn.active, .actions a.btn.active{
-  background:var(--brand-soft);
-  border-color:rgba(31,111,74,.45);
-}
-
-/* Stronger "active" state so users clearly see where they are */
+/* Stronger active state */
 button.proj-tab.active, button.alert-tab.active, button.admin-tab.active,
 button.dash-tab.active, button.resident-tab.active, button.elect-tab.active, button.elect-subtab.active,
-button.hh-tab.active, button.report-tab.active, button.subtab.active,
-.actions button.btn.active{
+button.hh-tab.active, button.report-tab.active, button.subtab.active{
   background:var(--brand);
   color:#fff;
   border-color:var(--brand);
 }
 
-/* Textareas that auto-grow (safe defaults) */
+/* Textareas */
 textarea{
   min-height: 90px;
   resize: none;
@@ -414,9 +450,8 @@ textarea{
 }
 
 /* =========================================================
-   ANW Custom Alerts / Modals / Toasts (matches site design)
+   ANW Alerts / Modals / Toasts
    ========================================================= */
-
 .anw-overlay{
   position:fixed;
   inset:0;
@@ -517,7 +552,6 @@ textarea{
   background:rgba(31,111,74,.75);
   flex:0 0 auto;
 }
-.anw-toast.info .dot{ background:rgba(31,111,74,.75); }
 .anw-toast.warn .dot{ background:rgba(217,119,6,.90); }
 .anw-toast.error .dot{ background:rgba(185,28,28,.90); }
 .anw-toast.success .dot{ background:rgba(34,197,94,.90); }
@@ -540,11 +574,8 @@ textarea{
 .anw-toast .x:hover{ background:rgba(17,24,39,.05); }
 
 /* =========================================================
-   LOGO IMAGE OVERRIDE (keep existing layout; swap brand to image)
-   - Uses: <a class="site-logo"><img class="logo-img" src="assets/logo/logo.png"></a>
-   - Hides legacy .logo (ANW square) and .brand-text (Aderrig NW / Adamstown)
+   LOGO IMAGE OVERRIDE (header)
    ========================================================= */
-
 .site-logo{
   display:flex;
   align-items:center;
@@ -553,11 +584,11 @@ textarea{
   text-decoration:none;
 }
 
-/* ✅ AJUSTE: tamanho “ideal” + limite de largura pra NÃO mastigar as abas */
+/* Ideal size: visible, but does not eat nav */
 .logo-img{
-  height:36px;          /* desktop ideal */
+  height:42px;
   width:auto;
-  max-width:180px;      /* impede que o logo empurre o menu */
+  max-width:190px;     /* prevents crowding the nav */
   display:block;
   object-fit:contain;
 }
@@ -566,98 +597,55 @@ textarea{
 .logo{ display:none !important; }
 .brand-text{ display:none !important; }
 
-/* If any nav item is hidden by access control, remove it from layout completely */
-.nav a[hidden],
-.nav button[hidden]{
-  display:none !important;
+@media (max-width: 980px){
+  .logo-img{
+    height:38px;
+    max-width:170px;
+  }
 }
-
 @media (max-width: 768px){
   .logo-img{
-    height:32px;        /* mobile */
+    height:34px;
     max-width:160px;
   }
 }
 
-/* =========================
-   HOME PAGE: Quick links tiles alignment fix
-   ========================= */
+/* If any nav item is hidden by access control, remove it completely */
+.nav a[hidden],
+.nav button[hidden]{ display:none !important; }
 
-/* Faz os tiles ficarem alinhados e “com cara de card”, sem texto torto */
-body.page-home .tile{
-  display:flex;
-  align-items:center;        /* centraliza verticalmente */
-  justify-content:flex-start;
-  gap:10px;
-
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:14px;
-  box-shadow:var(--shadow);
-  padding:14px 16px;
-
-  color:var(--brand);
-  font-weight:800;
-  text-decoration:none;
-
-  min-height:56px;           /* evita caixas “gigantes” desproporcionais */
-  line-height:1.2;
-}
-
-body.page-home .tile:hover{
-  background:rgba(31,111,74,.04);
-  text-decoration:none;
-}
-
-/* Garante que o grid não distorça os tiles */
-body.page-home .grid.cols-3{
-  align-items:stretch;
-}
-body.page-home .grid.cols-3 > .tile{
-  height:100%;
-}
-
-/* Mobile: tiles empilhados e bonitos */
-@media (max-width:860px){
-  body.page-home .grid.cols-3{
-    grid-template-columns:1fr !important;
-  }
-}
-
-/* =========================
-   Sponsors (footer/page) — LIMITAR TAMANHO dos logos
-   ========================= */
-
-.sponsors{
-  margin: 10px 0 6px;
-}
-
+/* -------------------- Sponsors (FIX giant logos) -------------------- */
+.sponsors{ margin-top:10px; }
 .sponsors-title{
-  margin: 0 0 10px;
-  font-weight: 800;
+  margin:10px 0 8px;
+  font-weight:800;
   color:#111827;
 }
 
-/* layout das logos */
+/* Logos row: wraps nicely, never huge */
 .sponsors-logos{
   display:flex;
-  flex-wrap:wrap;
   justify-content:center;
   align-items:center;
-  gap:14px;
+  gap:16px;
+  flex-wrap:wrap;
+  margin:8px 0 0;
 }
 
-/* ✅ evita logos gigantes */
 .sponsors-logos img{
-  max-height:34px;
+  height:34px;        /* IMPORTANT: prevents giant sponsor images */
   width:auto;
-  height:auto;
+  max-width:160px;
   object-fit:contain;
+  display:block;
 }
 
-/* footer: um pouco menor */
-.sponsors--footer .sponsors-logos img{
-  max-height:30px;
+/* Slightly smaller on mobile */
+@media (max-width:768px){
+  .sponsors-logos img{
+    height:28px;
+    max-width:140px;
+  }
 }
 
 /* =========================
@@ -722,21 +710,8 @@ body.page-home .grid.cols-3 > .tile{
   .home-notice-bar__text{ font-size: 13px; }
 }
 
-/* Footer Public/Private Page indicator */
-.site-footer, footer {
-  position: relative;
-  text-align: center;
-}
-
-.page-access {
-  position: absolute;
-  left: 0;
-  color: green;
-  font-weight: normal;
-}
-
 /* =========================
-   ACL (Access Control) helpers
+   ACL helpers
    ========================= */
 .anw-acl-hidden{ display:none !important; }
 
@@ -752,7 +727,7 @@ nav a .anw-nav-badge{
   opacity:0.85;
 }
 
-/* --- Visibility helpers (defensive) --- */
-[hidden]{display:none !important;}
+/* Visibility helpers (defensive) */
+[hidden]{ display:none !important; }
 #teamRosterModal[hidden],
-#teamMemberModal[hidden]{display:none !important;}
+#teamMemberModal[hidden]{ display:none !important; }
