@@ -1,10 +1,10 @@
-/* =========================================================
+/* ========================================================= 
    ADERRIG NEIGHBOURHOOD WATCH — GLOBAL STYLES (Ireland)
    Focus:
    - Harmonised look across all pages
    - Single-line main navigation
    - Consistent, slightly smaller headings everywhere
-   - Login (left) + Register (right) on the login page only
+   - Login (left) + Register (right on the login page only 
    ========================================================= */
 
 /* -------------------- Reset -------------------- */
@@ -565,10 +565,11 @@ textarea{
   text-decoration:none;
 }
 
+/* ✅ FIX: logo do TOPO menor (desktop e mobile) */
 .logo-img{
-  height:40px;         /* desktop height */
+  height:32px;
   width:auto;
-  max-width:260px;
+  max-width:180px;
   display:block;
   object-fit:contain;
 }
@@ -584,7 +585,7 @@ textarea{
 }
 
 @media (max-width: 768px){
-  .logo-img{ height:32px; }
+  .logo-img{ height:28px; }
 }
 
 /* =========================
@@ -685,3 +686,38 @@ nav a .anw-nav-badge{
 [hidden]{display:none !important;}
 #teamRosterModal[hidden],
 #teamMemberModal[hidden]{display:none !important;}
+
+/* =========================
+   Sponsors (footer) — FIX
+   ========================= */
+
+.sponsors{
+  margin-top: 10px;
+}
+
+.sponsors-title{
+  margin: 0 0 10px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.sponsors-logos{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:center;
+  gap:16px;
+}
+
+/* ✅ FIX: controla tamanho das imagens no rodapé */
+.sponsors-logos img{
+  max-height:56px;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  display:block;
+}
+
+@media (max-width: 768px){
+  .sponsors-logos img{ max-height:44px; }
+}
