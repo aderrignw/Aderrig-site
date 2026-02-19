@@ -79,9 +79,9 @@ table{ max-width:100%; }
   backdrop-filter:saturate(180%) blur(10px);
   border-bottom:1px solid rgba(17,24,39,.08);
 
-  /* Full-width header so the navigation can always fit without clipping */
-  width:100%;
-  margin:0;
+  /* Premium centred header: aligns with page content while giving the nav more room */
+  width:min(1400px, calc(100% - 24px));
+  margin:0 auto;
   padding:8px 12px;
   box-sizing:border-box;
 
@@ -96,15 +96,14 @@ table{ max-width:100%; }
 .brand{
   display:flex;
   align-items: flex-start;
-  gap:10px;
+  gap:8px;
   min-width:0; /* allows the nav to keep space */
 }
 
 /* Top navigation alignment */
 .nav{
-  margin-left:12px;
+  margin-left:10px;
   flex:1 1 auto;
-  justify-content:flex-start;
 }
 
 /* Optional: visually hint locked items without showing Public/Private badges */
@@ -151,7 +150,7 @@ table{ max-width:100%; }
   justify-content:flex-start;
   gap:6px;
 
-  margin-left:12px;
+  margin-left:10px;
   flex:1 1 auto;
 
   flex-wrap:nowrap;          /* keep a single row */
@@ -625,9 +624,9 @@ textarea{
 }
 
 .logo-img{
-  height:36px;         /* desktop height (slightly smaller to fit full nav) */
+  height:32px;         /* desktop height (slightly smaller to fit full nav) */
   width:auto;
-  max-width:220px;
+  max-width:180px;
   display:block;
   object-fit:contain;
 }
