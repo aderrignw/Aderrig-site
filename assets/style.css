@@ -79,31 +79,30 @@ table{ max-width:100%; }
   backdrop-filter:saturate(180%) blur(10px);
   border-bottom:1px solid rgba(17,24,39,.08);
 
-  /* Premium centred header: aligns with page content while giving the nav more room */
-  width:min(1400px, calc(100% - 24px));
+  width:min(var(--container), calc(100% - 32px));
   margin:0 auto;
-  padding:8px 12px;
-  box-sizing:border-box;
+  padding:8px 0;
 
   display:flex;
-  align-items: flex-start;
+  align-items: center;
   /* Keep logo and first tab closer (no big empty gap) */
   justify-content:flex-start;
-  gap:10px;
+  gap:6px;
 }
 
 
 .brand{
   display:flex;
-  align-items: flex-start;
-  gap:8px;
+  align-items: center;
+  gap:6px;
   min-width:0; /* allows the nav to keep space */
 }
 
 /* Top navigation alignment */
 .nav{
-  margin-left:10px;
+  margin-left:8px;
   flex:1 1 auto;
+  justify-content:center;
 }
 
 /* Optional: visually hint locked items without showing Public/Private badges */
@@ -118,7 +117,7 @@ table{ max-width:100%; }
   background:rgba(31,111,74,.12);
   color:var(--brand-ink);
   display:flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content:center;
   font-weight:800;
   letter-spacing:.4px;
@@ -145,23 +144,20 @@ table{ max-width:100%; }
 
 .nav{
   display:flex;
-  align-items: flex-start;
-  /* Premium single-line tabs (no wrapping); if needed, scroll but do not clip */
-  justify-content:flex-start;
+  align-items: center;
+  /* Center the tabs, but keep them close to the logo */
+  justify-content:center;
   gap:6px;
 
-  margin-left:10px;
+  margin-left:8px;
   flex:1 1 auto;
 
   flex-wrap:nowrap;          /* keep a single row */
   overflow-x:auto;           /* allow scroll instead of wrapping */
   -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;      /* hide scrollbar (Firefox) */
-  padding:0 12px 2px 0;      /* right padding keeps last tab fully visible */
+  scrollbar-width:thin;
+  padding-bottom:2px;
 }
-
-/* hide scrollbar (WebKit) */
-.nav::-webkit-scrollbar{ display:none; }
 
 .nav a{
   text-decoration:none;
@@ -239,8 +235,8 @@ input[type="radio"]{
 /* Checkbox label layout helper (used in Admin Notices, etc.) */
 .chk{
   display:flex;
-  align-items: flex-start;
-  gap:10px;
+  align-items: center;
+  gap:6px;
   font-weight:500;
   color:#111827;
 }
@@ -274,8 +270,8 @@ button:hover, .btn:hover{ filter:brightness(.98); }
 /* Sub-tabs / pill rows (About/Team etc.) */
 .actions{
   display:flex;
-  align-items: flex-start;
-  gap:10px;
+  align-items: center;
+  gap:6px;
   flex-wrap:wrap;
   margin:12px 0 8px;
 }
@@ -331,7 +327,7 @@ body.page-about p, body.page-about li{ font-size:1rem; }
     display:flex;
     flex-direction:column;
     align-items: flex-start;
-    gap:8px;
+    gap:6px;
     padding:10px 0 8px;
   }
   .nav{
@@ -355,7 +351,7 @@ body.page-about p, body.page-about li{ font-size:1rem; }
   font-weight:800;
   color:#111827;
   display:flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content:space-between;
   cursor:pointer;
   user-select:none;
@@ -389,7 +385,7 @@ strong{ font-weight:650; }
 /* Keep secondary tab rows usable: single line with horizontal scroll (prevents missing buttons like "Incidents map") */
 .report-tabs, .dash-tabs, .resident-tabs, .proj-tabs, .alert-tabs, .admin-tabs{
   display:flex;
-  gap:10px;
+  gap:6px;
   align-items: flex-start;
   flex-wrap:nowrap;
   overflow-x:auto;
@@ -548,7 +544,7 @@ textarea{
   padding:12px 16px 16px;
   display:flex;
   justify-content:flex-end;
-  gap:10px;
+  gap:6px;
   flex-wrap:wrap;
 }
 
@@ -558,7 +554,7 @@ textarea{
   bottom:14px;
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:6px;
   z-index:10000;
 }
 
@@ -571,7 +567,7 @@ textarea{
   padding:12px 14px;
   display:flex;
   align-items:flex-start;
-  gap:10px;
+  gap:6px;
   animation: anwToastIn .16s ease-out forwards;
 }
 @keyframes anwToastIn{
@@ -617,16 +613,16 @@ textarea{
 
 .site-logo{
   display:flex;
-  align-items: flex-start;
-  gap:10px;
+  align-items: center;
+  gap:6px;
   flex:0 0 auto;
   text-decoration:none;
 }
 
 .logo-img{
-  height:32px;         /* desktop height (slightly smaller to fit full nav) */
+  height:34px;         /* desktop height */
   width:auto;
-  max-width:180px;
+  max-width:220px;
   display:block;
   object-fit:contain;
 }
@@ -642,7 +638,7 @@ textarea{
 }
 
 @media (max-width: 768px){
-  .logo-img{ height:30px; }
+  .logo-img{ height:32px; }
 }
 
 /* =========================
@@ -810,7 +806,7 @@ nav a .anw-nav-badge{
 .home-form-row,
 .find-coordinator-row{
   display:flex;
-  align-items: flex-start;
+  align-items: center;
   gap:12px;
   flex-wrap:nowrap;
 }
@@ -877,7 +873,7 @@ nav a .anw-nav-badge{
   display:inline-flex;
   align-items: flex-start;
   justify-content:center;
-  gap:8px;
+  gap:6px;
   padding:10px 16px;
   border-radius:999px;
   border:1px solid rgba(31,111,74,.30);
@@ -895,7 +891,7 @@ nav a .anw-nav-badge{
 
 @media (max-width: 900px){
   .quick-links{
-    gap:10px;
+    gap:6px;
   }
   .quick-links a{
     width:100%;
@@ -929,7 +925,7 @@ nav a .anw-nav-badge{
 
 .sponsor-track{
   display:flex;
-  align-items: flex-start;
+  align-items: center;
   gap:22px;
   width:max-content;
   animation: sponsorScroll 26s linear infinite;
@@ -937,7 +933,7 @@ nav a .anw-nav-badge{
 
 .sponsor-item{
   display:flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content:center;
   padding:0 6px;
 }
@@ -962,7 +958,7 @@ nav a .anw-nav-badge{
 .sponsors-title{ margin:0 0 8px; font-weight:700; text-align:center; }
 .sponsors-logos{
   display:flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content:center;
   gap:16px;
   flex-wrap:wrap;
@@ -978,7 +974,7 @@ nav a .anw-nav-badge{
 }
 .grid.cols-3 > a{
   display:flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content:center;
   text-align:center;
 }
