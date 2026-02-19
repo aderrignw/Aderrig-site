@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="page:dashboard" name="anw-acl-key"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<!-- Prevent protected-page "flash" before auth redirect (runs before first paint) -->
+<style>html.anw-preauth-hide{visibility:hidden}</style>
+<script>
+  (function(){
+    try {
+      if (location && location.protocol === 'file:') return;
+      var k = document.querySelector('meta[name="anw-acl-key"]');
+      var pageKey = k ? String(k.getAttribute('content') || '').trim() : '';
+      var isPublic = (pageKey === 'page:home' || pageKey === 'page:about' || pageKey === 'page:privacy' || pageKey === 'page:login');
+      if (isPublic) return;
+
+      document.documentElement.classList.add('anw-preauth-hide');
+      var cachedUser = null;
+      try { cachedUser = localStorage.getItem('netlify.auth.user'); } catch (e) { cachedUser = null; }
+      if (!cachedUser) {
+        location.replace('login.html');
+        return;
+      }
+      document.documentElement.classList.remove('anw-preauth-hide');
+    } catch (e) {
+      try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
+    }
+  })();
+</script>
+<title>Dashboard — Aderrig NW</title>
+<link href="assets/style.css" rel="stylesheet"/>
+<style>
+    /* Garda & Safety (Dashboard) */
+    .garda-panel{
+      margin-top:0.75rem;
+      border:1px solid #e4e7eb;
+      border-radius:14px;
+      background:#fff;
+      padding:0.9rem;
+    }
+    .chip-row{
+      margin-top:0.6rem;
+      overflow-x:auto;
+      white-space:nowrap;
+      -webkit-overflow-scrolling:touch;
+      padding-bottom:4px;
+    }
+    .chip{
+      display:inline-flex; align-items:center;
+      padding:7px 12px;
+      border:1px solid #e4e7eb;
+      border-radius:999px;
+      background:#fff;
+      font-size:12px;
+      margin-right:8px;
+      cursor:pointer;
+      color: var(--ink);
+      font-weight:800;
+      line-height:1;
+      -webkit-appearance:none; appearance:none;
+    }
+    .chip::-moz-focus-inner{ border:0; padding:0; }
+    .chip.active{
+      border-color: var(--brand, #1f7a3f);
+      background: var(--brandSoft, #eaf6ee);
+      color: var(--brand, #1f7a3f);
+    }
+    .garda-list{ margin-top:0.85rem; }
+    .garda-item{
+      border:1px solid #e4e7eb;
+      border-radius:12px;
+      background:#fff;
+      padding:0.9rem;
+      margin:0.65rem 0;
+    }
+    .garda-item .row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .garda-item .title{
+      font-weight:800;
+      margin:0;
+    }
+    .garda-item .date{
+      font-size:12px;
+      color: #6b7280;
+      white-space:nowrap;
+    }
+    .garda-item .snippet{
+      margin-top:8px;
+      font-size:13px;
+      color:#374151;
+    }
+    .garda-item .link{
+      margin-top:8px;
+      font-size:13px;
+      font-weight:700;
+      color: var(--brand, #1f7a3f);
+      display:inline-block;
+      text-decoration:none;
+    }
+    .garda-item .meta{
+      margin-top:6px;
+      font-size:12px;
+      color:#6b7280;
+      font-weight:700;
+    }
+</style>
+<style>
+    /* Garda tab: in-page TOP button (does not float) */
+    .garda-top-wrap{
+      display:flex;
+      justify-content:flex-end;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #eef0f2;
+    }
+    .garda-top-btn{
+      min-width: 88px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+    }
+  </style>
+<style>
+    /* In-page back-to-top tab-style button */
+    .garda-top-wrap{
+      display:flex;
+      justify-content:flex-end;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #eef0f2;
+    }
+    .garda-top-btn.tab-like{
+      border-radius: 999px;
+      padding: 8px 16px;
+      background: #fff;
+      color: var(--brand, #1f7a3f);
+      border: 2px solid var(--brand, #1f7a3f);
+      font-weight: 700;
+    }
+    .garda-top-btn.tab-like.is-active{
+      background: var(--brand, #1f7a3f);
+      color: #fff;
+    }
+  </style>
+<style>
+    /* Garda categories: responsive grid with SVG icons (Option A) */
+    #tabGarda .chip-row{
+      margin-top: 12px;
+      overflow: visible !important;
+      white-space: normal !important;
+      padding-bottom: 0 !important;
+    }
+    #tabGarda .garda-cat-grid{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    #tabGarda .garda-cat{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1.5px solid #d9e7dd;
+      background:#fff;
+      cursor:pointer;
+      text-align:left;
+      transition:.15s ease;
+      -webkit-appearance:none;
+      appearance:none;
+    }
+    #tabGarda .garda-cat:hover{
+      background: var(--brandSoft, #eaf6ee);
+    }
+    #tabGarda .garda-cat .icon{
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: var(--brandSoft, #eaf6ee);
+      flex: 0 0 36px;
+    }
+    #tabGarda .garda-cat .icon svg{
+      width: 20px;
+      height: 20px;
+      stroke: var(--brand, #1f7a3f);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    #tabGarda .garda-cat .label{
+      font-weight: 700;
+      color: var(--ink, #1f2937);
+      line-height: 1.2;
+      font-size: 14px;
+    }
+    #tabGarda .garda-cat.is-active{
+      background: var(--brand, #1f7a3f);
+      border-color: var(--brand, #1f7a3f);
+    }
+    #tabGarda .garda-cat.is-active .label{
+      color:#fff;
+    }
+    #tabGarda .garda-cat.is-active .icon{
+      background: rgba(255,255,255,0.18);
+    }
+    #tabGarda .garda-cat.is-active .icon svg{
+      stroke:#fff;
+    }
+  </style>
+<style id="page-access-style">
+  footer.site-footer { position: relative; }
+  footer.site-footer .page-access {
+    position: absolute;
+    left: 0;
+    color: green;
+    font-weight: normal;
+  }
+</style>
+</head>
+<body>
+<header class="site-header">
+<div class="brand">
+<a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
+<div class="brand-text">
+<h1>Aderrig NW</h1>
+<p class="muted">Adamstown</p>
+</div>
+</div>
+<nav class="nav">
+<a href="index.html">Home</a>
+<a href="about.html">About</a>
+<a href="report.html">Report</a>
+<a href="alerts.html">Community Alerts</a>
+<a href="projects.html">Community Projects</a>
+<a href="handbook.html">Handbook</a>
+<a href="login.html">Login / Register</a>
+<a class="active" href="dashboard.html">Dashboard</a>
+<a href="household.html">Household</a>
+<a href="admin.html">Admin</a>
+</nav>
+</header>
+<main class="wrap">
+<section class="card">
+<h2>Resident dashboard</h2>
+<p class="muted">Manage your profile, elections and interests.</p>
+<div class="tiny muted" id="anwAccessNotice" style="margin-top:12px; display:none;">
+<span id="anwAccessText">
+        You are not logged in. Please <a href="login.html">log in</a> or
+        <a href="login.html#signup">register</a> to access your dashboard.
+      </span>
+</div>
+<div class="actions dash-tabs" style="margin-top:0.5rem;">
+<button class="btn small dash-tab active" data-acl-feature="dashboard:tab_profile" data-tab="tabProfile" type="button">Profile</button>
+<button class="btn small dash-tab" data-acl-feature="dashboard:tab_interest" data-tab="tabInterest" type="button">Interest</button>
+<button class="btn small dash-tab" data-acl-feature="dashboard:tab_elections" data-tab="tabElections" type="button">Elections</button>
+<button class="btn small dash-tab" data-acl-feature="dashboard:tab_notices" data-tab="tabNotices" type="button">Notices <span class="badge" id="noticesBadge" style="display:none; margin-left:6px;">0</span></button>
+<button class="btn small dash-tab" data-acl-feature="dashboard:tab_garda" data-tab="tabGarda" type="button">Garda &amp; Safety</button>
+</div>
+</section>
+<!-- ================= PROFILE TAB ================= -->
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_profile" id="tabProfile">
+<h3>Profile</h3>
+<div class="card" id="dbNotLogged" style="background:#f9fafb; display:none;">
+<p class="tiny muted" style="margin:0;">
+        Please log in first to access your dashboard.
+      </p>
+</div>
+<div id="dbProfileArea" style="display:none;">
+<p class="tiny muted" style="margin-top:0;">
+        Email and Eircode are protected and cannot be changed.
+      </p>
+<div class="grid-2" style="gap:1rem;">
+<div class="field">
+<label>Registration No</label>
+<input disabled="" id="pfRegId" type="text"/>
+</div>
+<div class="field">
+<label>Status</label>
+<input disabled="" id="pfStatus" type="text"/>
+</div>
+</div>
+<div class="grid-2" style="gap:1rem;">
+<div class="field">
+<label>Full name</label>
+<input id="pfName" type="text"/>
+</div>
+<div class="field">
+<label>Phone</label>
+<input id="pfPhone" type="text"/>
+</div>
+</div>
+<div class="grid-2" style="gap:1rem;">
+<div class="field">
+<label>Email</label>
+<input disabled="" id="pfEmail" type="email"/>
+</div>
+<div class="field">
+<label>Eircode</label>
+<input disabled="" id="pfEir" type="text"/>
+</div>
+</div>
+<div class="field">
+<label>Full address</label>
+<input disabled="" id="pfAddress" type="text"/>
+</div>
+<div class="field">
+<label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
+<input id="pfAlertOptIn" type="checkbox"/>
+<span>I agree to receive Aderrig NW alerts via Email, SMS or WhatsApp (optional).</span>
+</label>
+<p class="tiny muted" id="pfAlertMeta" style="margin:6px 0 0;">No alert preference recorded yet (Email/SMS/WhatsApp).</p>
+</div>
+<div class="grid-2" style="gap:1rem;">
+<div class="field">
+<label>Resident type</label>
+<input disabled="" id="pfType" type="text"/>
+</div>
+<div class="field">
+<label>Management company</label>
+<input disabled="" id="pfMgmt" type="text"/>
+</div>
+</div>
+<div class="field">
+<label>Elected position</label>
+<input disabled="" id="pfElected" type="text"/>
+</div>
+<div class="field">
+<label>Volunteer roles</label>
+<ul class="tiny" id="pfVolRoles" style="margin:0; padding-left:18px;"></ul>
+</div>
+<p class="tiny muted" id="pfMsg" style="margin-top:0.5rem;"></p>
+<div class="actions" style="justify-content:flex-end;">
+<button class="btn" id="btnSaveProfile" type="button">Save</button>
+</div>
+</div>
+</section>
+<!-- ================= INTEREST TAB ================= -->
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_interest" id="tabInterest" style="display:none;">
+<h3>Expression of Interest (Elections)</h3>
+<p class="tiny muted" style="margin-top:0;">
+      Submit your interest for an elected role. Admin approval is required before your name appears for resident voting.
+    </p>
+<div class="card" id="interestBlocked" style="background:#f9fafb; display:none;">
+<p class="tiny muted" style="margin:0;">
+        Your registration must be approved before submitting interest.
+      </p>
+</div>
+<div id="interestArea" style="display:none;">
+<div class="field">
+<label>Role</label>
+<select id="intRole">
+<option value="">Select…</option>
+<option value="area">Area Coordinator</option>
+<option value="assistant">Assistant Area Coordinator</option>
+</select>
+</div>
+<div class="field">
+<label>Motivation / experience (visible to residents)</label>
+<textarea id="intText" rows="6"></textarea>
+</div>
+<p class="tiny muted" id="intMeta"></p>
+<div class="actions" style="justify-content:flex-end; gap:0.5rem;">
+<button class="btn-line" id="btnWithdrawInterest" style="display:none;" type="button">Withdraw</button>
+<button class="btn" id="btnSubmitInterest" type="button">Submit</button>
+</div>
+</div>
+</section>
+<!-- ================= ELECTIONS TAB ================= -->
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_elections" id="tabElections" style="display:none;">
+<h3>Elections</h3>
+<p class="tiny muted" style="margin-top:0;">
+      View current election periods and your eligibility.
+    </p>
+<div class="card" id="electionsArea" style="background:#f9fafb;">
+<p class="tiny muted" style="margin:0;">
+        Election information will appear here when elections are created by an admin.
+      </p>
+</div>
+<div style="overflow-x:auto; margin-top:0.75rem;">
+<table style="width:100%;">
+<thead>
+<tr>
+<th>Role</th>
+<th>Period</th>
+<th>Status</th>
+<th>Winner</th>
+</tr>
+</thead>
+<tbody id="electionsBody"></tbody>
+</table>
+</div>
+<p class="tiny muted" id="electionsEmpty" style="display:none; margin-top:0.5rem;">
+      No elections configured.
+    </p>
+</section>
+<!-- ================= NOTICES TAB ================= -->
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_notices" id="tabNotices" style="display:none;">
+<h3 style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+<span>Notices</span>
+<span class="badge" id="noticesBadgeTop" style="display:none;">0</span>
+</h3>
+<p class="tiny muted" style="margin-top:0;">Official community notices published by Aderrig NW administrators.</p>
+<div class="card" id="noticesEmpty" style="background:#f9fafb; display:none;">
+<p class="tiny muted" style="margin:0;">No notices available.</p>
+</div>
+<div id="noticesList" style="display:none;"></div>
+</section>
+<!-- ================= GARDA & SAFETY TAB ================= -->
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_garda" id="tabGarda" style="display:none;">
+<h3>Garda &amp; Safety</h3>
+<p class="tiny muted" style="margin-top:0;">
+      Official safety information and Garda updates for residents.
+    </p>
+<div class="garda-panel">
+<div class="tiny muted" id="gardaStatus">Loading Garda updates…</div>
+<div class="chip-row" id="gardaChips"></div>
+<div class="garda-list" id="gardaList"></div>
+<div class="garda-top-wrap">
+<button class="btn garda-top-btn tab-like" id="scrollTopBtn" type="button">Back to top</button>
+</div>
+</div>
+</section>
+</main>
+<footer class="site-footer">
+  <div class="footer-row">
+    <div class="footer-left">
+      <span class="page-status">Private Page</span>
+    </div>
+
+    <div class="footer-center">
+      © 2025 Aderrig NW · 
+      <a href="privacy.html">Privacy Policy</a>
+    </div>
+  </div>
+</footer>
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script><script src="assets/identity.js"></script><script src="assets/app-core.js"></script>
+<script>
+(async function(){
+  'use strict';
+  await anwInitStore();
+
+  function toast(msg, type){
+    try{
+      if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){
+        ANW.ui.toast(String(msg || ''), type || 'info');
+      }
+    }catch{}
+  }
+  function modal(msg, title){
+    try{
+      if(window.ANW && ANW.ui && typeof ANW.ui.alert === 'function'){
+        ANW.ui.alert(String(msg || ''), { title: title || 'Message' });
+        return;
+      }
+    }catch{}
+    alert(msg);
+  }
+  async function confirmModal(msg, title){
+    try{
+      if(typeof window.anwConfirm === 'function'){
+        return await window.anwConfirm(String(msg || ''), { title: title || 'Confirm' });
+      }
+    }catch{}
+    return confirm(msg);
+  }
+  function setText(id, value){
+    const el = document.getElementById(id);
+    if(el) el.textContent = (value ?? '').toString();
+  }
+
+  const KEY_USERS     = ANW_KEYS.USERS;
+  const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
+
+  const loggedEmail = anwGetLoggedEmail();
+  const users = anwLoad(KEY_USERS, []);
+  const me = Array.isArray(users)
+    ? users.find(u => anwNormEmail(u.email) === anwNormEmail(loggedEmail))
+    : null;
+
+  const notLoggedBox = document.getElementById('dbNotLogged');
+  const profileArea = document.getElementById('dbProfileArea');
+
+  if(!loggedEmail || !me){
+    notLoggedBox.style.display = 'block';
+    profileArea.style.display = 'none';
+  } else {
+    notLoggedBox.style.display = 'none';
+    profileArea.style.display = 'block';
+  }
+
+  const tabBtns = document.querySelectorAll('.dash-tab');
+  const tabPanels = document.querySelectorAll('.dash-tab-content');
+
+  function showTab(id){
+    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+    tabPanels.forEach(p => p.style.display = (p.id === id ? 'block' : 'none'));
+  }
+  tabBtns.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+  function electedLabelFromUser(u){
+    const r = String(u?.electedRole || '').toLowerCase();
+    if(r === 'assistant') return 'Assistant Area Coordinator';
+    if(r === 'area') return 'Area Coordinator';
+    return '—';
+  }
+
+  if(me){
+    document.getElementById('pfRegId').value = me.regId || '—';
+    document.getElementById('pfStatus').value = me.status || 'pending';
+    document.getElementById('pfName').value = me.name || '';
+    document.getElementById('pfPhone').value = me.phone || '';
+    document.getElementById('pfEmail').value = me.email || '';
+    document.getElementById('pfEir').value = me.eircode || '';
+    document.getElementById('pfAddress').value = me.address || '';
+
+    const ac = me.alertsConsent || {};
+    const cb = document.getElementById('pfAlertOptIn');
+    if(cb) cb.checked = !!ac.optIn || !!ac.email || !!ac.sms;
+
+    const meta = document.getElementById('pfAlertMeta');
+    if(meta){
+      meta.textContent = ac.updatedAt
+        ? ('Last updated: ' + new Date(ac.updatedAt).toLocaleString())
+        : 'No alert preference recorded yet (Email/SMS/WhatsApp).';
+    }
+
+    document.getElementById('pfType').value = me.type || '';
+    document.getElementById('pfMgmt').value = me.managementCompany || '';
+
+    document.getElementById('pfElected').value = electedLabelFromUser(me);
+
+    const ul = document.getElementById('pfVolRoles');
+    ul.innerHTML = '';
+    const vr = me.vol_roles || {};
+    const labels = {
+      streetWatch:'Street watch / patrols',
+      leaflets:'Distribute leaflets',
+      tech:'Tech support',
+      elderly:'Elderly checks',
+      meetings:'Meeting organiser',
+      translation:'Translation'
+    };
+    Object.keys(labels).forEach(k=>{
+      if(vr[k]){
+        const li = document.createElement('li');
+        li.textContent = labels[k];
+        ul.appendChild(li);
+      }
+    });
+    if(!ul.children.length){
+      ul.innerHTML = '<li class="muted">No volunteer roles selected</li>';
+    }
+  }
+
+  document.getElementById('btnSaveProfile')?.addEventListener('click', async ()=>{
+    if(!me) return;
+
+    try{
+      me.name = document.getElementById('pfName').value.trim();
+      me.phone = document.getElementById('pfPhone').value.trim();
+
+      const cb = document.getElementById('pfAlertOptIn');
+      const nextOptIn = !!(cb && cb.checked);
+      const now = new Date().toISOString();
+
+      me.termsAccepted = true;
+      if(!me.termsAcceptedAt) me.termsAcceptedAt = me.createdAt || now;
+
+      const prev = me.alertsConsent || { email:false, sms:false, history:[] };
+      const prevOptIn = !!(prev.optIn || prev.email || prev.sms);
+      const changed = (prevOptIn !== nextOptIn);
+
+      if(changed){
+        const hist = Array.isArray(prev.history) ? prev.history.slice() : [];
+        hist.push({ at: now, email: nextOptIn, sms: nextOptIn, source: 'profile' });
+        me.alertsConsent = { optIn: nextOptIn, email: nextOptIn, sms: nextOptIn, updatedAt: now, history: hist };
+      }else{
+        me.alertsConsent = {
+          optIn: prevOptIn,
+          email: !!prev.email,
+          sms: !!prev.sms,
+          updatedAt: prev.updatedAt || now,
+          history: Array.isArray(prev.history) ? prev.history : []
+        };
+      }
+
+      await anwSave(KEY_USERS, users);
+
+      setText('pfMsg', 'Profile updated.');
+      toast('Profile updated.', 'success');
+
+      const meta = document.getElementById('pfAlertMeta');
+      if(meta){
+        meta.textContent = me.alertsConsent?.updatedAt
+          ? ('Last updated: ' + new Date(me.alertsConsent.updatedAt).toLocaleString())
+          : 'No alert preference recorded yet (Email/SMS/WhatsApp).';
+      }
+    }catch(err){
+      setText('pfMsg', 'Error updating profile.');
+      modal('Error updating profile. Please try again.', 'Error');
+      toast('Error updating profile.', 'error');
+    }
+  });
+
+  const interestBlocked = document.getElementById('interestBlocked');
+  const interestArea = document.getElementById('interestArea');
+
+  const allowed = !!(me && anwIsApproved(me));
+
+  if(!allowed){
+    interestBlocked.style.display = 'block';
+    interestArea.style.display = 'none';
+  } else {
+    interestBlocked.style.display = 'none';
+    interestArea.style.display = 'block';
+  }
+
+  const intRole = document.getElementById('intRole');
+  const intText = document.getElementById('intText');
+  const intMeta = document.getElementById('intMeta');
+  const btnSubmitInterest = document.getElementById('btnSubmitInterest');
+  const btnWithdrawInterest = document.getElementById('btnWithdrawInterest');
+
+  function renderInterest(){
+    if(!me) return;
+
+    if(me.interest){
+      intRole.value = me.interest.role || '';
+      intText.value = me.interest.text || '';
+      intMeta.textContent =
+        'Submitted on ' + (me.interest.date || '—') +
+        ' · Status: ' + (me.interest.status || 'pending');
+      btnWithdrawInterest.style.display = 'inline-block';
+      btnSubmitInterest.textContent = 'Update';
+    } else {
+      intRole.value = '';
+      intText.value = '';
+      intMeta.textContent = '';
+      btnWithdrawInterest.style.display = 'none';
+      btnSubmitInterest.textContent = 'Submit';
+    }
+  }
+  renderInterest();
+
+  btnSubmitInterest?.addEventListener('click', async ()=>{
+    if(!me) return;
+
+    const roleVal = (intRole.value || '').trim();
+    const textVal = (intText.value || '').trim();
+
+    if(!roleVal || !textVal){
+      intMeta.textContent = 'Please complete all fields.';
+      toast('Please complete all fields.', 'warn');
+      modal('Please complete all fields before submitting.', 'Missing information');
+      return;
+    }
+
+    try{
+      const existingStatus = me.interest?.status || 'pending';
+
+      me.interest = {
+        role: roleVal,
+        text: textVal,
+        date: new Date().toISOString().slice(0,10),
+        status: existingStatus
+      };
+
+      await anwSave(KEY_USERS, users);
+      renderInterest();
+
+      intMeta.textContent = 'Interest saved. Awaiting admin approval if pending.';
+      toast('Interest saved.', 'success');
+    }catch(err){
+      intMeta.textContent = 'Error saving interest.';
+      toast('Error saving interest.', 'error');
+      modal('Error saving your interest. Please try again.', 'Error');
+    }
+  });
+
+  btnWithdrawInterest?.addEventListener('click', async ()=>{
+    if(!me || !me.interest) return;
+
+    const ok = await confirmModal('Withdraw your submitted interest?', 'Confirm');
+    if(!ok) return;
+
+    try{
+      delete me.interest;
+      await anwSave(KEY_USERS, users);
+      renderInterest();
+      intMeta.textContent = 'Interest withdrawn.';
+      toast('Interest withdrawn.', 'info');
+    }catch(err){
+      intMeta.textContent = 'Error withdrawing interest.';
+      toast('Error withdrawing interest.', 'error');
+      modal('Error withdrawing interest. Please try again.', 'Error');
+    }
+  });
+
+  const electionsBody = document.getElementById('electionsBody');
+  const electionsEmpty = document.getElementById('electionsEmpty');
+  const elections = anwLoad(KEY_ELECTIONS, []);
+
+  electionsBody.innerHTML = '';
+  if(!Array.isArray(elections) || !elections.length){
+    electionsEmpty.style.display = 'block';
+  } else {
+    electionsEmpty.style.display = 'none';
+    elections.forEach(e=>{
+      const tr = document.createElement('tr');
+      const roleLabel = (String(e.role||'').toLowerCase()==='assistant')
+        ? 'Assistant Area Coordinator'
+        : 'Area Coordinator';
+
+      const winner = e.electedName || e.winnerName || e.electedEmail || '—';
+
+      tr.innerHTML = `
+        <td>${roleLabel}</td>
+        <td>${e.start || '—'} → ${e.end || '—'}</td>
+        <td>${e.status || '—'}</td>
+        <td>${winner}</td>
+      `;
+      electionsBody.appendChild(tr);
+    });
+  }
+
+  /* =========================
+     Notices (dashboard)
+     ========================= */
+
+  const KEY_NOTICES = ANW_KEYS.NOTICES || 'anw_notices';
+  const noticesBadge = document.getElementById('noticesBadge');
+  const noticesBadgeTop = document.getElementById('noticesBadgeTop');
+  const noticesEmpty = document.getElementById('noticesEmpty');
+  const noticesList = document.getElementById('noticesList');
+
+  function getReadSet(){
+    try{
+      const key = `anw_notices_read_${anwNormEmail(loggedEmail)}`;
+      const raw = localStorage.getItem(key);
+      const arr = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(arr) ? arr : []);
+    }catch{ return new Set(); }
+  }
+  function saveReadSet(set){
+    try{
+      const key = `anw_notices_read_${anwNormEmail(loggedEmail)}`;
+      localStorage.setItem(key, JSON.stringify(Array.from(set)));
+    }catch{}
+  }
+
+  function isAdminRole(role){
+    const r = String(role||'').toLowerCase();
+    return r === 'admin' || r === 'owner';
+  }
+
+  function getStreetName(address){
+    const a = String(address||'').trim();
+    if(!a) return '';
+    // Remove eircode (7 chars) and trailing commas
+    let s = a.replace(/[A-Z]\d{2}\s?[A-Z0-9]{4}\b/gi, '').replace(/\s{2,}/g,' ').trim();
+    // Take first segment before comma
+    s = s.split(',')[0] || s;
+    // Remove leading house number
+    s = s.replace(/^\s*\d+[A-Za-z]?\s+/, '').trim();
+    return s;
+  }
+
+  function noticeMatchesUser(n, user){
+    const t = n?.target || {};
+    const inc = t.include || {};
+    const exc = t.exclude || {};
+
+    const role = String(user?.role || 'resident').toLowerCase();
+    const isAdmin = isAdminRole(role);
+    const eir = String(user?.eircode || '').replace(/\s+/g,'').toUpperCase();
+    const street = getStreetName(user?.address || user?.fullAddress || '');
+
+    // Exclude rules (hard)
+    if(Array.isArray(exc.roles) && exc.roles.map(String).map(x=>x.toLowerCase()).includes(role)) return false;
+    if(Array.isArray(exc.eircodes) && exc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return false;
+    if(Array.isArray(exc.emails) && exc.emails.map(anwNormEmail).includes(anwNormEmail(user?.email))) return false;
+
+    // If nonAdminOnly and user is admin, block
+    if(inc.nonAdminOnly && isAdmin) return false;
+
+    // If include is empty => visible to all logged-in
+    const hasAnyInclude = !!(
+      inc.allLoggedIn ||
+      (Array.isArray(inc.roles) && inc.roles.length) ||
+      (Array.isArray(inc.eircodes) && inc.eircodes.length) ||
+      (Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.length) ||
+      (Array.isArray(inc.streets) && inc.streets.length) ||
+      (Array.isArray(inc.emails) && inc.emails.length)
+    );
+
+    if(!hasAnyInclude) return true;
+
+    if(inc.allLoggedIn) return true;
+    if(Array.isArray(inc.roles) && inc.roles.map(String).map(x=>x.toLowerCase()).includes(role)) return true;
+    if(Array.isArray(inc.emails) && inc.emails.map(anwNormEmail).includes(anwNormEmail(user?.email))) return true;
+    if(Array.isArray(inc.eircodes) && inc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return true;
+    if(Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.map(String).map(x=>x.toUpperCase()).some(p=>eir.startsWith(p))) return true;
+    if(Array.isArray(inc.streets) && street){
+      const stList = inc.streets.map(String).map(x=>x.trim().toLowerCase()).filter(Boolean);
+      if(stList.includes(street.toLowerCase())) return true;
+    }
+    return false;
+  }
+
+  function setBadge(count){
+    const show = Number(count||0) > 0;
+    if(noticesBadge){
+      noticesBadge.textContent = String(count||0);
+      noticesBadge.style.display = show ? 'inline-flex' : 'none';
+    }
+    if(noticesBadgeTop){
+      noticesBadgeTop.textContent = String(count||0);
+      noticesBadgeTop.style.display = show ? 'inline-flex' : 'none';
+    }
+  }
+
+  function renderNotices(){
+    if(!noticesList || !noticesEmpty) return;
+    if(!loggedEmail || !me){
+      setBadge(0);
+      noticesEmpty.style.display = 'block';
+      noticesList.style.display = 'none';
+      return;
+    }
+
+    const all = anwLoad(KEY_NOTICES, []);
+    const arr = Array.isArray(all) ? all : [];
+    const now = Date.now();
+    const filtered = arr
+      .filter(n => {
+        const exp = n?.expiresAt ? Date.parse(n.expiresAt) : NaN;
+        if(!isNaN(exp) && exp < now) return false;
+        return noticeMatchesUser(n, me);
+      })
+      .sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
+
+    const read = getReadSet();
+    const unread = filtered.filter(n => n?.id && !read.has(n.id)).length;
+    setBadge(unread);
+
+    if(!filtered.length){
+      noticesEmpty.style.display = 'block';
+      noticesList.style.display = 'none';
+      return;
+    }
+    noticesEmpty.style.display = 'none';
+    noticesList.style.display = 'block';
+
+    noticesList.innerHTML = '';
+    filtered.forEach(n => {
+      const isUnread = n?.id && !read.has(n.id);
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.margin = '0.75rem 0';
+      card.style.cursor = 'pointer';
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:${isUnread ? '800' : '700'};">
+              ${String(n?.title || 'Notice').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+              ${isUnread ? '<span class="badge" style="margin-left:8px;">NEW</span>' : ''}
+            </div>
+            <div class="tiny muted" style="margin-top:4px; font-weight:${isUnread ? '700' : '400'};">
+              ${String(n?.message || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+            </div>
+          </div>
+          <div class="tiny muted">${n?.createdAt ? new Date(n.createdAt).toLocaleDateString() : ''}</div>
+        </div>
+      `;
+      card.addEventListener('click', async () => {
+        if(n?.id){
+          read.add(n.id);
+          saveReadSet(read);
+          renderNotices();
+        }
+      });
+      noticesList.appendChild(card);
+    });
+  }
+
+  // Render once on load, and again when user switches tabs
+  renderNotices();
+  document.querySelectorAll('.dash-tab').forEach(b => {
+    b.addEventListener('click', () => {
+      if(b.dataset.tab === 'tabNotices') renderNotices();
+    });
+  });
+
+
+
+  /* =========================
+     Garda & Safety (dashboard)
+     ========================= */
+  (function(){
+    'use strict';
+    const statusEl = document.getElementById('gardaStatus');
+    const chipsEl  = document.getElementById('gardaChips');
+    const listEl   = document.getElementById('gardaList');
+    const fallbackEl = document.getElementById('gardaFallback');
+
+    const PRESET = {
+      categories: ['Fraud / Economic Crime','Cyber Crime','Burglary & Theft','Drugs','Domestic Abuse','Traffic Matters','Community Policing','Other'],
+      linksByCategory: {
+      'Fraud / Economic Crime': [
+        { title:'Fraud (information hub)', url:'https://www.garda.ie/en/crime/fraud/', snippet:'Practical advice on avoiding scams, spotting fraud attempts, and reporting economic crime.' }
+      ],
+      'Cyber Crime': [
+        { title:'Cyber crime (information hub)', url:'https://www.garda.ie/en/crime/cyber-crime/', snippet:'Guidance on staying safe online, common cyber threats, and how to report incidents.' },
+        { title:'Cyber crime awareness', url:'https://www.garda.ie/en/crime/cyber-crime/cyber-crime-awareness.html', snippet:'Tips and campaigns to help residents recognise phishing, hacking and online fraud.' }
+      ],
+      'Burglary & Theft': [
+        { title:'Securing your home (burglary prevention)', url:'https://www.garda.ie/en/crime-prevention/securing-your-home/', snippet:'Steps to protect your home: locks, lighting, alarms and everyday habits that deter burglary.' },
+        { title:'Burglary & theft (hub)', url:'https://www.garda.ie/en/crime/burglary-theft/', snippet:'Information and guidance related to burglary and theft, including prevention and reporting.' },
+        { title:'Burglary & theft FAQs', url:'https://www.garda.ie/en/crime/burglary-theft/burglary-and-theft-faqs.html', snippet:'Frequently asked questions about burglary and theft: what to do and how to prevent it.' }
+      ],
+      'Drugs': [
+        { title:'Drugs (information hub)', url:'https://www.garda.ie/en/crime/drugs/', snippet:'Information on drug-related crime, community safety guidance and how to share information.' }
+      ],
+      'Domestic Abuse': [
+        { title:'Domestic abuse (information hub)', url:'https://www.garda.ie/en/crime/domestic-abuse/domestic-abuse.html', snippet:'Support and reporting information for domestic abuse, including emergency contacts and resources.' }
+      ],
+      'Traffic Matters': [
+        { title:'Road safety (Roads Policing)', url:'https://www.garda.ie/en/roads-policing/road-safety/', snippet:'Road safety information, campaigns and advice to help keep drivers, cyclists and pedestrians safe.' },
+        { title:'Traffic matters (crime hub)', url:'https://www.garda.ie/en/crime/traffic-matters/', snippet:'Guidance on traffic-related offences and how to report dangerous driving or incidents.' }
+      ],
+      'Community Policing': [
+        { title:'Community policing', url:'https://www.garda.ie/en/crime-prevention/community-policing/community-policing.html', snippet:'How Garda community policing works and how residents can engage locally.' },
+        { title:'Community engagement', url:'https://www.garda.ie/en/crime-prevention/community-engagement/', snippet:'Neighbourhood Watch and other community engagement initiatives and resources.' }
+      ],
+      'Other': [
+        { title:'Crime prevention (main hub)', url:'https://www.garda.ie/en/crime-prevention/', snippet:'Main Garda crime prevention hub with practical guidance and official resources.' },
+        { title:'Garda press releases', url:'https://www.garda.ie/en/about-us/our-departments/office-of-corporate-communications/press-releases/', snippet:'Official press releases and updates published by An Garda Síochána.' }
+      ]
+    }
+    };
+
+    function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function normCat(cat){
+      return String(cat || '').toLowerCase().replace(/\s+/g,' ').trim();
+    }
+
+    function iconSvg(cat){
+      const c = normCat(cat);
+
+      const svgs = {
+        all: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V7l8-4z"/></svg>`,
+        fraud: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M17 7h-6a3 3 0 0 0 0 6h2a3 3 0 0 1 0 6H7"/></svg>`,
+        cyber: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="11" rx="2"/><path d="M8 21h8"/><path d="M12 16v5"/></svg>`,
+        burglary: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 10v11h14V10"/><path d="M10 21v-6h4v6"/></svg>`,
+        drugs: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 7l7 7"/><path d="M14 6l4 4a4 4 0 0 1-6 6l-4-4a4 4 0 0 1 6-6z"/><path d="M7 17l-1 1"/></svg>`,
+        domestic: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z"/></svg>`,
+        traffic: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17h10"/><path d="M6 17l-1-6 2-5h10l2 5-1 6"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/></svg>`,
+        community: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M12 15c-4 0-7 2-7 5h14c0-3-3-5-7-5z"/><path d="M12 3v2"/></svg>`,
+        other: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="10"/></svg>`
+      };
+
+      if (c === 'all') return svgs.all;
+      if (c.includes('fraud') || c.includes('economic')) return svgs.fraud;
+      if (c.includes('cyber')) return svgs.cyber;
+      if (c.includes('burglary') || c.includes('theft')) return svgs.burglary;
+      if (c.includes('drug')) return svgs.drugs;
+      if (c.includes('domestic')) return svgs.domestic;
+      if (c.includes('traffic') || c.includes('road')) return svgs.traffic;
+      if (c.includes('community') || c.includes('policing')) return svgs.community;
+      return svgs.other;
+    }
+
+    function isBadUrl(url){
+      const u = String(url || '');
+      if(!u) return true;
+      // Common Garda 'not found' redirect patterns
+      if(u.includes('/403/?404') || u.includes('/404/') || u.includes('404%3b') || u.includes('page-not-found')) return true;
+      // Only allow Garda domain links
+      if(!/^https:\/\/(www\.)?garda\.ie\//i.test(u)) return true;
+      return false;
+    }
+
+    function looksLikeNotFound(item){
+      const t = (item && item.title) ? String(item.title) : '';
+      const s = (item && item.snippet) ? String(item.snippet) : '';
+      const joined = (t + ' ' + s).toLowerCase();
+      return joined.includes('page not found') || joined.includes(' 404') || joined.startsWith('404');
+    }
+
+    function filterItems(items){
+      return (items || []).filter(it => it && !isBadUrl(it.url) && !looksLikeNotFound(it));
+    }
+    function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
+    function showFallback(){
+      // In tests/offline we still want content; render preset links quietly.
+      renderPreset();
+    }
+
+    function render(items){
+      if(!chipsEl || !listEl) return;
+
+      const cats = Array.from(new Set((items||[]).map(x => x.category || 'Other'))).sort((a,b)=>a.localeCompare(b));
+      const allCats = ['All', ...cats];
+
+      chipsEl.innerHTML = `
+        <div class="garda-cat-grid">
+          ${allCats.map((c,i)=>`
+            <button type="button" class="garda-cat ${i===0?'is-active':''}" data-cat="${esc(c)}">
+              <span class="icon">${iconSvg(c)}</span>
+              <span class="label">${esc(c)}</span>
+            </button>
+          `).join('')}
+        </div>
+      `;
+
+      function apply(cat){
+        chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat));
+        const show = (cat === 'All') ? items : items.filter(x => (x.category||'Other') === cat);
+
+        listEl.innerHTML = (show||[]).map(x => `
+          <div class="garda-item">
+            <div class="row">
+              <div class="title">${esc(x.title || '')}</div>
+              <div class="date">${esc(x.date || '')}</div>
+            </div>
+            ${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}
+            <a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a>
+            <div class="meta">${esc(x.category || 'Other')}</div>
+          </div>
+        `).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
+      }
+
+      chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat)));
+      apply('All');
+    }
+
+    function renderPreset(){
+      if(!chipsEl || !listEl) return;
+      const allCats = ['All', ...PRESET.categories];
+
+      chipsEl.innerHTML = `
+        <div class="garda-cat-grid">
+          ${allCats.map((c,i)=>`
+            <button type="button" class="garda-cat ${i===0?'is-active':''}" data-cat="${esc(c)}">
+              <span class="icon">${iconSvg(c)}</span>
+              <span class="label">${esc(c)}</span>
+            </button>
+          `).join('')}
+        </div>
+      `;
+
+      function apply(cat){
+        chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat));
+        const cats = (cat === 'All') ? PRESET.categories : [cat];
+        const items = [];
+        cats.forEach(cc => (PRESET.linksByCategory[cc] || []).forEach(l => items.push({ category: cc, title: l.title, url: l.url, snippet: (l.snippet || '') })));
+
+        const safeItems = filterItems(items);
+
+        listEl.innerHTML = safeItems.map(x => `
+          <div class="garda-item">
+            <div class="row">
+              <div class="title">${esc(x.title || '')}</div>
+              <div class="date">Official link</div>
+            </div>
+            ${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}
+            <a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a>
+            <div class="meta">${esc(x.category || 'Other')}</div>
+          </div>
+        `).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
+      }
+
+      chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat)));
+      apply('All');
+    }
+
+    async function loadGardaFeed(){
+      setStatus('Loading Garda updates…');
+      try{
+        // Browser direct fetch to garda.ie is commonly blocked by CORS; use a server-side proxy function.
+        const res = await fetch('/.netlify/functions/garda-feed', { cache: 'no-store' });
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        // Accept both schemas:
+        // 1) { items: [...] } (alerts-style feed)
+        // 2) { categories: [...] } (curated links feed)
+        let itemsRaw = [];
+        if (Array.isArray(data.items)) {
+          itemsRaw = data.items;
+        } else if (Array.isArray(data.categories)) {
+          itemsRaw = data.categories.map(c => ({
+            title: c.label || c.title || 'Official link',
+            url: c.url || '',
+            category: c.label || c.category || 'Other',
+            date: 'Official link',
+            snippet: c.snippet || ''
+          }));
+        }
+
+        const items = filterItems(itemsRaw);
+
+        // Only show fallback if we truly have nothing valid to show
+        if(!items.length){
+          setStatus('Official Garda resources');
+          showFallback();
+          return;
+        }
+        setStatus('Official Garda resources (source: Garda.ie)');
+        if (fallbackEl) fallbackEl.style.display = 'none';
+        render(items.slice(0, 40));
+      }catch(e){
+        console.warn('garda-feed failed', e);
+        setStatus('Official Garda resources');
+        showFallback();
+      }
+    }
+
+    let loaded = false;
+    document.querySelectorAll('.dash-tab').forEach(b => {
+      b.addEventListener('click', () => {
+        if(b.dataset.tab !== 'tabGarda') return;
+        if(loaded) return;
+        loaded = true;
+        loadGardaFeed();
+      });
+    });
+  })();
+
+})();
+</script>
+<script>
+    (function(){
+      const btn = document.getElementById('scrollTopBtn');
+      if(!btn) return;
+
+      function isScrollable(el){
+        if(!el || el === document.documentElement) return false;
+        const cs = window.getComputedStyle(el);
+        const oy = cs.overflowY;
+        if(!(oy === 'auto' || oy === 'scroll')) return false;
+        return el.scrollHeight > (el.clientHeight + 5);
+      }
+
+      function scrollElementToTop(el){
+        try{
+          if(typeof el.scrollTo === 'function'){
+            el.scrollTo({ top: 0, behavior: 'smooth' });
+          }else{
+            el.scrollTop = 0;
+          }
+        }catch(e){
+          try{ el.scrollTop = 0; }catch(_){}
+        }
+      }
+
+      function scrollEverythingToTop(){
+        // 1) Try the document scroller first
+        const docEl = document.scrollingElement || document.documentElement;
+        scrollElementToTop(docEl);
+        scrollElementToTop(document.documentElement);
+        scrollElementToTop(document.body);
+
+        // 2) Try scrollable ancestors of the button (most reliable for container-scroll layouts)
+        let p = btn.parentElement;
+        while(p){
+          if(isScrollable(p)) scrollElementToTop(p);
+          p = p.parentElement;
+        }
+
+        // 3) As a last resort, scroll any visible vertical scroll containers on the page
+        document.querySelectorAll('*').forEach(el => {
+          if(isScrollable(el)) scrollElementToTop(el);
+        });
+
+        // Also attempt window scroll (some browsers prefer this)
+        try{ window.scrollTo({ top: 0, behavior: 'smooth' }); }catch(e){ try{ window.scrollTo(0,0);}catch(_){} }
+      }
+
+      btn.addEventListener('click', () => {
+        // visual feedback
+        btn.classList.add('is-active');
+        scrollEverythingToTop();
+        setTimeout(() => btn.classList.remove('is-active'), 600);
+      });
+    })();
+  </script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const notice = document.getElementById('anwAccessNotice');
+
+  const showNotice = (msg) => {
+    if(notice){
+      notice.style.display = 'block';
+      notice.innerHTML = msg;
+    }
+  };
+  const hideNotice = () => {
+    if(notice) notice.style.display = 'none';
+  };
+
+  const ensureIdentityUser = async () => {
+    if(!window.netlifyIdentity) return null;
+    return await new Promise((resolve)=>{
+      let done=false;
+      const finish=(u)=>{ if(done) return; done=true; resolve(u||null); };
+      try{
+        window.netlifyIdentity.on('init', (u)=>finish(u));
+        window.netlifyIdentity.init();
+      }catch(e){}
+      setTimeout(()=>{
+        try{
+          const u = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
+          finish(u);
+        }catch(e){ finish(null); }
+      }, 300);
+    });
+  };
+
+  const user = await ensureIdentityUser();
+  if(!user){
+    showNotice('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access your dashboard.');
+    return;
+  }
+
+  try{
+    const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
+    const email = user.email?.toLowerCase();
+    const profile = users.find(u => u.email?.toLowerCase() === email);
+
+    if(!profile || !(profile.approved || profile.active)){
+      showNotice('Your account is logged in but not yet approved. Please wait for approval.');
+      return;
+    }
+  }catch(e){}
+
+  hideNotice();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const label = document.getElementById('pageAccessLabel');
+  if(!label) return;
+
+  const normalize = (s) => String(s || '').toLowerCase().replace(/\s+/g,' ').trim();
+  const isGardaTab = (btn) => {
+    const t = normalize(btn?.textContent);
+    return t.includes('garda') && t.includes('safety');
+  };
+  const setLabelForButton = (btn) => {
+    if(isGardaTab(btn)) label.textContent = 'Public Page';
+    else label.textContent = 'Private Page';
+  };
+
+  // Collect likely tab buttons by text
+  const tabButtons = Array.from(document.querySelectorAll('button, a'))
+    .filter(el => {
+      const t = normalize(el.textContent);
+      return t === 'profile' || t === 'interest' || t === 'elections' || t === 'notices' || (t.includes('garda') && t.includes('safety'));
+    });
+
+  tabButtons.forEach(btn => btn.addEventListener('click', () => setLabelForButton(btn)));
+
+  // Initial label
+  const active = tabButtons.find(b => b.getAttribute('aria-selected') === 'true' || b.classList.contains('active'));
+  setLabelForButton(active || tabButtons.find(isGardaTab) || tabButtons[0]);
+});
+</script>
+<script src="assets/acl-guard.js"></script>
+</body>
+</html>

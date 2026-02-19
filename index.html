@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="page:home" name="anw-acl-key"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Aderrig Neighbourhood Watch — Adamstown</title>
+<link href="assets/style.css" rel="stylesheet"/>
+<meta content="Aderrig Neighbourhood Watch (Adamstown). Community-led safety, reporting and alerts aligned with Garda guidance." name="description"/>
+<style>
+    body.page-home .hero .help{ margin:0 0 12px; color:var(--muted); }
+    body.page-home .grid{ display:grid; gap:12px; }
+    body.page-home .cols-3{ grid-template-columns:2fr 3fr auto; align-items:stretch; }
+    @media (max-width:860px){
+      body.page-home .cols-3{ grid-template-columns:1fr; }
+    }
+    body.page-home .result{
+      margin-top:12px;
+      padding:12px 14px;
+      border:1px dashed rgba(17,24,39,.16);
+      border-radius:14px;
+      background:#fbfdfc;
+    }
+    body.page-home .tile{
+      display:block;
+      background:#fff;
+      border:1px solid var(--border);
+      padding:14px;
+      border-radius:14px;
+      box-shadow:var(--shadow);
+      color:var(--brand);
+      font-weight:700;
+      text-decoration:none;
+    }
+    body.page-home .tile:hover{ background:rgba(31,111,74,.04); text-decoration:none; }
+    body.page-home .quick-links{ display:grid; gap:12px; grid-template-columns:repeat(3,1fr); }
+    @media (max-width:860px){
+      body.page-home .quick-links{ grid-template-columns:1fr; }
+    }
+    body.page-home .btn{ height:44px; }
+    body.page-home #coordResult:empty{ display:none; }
+  </style>
+</head>
+<body class="page-home">
+<header class="site-header">
+<div class="brand">
+<a class="site-logo" href="index.html">
+<img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/>
+</a>
+</div>
+<nav class="nav">
+<a class="active" href="index.html">Home</a>
+<a href="about.html">About</a>
+<a href="report.html">Report</a>
+<a href="alerts.html">Community Alerts</a>
+<a href="projects.html">Community Projects</a>
+<a href="handbook.html">Handbook</a>
+<a href="login.html">Login / Register</a>
+<a href="dashboard.html">Dashboard</a>
+<a href="household.html">Household</a>
+<a href="admin.html">Admin</a>
+</nav>
+</header>
+<main class="container">
+<section class="hero card">
+<h2>Find your street coordinator</h2>
+<p class="help">Enter your Eircode to see nearby support for your street.</p>
+<form class="grid cols-3" id="eirForm" onsubmit="return (window.ANW &amp;&amp; ANW.handleFindCoordinator) ? ANW.handleFindCoordinator(event) : false">
+<input autocomplete="postal-code" class="input" id="eircodeInput" maxlength="8" placeholder="Enter your Eircode (e.g., K78XXXX)" required=""/>
+<input class="input" id="eirAddress" placeholder="Address will appear here" readonly=""/>
+<button class="btn" type="submit">Continue</button>
+</form>
+<div class="result" id="coordResult"></div>
+<p class="tiny muted" style="margin-top:8px">
+        Guidance: Always call <strong>999/112</strong> in emergencies.
+        For crimes, contact your local <strong>Lucan Garda Station</strong>:
+        +353 (0)1 666 7300 · <a href="mailto:lucan.ds@garda.ie">lucan.ds@garda.ie</a>
+</p>
+</section>
+<section class="card">
+<h3>Quick links</h3>
+<div class="grid cols-3">
+<a class="tile" href="about.html">What is Neighbourhood Watch?</a>
+<a class="tile" href="report.html">Report an Incident</a>
+<a class="tile" href="alerts.html">Community Alerts</a>
+</div>
+</section>
+</main>
+<!-- Core secured app logic -->
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script><script src="assets/identity.js"></script><script src="assets/app-core.js"></script>
+
+  <!-- Home Notices (message area) -->
+  <div id="homeNoticeBar" class="home-notice-bar home-notice-bar--info" role="status" aria-live="polite">
+    <span class="home-notice-bar__icon" aria-hidden="true" data-home-notice-icon>ℹ️</span>
+    <div class="home-notice-bar__text" data-home-notice-text>Test: Message area — information will appear here.</div>
+    <button class="home-notice-btn" type="button" aria-label="Previous message" data-home-notice-prev>&lsaquo;</button>
+    <button class="home-notice-btn" type="button" aria-label="Next message" data-home-notice-next>&rsaquo;</button>
+  </div>
+
+  <!-- Community Support (sponsor logos) -->
+  <div id="sponsorsFooter" class="sponsors sponsors--footer"></div>
+
+<footer class="site-footer">
+  <div class="footer-row">
+    <div class="footer-left">
+      <span class="page-status">Public Page</span>
+    </div>
+
+    <div class="footer-center">
+      © 2025 Aderrig NW · 
+      <a href="privacy.html">Privacy Policy</a>
+    </div>
+  </div>
+</footer>
+<script defer="" src="assets/sponsors/sponsors.js"></script>
+<!-- Home notices bar (compact carousel) -->
+<script defer="" src="assets/home-notices.js"></script>
+<script>
+    // Home: lookup nearby support via Netlify Function (server-side)
+    window.ANW = window.ANW || {};
+
+    (function () {
+      const EIRCODE_ADDR = {
+        'K78XXXX': 'Aderrig Park, Adamstown, Co. Dublin',
+        'K78T2W8': 'Adamstown, Co. Dublin',
+        'K78T3X1': 'Aderrig Lane, Adamstown, Co. Dublin',
+        'K78A1B2': 'Aderrig Grove, Adamstown, Co. Dublin',
+        'K78C9D4': 'Aderrig Court, Adamstown, Co. Dublin'
+      };
+
+      function normalizeEir(val) {
+        return (val || '').toUpperCase().replace(/\s+/g, '').trim();
+      }
+      function isValidEir(e) {
+        return /^[A-Z0-9]{7,8}$/.test(e);
+      }
+
+      function setupAddressPreview() {
+        const eirInput  = document.getElementById('eircodeInput');
+        const addrInput = document.getElementById('eirAddress');
+        if (!eirInput || !addrInput) return;
+
+        eirInput.addEventListener('input', () => {
+          const e = normalizeEir(eirInput.value);
+          addrInput.value = EIRCODE_ADDR[e] || '';
+        });
+      }
+
+      async function getTokenIfLogged() {
+        try {
+          if (!window.netlifyIdentity) return null;
+          const u = window.netlifyIdentity.currentUser();
+          if (!u) return null;
+          return await u.jwt();
+        } catch {
+          return null;
+        }
+      }
+
+      ANW.handleFindCoordinator = async function (ev) {
+        if (ev && ev.preventDefault) ev.preventDefault();
+
+        const input = document.getElementById('eircodeInput');
+        const out   = document.getElementById('coordResult');
+        if (!input || !out) return false;
+
+        const e = normalizeEir(input.value);
+        if (!isValidEir(e)) {
+          out.textContent = 'Please enter a valid Eircode.';
+          return false;
+        }
+
+        out.textContent = 'Searching...';
+
+        const token = await getTokenIfLogged();
+        const headers = { 'content-type': 'application/json' };
+        if (token) headers['authorization'] = `Bearer ${token}`;
+
+        try {
+          const res = await fetch(`/.netlify/functions/store?key=nearby_support`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ eircode: e })
+          });
+
+          let data = {};
+          let rawText = '';
+          try { data = await res.json(); }
+          catch { rawText = await res.text().catch(() => ''); }
+
+          if (!res.ok) {
+            // Fallback: treat lookup issues as "no nearby support" (show 0/0 instead of an error)
+            const c = 0;
+            const v = 0;
+            const addrInput = document.getElementById('eirAddress');
+            if (addrInput) addrInput.value = EIRCODE_ADDR[e] || addrInput.value || '';
+
+            out.innerHTML = `
+              <strong>Nearby support:</strong><br>
+              ${c} street coordinator(s) and ${v} volunteer(s) near your Eircode.<br>
+              <small>Login or register to see names and phone numbers.</small>
+            `;
+            return true;
+          }
+
+          const c = data?.counts?.coordinators ?? 0;
+          const v = data?.counts?.volunteers ?? 0;
+
+          // Fill the address field (best effort).
+          const addrInput = document.getElementById('eirAddress');
+          if (addrInput) {
+            const addr = (data && (data.address || (data.meta && data.meta.address))) || EIRCODE_ADDR[e] || '';
+            if (addr) addrInput.value = addr;
+          }
+
+
+          if (data.mode !== 'details') {
+            out.innerHTML = `
+              <strong>Nearby support:</strong><br>
+              ${c} street coordinator(s) and ${v} volunteer(s) near your Eircode.<br>
+              <small>Login or register to see names and phone numbers.</small>
+            `;
+            return false;
+          }
+
+          const lines = [];
+          if (data.coordinators && data.coordinators.length) {
+            lines.push('<strong>Street coordinators near you:</strong>');
+            data.coordinators.forEach(u => {
+              const phone = u.phone || '(phone not available)';
+              lines.push(`${u.name} — Street coordinator — ${phone}`);
+            });
+            lines.push('');
+          }
+
+          if (data.volunteers && data.volunteers.length) {
+            lines.push('<strong>Volunteers near you:</strong>');
+            data.volunteers.forEach(u => {
+              const phone = u.phone || '(phone not available)';
+              lines.push(`${u.name} — ${u.role || 'Volunteer'} — ${phone}`);
+            });
+          }
+
+          if (!lines.length) {
+            out.innerHTML = `
+              <strong>No coordinators or volunteers found near this Eircode.</strong><br>
+              Once local residents register and are approved, their roles will appear here.
+            `;
+          } else {
+            out.innerHTML = lines.join('<br>');
+          }
+
+          return false;
+        } catch (err) {
+          // Always fail-safe to 0/0 instead of showing an error.
+          const addrInput = document.getElementById('eirAddress');
+          if (addrInput) addrInput.value = EIRCODE_ADDR[e] || addrInput.value || '';
+
+          out.innerHTML = `
+            <strong>Nearby support:</strong><br>
+            0 street coordinator(s) and 0 volunteer(s) near your Eircode.<br>
+            <small>Login or register to see names and phone numbers.</small>
+          `;
+          return false;
+        }
+      };
+
+      setupAddressPreview();
+    })();
+  </script>
+<script src="assets/acl-guard.js"></script>
+</body>
+</html>

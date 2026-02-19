@@ -1,0 +1,14 @@
+[build]
+  publish = "."
+  # Netlify already installs dependencies; using npm ci makes builds deterministic.
+  command = "npm ci"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[functions."backup-scheduled"]
+  schedule = "0 */6 * * *"

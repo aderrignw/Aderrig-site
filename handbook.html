@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="anw-acl-key" content="page:handbook" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Prevent protected-page "flash" before auth redirect (runs before first paint) -->
+  <style>html.anw-preauth-hide{visibility:hidden}</style>
+  <script>
+    (function(){
+      try {
+        if (location && location.protocol === 'file:') return;
+        var k = document.querySelector('meta[name="anw-acl-key"]');
+        var pageKey = k ? String(k.getAttribute('content') || '').trim() : '';
+        var isPublic = (pageKey === 'page:home' || pageKey === 'page:about' || pageKey === 'page:privacy' || pageKey === 'page:login');
+        if (isPublic) return;
+
+        document.documentElement.classList.add('anw-preauth-hide');
+        var cachedUser = null;
+        try { cachedUser = localStorage.getItem('netlify.auth.user'); } catch (e) { cachedUser = null; }
+        if (!cachedUser) {
+          location.replace('login.html');
+          return;
+        }
+        document.documentElement.classList.remove('anw-preauth-hide');
+      } catch (e) {
+        try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
+      }
+    })();
+  </script>
+
+  <title>Handbook — Aderrig NW</title>
+  <link rel="stylesheet" href="assets/style.css" />
+
+  <style>
+    /* Match the existing “premium” styling used across the site */
+    .hb-top{ display:flex; gap:12px; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; }
+    .hb-search{ max-width:360px; width:100%; }
+
+    .hb-grid{ display:grid; gap:12px; grid-template-columns:repeat(3,1fr); }
+    @media (max-width: 980px){ .hb-grid{ grid-template-columns:repeat(2,1fr);} }
+    @media (max-width: 620px){ .hb-grid{ grid-template-columns:1fr;} }
+
+    .hb-card{ display:flex; align-items:center; gap:12px; padding:14px; text-decoration:none; color:inherit; }
+    .hb-card:hover{ background: rgba(17,24,39,.03); text-decoration:none; }
+    .hb-icon{ width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(17,24,39,.10); background:#fff; font-size:20px; }
+    .hb-card-title{ font-weight:800; color: var(--brand); }
+
+    .hb-item{ display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border:1px solid rgba(17,24,39,.10); background:#fff; padding:12px 14px; border-radius:14px; box-shadow:var(--shadow);
+      text-decoration:none; color:inherit;
+    }
+    .hb-item:hover{ background: rgba(17,24,39,.03); text-decoration:none; }
+    .hb-item-title{ font-weight:800; color: var(--brand); }
+    .hb-item-right{ display:flex; align-items:center; gap:10px; color: rgba(0,0,0,.55); }
+
+    .hb-item-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .hb-hero{ width:100%; border-radius:14px; border:1px solid rgba(17,24,39,.10); margin:12px 0; display:block; }
+    .hb-content p{ margin-top: 0.6rem; }
+    .hb-attach{ display:inline-flex; align-items:center; justify-content:center; padding:10px 12px; border-radius:12px;
+      border:1px solid rgba(17,24,39,.10); background:#fff; box-shadow:var(--shadow); text-decoration:none; color: var(--brand); font-weight:800;
+    }
+    .hb-attach:hover{ background: rgba(17,24,39,.03); text-decoration:none; }
+  </style>
+</head>
+<body class="page-handbook">
+
+<header class="site-header">
+  <div class="brand">
+    <a class="site-logo" href="index.html">
+      <img class="logo-img" src="assets/logo/logo.png" alt="Aderrig Neighbourhood Watch" />
+    </a>
+  </div>
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="report.html">Report</a>
+    <a href="alerts.html">Community Alerts</a>
+    <a href="projects.html">Community Projects</a>
+    <a href="handbook.html" class="active">Handbook</a>
+    <a href="login.html">Login / Register</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="household.html">Household</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+</header>
+
+<main class="container">
+  <section class="card" id="hbHome">
+    <div class="hb-top">
+      <div>
+        <h2 style="margin:0;">Handbook</h2>
+        <p class="muted" style="margin-top:6px;">Essential information for residents — maps, services, policies and useful links.</p>
+      </div>
+      <div class="hb-search">
+        <label class="tiny muted" for="hbSearch">Search</label>
+        <input id="hbSearch" class="input" type="text" placeholder="Search categories and items..." />
+      </div>
+    </div>
+
+    <div id="hbCategories" class="hb-grid" style="margin-top:14px;"></div>
+  </section>
+
+  <section id="hbCategory" class="card" style="display:none;">
+    <div class="hb-top">
+      <div>
+        <h3 id="hbCatTitle" style="margin:0;">Category</h3>
+        <p class="tiny muted" style="margin-top:6px;">Select an item to view details.</p>
+      </div>
+      <div>
+        <a class="btn btn-line small" href="#">Back to categories</a>
+      </div>
+    </div>
+
+    <div id="hbItems" class="grid" style="gap:10px; margin-top:14px;"></div>
+  </section>
+
+  <section id="hbItem" class="card" style="display:none;"></section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-row">
+    <div class="footer-left">
+      <span class="page-status">Private Page</span>
+    </div>
+    <div class="footer-center">
+      © 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+<script src="assets/app-core.js"></script>
+<script src="assets/handbook.js"></script>
+<script src="assets/acl-guard.js"></script>
+
+</body>
+</html>
