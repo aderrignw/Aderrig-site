@@ -79,9 +79,11 @@ table{ max-width:100%; }
   backdrop-filter:saturate(180%) blur(10px);
   border-bottom:1px solid rgba(17,24,39,.08);
 
-  width:min(var(--container), calc(100% - 24px));
-  margin:0 auto;
-  padding:8px 0;
+  /* Full-width header so the navigation can always fit without clipping */
+  width:100%;
+  margin:0;
+  padding:8px 12px;
+  box-sizing:border-box;
 
   display:flex;
   align-items: flex-start;
@@ -102,7 +104,7 @@ table{ max-width:100%; }
 .nav{
   margin-left:12px;
   flex:1 1 auto;
-  justify-content:center;
+  justify-content:flex-start;
 }
 
 /* Optional: visually hint locked items without showing Public/Private badges */
@@ -124,8 +126,6 @@ table{ max-width:100%; }
   flex:0 0 auto;
 }
 
-
-.logo-img{ height:38px; max-width:170px; width:auto; }
 .brand-text{
   min-width:0;
 }
@@ -142,34 +142,28 @@ table{ max-width:100%; }
 /* Keep the header compact by hiding the subtitle when space is tight */
 @media (max-width: 980px){
   .brand-text p{ display:none; }
-  .site-header{ flex-wrap:wrap; align-items:center; }
-  .logo-img{ height:32px; max-width:150px; }
-  .brand{ width:100%; }
 }
-
 
 .nav{
   display:flex;
-  align-items:center;
-
-  /* Premium single-line navigation */
+  align-items: flex-start;
+  /* Premium single-line tabs (no wrapping); if needed, scroll but do not clip */
   justify-content:flex-start;
   gap:6px;
 
-  margin-left:10px;
+  margin-left:12px;
   flex:1 1 auto;
 
-  flex-wrap:nowrap;          /* keep everything on one line */
-  overflow-x:auto;           /* if ever needed on smaller widths */
+  flex-wrap:nowrap;          /* keep a single row */
+  overflow-x:auto;           /* allow scroll instead of wrapping */
   -webkit-overflow-scrolling:touch;
-
-  /* keep the start visible (fixes "Home disappears") */
-  padding-left:2px;
-
-  /* hide scrollbar while still scrollable */
-  scrollbar-width:none;      /* Firefox */
+  scrollbar-width:none;      /* hide scrollbar (Firefox) */
+  padding:0 12px 2px 0;      /* right padding keeps last tab fully visible */
 }
+
+/* hide scrollbar (WebKit) */
 .nav::-webkit-scrollbar{ display:none; }
+
 .nav a{
   text-decoration:none;
   color:var(--brand);
@@ -631,9 +625,9 @@ textarea{
 }
 
 .logo-img{
-  height:40px;         /* desktop height */
+  height:36px;         /* desktop height (slightly smaller to fit full nav) */
   width:auto;
-  max-width:260px;
+  max-width:220px;
   display:block;
   object-fit:contain;
 }
@@ -649,7 +643,7 @@ textarea{
 }
 
 @media (max-width: 768px){
-  .logo-img{ height:32px; }
+  .logo-img{ height:30px; }
 }
 
 /* =========================
