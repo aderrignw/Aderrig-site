@@ -500,14 +500,14 @@ const volMeetings    = document.getElementById('volMeetings');
     loginAddr.value = '';
 
     const email = (loginEmail.value || '').trim().toLowerCase();
-    const eir   = normalizeEircode(loginEir.value || '');
+    const eir   = normalizeEir(loginEir.value || '');
     if(!email || !eir) return;
 
     try{
       await anwInitStore();
       const users = anwLoad(KEY_USERS, []);
       const u = Array.isArray(users)
-        ? users.find(x => (x.email||'').toLowerCase() === email && normalizeEircode(x.eircode||'') === eir)
+        ? users.find(x => (x.email||'').toLowerCase() === email && normalizeEir(x.eircode||'') === eir)
         : null;
       if(u && u.address){
         loginAddr.value = u.address;
@@ -635,7 +635,8 @@ const volMeetings    = document.getElementById('volMeetings');
       }
 
       try{
-        await (window.netlifyIdentity.gotrue ? window.netlifyIdentity.gotrue.login(email, pass, true) : window.netlifyIdentity.login(email, pass, true));
+        await new Promise((res, rej)=>window.__ensureIdentityReady(err=>err?rej(err):res()));
+        await window.netlifyIdentity.gotrue.login(email, pass, true);
 
         // login succeeded -> clear soft lock state
         clearAttemptState(email, eir);
@@ -669,7 +670,7 @@ const volMeetings    = document.getElementById('volMeetings');
           toast('Account blocked.', 'error');
           return;
         }
-        if(status !== 'active'){
+        if(status !== 'active' && status !== 'approved'){
           try{ window.netlifyIdentity.logout(); } catch {}
           setMsg(loginMsg, 'Your registration is pending approval by an ANW admin.', 'error');
           toast('Pending admin approval.', 'warn');
@@ -878,12 +879,14 @@ const volMeetings    = document.getElementById('volMeetings');
       const nowIso = new Date().toISOString();
 
       try{
+        await new Promise((res, rej)=>window.__ensureIdentityReady(err=>err?rej(err):res()));
         const gt = window.netlifyIdentity && window.netlifyIdentity.gotrue;
         if(!gt || typeof gt.signup !== 'function'){
           throw new Error('Netlify Identity not ready (gotrue.signup missing)');
         }
         await gt.signup(email, pass, { full_name: name });
-        await (window.netlifyIdentity.gotrue ? window.netlifyIdentity.gotrue.login(email, pass, true) : window.netlifyIdentity.login(email, pass, true));
+        await new Promise((res, rej)=>window.__ensureIdentityReady(err=>err?rej(err):res()));
+        await window.netlifyIdentity.gotrue.login(email, pass, true);
 
         await anwInitStore();
         let users = anwLoad(KEY_USERS, []);
