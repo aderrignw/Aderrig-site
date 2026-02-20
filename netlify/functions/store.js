@@ -2,11 +2,12 @@ import { getStore } from "@netlify/blobs";
 
 
 function getCentralStore(context){
-  const fixed = (process?.env?.CENTRAL_STORE_NAME || "").trim();
+  // Force a single, predictable Blobs store name so data (including anw_users) is always in one place.
+  // Override via Netlify Environment Variable: CENTRAL_STORE_NAME
+  const fixed = (process?.env?.CENTRAL_STORE_NAME || "aderrignw").trim();
   const storeName = fixed || (context?.site?.id ? `kv_${context.site.id}` : "kv_default");
   return getStore(storeName);
 }
-
 /**
  * Secure KV store (Netlify Blobs) with Netlify Identity enforcement.
  *
@@ -59,6 +60,18 @@ const AUDIT_ALLOWED_EVENTS = new Set([
   "PASSWORD_RESET_SENT",
 ]);
 
+/* =========================
+   MASTER BOOTSTRAP (First Admin)
+   - Ensures there is always at least one ACTIVE admin/owner record in anw_users.
+   - If no active admin exists yet, the first logged-in user is promoted to admin.
+   - Additionally, the configured MASTER_EMAIL is always enforced as an ACTIVE owner.
+   ========================= */
+const MASTER_EMAIL = "claudiosantos1968@gmail.com";
+const MASTER_NAME = "Claudio Santos";
+const MASTER_EIRCODE = "K78T2W8";
+const MASTER_ROLE = "owner";   // treated as admin by recordIsAdmin()
+const MASTER_STATUS = "active";
+
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
@@ -99,18 +112,6 @@ function isAdmin(user) {
 function isActiveStatus(status) {
   const st = safeLower(status);
   return st === "active" || st === "approved";
-}
-
-function recordIsAdmin(rec) {
-  const r = rec?.role || rec?.roles || rec?.app_metadata?.roles || rec?.user_metadata?.roles || [];
-  const list = Array.isArray(r) ? r : [r];
-  const lowered = list.map(String).map(x => x.toLowerCase());
-  return lowered.includes("admin") || lowered.includes("owner");
-}
-
-function hasAnyActiveAdmin(usersList) {
-  const arr = Array.isArray(usersList) ? usersList : [];
-  return arr.some(u => isActiveStatus(u?.status || "pending") && recordIsAdmin(u));
 }
 
 async function readBodyJson(req) {
@@ -285,35 +286,6 @@ export default async (req, context) => {
   //   /.netlify/functions/store?key=anw_users&reset=1
   if (process.env.NETLIFY_DEV && url.searchParams.get("reset") === "1" && key === "anw_users") {
     const store = getCentralStore(context);
-
-  const ensureBootstrapAdmin = async () => {
-    // If no active admin exists yet, promote the current logged-in user to active admin.
-    const current = (await store.get("anw_users", { type: "json" })) || [];
-    const usersList = Array.isArray(current) ? current : [];
-    if (hasAnyActiveAdmin(usersList)) return { usersList, changed: false };
-
-    const idx = usersList.findIndex(u => normalizeEmail(u?.email) === email);
-    const base = idx >= 0 ? (usersList[idx] || {}) : {};
-
-    const next = {
-      ...base,
-      email,
-      name: base.name || user?.user_metadata?.full_name || user?.user_metadata?.name || "",
-      status: "active",
-      role: "admin",
-      createdAt: base.createdAt || new Date().toISOString(),
-    };
-
-    const updated = [...usersList];
-    if (idx >= 0) updated[idx] = next;
-    else updated.push(next);
-
-    await store.set("anw_users", JSON.stringify(updated));
-    bootstrapAdmin = true;
-    return { usersList: updated, changed: true };
-  };
-
-  const effectiveAdmin = () => admin || bootstrapAdmin;
     await store.delete("anw_users");
     return json({ ok: true, deleted: "anw_users" }, 200, corsHeaders);
   }
@@ -360,35 +332,6 @@ export default async (req, context) => {
 
     try {
       const store = getCentralStore(context);
-
-  const ensureBootstrapAdmin = async () => {
-    // If no active admin exists yet, promote the current logged-in user to active admin.
-    const current = (await store.get("anw_users", { type: "json" })) || [];
-    const usersList = Array.isArray(current) ? current : [];
-    if (hasAnyActiveAdmin(usersList)) return { usersList, changed: false };
-
-    const idx = usersList.findIndex(u => normalizeEmail(u?.email) === email);
-    const base = idx >= 0 ? (usersList[idx] || {}) : {};
-
-    const next = {
-      ...base,
-      email,
-      name: base.name || user?.user_metadata?.full_name || user?.user_metadata?.name || "",
-      status: "active",
-      role: "admin",
-      createdAt: base.createdAt || new Date().toISOString(),
-    };
-
-    const updated = [...usersList];
-    if (idx >= 0) updated[idx] = next;
-    else updated.push(next);
-
-    await store.set("anw_users", JSON.stringify(updated));
-    bootstrapAdmin = true;
-    return { usersList: updated, changed: true };
-  };
-
-  const effectiveAdmin = () => admin || bootstrapAdmin;
       const usersList = (await store.get("anw_users", { type: "json" })) || [];
       list = Array.isArray(usersList) ? usersList : [];
     } catch (e) {
@@ -485,35 +428,6 @@ export default async (req, context) => {
   // --- Public reads (optional)
   if (req.method === "GET" && PUBLIC_READ_KEYS.has(key)) {
     const store = getCentralStore(context);
-
-  const ensureBootstrapAdmin = async () => {
-    // If no active admin exists yet, promote the current logged-in user to active admin.
-    const current = (await store.get("anw_users", { type: "json" })) || [];
-    const usersList = Array.isArray(current) ? current : [];
-    if (hasAnyActiveAdmin(usersList)) return { usersList, changed: false };
-
-    const idx = usersList.findIndex(u => normalizeEmail(u?.email) === email);
-    const base = idx >= 0 ? (usersList[idx] || {}) : {};
-
-    const next = {
-      ...base,
-      email,
-      name: base.name || user?.user_metadata?.full_name || user?.user_metadata?.name || "",
-      status: "active",
-      role: "admin",
-      createdAt: base.createdAt || new Date().toISOString(),
-    };
-
-    const updated = [...usersList];
-    if (idx >= 0) updated[idx] = next;
-    else updated.push(next);
-
-    await store.set("anw_users", JSON.stringify(updated));
-    bootstrapAdmin = true;
-    return { usersList: updated, changed: true };
-  };
-
-  const effectiveAdmin = () => admin || bootstrapAdmin;
     const raw = await store.get(key, { type: "text" });
     const val = raw ? safeJsonParse(raw) : null;
     return json({ key, value: val }, 200, corsHeaders);
@@ -525,39 +439,61 @@ export default async (req, context) => {
 
   const email = normalizeEmail(user.email);
   const admin = isAdmin(user);
-  let bootstrapAdmin = false;
+  let adminEffective = admin;
   const userId = String(user?.sub || user?.id || user?.user_metadata?.id || "");
 
   const store = getCentralStore(context);
 
-  const ensureBootstrapAdmin = async () => {
-    // If no active admin exists yet, promote the current logged-in user to active admin.
-    const current = (await store.get("anw_users", { type: "json" })) || [];
-    const usersList = Array.isArray(current) ? current : [];
-    if (hasAnyActiveAdmin(usersList)) return { usersList, changed: false };
 
-    const idx = usersList.findIndex(u => normalizeEmail(u?.email) === email);
-    const base = idx >= 0 ? (usersList[idx] || {}) : {};
+// --- Bootstrap anw_users and compute effective admin ---
+// Read existing users list (if any)
+let usersList = (await store.get("anw_users", { type: "json" })) || [];
+usersList = Array.isArray(usersList) ? usersList : [];
 
-    const next = {
-      ...base,
-      email,
-      name: base.name || user?.user_metadata?.full_name || user?.user_metadata?.name || "",
-      status: "active",
-      role: "admin",
-      createdAt: base.createdAt || new Date().toISOString(),
-    };
+const upsertUser = async (emailNorm, patch) => {
+  const i = usersList.findIndex(u => normalizeEmail(u?.email) === emailNorm);
+  const base = i >= 0 ? (usersList[i] || {}) : {};
+  const next = { ...base, ...patch, email: emailNorm };
+  if (patch?.eircode) next.eircode = normalizeEircode(patch.eircode);
+  if (!next.createdAt) next.createdAt = new Date().toISOString();
+  if (i >= 0) usersList[i] = next;
+  else usersList.push(next);
+  enforceUniqueEircode(usersList);
+  await store.set("anw_users", JSON.stringify(usersList));
+  return next;
+};
 
-    const updated = [...usersList];
-    if (idx >= 0) updated[idx] = next;
-    else updated.push(next);
+// 1) Ensure master user is always ACTIVE owner (if this login matches)
+if (email === normalizeEmail(MASTER_EMAIL)) {
+  await upsertUser(email, {
+    name: MASTER_NAME,
+    eircode: MASTER_EIRCODE,
+    role: MASTER_ROLE,
+    status: MASTER_STATUS,
+    residentType: "Owner",
+  });
+}
 
-    await store.set("anw_users", JSON.stringify(updated));
-    bootstrapAdmin = true;
-    return { usersList: updated, changed: true };
-  };
+// 2) If no active admin exists yet, promote the current logged-in user to ACTIVE admin
+if (!hasAnyActiveAdmin(usersList)) {
+  await upsertUser(email, {
+    name: usersList.find(u => normalizeEmail(u?.email) === email)?.name
+      || user?.user_metadata?.full_name
+      || user?.user_metadata?.name
+      || "",
+    status: "active",
+    role: "admin",
+    residentType: "Admin",
+  });
+}
 
-  const effectiveAdmin = () => admin || bootstrapAdmin;
+// Refresh after any possible writes
+usersList = (await store.get("anw_users", { type: "json" })) || [];
+usersList = Array.isArray(usersList) ? usersList : [];
+
+const myRecord = usersList.find(u => normalizeEmail(u?.email) === email) || null;
+adminEffective = adminEffective || (myRecord && isActiveStatus(myRecord?.status || "pending") && recordIsAdmin(myRecord));
+
 
   try {
     async function getValue() {
@@ -568,16 +504,12 @@ export default async (req, context) => {
       await store.set(key, JSON.stringify(value));
     }
 
-    // Bootstrap: ensure there is at least one active admin user in anw_users.
-    // If none exists yet, promote the current logged-in user.
-    await ensureBootstrapAdmin();
-
     /* =========================
        AUDIT LOG KEY (special)
        ========================= */
     if (key === AUDIT_KEY) {
       // Non-admin must be active to write audit events.
-      if (!effectiveAdmin()) {
+      if (!adminEffective) {
         const usersList = (await store.get("anw_users", { type: "json" })) || [];
         const my = Array.isArray(usersList)
           ? usersList.find(u => normalizeEmail(u?.email) === email)
@@ -590,7 +522,7 @@ export default async (req, context) => {
 
       // GET: admin only, with optional ?eircode= filter
       if (req.method === "GET") {
-        if (!effectiveAdmin()) return json({ error: "Forbidden" }, 403, corsHeaders);
+        if (!adminEffective) return json({ error: "Forbidden" }, 403, corsHeaders);
         const eirFilter = normalizeEircode(url.searchParams.get("eircode") || "");
         const rawList = (await getValue()) || [];
         const list = applyAuditRetention(rawList);
@@ -606,7 +538,7 @@ export default async (req, context) => {
 
       // DELETE: admin only
       if (req.method === "DELETE") {
-        if (!effectiveAdmin()) return json({ error: "Forbidden" }, 403, corsHeaders);
+        if (!adminEffective) return json({ error: "Forbidden" }, 403, corsHeaders);
         await store.delete(key);
         return json({ ok: true }, 200, corsHeaders);
       }
@@ -634,7 +566,7 @@ export default async (req, context) => {
 
       // PUT: admin only (bulk replace), always re-apply retention
       if (req.method === "PUT") {
-        if (!effectiveAdmin()) return json({ error: "Forbidden" }, 403, corsHeaders);
+        if (!adminEffective) return json({ error: "Forbidden" }, 403, corsHeaders);
         const body = await readBodyJson(req);
         const payload = body && body.value !== undefined ? body.value : body;
 
@@ -658,12 +590,12 @@ export default async (req, context) => {
       const amActive = isActiveStatus(myStatus);
 
       if (req.method === "GET") {
-        if (effectiveAdmin()) return json({ key, value: usersList }, 200, corsHeaders);
+        if (adminEffective) return json({ key, value: usersList }, 200, corsHeaders);
         return json({ key, value: myRecord ? [myRecord] : [] }, 200, corsHeaders);
       }
 
       if (req.method === "DELETE") {
-        if (!effectiveAdmin()) return json({ error: "Forbidden" }, 403, corsHeaders);
+        if (!adminEffective) return json({ error: "Forbidden" }, 403, corsHeaders);
         await store.delete(key);
         return json({ ok: true }, 200, corsHeaders);
       }
@@ -672,7 +604,7 @@ export default async (req, context) => {
         const body = await readBodyJson(req);
         const payload = body && body.value !== undefined ? body.value : body;
 
-        if (effectiveAdmin()) {
+        if (adminEffective) {
           const nextList = Array.isArray(payload) ? payload : usersList;
           enforceUniqueEircode(nextList);
           await setValue(nextList);
@@ -750,7 +682,7 @@ export default async (req, context) => {
     // ===== For ALL other keys =====
 
     // If not admin, must be ACTIVE and must respect key permissions
-    if (!effectiveAdmin()) {
+    if (!adminEffective) {
       const usersList = (await store.get("anw_users", { type: "json" })) || [];
       const my = Array.isArray(usersList)
         ? usersList.find(u => normalizeEmail(u?.email) === email)
@@ -777,7 +709,7 @@ export default async (req, context) => {
     }
 
     if (req.method === "DELETE") {
-      if (!effectiveAdmin()) return json({ error: "Forbidden" }, 403, corsHeaders);
+      if (!adminEffective) return json({ error: "Forbidden" }, 403, corsHeaders);
       await store.delete(key);
       return json({ ok: true }, 200, corsHeaders);
     }
@@ -786,7 +718,7 @@ export default async (req, context) => {
       const body = await readBodyJson(req);
       const payload = body && body.value !== undefined ? body.value : body;
 
-      if (!effectiveAdmin() && key === "anw_incidents") {
+      if (!adminEffective && key === "anw_incidents") {
         const existing = await getValue();
         enforceIncidentsAppendOnly(existing, payload, email);
       }
