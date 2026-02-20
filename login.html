@@ -346,6 +346,14 @@
 
   const ADMIN_CONTACT_EMAIL = 'aderrignw@gmail.com';
 
+
+// --- Bootstrap master admin (first-time setup) ---
+// This ensures the first approved admin can access /admin.html to approve others.
+// You can remove these constants once your admin account is fully active.
+const MASTER_EMAIL = 'claudiosantos1968@gmail.com';
+const MASTER_NAME  = 'Claudio Santos';
+const MASTER_EIR   = 'K78T2W8';
+
   function normalizeEir(val) {
     return (val || '').toUpperCase().replace(/\s+/g, '').trim();
   }
@@ -601,22 +609,33 @@ const volMeetings    = document.getElementById('volMeetings');
       setMsg(loginMsg, '', '');
 
       const email = (loginEmail.value || '').trim().toLowerCase();
-      const eir   = normalizeEir(loginEir.value || '');
+      let eir   = normalizeEir(loginEir.value || '');
       const pass  = (loginPass.value || '').trim();
 
-      if (!email || !eir || !pass) {
-        setMsg(loginMsg, 'Please fill all fields.', 'error');
-        toast('Please fill all fields.', 'warn');
-        modal('Please fill all fields before logging in.', 'Missing information');
+      // Email + password are required to authenticate with Netlify Identity.
+      // Eircode will be validated AFTER we load your site profile.
+      if (!email || !pass) {
+        setMsg(loginMsg, 'Please enter your email and password.', 'error');
+        toast('Missing email or password.', 'warn');
+        modal('Please enter your email and password.', 'Missing information');
         return;
       }
 
-      if (!isValidEir(eir)) {
+      // Auto-fill master eircode if the master email is used (bootstrap)
+      if (!eir && email === MASTER_EMAIL.toLowerCase()) {
+        loginEir.value = MASTER_EIR;
+      }
+      const eirFilled = normalizeEir(loginEir.value || '');
+
+      // If an eircode is provided, validate its format early (optional)
+      if (eirFilled && !isValidEir(eirFilled)) {
         setMsg(loginMsg, 'Please enter a valid Eircode.', 'error');
         toast('Invalid Eircode.', 'warn');
         modal('Please enter a valid Eircode (letters/numbers only).', 'Invalid Eircode');
         return;
       }
+
+      eir = eirFilled;
 
       // Soft lock check (device-level)
       const rem = lockRemainingMs(email, eir);
@@ -647,14 +666,78 @@ const volMeetings    = document.getElementById('volMeetings');
           ? users.find(x => (x.email||'').toLowerCase() === email)
           : null;
 
-        if(!me){
-          try{ window.netlifyIdentity.logout(); } catch {}
-          setMsg(loginMsg, 'Your profile is not registered. Please create an account first.', 'error');
-          toast('Profile not found. Please register.', 'error');
-          return;
-        }
+        
+if(!me){
+  // Bootstrap: if there is no approved admin yet, promote the first authenticated user
+  const hasActiveAdmin = Array.isArray(users) && users.some(x => (x.role||'') === 'admin' && String(x.status||'').toLowerCase() === 'active');
+  const isMaster = (email === MASTER_EMAIL.toLowerCase());
+  const profileEir = eir || (isMaster ? MASTER_EIR : '');
 
-        if(normalizeEir(me.eircode || '') !== eir){
+  if(!profileEir){
+    try{ window.netlifyIdentity.logout(); } catch {}
+    setMsg(loginMsg, 'Your profile is not registered yet. Please enter your Eircode or create an account first.', 'error');
+    toast('Profile not found. Please register.', 'error');
+    modal('We could not find a registered profile for this email. Please create an account, or enter your Eircode if you were invited.', 'Profile not found');
+    return;
+  }
+
+  const idUser = window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+  const displayName = (isMaster ? MASTER_NAME : (idUser?.user_metadata?.full_name || idUser?.user_metadata?.full_name || idUser?.email || email));
+
+  me = {
+    name: displayName,
+    email: email,
+    eircode: profileEir,
+    address: '',
+    phone: '',
+    residentType: 'owner',
+    type: 'owner',
+    coordinator: false,
+    volunteer: false,
+    vol_roles: {},
+    role: (isMaster || !hasActiveAdmin) ? 'admin' : 'resident',
+    status: (isMaster || !hasActiveAdmin) ? 'active' : 'pending',
+    createdAt: new Date().toISOString(),
+    regDate: new Date().toISOString()
+  };
+
+  users.push(me);
+  await anwSave(KEY_USERS, users);
+
+  // If we just created a pending profile, require admin approval.
+  if(String(me.status||'').toLowerCase() !== 'active'){
+    try{ window.netlifyIdentity.logout(); } catch {}
+    setMsg(loginMsg, 'Your registration is pending approval by an ANW admin.', 'error');
+    toast('Pending admin approval.', 'warn');
+    modal('Your account is pending approval. Please wait for an admin to approve your registration.', 'Pending approval');
+    return;
+  }
+} else {
+  // If this is the master account, ensure it is active admin (bootstrap)
+  const isMaster = (email === MASTER_EMAIL.toLowerCase());
+  if(isMaster){
+    let changed = false;
+    if(normalizeEir(me.eircode || '') !== normalizeEir(MASTER_EIR)){
+      me.eircode = MASTER_EIR;
+      changed = true;
+    }
+    if((me.role||'') !== 'admin'){ me.role = 'admin'; changed = true; }
+    if(String(me.status||'').toLowerCase() !== 'active'){ me.status = 'active'; changed = true; }
+    if(!me.name){ me.name = MASTER_NAME; changed = true; }
+    if(changed){
+      const idx = users.findIndex(x => (x.email||'').toLowerCase() === email);
+      if(idx >= 0){ users[idx] = me; await anwSave(KEY_USERS, users); }
+    }
+  }
+}
+
+// If the user did not enter an eircode, use the one from the profile.
+const expectedEir = normalizeEir(me.eircode || '');
+if(!eir && expectedEir){
+  loginEir.value = me.eircode;
+}
+
+if(normalizeEir(me.eircode || '') !== normalizeEir(loginEir.value || '')){
           try{ window.netlifyIdentity.logout(); } catch {}
           setMsg(loginMsg, 'Eircode does not match this account.', 'error');
           toast('Eircode mismatch.', 'error');
@@ -680,7 +763,7 @@ const volMeetings    = document.getElementById('volMeetings');
         setMsg(loginMsg, 'Login successful. Redirecting...', 'ok');
         toast('Login successful.', 'success');
 
-        await auditLog('LOGIN_OK', email, eir);
+        await auditLog('LOGIN_OK', email, normalizeEir(loginEir.value || ''));
 
         setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
 
