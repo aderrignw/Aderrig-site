@@ -1,13 +1,13 @@
 import { getStore } from "@netlify/blobs";
 
-
-function getCentralStore(context){
+function getCentralStore(context) {
   // Force a single, predictable Blobs store name so data (including anw_users) is always in one place.
   // Override via Netlify Environment Variable: CENTRAL_STORE_NAME
   const fixed = (process?.env?.CENTRAL_STORE_NAME || "aderrignw").trim();
   const storeName = fixed || (context?.site?.id ? `kv_${context.site.id}` : "kv_default");
   return getStore(storeName);
 }
+
 /**
  * Secure KV store (Netlify Blobs) with Netlify Identity enforcement.
  *
@@ -109,9 +109,23 @@ function isAdmin(user) {
   return lowered.includes("admin") || lowered.includes("owner");
 }
 
+function recordIsAdmin(rec) {
+  const r = safeLower(rec?.role || "");
+  if (r === "admin" || r === "owner") return true;
+  const roles = rec?.roles;
+  const list = Array.isArray(roles) ? roles : (roles ? [roles] : []);
+  const lowered = list.map(String).map(x => x.toLowerCase());
+  return lowered.includes("admin") || lowered.includes("owner");
+}
+
 function isActiveStatus(status) {
   const st = safeLower(status);
   return st === "active" || st === "approved";
+}
+
+function hasAnyActiveAdmin(usersList) {
+  const arr = Array.isArray(usersList) ? usersList : [];
+  return arr.some(u => isActiveStatus(u?.status || "pending") && recordIsAdmin(u));
 }
 
 async function readBodyJson(req) {
@@ -232,8 +246,6 @@ function normalizeAuditEvent(raw, { email, userId }) {
   }
 
   const at = safeString(raw?.at || raw?.timestamp || isoNow(), 40);
-  // We accept ISO strings; keep it simple and store as provided.
-  // (Retention compares string lexicographically in ISO format, which is safe.)
   const meta = raw?.meta && typeof raw.meta === "object" ? raw.meta : null;
 
   return {
@@ -243,7 +255,6 @@ function normalizeAuditEvent(raw, { email, userId }) {
     eircode,
     userId: safeString(userId || "", 80),
     emailMasked: maskEmail(email),
-    // meta kept minimal (optional)
     meta: meta ? meta : undefined,
   };
 }
@@ -252,15 +263,12 @@ function applyAuditRetention(list) {
   const arr = Array.isArray(list) ? list : [];
   const cutoff = cutoffIso(AUDIT_RETENTION_DAYS);
 
-  // Keep items with valid ISO >= cutoff; if missing "at", keep (conservative)
   const kept = arr.filter(it => {
     const at = String(it?.at || "");
     if (!at) return true;
-    // ISO 8601 strings compare lexicographically (same format)
     return at >= cutoff;
   });
 
-  // Cap to last AUDIT_MAX_ITEMS (keep newest at end)
   if (kept.length > AUDIT_MAX_ITEMS) {
     return kept.slice(kept.length - AUDIT_MAX_ITEMS);
   }
@@ -269,7 +277,6 @@ function applyAuditRetention(list) {
 
 export default async (req, context) => {
   const url = new URL(req.url);
-  const key = url.searchParams.get("key") || "";
 
   // --- CORS
   const origin = req.headers.get("origin") || "";
@@ -281,6 +288,9 @@ export default async (req, context) => {
   };
   if (req.method === "OPTIONS") return new Response("", { status: 204, headers: corsHeaders });
 
+  const action = url.searchParams.get("action") || "";
+  const key = url.searchParams.get("key") || "";
+
   // === DEV-ONLY: one-off reset of residents/users ===
   // Call in browser while running `netlify dev`:
   //   /.netlify/functions/store?key=anw_users&reset=1
@@ -290,7 +300,85 @@ export default async (req, context) => {
     return json({ ok: true, deleted: "anw_users" }, 200, corsHeaders);
   }
 
+  // ✅ NEW: SYNC endpoint (no key required)
+  // Use:
+  //   /.netlify/functions/store?action=sync
+  // or:
+  //   /.netlify/functions/store?key=anw_users&action=sync
+  if (action === "sync") {
+    const user = context?.clientContext?.user;
+    if (!user) return json({ error: "Unauthorized (login required)" }, 401, corsHeaders);
 
+    const email = normalizeEmail(user.email);
+    const admin = isAdmin(user);
+    const isMaster = email === normalizeEmail(MASTER_EMAIL);
+
+    const store = getCentralStore(context);
+
+    let usersList = (await store.get("anw_users", { type: "json" })) || [];
+    usersList = Array.isArray(usersList) ? usersList : [];
+
+    const upsertUser = async (emailNorm, patch) => {
+      const i = usersList.findIndex(u => normalizeEmail(u?.email) === emailNorm);
+      const base = i >= 0 ? (usersList[i] || {}) : {};
+      const next = { ...base, ...patch, email: emailNorm };
+      if (patch?.eircode) next.eircode = normalizeEircode(patch.eircode);
+      if (!next.createdAt) next.createdAt = new Date().toISOString();
+      if (i >= 0) usersList[i] = next;
+      else usersList.push(next);
+      enforceUniqueEircode(usersList);
+      await store.set("anw_users", JSON.stringify(usersList));
+      return next;
+    };
+
+    // Ensure master user is always ACTIVE owner
+    if (isMaster) {
+      await upsertUser(email, {
+        name: MASTER_NAME,
+        eircode: MASTER_EIRCODE,
+        role: MASTER_ROLE,
+        status: MASTER_STATUS,
+        residentType: "Owner",
+      });
+    }
+
+    // If no active admin exists yet, promote the first logged-in user
+    if (!hasAnyActiveAdmin(usersList)) {
+      await upsertUser(email, {
+        name:
+          usersList.find(u => normalizeEmail(u?.email) === email)?.name
+          || user?.user_metadata?.full_name
+          || user?.user_metadata?.name
+          || "",
+        status: "active",
+        role: admin ? "admin" : "admin",
+        residentType: "Admin",
+      });
+    }
+
+    // Refresh list
+    usersList = (await store.get("anw_users", { type: "json" })) || [];
+    usersList = Array.isArray(usersList) ? usersList : [];
+
+    const myRecord = usersList.find(u => normalizeEmail(u?.email) === email) || null;
+
+    // If I am owner/admin in Identity, ensure I'm active in anw_users
+    if ((admin || isMaster) && (!myRecord || !isActiveStatus(myRecord?.status || "pending"))) {
+      await upsertUser(email, {
+        status: "active",
+        role: isMaster ? "owner" : (admin ? "owner" : "resident"),
+      });
+    }
+
+    // Final fetch
+    usersList = (await store.get("anw_users", { type: "json" })) || [];
+    usersList = Array.isArray(usersList) ? usersList : [];
+    const me = usersList.find(u => normalizeEmail(u?.email) === email) || null;
+
+    return json({ ok: true, action: "sync", me }, 200, corsHeaders);
+  }
+
+  // For all non-sync requests, key is required (it identifies the blob key)
   if (!key) return json({ error: "Missing ?key=" }, 400, corsHeaders);
 
   // =========================
@@ -299,16 +387,11 @@ export default async (req, context) => {
   // - Logged-in + ACTIVE: returns names/phones + roles
   // =========================
   if (key === "nearby_support" && req.method === "POST") {
-    // IMPORTANT:
-    // Local dev and some environments may not have Blobs configured.
-    // The Home page must NEVER fail because of that — it should safely return 0/0.
     let list = [];
     const body = await readBodyJson(req);
     const eircode = normalizeEircode(body?.eircode || body?.eir || "");
     if (!eircode) return json({ error: "Missing eircode" }, 400, corsHeaders);
 
-    // Resolve an address for the Eircode (best-effort).
-    // If Google Maps key is not configured yet, we fall back to OpenStreetMap Nominatim so local tests still show an address.
     async function resolveAddress(q) {
       const key = process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_KEY || "";
       try {
@@ -335,7 +418,6 @@ export default async (req, context) => {
       const usersList = (await store.get("anw_users", { type: "json" })) || [];
       list = Array.isArray(usersList) ? usersList : [];
     } catch (e) {
-      // Fail-safe: no store available, treat as no nearby support.
       const counts = { coordinators: 0, volunteers: 0 };
       const user = context?.clientContext?.user;
       return json({ ok: true, mode: user ? "counts" : "public", eircode, counts }, 200, corsHeaders);
@@ -370,13 +452,11 @@ export default async (req, context) => {
 
     const counts = { coordinators: coords.length, volunteers: vols.length };
 
-    // If not logged in (public): counts only
     const user = context?.clientContext?.user;
     if (!user) {
       return json({ ok: true, mode: "public", eircode, address, counts }, 200, corsHeaders);
     }
 
-    // Logged-in: only ACTIVE residents can see names/phones
     const email = normalizeEmail(user.email);
     const me = list.find(u => normalizeEmail(u?.email) === email);
     const isApproved = !!me && isActiveStatus(me?.status || "pending");
@@ -424,7 +504,6 @@ export default async (req, context) => {
     }, 200, corsHeaders);
   }
 
-
   // --- Public reads (optional)
   if (req.method === "GET" && PUBLIC_READ_KEYS.has(key)) {
     const store = getCentralStore(context);
@@ -444,56 +523,54 @@ export default async (req, context) => {
 
   const store = getCentralStore(context);
 
+  // --- Bootstrap anw_users and compute effective admin ---
+  // Read existing users list (if any)
+  let usersList = (await store.get("anw_users", { type: "json" })) || [];
+  usersList = Array.isArray(usersList) ? usersList : [];
 
-// --- Bootstrap anw_users and compute effective admin ---
-// Read existing users list (if any)
-let usersList = (await store.get("anw_users", { type: "json" })) || [];
-usersList = Array.isArray(usersList) ? usersList : [];
+  const upsertUser = async (emailNorm, patch) => {
+    const i = usersList.findIndex(u => normalizeEmail(u?.email) === emailNorm);
+    const base = i >= 0 ? (usersList[i] || {}) : {};
+    const next = { ...base, ...patch, email: emailNorm };
+    if (patch?.eircode) next.eircode = normalizeEircode(patch.eircode);
+    if (!next.createdAt) next.createdAt = new Date().toISOString();
+    if (i >= 0) usersList[i] = next;
+    else usersList.push(next);
+    enforceUniqueEircode(usersList);
+    await store.set("anw_users", JSON.stringify(usersList));
+    return next;
+  };
 
-const upsertUser = async (emailNorm, patch) => {
-  const i = usersList.findIndex(u => normalizeEmail(u?.email) === emailNorm);
-  const base = i >= 0 ? (usersList[i] || {}) : {};
-  const next = { ...base, ...patch, email: emailNorm };
-  if (patch?.eircode) next.eircode = normalizeEircode(patch.eircode);
-  if (!next.createdAt) next.createdAt = new Date().toISOString();
-  if (i >= 0) usersList[i] = next;
-  else usersList.push(next);
-  enforceUniqueEircode(usersList);
-  await store.set("anw_users", JSON.stringify(usersList));
-  return next;
-};
+  // 1) Ensure master user is always ACTIVE owner (if this login matches)
+  if (email === normalizeEmail(MASTER_EMAIL)) {
+    await upsertUser(email, {
+      name: MASTER_NAME,
+      eircode: MASTER_EIRCODE,
+      role: MASTER_ROLE,
+      status: MASTER_STATUS,
+      residentType: "Owner",
+    });
+  }
 
-// 1) Ensure master user is always ACTIVE owner (if this login matches)
-if (email === normalizeEmail(MASTER_EMAIL)) {
-  await upsertUser(email, {
-    name: MASTER_NAME,
-    eircode: MASTER_EIRCODE,
-    role: MASTER_ROLE,
-    status: MASTER_STATUS,
-    residentType: "Owner",
-  });
-}
+  // 2) If no active admin exists yet, promote the current logged-in user to ACTIVE admin
+  if (!hasAnyActiveAdmin(usersList)) {
+    await upsertUser(email, {
+      name: usersList.find(u => normalizeEmail(u?.email) === email)?.name
+        || user?.user_metadata?.full_name
+        || user?.user_metadata?.name
+        || "",
+      status: "active",
+      role: "admin",
+      residentType: "Admin",
+    });
+  }
 
-// 2) If no active admin exists yet, promote the current logged-in user to ACTIVE admin
-if (!hasAnyActiveAdmin(usersList)) {
-  await upsertUser(email, {
-    name: usersList.find(u => normalizeEmail(u?.email) === email)?.name
-      || user?.user_metadata?.full_name
-      || user?.user_metadata?.name
-      || "",
-    status: "active",
-    role: "admin",
-    residentType: "Admin",
-  });
-}
+  // Refresh after any possible writes
+  usersList = (await store.get("anw_users", { type: "json" })) || [];
+  usersList = Array.isArray(usersList) ? usersList : [];
 
-// Refresh after any possible writes
-usersList = (await store.get("anw_users", { type: "json" })) || [];
-usersList = Array.isArray(usersList) ? usersList : [];
-
-const myRecord = usersList.find(u => normalizeEmail(u?.email) === email) || null;
-adminEffective = adminEffective || (myRecord && isActiveStatus(myRecord?.status || "pending") && recordIsAdmin(myRecord));
-
+  const myRecord0 = usersList.find(u => normalizeEmail(u?.email) === email) || null;
+  adminEffective = adminEffective || (myRecord0 && isActiveStatus(myRecord0?.status || "pending") && recordIsAdmin(myRecord0));
 
   try {
     async function getValue() {
@@ -548,7 +625,6 @@ adminEffective = adminEffective || (myRecord && isActiveStatus(myRecord?.status 
         const body = await readBodyJson(req);
         const payload = body && body.value !== undefined ? body.value : body;
 
-        // Accept either: {event, eircode, at?, meta?}
         const evRaw = payload && typeof payload === "object" ? payload : null;
         if (!evRaw) return json({ error: "Invalid body" }, 400, corsHeaders);
 
@@ -557,7 +633,6 @@ adminEffective = adminEffective || (myRecord && isActiveStatus(myRecord?.status 
 
         const entry = normalizeAuditEvent(evRaw, { email, userId });
 
-        // extra safety: keep list append-only
         const next = applyAuditRetention([...list, entry]);
         await setValue(next);
 
@@ -617,7 +692,6 @@ adminEffective = adminEffective || (myRecord && isActiveStatus(myRecord?.status 
           ? (payload.find(u => normalizeEmail(u?.email) === email) || {})
           : (payload && typeof payload === "object" ? payload : {});
 
-        // Allowlist of fields residents can write to their own record (used at registration / profile edits).
         const incoming = {
           name: incomingRaw.name,
           phone: incomingRaw.phone,
@@ -639,7 +713,6 @@ adminEffective = adminEffective || (myRecord && isActiveStatus(myRecord?.status 
 
         const next = {
           ...(myRecord || {}),
-          // force identity email (cannot be changed client-side)
           email,
           name: incoming.name ?? (myRecord?.name || ""),
           phone: incoming.phone ?? (myRecord?.phone || ""),
@@ -659,8 +732,14 @@ adminEffective = adminEffective || (myRecord && isActiveStatus(myRecord?.status 
           eircode: incoming.eircode ? normalizeEircode(incoming.eircode) : normalizeEircode(myRecord?.eircode || ""),
         };
 
-        // resident cannot self-approve
-        next.status = amActive ? myStatus : "pending";
+        // ✅ FIX: owner/admin (Identity) OR MASTER_EMAIL becomes ACTIVE automatically
+        const identityIsOwnerAdmin = isAdmin(user) || (email === normalizeEmail(MASTER_EMAIL));
+        if (identityIsOwnerAdmin) {
+          next.status = "active";
+        } else {
+          // resident cannot self-approve
+          next.status = amActive ? myStatus : "pending";
+        }
 
         // block resident from roles/admin fields
         delete next.role;
@@ -743,5 +822,4 @@ adminEffective = adminEffective || (myRecord && isActiveStatus(myRecord?.status 
 
     return json({ error: message }, 500, corsHeaders);
   }
-
 };
