@@ -109,11 +109,15 @@
     return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
   }
 
-  async function anwFetchKey(key) {
+  async function anwFetchKey(key, opts) {
     const token = await getIdentityToken();
     if (!token) throw new Error('Login required');
 
-    const res = await fetch(`${__STORE_URL}?key=${encodeURIComponent(key)}`, {
+    const o = opts && typeof opts === 'object' ? opts : {};
+    const qsExtra = o.qs && typeof o.qs === 'string' ? o.qs : '';
+    const url = `${__STORE_URL}?key=${encodeURIComponent(key)}${qsExtra ? ('&' + qsExtra.replace(/^\&+/, '')) : ''}`;
+
+    const res = await fetch(url, {
       headers: { authorization: `Bearer ${token}` }
     });
 
@@ -153,11 +157,24 @@
     return true;
   }
 
-  async function anwInitStore() {
-    for (const k of Object.values(ANW_KEYS)) {
+  async function anwInitStore(keys) {
+    // Avoid spamming Functions with many requests on pages like login.
+    // Default: only what is needed for auth/ACL gating.
+    const wanted = Array.isArray(keys) && keys.length
+      ? keys
+      : [ANW_KEYS.USERS, ANW_KEYS.ACL];
+
+    for (const k of wanted) {
       try {
         __ANW_CACHE[k] = await anwFetchKey(k);
-      } catch {}
+      } catch (e) {
+        // keep going; login page can render even if protected keys fail
+      }
+    }
+
+    if (!Array.isArray(__ANW_CACHE[ANW_KEYS.USERS])) __ANW_CACHE[ANW_KEYS.USERS] = [];
+    if (!__ANW_CACHE[ANW_KEYS.ACL]) __ANW_CACHE[ANW_KEYS.ACL] = ANW_ACL_DEFAULT;
+  } catch {}
     }
 
     if (!Array.isArray(__ANW_CACHE[ANW_KEYS.USERS])) __ANW_CACHE[ANW_KEYS.USERS] = [];
@@ -166,6 +183,26 @@
     if (!Array.isArray(__ANW_CACHE[ANW_KEYS.NOTICES])) __ANW_CACHE[ANW_KEYS.NOTICES] = [];
     if (!Array.isArray(__ANW_CACHE[ANW_KEYS.PROJECTS])) __ANW_CACHE[ANW_KEYS.PROJECTS] = [];
     if (!__ANW_CACHE[ANW_KEYS.ACL]) __ANW_CACHE[ANW_KEYS.ACL] = ANW_ACL_DEFAULT;
+  }
+
+  
+  // Refresh the minimal auth-related cache (anw_users + anw_acl).
+  // Use this after login/registration or before checking approval.
+  async function anwRefresh() {
+    await anwInitStore([ANW_KEYS.USERS, ANW_KEYS.ACL]);
+    return true;
+  }
+
+  // Ensure we have the latest anw_users from the server (triggers server-side bootstrap).
+  async function anwEnsureUsersSynced() {
+    try {
+      __ANW_CACHE[ANW_KEYS.USERS] = await anwFetchKey(ANW_KEYS.USERS);
+      if (!Array.isArray(__ANW_CACHE[ANW_KEYS.USERS])) __ANW_CACHE[ANW_KEYS.USERS] = [];
+      return true;
+    } catch (e) {
+      if (!Array.isArray(__ANW_CACHE[ANW_KEYS.USERS])) __ANW_CACHE[ANW_KEYS.USERS] = [];
+      return false;
+    }
   }
 
   function anwLoad(key, fallback) {
@@ -240,10 +277,25 @@
       overlay.classList.add('open');
     }
 
-    function toast(msg, timeout = 3000) {
+    function toast(msg, typeOrTimeout, maybeTimeout) {
+      // Supports:
+      // - toast("hi") -> default 3s
+      // - toast("hi", 5000) -> 5s
+      // - toast("hi", "success") -> type + default 3s
+      // - toast("hi", "warn", 5000) -> type + 5s
+      let type = '';
+      let timeout = 3000;
+
+      if (typeof typeOrTimeout === 'number') {
+        timeout = typeOrTimeout;
+      } else if (typeof typeOrTimeout === 'string') {
+        type = typeOrTimeout;
+        if (typeof maybeTimeout === 'number') timeout = maybeTimeout;
+      }
+
       const t = document.createElement('div');
-      t.className = 'anw-toast';
-      t.textContent = msg;
+      t.className = 'anw-toast' + (type ? (' ' + String(type).toLowerCase()) : '');
+      t.textContent = String(msg ?? '');
       document.body.appendChild(t);
       setTimeout(() => t.remove(), timeout);
     }
@@ -260,6 +312,8 @@
 
   window.ANW_KEYS = ANW_KEYS;
   window.anwInitStore = anwInitStore;
+  window.anwRefresh = anwRefresh;
+  window.anwEnsureUsersSynced = anwEnsureUsersSynced;
   window.anwFetchKey = anwFetchKey;
   window.anwSave = anwSave;
   window.anwLoad = anwLoad;
