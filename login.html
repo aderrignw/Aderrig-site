@@ -74,7 +74,7 @@
   .msg.ok{ color:#0f5132; }
   .msg.error{ color:#b02a37; }
 
-  #resetBlock[hidden]{display:none !important;}
+#resetBlock[hidden]{display:none !important;}
 </style>
 <style id="page-access-style">
   footer.site-footer { position: relative; }
@@ -89,6 +89,9 @@
 <script>
 // --- Netlify Identity: make it work reliably on localhost (netlify dev) ---
 (function () {
+  // Deployed site URL used ONLY for localhost development.
+  // In production we automatically use window.location.origin so the same build
+  // works on your Netlify subdomain and on the custom domain.
   const DEPLOYED_SITE_URL = "https://aderrignw.ie";
   function isLocalhost(hostname){
     return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0" || (hostname && hostname.endsWith(".localhost"));
@@ -98,9 +101,11 @@
     const hostname = (window.location && window.location.hostname) ? window.location.hostname : "";
     const siteUrl = isLocalhost(hostname) ? DEPLOYED_SITE_URL : (window.location && window.location.origin ? window.location.origin : DEPLOYED_SITE_URL);
     try {
+      // Suppress the "Development Settings" prompt on localhost for the widget
       localStorage.setItem("netlifySiteURL", siteUrl);
     } catch(e){}
     try {
+      // Ensure gotrue is created
       window.netlifyIdentity.init();
     } catch(e){}
     const start = Date.now();
@@ -301,12 +306,8 @@
     </div>
   </div>
 </footer>
-
 <!-- Netlify Identity Widget -->
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script src="assets/identity.js"></script>
-<script src="assets/app-core.js"></script>
-
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script><script src="assets/identity.js"></script><script src="assets/app-core.js"></script>
 <script>
 (async function () {
   'use strict';
@@ -328,25 +329,18 @@
     }catch{}
     alert(msg);
   }
-  function setMsg(el, text, kind){
-    if(!el) return;
-    el.textContent = text || '';
-    el.className = 'msg' + (kind ? (' ' + kind) : '');
-  }
 
-  // ✅ NEW: Sync profile with server (creates/updates anw_users using Identity token)
+  // ✅ Sync profile on server (requires Identity token)
   async function anwSyncProfile(){
     try{
       if(!window.netlifyIdentity || !window.netlifyIdentity.currentUser) return false;
       const u = window.netlifyIdentity.currentUser();
       if(!u) return false;
-
       const token = await u.jwt();
       const res = await fetch("/.netlify/functions/store?action=sync", {
         method: "GET",
         headers: { "Authorization": "Bearer " + token }
       });
-
       const data = await res.json().catch(()=>({}));
       console.log("anwSyncProfile:", res.status, data);
       return res.ok;
@@ -356,10 +350,19 @@
     }
   }
 
+  function setMsg(el, text, kind){
+    if(!el) return;
+    el.textContent = text || '';
+    el.className = 'msg' + (kind ? (' ' + kind) : '');
+  }
+
   // ---------- Soft lock config (device-level) ----------
+  // 5 failed attempts -> lock for 1 hour
   const SOFTLOCK_MAX_ATTEMPTS = 5;
   const SOFTLOCK_MINUTES = 60;
 
+  // After lock expires: on FIRST failed attempt -> auto-send password reset email
+  // (cooldown so it won't spam on the same device)
   const RESET_AFTER_LOCK_COOLDOWN_MINUTES = 30;
 
   const ADMIN_CONTACT_EMAIL = 'aderrignw@gmail.com';
@@ -455,8 +458,8 @@
   const volTech        = document.getElementById('volTech');
   const volElderly     = document.getElementById('volElderly');
   const volCleanup     = document.getElementById('volCleanup');
-  const volParking     = document.getElementById('volParking');
-  const volMeetings    = document.getElementById('volMeetings');
+    const volParking    = document.getElementById('volParking');
+const volMeetings    = document.getElementById('volMeetings');
   const volTranslation = document.getElementById('volTranslation');
 
   const btnRegister = document.getElementById('btnRegister');
@@ -470,10 +473,12 @@
   const btnSendReset   = document.getElementById('btnSendReset');
   const resetMsg       = document.getElementById('resetMsg');
 
+  // Force reset panel closed on load
   if(resetBlock) resetBlock.hidden = true;
 
   const KEY_USERS = ANW_KEYS.USERS;
 
+  // Force volunteer options closed on load
   if(volBox) volBox.hidden = true;
 
   // ---------- Volunteer options toggle ----------
@@ -521,7 +526,7 @@
 
     try{
       await anwInitStore();
-      const users = anwLoad(KEY_USERS, []);
+      const users = await anwRefresh(KEY_USERS, []);
       const u = Array.isArray(users)
         ? users.find(x => (x.email||'').toLowerCase() === email && normalizeEir(x.eircode||'') === eir)
         : null;
@@ -557,12 +562,15 @@
     try{
       if(!eventType || !emailAddr || !eircodeVal) return;
       await anwInitStore();
+      // store.js enforces: admin can read; active residents can only append (POST)
       await anwSave('anw_audit_log', {
         event: String(eventType),
         eircode: String(eircodeVal),
         at: new Date().toISOString()
       });
-    }catch(e){}
+    }catch(e){
+      // never block UX if logging fails
+    }
   }
 
   // ---------- Banner + registration hide logic (after login only) ----------
@@ -579,12 +587,10 @@
       return;
     }
 
-    // ✅ Ensure server created/updated anw_users before we read it
-    try { await anwSyncProfile(); } catch {}
-
     try{ await anwInitStore(); } catch {}
+    try{ await anwSyncProfile(); } catch {}
 
-    const users = anwLoad(KEY_USERS, []);
+    const users = await anwRefresh(KEY_USERS, []);
     const me = Array.isArray(users) ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase()) : null;
 
     const status = (me && me.status ? me.status : 'pending').toLowerCase();
@@ -634,6 +640,7 @@
         return;
       }
 
+      // Soft lock check (device-level)
       const rem = lockRemainingMs(email, eir);
       if(rem > 0){
         const msg = 'Too many failed attempts. Please wait ' + formatMins(rem) + ' and try again, or use “I forgot my password”.';
@@ -653,13 +660,12 @@
         await new Promise((res, rej)=>window.__ensureIdentityReady(err=>err?rej(err):res()));
         await window.netlifyIdentity.gotrue.login(email, pass, true);
 
-        // ✅ IMPORTANT: sync server profile immediately after login
-        await anwSyncProfile();
-
+        // login succeeded -> clear soft lock state
         clearAttemptState(email, eir);
 
+        // now we have a token, load store and validate eircode + approval
         await anwInitStore();
-        const users = anwLoad(KEY_USERS, []);
+        const users = await anwRefresh(KEY_USERS, []);
         const me = Array.isArray(users)
           ? users.find(x => (x.email||'').toLowerCase() === email)
           : null;
@@ -702,20 +708,25 @@
         setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
 
       }catch(err){
+        // Login failed -> increment attempts + lock if reached threshold
         const st = getAttemptState(email, eir);
         const now = Date.now();
 
+        // If the user was locked previously, and lock has already expired,
+        // then ANY new failure triggers an automatic reset email (Option A).
         const previouslyLocked = Number(st.lockUntil || 0) > 0 && Number(st.fails || 0) >= SOFTLOCK_MAX_ATTEMPTS;
         const lockExpired = previouslyLocked && now > Number(st.lockUntil || 0);
         const resetCooldownOk = (now - Number(st.lastResetSentAt || 0)) > minutesToMs(RESET_AFTER_LOCK_COOLDOWN_MINUTES);
 
         if(lockExpired){
+          // Send reset email (once per cooldown window)
           let sent = false;
           if(resetCooldownOk){
             sent = await autoSendPasswordReset(email);
             if(sent){ await auditLog('PASSWORD_RESET_SENT', email, eir); }
             setAttemptState(email, eir, { fails: 0, lockUntil: 0, lastResetSentAt: sent ? now : Number(st.lastResetSentAt || 0) });
           }else{
+            // keep state but don't spam
             setAttemptState(email, eir, { fails: 0, lockUntil: 0, lastResetSentAt: Number(st.lastResetSentAt || 0) });
           }
 
@@ -767,8 +778,7 @@
       if (loginPass)  loginPass.value  = '';
       setMsg(loginMsg, 'You have been logged out.', '');
       toast('Logged out.', 'info');
-
-      await showLoggedBannerIfAny();
+  await showLoggedBannerIfAny();
     });
   }
 
@@ -843,11 +853,9 @@
         await new Promise((res, rej)=>window.__ensureIdentityReady(err=>err?rej(err):res()));
         await window.netlifyIdentity.gotrue.login(email, pass, true);
 
-        // ✅ sync server (so MASTER/owner gets created/activated)
-        await anwSyncProfile();
-
         await anwInitStore();
-        let users = anwLoad(KEY_USERS, []);
+        try{ await anwSyncProfile(); } catch {}
+        let users = await anwRefresh(KEY_USERS, []);
         if(!Array.isArray(users)) users = [];
 
         if (users.some(x => (x.email||'').toLowerCase() === email)) {
@@ -938,13 +946,13 @@
       ev.preventDefault();
       resetBlock.hidden = !resetBlock.hidden;
       if(!resetBlock.hidden){
-        if(resetEmail && loginEmail) resetEmail.value = (loginEmail.value || '').trim();
-        setMsg(resetMsg, '', '');
-        resetBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+if(resetEmail && loginEmail) resetEmail.value = (loginEmail.value || '').trim();
+      setMsg(resetMsg, '', '');
+      resetBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     });
   }
-  if(btnCancelReset && resetBlock){
+if(btnCancelReset && resetBlock){
     btnCancelReset.addEventListener('click', () => {
       resetBlock.hidden = true;
       setMsg(resetMsg, '', '');
@@ -968,6 +976,7 @@
         setMsg(resetMsg, 'Reset email sent. Please check your inbox.', 'ok');
         toast('Reset email sent.', 'success');
 
+        // also update cooldown stamp for this browser (if eircode exists)
         const eir = normalizeEir(loginEir ? loginEir.value : '');
         if(eir){
           const st = getAttemptState(email, eir);
@@ -980,21 +989,69 @@
     });
   }
 
-  // ✅ Sync on identity init/login events too
-  if(window.netlifyIdentity){
-    window.netlifyIdentity.on('init', async (user) => {
-      if(user){
-        await anwSyncProfile();
+
+
+  // ---------- Dev tools (localhost only) ----------
+  (function initDevTools(){
+    try{
+      const host = String(location.hostname || "").toLowerCase();
+      const isLocal = (host === "localhost" || host === "127.0.0.1" || host === "::1");
+      const box = document.getElementById("devTools");
+      if(!isLocal || !box) return;
+
+      box.style.display = "";
+      const msg = document.getElementById("devToolsMsg");
+      const btnRemove = document.getElementById("btnDevRemoveEmail");
+      const btnWipe = document.getElementById("btnDevWipeUsers");
+
+      function setMsg(t, ok){
+        if(!msg) return;
+        msg.textContent = t || "";
+        msg.style.color = ok ? "var(--ok,#0a7)" : "var(--danger,#b00)";
       }
-      await showLoggedBannerIfAny();
-    });
-    window.netlifyIdentity.on('login', async () => {
-      await anwSyncProfile();
-      await showLoggedBannerIfAny();
-    });
-    window.netlifyIdentity.on('logout', async () => {
-      await showLoggedBannerIfAny();
-    });
+
+      async function devDelete(url){
+        const res = await fetch(url, { method: "DELETE" });
+        const data = await res.json().catch(()=> ({}));
+        if(!res.ok || data.ok === false) throw new Error(data.error || data.message || "Dev reset failed");
+        return data;
+      }
+
+      if(btnRemove){
+        btnRemove.addEventListener("click", async () => {
+          const email = (document.getElementById("loginEmail")?.value || document.getElementById("regEmail")?.value || "").trim();
+          if(!email){ setMsg("Enter your email first (Login or Register box).", false); return; }
+          if(!confirm(`DEV: Remove ${email} from registrations?`)) return;
+          try{
+            setMsg("Removing…", true);
+            const data = await devDelete(`/.netlify/functions/store?key=anw_users&dev_reset=1&email=${encodeURIComponent(email)}`);
+            setMsg(`Done. Removed ${data.removed || 0} record(s). You can register again.`, true);
+          }catch(e){
+            setMsg(e.message || String(e), false);
+          }
+        });
+      }
+
+      if(btnWipe){
+        btnWipe.addEventListener("click", async () => {
+          if(!confirm("DEV: This will wipe ALL registrations (anw_users). Continue?")) return;
+          try{
+            setMsg("Wiping…", true);
+            await devDelete(`/.netlify/functions/store?key=anw_users&dev_reset=1`);
+            setMsg("Done. All registrations wiped.", true);
+          }catch(e){
+            setMsg(e.message || String(e), false);
+          }
+        });
+      }
+    }catch(_){}
+  })();
+
+
+  if(window.netlifyIdentity){
+    window.netlifyIdentity.on('init', async (user) => { if(user){ try{ await anwSyncProfile(); } catch {} } await showLoggedBannerIfAny(); });
+    window.netlifyIdentity.on('login', async () => { try{ await anwSyncProfile(); } catch {} await showLoggedBannerIfAny(); });
+    window.netlifyIdentity.on('logout', async () => { await showLoggedBannerIfAny(); });
   }
 
   await showLoggedBannerIfAny();
@@ -1002,7 +1059,6 @@
 
 })();
 </script>
-
 <script src="assets/acl-guard.js"></script>
 </body>
 </html>
