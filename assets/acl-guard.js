@@ -1,5 +1,8 @@
 // assets/acl-guard.js
 // Guard de acesso baseado em ACL + role do usuário
+// Fixes:
+// - Reads page key from meta[name="anw-acl-key"] (and legacy meta[name="anw-page"])
+// - Applies feature ACL using [data-acl-feature] (and legacy [data-feature-acl])
 
 (function () {
   function getLoggedRoleSafe() {
@@ -16,10 +19,9 @@
 
   function isLoggedIn() {
     try {
-      if (typeof anwIsLoggedIn === 'function') {
-        return !!anwIsLoggedIn();
-      }
-      return false;
+      if (typeof anwIsLoggedIn === 'function') return !!anwIsLoggedIn();
+      // Fallback: check Identity user
+      return !!(window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function' && window.netlifyIdentity.currentUser());
     } catch {
       return false;
     }
@@ -28,13 +30,11 @@
   async function loadAclFresh() {
     try {
       if (typeof anwInitStore === 'function') {
-        await anwInitStore(); // 🔥 GARANTE que anw_users foi carregado antes de qualquer checagem
+        await anwInitStore(); // ensures ACL + (if permitted) users are synced
       }
-
       if (typeof anwLoad === 'function') {
-        return await anwLoad('acl', {});
+        return anwLoad((window.ANW_KEYS && ANW_KEYS.ACL) ? ANW_KEYS.ACL : 'acl', {});
       }
-
       return {};
     } catch (e) {
       console.warn('Erro ao carregar ACL:', e);
@@ -43,8 +43,13 @@
   }
 
   function pageKeyFromMeta() {
-    const meta = document.querySelector('meta[name="anw-page"]');
-    return meta ? meta.getAttribute('content') : null;
+    const meta1 = document.querySelector('meta[name="anw-acl-key"]');
+    if (meta1 && meta1.getAttribute('content')) return meta1.getAttribute('content');
+
+    const meta2 = document.querySelector('meta[name="anw-page"]'); // legacy
+    if (meta2 && meta2.getAttribute('content')) return meta2.getAttribute('content');
+
+    return null;
   }
 
   function classifyPage(pageKey, acl) {
@@ -74,8 +79,14 @@
   }
 
   function applyFeatureAcl(acl, role) {
-    document.querySelectorAll('[data-feature-acl]').forEach(el => {
-      const rule = el.getAttribute('data-feature-acl');
+    // Support both attribute names
+    const nodes = [
+      ...Array.from(document.querySelectorAll('[data-acl-feature]')),
+      ...Array.from(document.querySelectorAll('[data-feature-acl]'))
+    ];
+
+    nodes.forEach(el => {
+      const rule = el.getAttribute('data-acl-feature') || el.getAttribute('data-feature-acl');
       if (!rule) return;
 
       if (rule === 'Public') return;
@@ -85,8 +96,10 @@
         return;
       }
 
-      if (role !== rule && role !== 'owner') {
-        el.style.display = 'none';
+      if (rule !== 'Public' && rule !== 'Authenticated') {
+        if (role !== rule && role !== 'owner') {
+          el.style.display = 'none';
+        }
       }
     });
   }
@@ -98,28 +111,22 @@
     if (rule === 'Public') return;
 
     if (rule === 'Authenticated') {
-      if (!isLoggedIn()) {
-        location.replace('login.html');
-      }
+      if (!isLoggedIn()) location.replace('login.html');
       return;
     }
 
-    // 🔥 OWNER agora tem acesso total
+    // Owner has access to everything
     if (role !== rule && role !== 'owner') {
       location.replace('dashboard.html');
     }
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
-
-    // 🔥 CORREÇÃO CRÍTICA:
-    // Primeiro carrega store (anw_users), depois calcula role
     const acl = await loadAclFresh();
     const role = getLoggedRoleSafe();
 
     applyNavAcl(acl || {}, role);
     applyFeatureAcl(acl || {}, role);
     enforcePageAcl(acl || {}, role);
-
   });
 })();
