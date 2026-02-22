@@ -1,84 +1,125 @@
 // assets/acl-guard.js
-(async function () {
-  "use strict";
+// Guard de acesso baseado em ACL + role do usuário
 
-  // Páginas públicas (não bloquear)
-  const PUBLIC = new Set([
-    "/",
-    "/index.html",
-    "/login.html",
-    "/login",
-    "/privacy.html",
-    "/about.html",
-  ]);
-
-  function normalizePath() {
-    let p = (location.pathname || "/").toLowerCase();
-    if (p.length > 1 && p.endsWith("/")) {
-      p = p.slice(0, -1);
-    }
-    return p;
-  }
-
-  function isPublic() {
-    const p = normalizePath();
-    return PUBLIC.has(p) || p.endsWith("/login") || p.endsWith("/login.html");
-  }
-
-  function redirectToLogin() {
-    if (isPublic()) return;
-    window.location.href = "/login.html";
-  }
-
-  // Se for página pública, não faz nada
-  if (isPublic()) return;
-
-  // Se o Identity não carregou, redireciona
-  if (!window.netlifyIdentity) {
-    redirectToLogin();
-    return;
-  }
-
-  try {
-    window.netlifyIdentity.init();
-  } catch (e) {}
-
-  // Espera até 1.5s para o Identity restaurar sessão
-  const user = await new Promise((resolve) => {
-    let finished = false;
-
-    function done(u) {
-      if (!finished) {
-        finished = true;
-        resolve(u || null);
-      }
-    }
-
-    // Verifica imediatamente
+(function () {
+  function getLoggedRoleSafe() {
     try {
-      const current = window.netlifyIdentity.currentUser();
-      if (current) return done(current);
-    } catch (e) {}
-
-    // Espera evento init
-    try {
-      window.netlifyIdentity.on("init", (u) => done(u));
-    } catch (e) {}
-
-    // Fallback após timeout
-    setTimeout(() => {
-      try {
-        const current = window.netlifyIdentity.currentUser();
-        done(current);
-      } catch (e) {
-        done(null);
+      if (typeof anwGetLoggedRole === 'function') {
+        return anwGetLoggedRole() || 'resident';
       }
-    }, 1500);
+      return 'resident';
+    } catch (e) {
+      console.warn('Erro ao obter role:', e);
+      return 'resident';
+    }
+  }
+
+  function isLoggedIn() {
+    try {
+      if (typeof anwIsLoggedIn === 'function') {
+        return !!anwIsLoggedIn();
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  async function loadAclFresh() {
+    try {
+      if (typeof anwInitStore === 'function') {
+        await anwInitStore(); // 🔥 GARANTE que anw_users foi carregado antes de qualquer checagem
+      }
+
+      if (typeof anwLoad === 'function') {
+        return await anwLoad('acl', {});
+      }
+
+      return {};
+    } catch (e) {
+      console.warn('Erro ao carregar ACL:', e);
+      return {};
+    }
+  }
+
+  function pageKeyFromMeta() {
+    const meta = document.querySelector('meta[name="anw-page"]');
+    return meta ? meta.getAttribute('content') : null;
+  }
+
+  function classifyPage(pageKey, acl) {
+    if (!pageKey) return 'Public';
+    if (!acl || !acl[pageKey]) return 'Public';
+    return acl[pageKey];
+  }
+
+  function applyNavAcl(acl, role) {
+    document.querySelectorAll('[data-acl]').forEach(el => {
+      const rule = el.getAttribute('data-acl');
+      if (!rule) return;
+
+      if (rule === 'Public') return;
+
+      if (rule === 'Authenticated' && !isLoggedIn()) {
+        el.style.display = 'none';
+        return;
+      }
+
+      if (rule !== 'Public' && rule !== 'Authenticated') {
+        if (role !== rule && role !== 'owner') {
+          el.style.display = 'none';
+        }
+      }
+    });
+  }
+
+  function applyFeatureAcl(acl, role) {
+    document.querySelectorAll('[data-feature-acl]').forEach(el => {
+      const rule = el.getAttribute('data-feature-acl');
+      if (!rule) return;
+
+      if (rule === 'Public') return;
+
+      if (rule === 'Authenticated' && !isLoggedIn()) {
+        el.style.display = 'none';
+        return;
+      }
+
+      if (role !== rule && role !== 'owner') {
+        el.style.display = 'none';
+      }
+    });
+  }
+
+  function enforcePageAcl(acl, role) {
+    const pageKey = pageKeyFromMeta();
+    const rule = classifyPage(pageKey, acl);
+
+    if (rule === 'Public') return;
+
+    if (rule === 'Authenticated') {
+      if (!isLoggedIn()) {
+        location.replace('login.html');
+      }
+      return;
+    }
+
+    // 🔥 OWNER agora tem acesso total
+    if (role !== rule && role !== 'owner') {
+      location.replace('dashboard.html');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+
+    // 🔥 CORREÇÃO CRÍTICA:
+    // Primeiro carrega store (anw_users), depois calcula role
+    const acl = await loadAclFresh();
+    const role = getLoggedRoleSafe();
+
+    applyNavAcl(acl || {}, role);
+    applyFeatureAcl(acl || {}, role);
+    enforcePageAcl(acl || {}, role);
+
   });
-
-  // Regra mínima: só exige login
-  if (!user || !user.token) {
-    redirectToLogin();
-  }
-
 })();
