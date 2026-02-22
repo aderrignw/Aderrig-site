@@ -1,255 +1,4424 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin — Aderrig NW</title>
-  <link rel="stylesheet" href="assets/style.css" />
-  <style>
-    .wrap{max-width:1100px;margin:0 auto;padding:24px}
-    .row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-    .msg{margin-top:10px}
-    .msg.ok{color:#0f5132}
-    .msg.error{color:#b02a37}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:10px 8px;border-bottom:1px solid rgba(17,24,39,.10);text-align:left}
-    th{font-size:.85rem;letter-spacing:.02em;color:#1f5c45}
-    .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.8rem;border:1px solid rgba(17,24,39,.15)}
-    .pill.active{background:rgba(15,81,50,.06)}
-    .pill.pending{background:rgba(255,193,7,.08)}
-    .pill.suspended{background:rgba(176,42,55,.06)}
-    .actions{display:flex;gap:8px;flex-wrap:wrap}
-    .tiny{font-size:.85rem}
-  </style>
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<meta charset="utf-8" />
+  <meta name="anw-acl-key" content="page:admin" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- Prevent protected-page "flash" before auth redirect (runs before first paint) -->
+<style>html.anw-preauth-hide{visibility:hidden}</style>
+<script>
+  (function(){
+    try {
+      if (location && location.protocol === 'file:') return;
+      var k = document.querySelector('meta[name="anw-acl-key"]');
+      var pageKey = k ? String(k.getAttribute('content') || '').trim() : '';
+      var isPublic = (pageKey === 'page:home' || pageKey === 'page:about' || pageKey === 'page:privacy' || pageKey === 'page:login');
+      if (isPublic) return;
+
+      document.documentElement.classList.add('anw-preauth-hide');
+      var cachedUser = null;
+      try { cachedUser = localStorage.getItem('netlify.auth.user'); } catch (e) { cachedUser = null; }
+      if (!cachedUser) {
+        location.replace('login.html');
+        return;
+      }
+      document.documentElement.classList.remove('anw-preauth-hide');
+    } catch (e) {
+      try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
+    }
+  })();
+</script>
+<title>Admin Panel — Aderrig NW</title>
+<link rel="stylesheet" href="assets/style.css" />
+
+
+<style>
+  /* Backups status badge */
+  .tag { display:inline-block; padding:4px 10px; border-radius:999px; font-size:.85rem; border:1px solid rgba(0,0,0,.10); background:rgba(0,0,0,.04); }
+  .tag.ok { background: rgba(47,125,91,.10); border-color: rgba(47,125,91,.25); color: var(--brand); }
+  .tag.gray { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.10); color: inherit; }
+</style>
+
+<style>
+  /* Hide stray backup checkbox UI (keeps JS intact) */
+  #backupEnabled{ display:none !important; }
+  label[for="backupEnabled"]{ display:none !important; }
+</style>
+
+<style>
+  /* Tools: keep Backups layout tidy */
+  .anw-acc .acc-body > .card { margin-top: 12px; }
+  /* Optional: hide the scheduled checkbox UI (keeps JS intact). Remove these 2 rules if you want it visible. */
+  #backupEnabled{ display:none !important; }
+  label[for="backupEnabled"]{ display:none !important; }
+</style>
+
+<style>
+  /* Tools: Backups alignment */
+  #tabTools details.anw-acc .acc-body .grid { align-items: start; }
+</style>
+
+<style>
+  /* Access Control (embedded) */
+  #tabAccessControl .ac-wrap{ overflow:auto; border:1px solid var(--line); border-radius:14px; background:#fff; }
+  #tabAccessControl table.ac-table{ width:100%; min-width:920px; border-collapse:collapse; }
+  #tabAccessControl .ac-table th, #tabAccessControl .ac-table td{ padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  #tabAccessControl .ac-table thead th{ position:sticky; top:0; background:#fff; z-index:2; }
+  #tabAccessControl .ac-item{ display:flex; align-items:flex-start; gap:10px; }
+  #tabAccessControl .ac-badge{ font-size:.70rem; padding:2px 8px; border-radius:999px; border:1px solid rgba(0,0,0,.10); background:rgba(0,0,0,.03); }
+  #tabAccessControl .ac-key{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size:.72rem; color: rgba(0,0,0,.55); margin-top:2px; }
+  #tabAccessControl .ac-indent-0{ font-weight:700; }
+  #tabAccessControl .ac-indent-1{ padding-left:18px; }
+  #tabAccessControl .ac-indent-2{ padding-left:36px; }
+  #tabAccessControl .ac-indent-3{ padding-left:54px; }
+
+  /* Toggle buttons (green like the site) */
+  #tabAccessControl .ac-toggle{
+    width:36px; height:30px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    user-select:none;
+  }
+  #tabAccessControl .ac-toggle.allowed{
+    color: var(--brand);
+    background: rgba(47,125,91,.12);
+    border-color: rgba(47,125,91,.28);
+  }
+  #tabAccessControl .ac-toggle.denied{
+    color: rgba(0,0,0,.35);
+    background: rgba(0,0,0,.03);
+    border-color: rgba(0,0,0,.10);
+  }
+  #tabAccessControl .ac-toggle:focus{ outline:2px solid rgba(47,125,91,.28); outline-offset:2px; }
+</style>
+
+<style>
+  /* Print only Access Control when requested */
+  @media print {
+    body.print-access-control header,
+    body.print-access-control nav,
+    body.print-access-control .admin-tabs,
+    body.print-access-control #tabResidents,
+    body.print-access-control #tabTasks,
+    body.print-access-control #tabElections,
+    body.print-access-control #tabReports,
+    body.print-access-control #tabProjects,
+    body.print-access-control #tabTools,
+    body.print-access-control footer {
+      display: none !important;
+    }
+    body.print-access-control #tabAccessControl {
+      display: block !important;
+    }
+    body.print-access-control main.wrap { max-width: 100% !important; padding: 0 !important; }
+  }
+</style>
+
+
+<style id="page-access-style">
+  footer.site-footer { position: relative; text-align: center; margin-top: 60px; }
+  footer.site-footer .page-access { position: absolute; left: 0; color: green; font-weight: normal; }
+</style>
+
 </head>
+
 <body>
-  <header class="site-header">
-    <div class="brand">
-      <a class="site-logo" href="index.html"><img class="logo-img" alt="Aderrig Neighbourhood Watch" src="assets/logo/logo.png"></a>
-      <div class="brand-text">
+
+<header class="site-header">
+  <div class="brand">
+    <a href="index.html" class="site-logo"><img src="assets/logo/logo.png" alt="Aderrig Neighbourhood Watch" class="logo-img"></a>
+    <div class="brand-text">
         <h1>Aderrig NW</h1>
         <p class="muted">Adamstown</p>
       </div>
     </div>
     <nav class="nav">
-      <a href="index.html">Home</a>
-      <a href="about.html">About</a>
-      <a href="report.html">Report</a>
-      <a href="alerts.html">Community Alerts</a>
-      <a href="projects.html">Community Projects</a>
-      <a href="handbook.html">Handbook</a>
-      <a href="login.html">Login / Register</a>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="household.html">Household</a>
-      <a class="active" href="admin.html">Admin</a>
-    </nav>
-  </header>
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="report.html">Report</a>
+    <a href="alerts.html">Community Alerts</a>
+    <a href="projects.html">Community Projects</a>
+<a href="handbook.html">Handbook</a>
+    <a href="login.html">Login / Register</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="household.html">Household</a>
+    <a href="admin.html" class="active" >Admin</a>
+  </nav>
+</header>
 
-  <main class="wrap">
-    <section class="card">
-      <h2>Admin</h2>
-      <p class="muted">This page manages registrations stored in <code>anw_users</code>.</p>
+<main class="wrap">
 
-      <div class="row" style="margin-top:10px;">
-        <div class="actions">
-          <button class="btn" id="btnRefresh" type="button">Refresh list</button>
-          <button class="btn btn-line" id="btnLogout" type="button">Logout</button>
+  <section class="card">
+    <h2>Admin panel</h2>
+    <p class="muted">Manage resident registrations, elections and volunteer tasks.</p>
+    <p id="adminGateMsg" class="tiny muted" style="margin-top:0.5rem; display:none;"></p>
+
+    <div class="actions admin-tabs" style="margin-top:0.5rem;">
+      <button type="button" class="btn small admin-tab active" data-tab="tabResidents">Residents</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabTasks">Volunteer tasks</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabElections">Elections</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabReports">Reports</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabNotices">Notices</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabHandbook">Handbook</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabProjects">Projects Monitoring</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabAccessControl">Access Control</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabTools">Tools</button>
+    </div>
+  </section>
+
+  <!-- ================= RESIDENTS ================= -->
+  <section class="card admin-tab-content" id="tabResidents">
+    <h3>Residents</h3>
+
+    <div class="actions resident-tabs" style="margin-top:0.25rem;">
+      <button type="button" class="btn small resident-tab active" data-subtab="subPending">Pending</button>
+      <button type="button" class="btn small resident-tab" data-subtab="subApproved">Approved</button>
+      <button type="button" class="btn small resident-tab" data-subtab="subAll">All</button>
+    </div>
+
+    <div id="resSummary" class="tiny muted" style="margin-top:0.5rem;"></div>
+
+    <div style="overflow-x:auto; margin-top:0.75rem;">
+      <table style="width:100%;">
+        <thead>
+          <tr>
+            <th>Reg No</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Eircode</th>
+            <th>Address</th>
+            <th>Status</th>
+            <th>Roles</th>
+            <th style="width:220px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="resBody"></tbody>
+      </table>
+    </div>
+
+    <p id="resEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No residents found.</p>
+  </section>
+
+  <!-- Modal: view/edit resident -->
+  <div id="modalResident" class="modal" style="display:none;">
+    <div class="modal-content card">
+      <div class="modal-header">
+        <div>
+          <h3 style="margin:0;">Resident details</h3>
+          <p class="sub" style="margin-top:0.25rem;">
+        Email, Eircode and Registration No are protected and cannot be changed.
+      </p>
         </div>
-        <div class="tiny muted" id="who"></div>
+        <button type="button" class="btn-line small" id="btnCloseResident">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="grid-2" style="gap:1rem;">
+        <div class="field">
+          <label>Registration No</label>
+          <input id="mRegId" type="text" disabled>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <input id="mStatus" type="text" disabled>
+      </div>
+      <div class="modal-footer" id="residentFooterActions">
+        <!-- Buttons move here -->
+      </div>
+</div>
       </div>
 
-      <div class="msg" id="msg"></div>
-      <div class="tiny muted" id="hint" style="margin-top:6px;"></div>
-    </section>
+      <div class="grid-2" style="gap:1rem;">
+        <div class="field">
+          <label>Full name</label>
+          <input id="mName" type="text">
+        </div>
+        <div class="field">
+          <label>Phone</label>
+          <input id="mPhone" type="text">
+        </div>
+      </div>
 
-    <section class="card" style="margin-top:14px;">
-      <h3 class="h3">Registrations</h3>
-      <div style="overflow:auto;">
-        <table>
+      $1
+
+      <div class="field">
+        <label>Address</label>
+        <input id="mAddress" type="text" disabled>
+      </div>
+
+      <div class="grid-2" style="gap:1rem;">
+        <div class="field">
+          <label>Resident type</label>
+          <select id="mType">
+            <option value="">Select…</option>
+            <option value="owner">Owner</option>
+            <option value="tenant">Tenant</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Management company</label>
+          <input id="mMgmt" type="text">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Roles</label>
+        <label class="chk"><input id="mCoord" type="checkbox"> <span>Street Coordinator</span></label>
+        <label class="chk"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
+        <label class="chk"><input id="mAlertAdmin" type="checkbox" disabled> <span>Community Alerts admin (set after approval)</span></label>
+
+        <div style="margin:0.5rem 0 0 1.25rem;">
+          <p class="tiny muted" style="margin:0 0 0.25rem;">Volunteer roles (6):</p>
+          <div style="display:grid; grid-template-columns:repeat(2, minmax(180px, 1fr)); column-gap:18px; row-gap:4px;">
+            <label class="chk"><input id="mVStreet" type="checkbox"> <span>Street watch / patrols</span></label>
+            <label class="chk"><input id="mVLeaf" type="checkbox"> <span>Distribute leaflets</span></label>
+            <label class="chk"><input id="mVTech" type="checkbox"> <span>Tech support</span></label>
+            <label class="chk"><input id="mVEld" type="checkbox"> <span>Elderly checks</span></label>
+            <label class="chk"><input id="mVMeet" type="checkbox"> <span>Meeting organiser</span></label>
+            <label class="chk"><input id="mVTrans" type="checkbox"> <span>Translation</span></label>
+          </div>
+        </div>
+      </div>
+
+      <p class="tiny muted" id="mMsg" style="margin-top:0.5rem;"></p>
+
+      <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+        <button type="button" class="btn-line small" id="btnReject">Reject</button>
+        <button type="button" class="btn small" id="btnSaveResident">Save</button>
+        <button type="button" class="btn small" id="btnApprove">Approve</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: view interest (replaces alert) -->
+  <div id="modalInterest" class="modal" style="display:none;">
+    <div class="modal-content card">
+      <div class="actions" style="justify-content:space-between; align-items:center;">
+        <h3 style="margin:0;">Candidate interest</h3>
+        <button type="button" class="btn-line small" id="btnCloseInterest">Close</button>
+      </div>
+
+      <div class="grid-2" style="gap:1rem; margin-top:0.5rem;">
+        <div class="field">
+          <label>Candidate</label>
+          <input id="iName" type="text" disabled>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input id="iEmail" type="text" disabled>
+        </div>
+      </div>
+
+      <div class="grid-2" style="gap:1rem;">
+        <div class="field">
+          <label>Role</label>
+          <input id="iRole" type="text" disabled>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <input id="iStatus" type="text" disabled>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Submitted</label>
+        <input id="iDate" type="text" disabled>
+      </div>
+
+      <div class="field">
+        <label>Motivation / experience</label>
+        <textarea id="iText" rows="8" readonly></textarea>
+      </div>
+
+      <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+        <button class="btn-line" type="button" id="btnInterestReject">Reject</button>
+        <button class="btn" type="button" id="btnInterestApprove">Approve</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TASKS ================= -->
+  
+  <!-- ================= TASKS ================= -->
+  <section class="card admin-tab-content" id="tabTasks" style="display:none;">
+    <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <div>
+        <h3 style="margin:0;">Volunteer tasks</h3>
+        <p class="tiny muted" style="margin:6px 0 0;">
+          Create and manage volunteer tasks for the community. Households can accept open tasks in the Household page.
+        </p>
+      </div>
+      <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="button" class="btn small btn-line" id="btnTaskRefresh">Refresh</button>
+        <button type="button" class="btn small" id="btnTaskNew">New task</button>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 1fr; gap:14px; margin-top:12px;">
+      <!-- Editor -->
+      <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
+        <h4 style="margin:0;">Task builder</h4>
+        <p class="tiny muted" style="margin:6px 0 10px;">
+          Use targeting to limit tasks to specific Eircodes or streets, and set suitable volunteer roles.
+        </p>
+
+        <div class="grid-2" style="gap:12px;">
+          <div class="field">
+            <label>Task code</label>
+            <input id="admTaskCode" type="text" disabled>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="admTaskStatus">
+              <option value="open">Open</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Title</label>
+          <input id="admTaskTitle" type="text" placeholder="e.g., Leaflet drop on Street A">
+        </div>
+
+        <div class="field">
+          <label>Description</label>
+          <textarea id="admTaskDesc" rows="4" placeholder="What needs to be done, any instructions, and who to contact."></textarea>
+        </div>
+
+        <div class="grid-2" style="gap:12px;">
+          <div class="field">
+            <label>Targeting</label>
+            <select id="admTaskType">
+              <option value="general">General (all volunteers)</option>
+              <option value="eircode">Eircode(s)</option>
+              <option value="street">Street(s)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Preferred completion date</label>
+            <input id="admTaskDue" type="date">
+          </div>
+        </div>
+
+        <div class="grid-2" style="gap:12px;">
+          <div class="field">
+            <label>Eircode(s) (semicolon separated)</label>
+            <input id="admTaskEircodes" type="text" placeholder="e.g., K78XXXX; K78YYYY">
+          </div>
+          <div class="field">
+            <label>Street(s) (semicolon separated)</label>
+            <input id="admTaskStreets" type="text" placeholder="e.g., The Avenue; Main Street">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Suitable volunteer roles (semicolon separated)</label>
+          <input id="admTaskRoles" type="text" placeholder="e.g., Distribute leaflets; Street watch / patrols">
+          <p class="tiny muted" style="margin:6px 0 0;">Leave blank to show the task to any volunteer household.</p>
+        </div>
+
+        <p class="tiny muted" id="admTaskMsg" style="margin-top:10px;"></p>
+
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
+          <button type="button" class="btn-line small" id="btnTaskDelete" style="display:none;">Delete</button>
+          <button type="button" class="btn-line small" id="btnTaskClear">Clear</button>
+          <button type="button" class="btn small" id="btnTaskSave">Save task</button>
+        </div>
+      </div>
+
+      <!-- List -->
+      <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <h4 style="margin:0;">Tasks</h4>
+          <div class="tiny muted" id="admTasksSummary"></div>
+        </div>
+
+        <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
+          <div class="field" style="min-width:220px; margin:0;">
+            <label class="tiny muted" for="admTasksFilter">Status filter</label>
+            <select id="admTasksFilter" class="input" style="width:100%;">
+              <option value="all">All</option>
+              <option value="open">Open</option>
+              <option value="assigned">Assigned</option>
+              <option value="completed">Completed</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+
+          <div class="field" style="min-width:280px; margin:0;">
+            <label class="tiny muted" for="admTasksSearch">Search</label>
+            <input id="admTasksSearch" type="text" placeholder="Code, title, eircode, street, volunteer email...">
+          </div>
+        </div>
+
+        <div style="overflow-x:auto; margin-top:10px;">
+          <table style="width:100%; min-width:920px;">
+            <thead>
+              <tr>
+                <th style="text-align:left;">Code</th>
+                <th style="text-align:left;">Title</th>
+                <th style="text-align:left;">Target</th>
+                <th style="text-align:left;">Due</th>
+                <th style="text-align:left;">Status</th>
+                <th style="text-align:left;">Assigned to</th>
+                <th style="text-align:left;">Updated</th>
+                <th style="text-align:left;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admTasksTbody"></tbody>
+          </table>
+        </div>
+        <p id="admTasksEmpty" class="tiny muted" style="display:none; margin-top:0.75rem;">No tasks found.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ================= ELECTIONS ================= -->
+  <section class="card admin-tab-content" id="tabElections" style="display:none;">
+    <h3>Elections</h3>
+
+    <div class="actions resident-tabs" style="margin-top:0.25rem;">
+      <button type="button" class="btn small elect-tab active" data-subtab="subManage">Manage</button>
+      <button type="button" class="btn small elect-tab" data-subtab="subCandidates">Candidates</button>
+      <button type="button" class="btn small elect-tab" data-subtab="subResults">Results</button>
+    </div>
+
+    <!-- Manage -->
+    <div id="subManage" class="elect-subtab" style="margin-top:0.75rem;">
+      <div class="grid-2" style="gap:1rem;">
+        <div class="field">
+          <label>Role</label>
+          <select id="elRole">
+            <option value="">Select…</option>
+            <option value="area">Area Coordinator</option>
+            <option value="assistant">Assistant Area Coordinator</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="elStatus">
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2" style="gap:1rem;">
+        <div class="field">
+          <label>Start date</label>
+          <input id="elStart" type="date">
+        </div>
+        <div class="field">
+          <label>End date</label>
+          <input id="elEnd" type="date">
+        </div>
+      </div>
+
+      <p class="tiny muted" id="elMsg" style="margin-top:0.5rem;"></p>
+
+      <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+        <button class="btn" type="button" id="btnCreateElection">Create / Update</button>
+      </div>
+
+      <div style="overflow-x:auto; margin-top:0.75rem;">
+        <table style="width:100%;">
           <thead>
             <tr>
-              <th>NAME</th>
-              <th>EMAIL</th>
-              <th>EIRCODE</th>
-              <th>ROLE</th>
-              <th>STATUS</th>
-              <th>ACTIONS</th>
+              <th>ID</th>
+              <th>Role</th>
+              <th>Period</th>
+              <th>Status</th>
+              <th>Winner</th>
+              <th style="width:200px;">Actions</th>
             </tr>
           </thead>
-          <tbody id="rows">
-            <tr><td colspan="6" class="muted">No registrations yet.</td></tr>
-          </tbody>
+          <tbody id="elBody"></tbody>
         </table>
       </div>
-    </section>
-  </main>
+      <p id="elEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No elections configured.</p>
+    </div>
 
+    <!-- Candidates -->
+    <div id="subCandidates" class="elect-subtab" style="display:none; margin-top:0.75rem;">
+      <p class="tiny muted" style="margin-top:0;">
+        Candidates come from residents who submitted Interest in their dashboard and were approved here.
+      </p>
+
+      <div style="overflow-x:auto; margin-top:0.75rem;">
+        <table style="width:100%;">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Reg No</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Interest status</th>
+              <th style="width:220px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="candBody"></tbody>
+        </table>
+      </div>
+      <p id="candEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No interests submitted.</p>
+    </div>
+
+    <!-- Results -->
+    <div id="subResults" class="elect-subtab" style="display:none; margin-top:0.75rem;">
+      <p class="tiny muted" style="margin-top:0;">
+        Results are calculated from votes stored as 1 vote per household (Reg No) per role.
+        A winner is declared only if the leading candidate reaches at least <strong>60%</strong> of total approved households.
+      </p>
+
+      <div id="resultsBox"></div>
+    </div>
+
+  </section>
+
+  <!-- ================= REPORTS ================= -->
+  <section class="card admin-tab-content" id="tabReports" style="display:none;">
+    <h3>Reports</h3>
+    <p class="tiny muted" style="margin-top:0;">
+      View and manage incident reports submitted via the <a href="report.html">Report</a> page.
+    </p>
+
+    <div class="actions" style="justify-content:flex-start; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem;">
+      <div class="field" style="min-width:220px; margin:0;">
+        <label class="tiny muted" for="repStatusFilter">Status</label>
+        <select id="repStatusFilter" class="input" style="width:100%;">
+          <option value="all">All</option>
+          <option value="submitted">Submitted</option>
+          <option value="in_review">In review</option>
+          <option value="sent_to_garda">Sent to Gardaí</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+
+      <div class="field" style="min-width:280px; margin:0;">
+        <label class="tiny muted" for="repSearch">Search (ID / email / location)</label>
+        <input id="repSearch" type="text" placeholder="e.g., RPT-0003 or someone@email.com" />
+      </div>
+
+      <div style="display:flex; gap:0.5rem; align-items:flex-end;">
+        <button type="button" class="btn" id="btnRepRefresh">Refresh</button>
+        <button type="button" class="btn btn-line" id="btnRepExport">Export file</button>
+      </div>
+    </div>
+
+    <p id="repMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
+
+    <div style="overflow-x:auto; margin-top:0.75rem;">
+      <table style="width:100%;">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Created</th>
+            <th>Category</th>
+            <th>Location</th>
+            <th>Reporter email</th>
+            <th>Status</th>
+            <th style="width:260px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="repBody"></tbody>
+      </table>
+    </div>
+
+    <p id="repEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No reports found.</p>
+  </section>
+
+  <!-- ================= NOTICES ================= -->
+  <section class="card admin-tab-content" id="tabNotices" style="display:none;">
+    <h3>Notices</h3>
+    <p class="tiny muted" style="margin-top:0;">Create official notices that appear on member dashboards. Messages are read-only for residents.</p>
+
+    <div class="grid-2" style="gap:1rem; align-items:flex-start;">
+      <div>
+        <h4 style="margin-top:0;">Create / Update notice</h4>
+        <div class="field">
+          <label>Title</label>
+          <input id="ntTitle" type="text" maxlength="120" placeholder="e.g., Visits to elderly residents" />
+        </div>
+        <div class="field">
+          <label>Message</label>
+          <textarea id="ntMessage" rows="5" maxlength="600" placeholder="Short reminder for members..."></textarea>
+        </div>
+        <div class="grid-2" style="gap:1rem;">
+          <div class="field">
+            <label>Category (optional)</label>
+            <select id="ntCategory">
+              <option value="General">General</option>
+              <option value="Volunteer">Volunteer</option>
+              <option value="Safety">Safety</option>
+              <option value="Meeting">Meeting</option>
+              <option value="Garda">Garda</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Expiry (optional)</label>
+            <input id="ntExpires" type="date" />
+          </div>
+        </div>
+
+        <h4 style="margin:0.75rem 0 0.25rem;">Home carousel</h4>
+        <p class="tiny muted" style="margin-top:0;">Optional. If enabled, this notice can appear as a compact carousel banner on the Home page.</p>
+        <div class="grid-2" style="gap:1rem; align-items:flex-end;">
+          <div class="field" style="margin:0;">
+            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
+              <input id="ntHomeEnabled" type="checkbox">
+              <span>Show on Home</span>
+            </label>
+          </div>
+          <div class="field" style="margin:0;">
+            <label>Home visibility</label>
+            <select id="ntHomeVisibility">
+              <option value="private" selected>Private (members only)</option>
+              <option value="public">Public (everyone)</option>
+            </select>
+          </div>
+        </div>
+
+        <h4 style="margin:0.75rem 0 0.25rem;">Send to</h4>
+        <p class="tiny muted" style="margin-top:0;">Choose one or more targeting options. If you select nothing, the notice will be visible to all logged-in members.</p>
+
+        <div class="field" style="margin:0.25rem 0 0.5rem;">
+          <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
+            <input id="ntAllLogged" type="checkbox" checked>
+            <span>All logged-in members</span>
+          </label>
+        </div>
+
+        <div class="field" style="margin:0.25rem 0 0.5rem;">
+          <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
+            <input id="ntNonAdminOnly" type="checkbox">
+            <span>Residents only (exclude admins/owners)</span>
+          </label>
+        </div>
+
+        <div class="field">
+          <label>By role (optional)</label>
+          <div class="grid-2" style="gap:0.5rem;">
+            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="resident"> <span>Residents</span></label>
+            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="street_admin"> <span>Street Coordinators</span></label>
+            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="area_coordinator"> <span>Area Coordinators</span></label>
+            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="aux_coordinator"> <span>Assistant Area Coordinators</span></label>
+            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="volunteer"> <span>Project Volunteers</span></label>
+            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="platform_support"> <span>Platform/Admin Support</span></label>
+            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="admin"> <span>Admins</span></label>
+          </div>
+        </div>
+
+        <div class="grid-2" style="gap:1rem;">
+          <div class="field">
+            <label>Eircode prefix (optional)</label>
+            <input id="ntEirPrefixes" type="text" placeholder="e.g., K78 (comma separated)" />
+          </div>
+          <div class="field">
+            <label>Street name(s) (optional)</label>
+            <input id="ntStreets" type="text" placeholder="e.g., Aderrig Park, Castlegate Way" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Specific Eircodes (optional, one per line)</label>
+          <textarea id="ntEircodes" rows="3" placeholder="K78XXXX\nK78YYYY"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Specific member emails (optional, one per line)</label>
+          <textarea id="ntEmails" rows="3" placeholder="person@email.com"></textarea>
+        </div>
+
+        <p id="ntMsg" class="tiny muted"></p>
+
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn btn-line" id="btnNtClear">Clear</button>
+          <button type="button" class="btn" id="btnNtPublish">Publish notice</button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:1rem; margin-top:1rem;">
+        <h4 style="margin-top:0;">Bin collection schedule (bulk import)</h4>
+        <p class="tiny muted" style="margin-top:0;">
+          Paste one line per collection. Format: <code>YYYY-MM-DD, Provider, Bin</code> (optional 4th value: <code>public</code> or <code>private</code>).<br>
+          Example: <code>2026-02-03, Panda, Green, public</code> (will show the weekday + date on Home during that week).
+        </p>
+        <div class="field">
+          <label>Schedule lines</label>
+          <textarea id="binCsv" rows="6" placeholder="2026-02-03, Panda, Green, public&#10;2026-02-10, Panda, Black, public"></textarea>
+        </div>
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn btn-line" id="btnBinImport">Import schedule</button>
+        </div>
+        <p id="binMsg" class="tiny muted"></p>
+      </div>
+
+      <div>
+        <h4 style="margin-top:0;">Existing notices</h4>
+        <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:0.25rem;">
+          <button type="button" class="btn" id="btnNtRefresh">Refresh</button>
+          <button type="button" class="btn btn-line" id="btnNtExport">Export file</button>
+        </div>
+        <p class="tiny muted" id="ntListMsg" style="margin-top:0.5rem;"></p>
+        <div id="ntList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TOOLS ================= -->
+  <!-- ================= PROJECTS MONITORING ================= -->
+
+  <!-- ================= HANDBOOK ================= -->
+  <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
+    <h3>Handbook</h3>
+    <p class="tiny muted" style="margin-top:0;">Create categories and items for the resident Handbook. Residents can view published items only. Prefer external links for large PDFs.</p>
+
+    <div class="grid-2" style="gap:1rem; align-items:flex-start;">
+
+      <div>
+        <h4 style="margin-top:0;">Categories</h4>
+        <div class="field">
+          <label>Category title</label>
+          <input id="hbCatTitle" type="text" maxlength="80" placeholder="e.g., Waste & Recycling" />
+        </div>
+        <div class="grid-2" style="gap:1rem;">
+          <div class="field">
+            <label>Icon (emoji)</label>
+            <input id="hbCatIcon" type="text" maxlength="8" placeholder="🗑️" />
+          </div>
+          <div class="field">
+            <label>Order</label>
+            <input id="hbCatOrder" type="number" min="1" step="1" placeholder="1" />
+          </div>
+        </div>
+        <div class="field">
+          <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
+            <input id="hbCatActive" type="checkbox" checked>
+            <span>Active</span>
+          </label>
+        </div>
+        <p id="hbCatMsg" class="tiny muted"></p>
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn btn-line" id="btnHbCatClear">Clear</button>
+          <button type="button" class="btn" id="btnHbCatSave">Save category</button>
+        </div>
+
+        <div style="overflow-x:auto; margin-top:0.75rem;">
+          <table style="width:100%;">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th style="width:90px;">Order</th>
+                <th style="width:90px;">Status</th>
+                <th style="width:220px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="hbCatBody"></tbody>
+          </table>
+        </div>
+        <p id="hbCatEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No categories yet.</p>
+      </div>
+
+      <div>
+        <h4 style="margin-top:0;">Items</h4>
+        <div class="field">
+          <label>Category</label>
+          <select id="hbItemCategory"></select>
+        </div>
+        <div class="field">
+          <label>Item title</label>
+          <input id="hbItemTitle" type="text" maxlength="120" placeholder="e.g., Visitor Parking Locations" />
+        </div>
+        <div class="field">
+          <label>Summary (optional)</label>
+          <input id="hbItemSummary" type="text" maxlength="160" placeholder="Short description shown in the list" />
+        </div>
+
+        <div class="grid-2" style="gap:1rem;">
+          <div class="field">
+            <label>Type</label>
+            <select id="hbItemType">
+              <option value="page" selected>Page (content on site)</option>
+              <option value="link">External link</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="hbItemStatus">
+              <option value="published" selected>Published</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>External URL (for Link type)</label>
+          <input id="hbItemUrl" type="url" placeholder="https://..." />
+        </div>
+
+        <div class="field">
+          <label>Hero image (optional)</label>
+          <input id="hbItemHeroUrl" type="url" placeholder="https://... (recommended)" />
+          <div class="tiny muted" style="margin-top:6px;">Tip: prefer a link (Netlify Large Media/Drive) to avoid storing large files in the KV store.</div>
+        </div>
+
+        <div class="field">
+          <label>Content (HTML allowed)</label>
+          <textarea id="hbItemContent" rows="7" placeholder="Write the page content here..."></textarea>
+        </div>
+
+        <div class="field">
+          <label>Attachments (one per line: Label | URL)</label>
+          <textarea id="hbItemAttachments" rows="4" placeholder="Map PDF | https://...
+Bin schedule | https://..."></textarea>
+        </div>
+
+        <p id="hbItemMsg" class="tiny muted"></p>
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn btn-line" id="btnHbItemClear">Clear</button>
+          <button type="button" class="btn" id="btnHbItemSave">Save item</button>
+        </div>
+
+        <div class="card" style="padding:1rem; margin-top:1rem;">
+          <h4 style="margin-top:0;">Items in selected category</h4>
+          <div id="hbItemList" class="grid" style="gap:10px;"></div>
+          <p id="hbItemEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No items in this category.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+<section class="card admin-tab-content" id="tabProjects" style="display:none;">
+  <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div>
+      <h3 style="margin:0;">Projects Monitoring</h3>
+      <p class="tiny muted" style="margin:6px 0 0;">
+        Review projects and recipient-tracking entries saved in the central store.
+      </p>
+      <div id="pmStoreNote" class="tiny" style="margin-top:10px; padding:10px 12px; border:1px solid rgba(0,0,0,.08); border-radius:12px; background:#fbfdfc; display:none;">
+        <strong>Store notice:</strong> This page reads from the central Netlify store. If you are opening files via <code>file://</code>, the store may not be reachable — use the deployed site (Netlify) or <code>netlify dev</code> to see live data.
+      </div>
+    </div>
+    <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button type="button" class="btn small btn-line" id="pmRefreshBtn">Refresh</button>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns: 1.1fr 0.9fr; gap:14px; margin-top:12px;">
+    <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <h4 style="margin:0;">Projects</h4>
+        <div class="tiny muted" id="pmSummary" aria-live="polite"></div>
+      </div>
+      <div style="overflow-x:auto; margin-top:10px;">
+        <table style="width:100%; min-width:720px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;">Title</th>
+              <th style="text-align:left;">Status</th>
+              <th style="text-align:left;">Category</th>
+              <th style="text-align:left;">#</th>
+              <th style="text-align:left;">Recipients</th>
+              <th style="text-align:left;">Last update</th>
+              <th style="text-align:left;">Open</th>
+            </tr>
+          </thead>
+          <tbody id="pmProjectsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <h4 style="margin:0;">Selected project</h4>
+        <div class="tiny muted" id="pmSelectedMeta"></div>
+      </div>
+
+      <div id="pmSelectedEmpty" class="tiny muted" style="margin-top:10px;">
+        Select a project to view monitoring entries.
+      </div>
+
+      <div id="pmSelectedWrap" style="display:none; margin-top:10px;">
+        <div style="overflow-x:auto;">
+          <table style="width:100%; min-width:720px;">
+            <thead>
+              <tr>
+                <th style="text-align:left;">Recipient</th>
+                <th style="text-align:left;">Email</th>
+                <th style="text-align:left;">Org</th>
+                <th style="text-align:left;">Status</th>
+                <th style="text-align:left;">Notes</th>
+                <th style="text-align:left;">Save</th>
+              </tr>
+            </thead>
+            <tbody id="pmEntriesTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="card admin-tab-content" id="tabAccessControl" style="display:none;">
+  <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div>
+      <h3 style="margin:0 0 4px 0;">Access Control</h3>
+      <p class="tiny muted" style="margin:0;">Configure which pages, sub-tabs and actions are visible for each user role.</p>
+    </div>
+    <div class="actions" style="gap:10px; flex-wrap:wrap;">
+      <span class="tag gray" id="acStatusBadge">Not saved</span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px; background:#fbfdfc;">
+    <div class="tiny muted" id="acStatusMsg">Toggle permissions, then Save.</div>
+  </div>
+
+  <div class="ac-wrap" style="margin-top:12px;">
+    <table class="ac-table">
+      <thead>
+        <tr>
+          <th style="text-align:left; min-width:300px;">Item</th>
+          <th>Resident</th>
+          <th>Street Admin</th>
+          <th>Area Coordinator</th>
+          <th>Aux Coordinator</th>
+          <th>Project Support</th>
+          <th>Platform Support</th>
+          <th>Owner</th>
+        </tr>
+      </thead>
+      <tbody id="acTbody"></tbody>
+    </table>
+  </div>
+
+  <div class="actions" style="justify-content:flex-end; gap:10px; margin-top:12px; flex-wrap:wrap;">
+    <button type="button" class="btn small btn-line" id="acPrintBtn">Print</button>
+    <button type="button" class="btn small btn-line" id="acCancelBtn">Cancel</button>
+    <button type="button" class="btn small" id="acSaveBtn">Save</button>
+  </div>
+</section>
+
+<section class="card admin-tab-content" id="tabTools" style="display:none;">
+  <h3>Tools</h3>
+  <p class="tiny muted" style="margin-top:0;">
+    Maintenance tools for Netlify storage (Netlify Blobs/KV). Use carefully.
+  </p>
+
+  <style>
+    /* Tools accordions (scoped inside this section) */
+    #tabTools .anw-acc {
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      box-shadow: var(--shadow);
+      margin-top:12px;
+      overflow:hidden;
+    }
+    #tabTools .anw-acc summary {
+      list-style:none;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 14px;
+      background: rgba(47,125,91,.05);
+      border-bottom:1px solid var(--line);
+      user-select:none;
+    }
+    #tabTools .anw-acc summary::-webkit-details-marker { display:none; }
+    #tabTools .anw-acc .sum-left {
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    #tabTools .anw-acc .chev {
+      opacity:.7;
+      font-size:18px;
+      transform: rotate(0deg);
+      transition: transform .15s ease;
+    }
+    #tabTools details[open] .chev { transform: rotate(180deg); }
+    #tabTools .anw-acc .acc-body {
+      padding:12px 14px;
+    }
+  </style>
+
+  
+    <details class="anw-acc">
+      <summary>
+        <div class="sum-left">
+          <strong>Resident consents</strong>
+          <span class="tiny muted">Privacy/Terms + Alerts opt-in audit</span>
+        </div>
+        <span class="chev" aria-hidden="true">▾</span>
+      </summary>
+
+      <div class="acc-body">
+        <div class="card" style="margin-top:0.75rem;">
+      <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+        <div>
+          <h4 style="margin:0;">Resident consents</h4>
+          <p class="tiny muted" style="margin:6px 0 0;">
+            Privacy/Terms acceptance is mandatory. Alert opt-in (Email/SMS/WhatsApp) is optional and can be changed by residents.
+            All consent changes are timestamped.
+          </p>
+        </div>
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn-line" id="btnRefreshConsents">Refresh</button>
+          <button type="button" class="btn-line" id="btnExportTermsCSV">Export Privacy/Terms (CSV)</button>
+          <button type="button" class="btn-line" id="btnExportAlertsCSV">Export Alerts opt-in (CSV)</button>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:12px;">
+        <div>
+          <h5 style="margin:0 0 8px 0;">Alert opt-ins</h5>
+          <div style="overflow:auto; border:1px solid var(--line); border-radius:12px;">
+            <table style="width:100%; border-collapse:collapse; background:#fff;">
+
+              <colgroup>
+                <col style="width:38%;">
+                <col style="width:18%;">
+                <col style="width:16%;">
+                <col style="width:28%;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th style="text-align:left; padding:10px; border-bottom:1px solid var(--line);">Resident</th>
+                  <th style="text-align:left; padding:10px; border-bottom:1px solid var(--line);">Eircode</th>
+                  <th style="text-align:center; padding:10px; border-bottom:1px solid var(--line);">Status</th>
+                  <th style="text-align:left; padding:10px; border-bottom:1px solid var(--line);">Updated</th>
+                </tr>
+              </thead>
+              <tbody id="consentAlertsTbody"></tbody>
+            </table>
+          </div>
+          <p class="tiny muted" id="consentAlertsEmpty" style="display:none; margin:10px 0 0 0;">No residents have opted in for alerts yet.</p>
+        </div>
+
+        <div>
+          <h5 style="margin:0 0 8px 0;">Privacy/Terms acceptance</h5>
+          <div style="overflow:auto; border:1px solid var(--line); border-radius:12px;">
+            <table style="width:100%; border-collapse:collapse; background:#fff;">
+
+              <colgroup>
+                <col style="width:38%;">
+                <col style="width:18%;">
+                <col style="width:16%;">
+                <col style="width:28%;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th style="text-align:left; padding:10px; border-bottom:1px solid var(--line);">Resident</th>
+                  <th style="text-align:left; padding:10px; border-bottom:1px solid var(--line);">Eircode</th>
+                  <th style="text-align:center; padding:10px; border-bottom:1px solid var(--line);">Status</th>
+                  <th style="text-align:left; padding:10px; border-bottom:1px solid var(--line);">Updated</th>
+                </tr>
+              </thead>
+              <tbody id="consentTermsTbody"></tbody>
+            </table>
+          </div>
+          <p class="tiny muted" id="consentTermsEmpty" style="display:none; margin:10px 0 0 0;">No registered residents found.</p>
+        </div>
+      </div>
+    </div>
+
+</div>
+    </div>
+      </div>
+    </details>
+
+  <details class="anw-acc">
+    <summary>
+      <div class="sum-left">
+        <strong>Backups</strong>
+        <span class="tiny muted">Central data store snapshots</span>
+      </div>
+      <span class="chev" aria-hidden="true">▾</span>
+    </summary>
+    <div class="acc-body">
+<div class="card" style="margin-top:12px; background:#fbfdfc;">
+    <h4 style="margin:0 0 8px 0;">Backups</h4>
+    <p class="tiny muted" style="margin-top:0;">
+      Create and review backups of the <strong>central data store</strong> (Netlify Blobs/KV). This does not back up the site code —
+      your site files are already versioned in Git and deploy history is available in Netlify.
+    </p>
+
+    <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; align-items:end;">
+      <div class="field">
+        <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
+          <input id="backupEnabled" type="checkbox">
+          <span>Enable scheduled backups (optional)</span>
+        </label>
+        <p class="tiny muted" style="margin:6px 0 0;">Runs on Netlify Scheduled Functions.</p>
+      </div>
+
+      <div class="field">
+        <label for="backupFrequency">Frequency</label>
+        <select id="backupFrequency">
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="backupTime">Time (UTC)</label>
+        <input id="backupTime" type="time" value="02:00">
+      </div>
+    </div>
+
+    <div class="actions" style="justify-content:flex-end; gap:10px; margin-top:12px;">
+      <button type="button" class="btn-line" id="backupRefresh">Refresh</button>
+      <button type="button" class="btn" id="backupRunNow">Run backup now</button>
+    </div>
+
+    
+    <div class="card" style="margin-top:12px; padding:12px; background:#fff;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span class="tiny muted">Status</span>
+          <span id="backupBadge" class="tag gray">Disabled</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+          <div class="tiny"><span class="muted">Last backup run:</span> <strong id="backupLastRun">—</strong></div>
+          <div class="tiny"><span class="muted">Schedule (cron):</span> <strong id="backupCronText">—</strong></div>
+          <div class="tiny"><span class="muted">Next scheduled run:</span> <strong id="backupNextRun">—</strong></div>
+        </div>
+      </div>
+      <p class="tiny muted" style="margin:8px 0 0;">
+        Next run is an estimate based on your backup settings and UTC time. Scheduled Functions run on Netlify only.
+      </p>
+    </div>
+
+<p id="backupStatus" class="tiny muted" style="margin-top:10px;">
+      Backups include: Residents, Incidents, Volunteer tasks, Community projects, Project monitoring, Alerts, Elections/Votes, Contacts and Access control.
+    </p>
+
+    <div class="table-wrap" style="margin-top:10px;">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width:220px;">Backup ID</th>
+            <th style="min-width:220px;">Created</th>
+            <th style="min-width:260px;">Includes</th>
+            <th style="width:140px;">Download</th>
+          </tr>
+        </thead>
+        <tbody id="backupTbody"></tbody>
+      </table>
+    </div>
+    <p id="backupEmpty" class="tiny muted" style="display:none; margin-top:10px;">No backups found yet.</p>
+    <p id="backupMsg" class="tiny muted" style="margin-top:10px;"></p>
+  </div>
+
+
+    </div>
+  </details>
+
+
+
+  
+  </section>
+
+
+</main>
+
+
+<footer class="site-footer">
+  <div class="footer-row">
+    <div class="footer-left">
+      <span class="page-status">Exclusive Page</span>
+    </div>
+
+    <div class="footer-center">
+      © 2025 Aderrig NW · 
+      <a href="privacy.html">Privacy Policy</a>
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+
+<script src="assets/app-core.js"></script>
 <script>
-(function(){
+(async function(){
+  await anwInitStore();
   'use strict';
 
-  const API = '/.netlify/functions/store';
-  const KEY = 'anw_users';
+  const KEY_USERS = ANW_KEYS.USERS;
+  const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
+  const KEY_VOTES = ANW_KEYS.VOTES;
+  const KEY_INCIDENTS = ANW_KEYS.INCIDENTS;
+  const KEY_TASKS = ANW_KEYS.TASKS;
+  const KEY_NOTICES = ANW_KEYS.NOTICES || 'anw_notices';
+  const KEY_HANDBOOK = ANW_KEYS.HANDBOOK || "anw_handbook";
 
-  const elMsg = document.getElementById('msg');
-  const elRows = document.getElementById('rows');
-  const elWho = document.getElementById('who');
-  const elHint = document.getElementById('hint');
 
-  function setMsg(text, kind){
-    elMsg.textContent = text || '';
-    elMsg.className = 'msg' + (kind ? (' ' + kind) : '');
-  }
+  const KEY_PROJECTS = ANW_KEYS.PROJECTS;
+  const KEY_PROJ_MON = ANW_KEYS.PROJECT_MONITORING;
 
-  function pill(status){
-    const st = String(status || '').toLowerCase();
-    const cls = st === 'active' || st === 'approved' ? 'active' : (st === 'suspended' ? 'suspended' : 'pending');
-    return '<span class="pill ' + cls + '">' + (st || 'pending') + '</span>';
-  }
 
-  async function ensureIdentity(){
-    if(!window.netlifyIdentity) throw new Error('Netlify Identity widget not loaded.');
-    try{ window.netlifyIdentity.init(); }catch(e){}
-    // Wait for currentUser to be available after init (max 5s)
-    const start = Date.now();
-    while(Date.now() - start < 5000){
-      const u = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
-      if(u && u.email) return u;
-      await new Promise(r=>setTimeout(r, 80));
+  function loadUsers(){ return anwLoad(KEY_USERS, []); }
+  function saveUsers(list){ anwSave(KEY_USERS, list); }
+  function loadElections(){ return anwLoad(KEY_ELECTIONS, []); }
+  function saveElections(list){ anwSave(KEY_ELECTIONS, list); }
+  function loadVotes(){ return anwLoad(KEY_VOTES, {}); }
+  function saveVotes(v){ anwSave(KEY_VOTES, v); }
+  function loadIncidents(){ return anwLoad(KEY_INCIDENTS, []); }
+  function saveIncidents(list){ anwSave(KEY_INCIDENTS, list); }
+  function loadTasks(){ return anwLoad(KEY_TASKS, []); }
+  async function reverseGeocodeOnce(lat, lng){
+    try{
+      const url = `/.netlify/functions/reverse-geocode?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if(!res.ok) return null;
+      const data = await res.json();
+      return data && data.formatted_address ? String(data.formatted_address) : null;
+    }catch(e){
+      return null;
     }
+  }
+
+  function saveTasks(list){ return anwSave(KEY_TASKS, list || []); }
+
+
+  function loadProjects(){ return anwLoad(KEY_PROJECTS, []); }
+  function saveProjects(list){ anwSave(KEY_PROJECTS, list); }
+  function loadProjMon(){ return anwLoad(KEY_PROJ_MON, []); }
+  function saveProjMon(list){ anwSave(KEY_PROJ_MON, list); }
+
+
+  function isApprovedStatus(st){
+    const s = String(st||'').toLowerCase();
+    return s === 'approved' || s === 'active';
+  }
+
+
+  /* =========================
+     Admin Gate + Role Tabs (Dashboard reference)
+     ========================= */
+  const ADMIN_TAB_PERMS = {"tabResidents": ["street_admin", "platform_support", "owner"], "tabTasks": ["street_admin", "platform_support", "owner"], "tabElections": ["street_admin", "platform_support", "owner"], "tabReports": ["street_admin", "platform_support", "owner"], "tabNotices": ["street_admin", "platform_support", "owner"], "tabHandbook": ["street_admin", "platform_support", "owner"], "tabProjects": ["project_support", "volunteer", "platform_support", "owner"], "tabAccessControl": ["platform_support", "owner"], "tabTools": ["platform_support"]};
+  const ADMIN_ALLOWED_ROLES = new Set(["owner", "platform_support", "project_support", "street_admin", "volunteer"]);
+
+  function adminSetGateMessage(htmlText) {
+    const el = document.getElementById('adminGateMsg');
+    if(!el) return;
+    if(!htmlText) { el.style.display='none'; el.innerHTML=''; }
+    else { el.style.display='block'; el.innerHTML = htmlText; }
+  }
+
+  function adminDisableAll() {
+    // hide all panels (but keep tabs clickable as in Dashboard style)
+    document.querySelectorAll('.admin-tab-content').forEach(p => p.style.display='none');
+    document.querySelectorAll('.admin-tab').forEach(b => {
+      b.classList.remove('active');
+      b.removeAttribute('aria-disabled');
+      b.style.opacity='';
+      b.style.pointerEvents='';
+    });
+  }
+
+  // When not authorised, we still allow clicking tabs, but we prevent showing the private content.
+  let __adminAccessGranted = false;
+  // ADMIN_GLOBAL_CLICK_BLOCKER: stop tabs from opening when gate is not granted
+  try {
+    document.addEventListener('click', (e) => {
+      const tabBtn = e.target && e.target.closest ? e.target.closest('.admin-tab') : null;
+      if(!tabBtn) return;
+      if(__adminAccessGranted) return;
+
+      // block any existing handlers (prevents showAdminTab)
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      e.stopPropagation();
+
+      // visual feedback only
+      document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+      tabBtn.classList.add('active');
+      document.querySelectorAll('.admin-tab-content').forEach(p => p.style.display='none');
+
+      if(__adminGateText) adminSetGateMessage(__adminGateText);
+      return false;
+    }, true);
+  } catch(e) {}
+
+  let __adminGateText = '';
+
+  function adminHookTabClicks() {
+    const btns = Array.from(document.querySelectorAll('.admin-tab'));
+    btns.forEach(b => {
+      if(b.__adminHooked) return;
+      b.__adminHooked = true;
+      b.addEventListener('click', (e) => {
+        if(__adminAccessGranted) return; // normal handler will run
+        // BLOCK the original tab handler (prevents content from opening)
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        e.stopPropagation();
+
+        // Keep active style for user feedback
+        btns.forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+
+        // Ensure content stays hidden
+        document.querySelectorAll('.admin-tab-content').forEach(p => p.style.display='none');
+
+        if(__adminGateText) adminSetGateMessage(__adminGateText);
+        return false;
+      }, true);
+    });
+  }
+
+  function adminEnableTabs() {
+    adminHookTabClicks();
+    document.querySelectorAll('.admin-tab').forEach(b => {
+      b.removeAttribute('aria-disabled');
+      b.style.opacity='';
+      b.style.pointerEvents='';
+    });
+  }
+
+  async function adminGetProfileByEmail(email) {
+    try {
+      const users = anwLoad(ANW_KEYS.USERS, []);
+      const norm = (v)=>String(v||'').toLowerCase().trim();
+      const u = (Array.isArray(users) ? users : []).find(x => norm(x.email) === norm(email));
+      return u || null;
+    } catch(e) {
+      return null;
+    }
+  }
+
+  function adminIsApproved(u) {
+    try {
+      return isApprovedStatus(u?.status);
+    } catch(e) {
+      const s = String(u?.status||'').toLowerCase();
+      return (s === 'approved' || s === 'active');
+    }
+  }
+
+  
+async function adminEnsureIdentityReady() {
+  if(!window.netlifyIdentity) return null;
+  return await new Promise((resolve)=>{
+    let done=false;
+    const finish=(u)=>{ if(done) return; done=true; resolve(u||null); };
+    try {
+      window.netlifyIdentity.on('init', (u)=>finish(u));
+      window.netlifyIdentity.init();
+    } catch(e) {}
+    setTimeout(()=>{
+      try {
+        const u = (typeof window.netlifyIdentity.currentUser === 'function') ? window.netlifyIdentity.currentUser() : null;
+        finish(u);
+      } catch(e) { finish(null); }
+    }, 400);
+  });
+}
+
+async function runAdminGate() {
+  // IMPORTANT: wait for Identity init, otherwise anwGetLoggedEmail() may return empty even when logged in.
+  const identityUser = await adminEnsureIdentityReady();
+
+  adminDisableAll();
+
+  const email = (identityUser && identityUser.email) ? String(identityUser.email||'') :
+                ((window.anwGetLoggedEmail && window.anwGetLoggedEmail()) ? String(window.anwGetLoggedEmail()||'') : '');
+  if(!email) {
+    adminSetGateMessage('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access Admin.');
+    return;
+  }
+
+  const prof = await adminGetProfileByEmail(email);
+  if(!prof) {
+    adminSetGateMessage('Your account is logged in, but you are not registered/approved yet. Please wait for approval.');
+    return;
+  }
+
+  if(!adminIsApproved(prof)) {
+    adminSetGateMessage('Your account is not approved yet. Please wait for approval.');
+    return;
+  }
+
+  const role = String((window.anwGetLoggedRole && window.anwGetLoggedRole()) || prof.role || 'resident');
+
+  if(!ADMIN_ALLOWED_ROLES.has(role)) {
+    adminSetGateMessage('Access restricted: your role does not have permission to use Admin.');
+    return;
+  }
+
+  adminSetGateMessage('');
+  adminEnableTabs();
+  adminApplyRoleVisibility(role);
+}
+
+
+  // Run after initial tab wiring exists
+  
+  try {
+    if(window.netlifyIdentity){
+      window.netlifyIdentity.on('login', () => setTimeout(runAdminGate, 0));
+      window.netlifyIdentity.on('logout', () => setTimeout(runAdminGate, 0));
+    }
+  } catch(e) {}
+setTimeout(runAdminGate, 0);
+
+
+  /* ---------------- Tabs ---------------- */
+  const adminBtns = document.querySelectorAll('.admin-tab');
+  const adminPanels = document.querySelectorAll('.admin-tab-content');
+
+  function showAdminTab(id){
+    adminBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+    adminPanels.forEach(p => p.style.display = (p.id === id ? 'block' : 'none'));
+  
+    if(id === 'tabProjects') renderProjectsMonitoring();
+    if(id === 'tabTasks') renderAdminTasks();
+    if(id === 'tabAccessControl') renderAccessControl();
+    if(id === 'tabNotices') renderNoticesAdmin();
+  }
+  adminBtns.forEach(b => b.addEventListener('click', ()=> showAdminTab(b.dataset.tab)));
+
+  const resBtns = document.querySelectorAll('.resident-tab');
+  function showResSub(id){
+    resBtns.forEach(b => b.classList.toggle('active', b.dataset.subtab === id));
+    window.__resFilter = id;
+    renderResidents();
+  }
+  resBtns.forEach(b => b.addEventListener('click', ()=> showResSub(b.dataset.subtab)));
+  window.__resFilter = 'subPending';
+
+  const electBtns = document.querySelectorAll('.elect-tab');
+  const electPanels = document.querySelectorAll('.elect-subtab');
+  function showElectSub(id){
+    electBtns.forEach(b => b.classList.toggle('active', b.dataset.subtab === id));
+    electPanels.forEach(p => p.style.display = (p.id === id ? 'block' : 'none'));
+    if(id === 'subManage') renderElections();
+    if(id === 'subCandidates') renderCandidates();
+    if(id === 'subResults') renderResults();
+  }
+  electBtns.forEach(b => b.addEventListener('click', ()=> showElectSub(b.dataset.subtab)));
+
+
+  /* ---------------- Projects Monitoring (Admin) ---------------- */
+  let __pmSelectedProjectId = null;
+
+  function fmtDate(s){
+    if(!s) return '';
+    try{
+      const d = new Date(s);
+      if(Number.isNaN(d.getTime())) return String(s);
+      return d.toLocaleString();
+    }catch(_){ return String(s); }
+  }
+
+  function normStr(v){ return (v ?? '').toString().trim(); }
+
+  function getProjectTitle(p){
+    return normStr(p?.title || p?.projectTitle || p?.name || p?.projectName || 'Untitled');
+  }
+  function getProjectStatus(p){
+    return normStr(p?.status || p?.projectStatus || 'draft');
+  }
+  function getProjectCategory(p){
+    return normStr(p?.category || p?.projectCategory || '');
+  }
+  function getProjectNumber(p){
+    return normStr(p?.number || p?.projectNumber || p?.ref || '');
+  }
+
+  function renderProjectsMonitoring(){
+    const tbody = document.getElementById('pmProjectsTbody');
+    const entriesTbody = document.getElementById('pmEntriesTbody');
+    const summaryEl = document.getElementById('pmSummary');
+    const selMeta = document.getElementById('pmSelectedMeta');
+    const selEmpty = document.getElementById('pmSelectedEmpty');
+    const selWrap = document.getElementById('pmSelectedWrap');
+    if(!tbody || !entriesTbody) return;
+
+    const projects = loadProjects();
+    const mon = loadProjMon();
+
+    const byProject = new Map();
+    (Array.isArray(mon) ? mon : []).forEach(m => {
+      const pid = m?.projectId || '';
+      if(!byProject.has(pid)) byProject.set(pid, []);
+      byProject.get(pid).push(m);
+    });
+
+    // summary
+    if(summaryEl){
+      summaryEl.textContent = `${projects.length} projects · ${(Array.isArray(mon)?mon.length:0)} monitoring entries`;
+    }
+
+    // projects list
+    tbody.innerHTML = '';
+    const list = Array.isArray(projects) ? projects.slice() : [];
+    // Sort: most recently updated first (fallback: createdAt)
+    list.sort((a,b)=>{
+      const da = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
+      const db = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
+      return db - da;
+    });
+
+    if(list.length === 0){
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td colspan="7" class="tiny muted">No projects saved yet. Create projects in <b>Projects</b> tab first.</td>`;
+      tbody.appendChild(tr);
+    }else{
+      list.forEach(p=>{
+        const pid = p?.id || p?.projectId || '';
+        const recs = byProject.get(pid) || [];
+        const last = recs.reduce((acc,it)=>{
+          const t = new Date(it?.updatedAt || it?.sentAt || 0).getTime();
+          return Math.max(acc, t || 0);
+        }, 0);
+        const tr=document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(getProjectTitle(p))}</td>
+          <td><span class="pill">${escapeHtml(getProjectStatus(p))}</span></td>
+          <td>${escapeHtml(getProjectCategory(p))}</td>
+          <td>${escapeHtml(getProjectNumber(p))}</td>
+          <td>${recs.length}</td>
+          <td class="tiny muted">${last ? fmtDate(last) : ''}</td>
+          <td><button type="button" class="btn small btn-line" data-pm-open="${escapeAttr(pid)}">Open</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // bind open buttons
+    tbody.querySelectorAll('[data-pm-open]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        __pmSelectedProjectId = btn.getAttribute('data-pm-open');
+        renderProjectsMonitoring();
+      });
+    });
+
+    // selected project
+    const selected = list.find(p => (p?.id || p?.projectId || '') === __pmSelectedProjectId) || null;
+    if(!selected){
+      selMeta && (selMeta.textContent = '');
+      selEmpty && (selEmpty.style.display='block');
+      selWrap && (selWrap.style.display='none');
+      entriesTbody.innerHTML='';
+      return;
+    }
+
+    selEmpty && (selEmpty.style.display='none');
+    selWrap && (selWrap.style.display='block');
+    selMeta && (selMeta.textContent = `${getProjectTitle(selected)} · ${getProjectStatus(selected)}`);
+
+    const pid = __pmSelectedProjectId;
+    const entries = (byProject.get(pid) || []).slice();
+    // sort by updatedAt desc
+    entries.sort((a,b)=>{
+      const da=new Date(a?.updatedAt || a?.sentAt || 0).getTime();
+      const db=new Date(b?.updatedAt || b?.sentAt || 0).getTime();
+      return db-da;
+    });
+
+    entriesTbody.innerHTML='';
+    if(entries.length === 0){
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td colspan="6" class="tiny muted">No monitoring entries for this project yet. Add recipients in <b>Projects → Monitoring</b>.</td>`;
+      entriesTbody.appendChild(tr);
+      return;
+    }
+
+    entries.forEach(ent=>{
+      const rid = ent?.id || '';
+      const tr=document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(ent?.recipientName || '')}</td>
+        <td>${escapeHtml(ent?.recipientEmail || '')}</td>
+        <td>${escapeHtml(ent?.recipientOrg || '')}</td>
+        <td>
+          <select class="input" data-pm-status="${escapeAttr(rid)}" style="min-width:140px;">
+            ${['Sent','Opened','Replied','Meeting','Completed','Archived'].map(s => 
+              `<option value="${s}" ${String(ent?.status||'Sent')===s?'selected':''}>${s}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td>
+          <input class="input" data-pm-notes="${escapeAttr(rid)}" placeholder="Notes" value="${escapeAttr(ent?.notes || '')}" />
+        </td>
+        <td>
+          <button type="button" class="btn small" data-pm-save="${escapeAttr(rid)}">Save</button>
+        </td>
+      `;
+      entriesTbody.appendChild(tr);
+    });
+
+    // bind save per row
+    entriesTbody.querySelectorAll('[data-pm-save]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const rid = btn.getAttribute('data-pm-save');
+        const statusEl = entriesTbody.querySelector(`[data-pm-status="${CSS.escape(rid)}"]`);
+        const notesEl  = entriesTbody.querySelector(`[data-pm-notes="${CSS.escape(rid)}"]`);
+        const nextStatus = statusEl ? statusEl.value : 'Sent';
+        const nextNotes  = notesEl ? notesEl.value : '';
+
+        const all = loadProjMon();
+        const arr = Array.isArray(all) ? all.slice() : [];
+        const idx = arr.findIndex(x => (x?.id || '') === rid);
+        if(idx === -1){
+          showToast('Not found', 'Monitoring entry not found.');
+          return;
+        }
+        const now = new Date().toISOString();
+        const prev = arr[idx] || {};
+        arr[idx] = {
+          ...prev,
+          status: nextStatus,
+          notes: nextNotes,
+          updatedAt: now,
+          history: Array.isArray(prev.history) ? prev.history.concat([{ at: now, status: nextStatus, notes: nextNotes }]) : [{ at: now, status: nextStatus, notes: nextNotes }]
+        };
+        saveProjMon(arr);
+        showToast('Saved', 'Monitoring entry updated.');
+        renderProjectsMonitoring();
+      });
+    });
+  }
+
+  // simple html escaping helpers
+  function escapeHtml(s){
+    return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function escapeAttr(s){
+    // also ok for value attributes
+    return escapeHtml(s).replace(/`/g,'&#96;');
+  }
+
+
+  /* ---------------- Toast (site-style, no black alert screens) ---------------- */
+  function showToast(title, message){
+    const existing = document.getElementById('anwToast');
+    if(existing) existing.remove();
+
+    const box = document.createElement('div');
+    box.id = 'anwToast';
+    box.setAttribute('role','status');
+    box.setAttribute('aria-live','polite');
+    box.style.position = 'fixed';
+    box.style.right = '16px';
+    box.style.top = '16px';
+    box.style.zIndex = '9999';
+    box.style.maxWidth = '360px';
+
+    box.innerHTML = `
+      <div class="card" style="padding:12px 14px; box-shadow:0 10px 24px rgba(0,0,0,.12);">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+          <div>
+            <div style="font-weight:700; margin:0;">${escapeHtml(title || 'Update')}</div>
+            <div class="tiny muted" style="margin-top:4px;">${escapeHtml(message || '')}</div>
+          </div>
+          <button type="button" class="btn-line small" style="padding:6px 10px; height:auto;" aria-label="Close">Close</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(box);
+
+    const btn = box.querySelector('button');
+    if(btn) btn.addEventListener('click', ()=> box.remove());
+
+    window.clearTimeout(box.__t);
+    box.__t = window.setTimeout(()=>{ try{ box.remove(); }catch(e){} }, 3200);
+  }
+
+  /* ---------------- Modal helpers (keeps site style) ---------------- */
+  function ensureBackdrop(modalEl, onClose){
+    if(!modalEl) return;
+    if(!modalEl.__anwBackdropBound){
+      modalEl.addEventListener('click', (e)=>{
+        if(e.target === modalEl) onClose();
+      });
+      const content = modalEl.querySelector('.modal-content');
+      if(content) content.addEventListener('click', (e)=> e.stopPropagation());
+      modalEl.__anwBackdropBound = true;
+    }
+  }
+
+
+  /* ---------------- Volunteer Tasks (Admin) ---------------- */
+  let __admEditingTaskId = null;
+
+  const admTaskCode   = document.getElementById('admTaskCode');
+  const admTaskStatus = document.getElementById('admTaskStatus');
+  const admTaskTitle  = document.getElementById('admTaskTitle');
+  const admTaskDesc   = document.getElementById('admTaskDesc');
+  const admTaskType   = document.getElementById('admTaskType');
+  const admTaskDue    = document.getElementById('admTaskDue');
+  const admTaskEirs   = document.getElementById('admTaskEircodes');
+  const admTaskSts    = document.getElementById('admTaskStreets');
+  const admTaskRoles  = document.getElementById('admTaskRoles');
+  const admTaskMsg    = document.getElementById('admTaskMsg');
+
+  const btnTaskRefresh = document.getElementById('btnTaskRefresh');
+  const btnTaskNew     = document.getElementById('btnTaskNew');
+  const btnTaskClear   = document.getElementById('btnTaskClear');
+  const btnTaskSave    = document.getElementById('btnTaskSave');
+  const btnTaskDelete  = document.getElementById('btnTaskDelete');
+
+  const admTasksSummary = document.getElementById('admTasksSummary');
+  const admTasksFilter  = document.getElementById('admTasksFilter');
+  const admTasksSearch  = document.getElementById('admTasksSearch');
+  const admTasksTbody   = document.getElementById('admTasksTbody');
+  const admTasksEmpty   = document.getElementById('admTasksEmpty');
+
+  function norm(v){ return String(v ?? '').trim(); }
+  function normLower(v){ return norm(v).toLowerCase(); }
+
+  function todayISO(){
+    return new Date().toISOString().slice(0,10);
+  }
+
+  function nextTaskCode(tasks){
+    // Codes like VT-0001
+    let max = 0;
+    (tasks || []).forEach(t=>{
+      const c = String(t.code || '').toUpperCase();
+      const m = c.match(/(\d+)$/);
+      if(m){
+        const n = parseInt(m[1],10);
+        if(!isNaN(n)) max = Math.max(max, n);
+      }
+    });
+    return 'VT-' + String(max + 1).padStart(4,'0');
+  }
+
+  function buildTargetLabel(t){
+    const type = normLower(t.type || 'general');
+    if(type === 'eircode'){
+      const e = norm(t.eircodes);
+      return e ? ('Eircodes: ' + e) : 'Eircodes';
+    }
+    if(type === 'street'){
+      const s = norm(t.streets);
+      return s ? ('Streets: ' + s) : 'Streets';
+    }
+    return 'General';
+  }
+
+  function setTaskMsg(text){
+    if(!admTaskMsg) return;
+    admTaskMsg.textContent = text || '';
+  }
+
+  function clearTaskForm(){
+    __admEditingTaskId = null;
+    if(admTaskCode) admTaskCode.value = '';
+    if(admTaskStatus) admTaskStatus.value = 'open';
+    if(admTaskTitle) admTaskTitle.value = '';
+    if(admTaskDesc) admTaskDesc.value = '';
+    if(admTaskType) admTaskType.value = 'general';
+    if(admTaskDue) admTaskDue.value = '';
+    if(admTaskEirs) admTaskEirs.value = '';
+    if(admTaskSts) admTaskSts.value = '';
+    if(admTaskRoles) admTaskRoles.value = '';
+    setTaskMsg('');
+    if(btnTaskDelete) btnTaskDelete.style.display = 'none';
+  }
+
+  function loadTaskById(id){
+    const tasks = loadTasks();
+    return (tasks || []).find(t => String(t.id||'') === String(id||'')) || null;
+  }
+
+  function openTaskForEdit(id){
+    const t = loadTaskById(id);
+    if(!t){
+      showToast('Not found','Task could not be found.');
+      renderAdminTasks();
+      return;
+    }
+    __admEditingTaskId = t.id;
+    if(admTaskCode) admTaskCode.value = t.code || '';
+    if(admTaskStatus) admTaskStatus.value = normLower(t.status || 'open');
+    if(admTaskTitle) admTaskTitle.value = t.title || '';
+    if(admTaskDesc) admTaskDesc.value = t.description || '';
+    if(admTaskType) admTaskType.value = normLower(t.type || 'general');
+    if(admTaskDue) admTaskDue.value = t.dueDate ? String(t.dueDate).slice(0,10) : '';
+    if(admTaskEirs) admTaskEirs.value = t.eircodes || '';
+    if(admTaskSts) admTaskSts.value = t.streets || '';
+    if(admTaskRoles) admTaskRoles.value = t.suitableRoles || '';
+    if(btnTaskDelete) btnTaskDelete.style.display = 'inline-flex';
+    setTaskMsg('Editing task. Changes apply on Save.');
+  }
+
+  async function deleteTask(id){
+    const t = loadTaskById(id);
+    if(!t) return;
+    const st = normLower(t.status);
+    const warn = (st === 'assigned' || st === 'completed')
+      ? 'This task has household activity linked to it. Deleting will remove it from all views. Continue?'
+      : 'Delete this task? This cannot be undone.';
+    if(!confirm(warn)) return;
+
+    const tasks = loadTasks().slice();
+    const next = tasks.filter(x => String(x.id||'') !== String(id||''));
+    await saveTasks(next);
+    showToast('Deleted','Task deleted.');
+    clearTaskForm();
+    renderAdminTasks();
+  }
+
+  async function saveTaskFromForm(){
+    const title = norm(admTaskTitle && admTaskTitle.value);
+    if(!title){
+      setTaskMsg('Please enter a title.');
+      return;
+    }
+    const tasks = loadTasks().slice();
+    const now = new Date().toISOString();
+
+    if(__admEditingTaskId){
+      const idx = tasks.findIndex(t => String(t.id||'') === String(__admEditingTaskId));
+      if(idx === -1){
+        showToast('Not found','Task could not be found.');
+        clearTaskForm();
+        renderAdminTasks();
+        return;
+      }
+      const prev = tasks[idx] || {};
+      const locked = ['assigned','completed'].includes(normLower(prev.status));
+      // allow editing metadata even if assigned/completed, but do not reset assignment fields
+      tasks[idx] = {
+        ...prev,
+        title,
+        description: norm(admTaskDesc && admTaskDesc.value),
+        type: normLower(admTaskType && admTaskType.value) || 'general',
+        eircodes: norm(admTaskEirs && admTaskEirs.value),
+        streets: norm(admTaskSts && admTaskSts.value),
+        suitableRoles: norm(admTaskRoles && admTaskRoles.value),
+        dueDate: admTaskDue && admTaskDue.value ? admTaskDue.value : '',
+        status: locked ? prev.status : (normLower(admTaskStatus && admTaskStatus.value) || prev.status || 'open'),
+        updatedAt: now
+      };
+      await saveTasks(tasks);
+      showToast('Saved','Task updated.');
+      renderAdminTasks();
+      return;
+    }
+
+    const id = 'TSK-' + Date.now();
+    const code = nextTaskCode(tasks);
+    const task = {
+      id,
+      code,
+      title,
+      description: norm(admTaskDesc && admTaskDesc.value),
+      type: normLower(admTaskType && admTaskType.value) || 'general',
+      eircodes: norm(admTaskEirs && admTaskEirs.value),
+      streets: norm(admTaskSts && admTaskSts.value),
+      suitableRoles: norm(admTaskRoles && admTaskRoles.value),
+      dueDate: admTaskDue && admTaskDue.value ? admTaskDue.value : '',
+      status: normLower(admTaskStatus && admTaskStatus.value) || 'open',
+      createdAt: now,
+      updatedAt: now
+    };
+    tasks.push(task);
+    await saveTasks(tasks);
+    showToast('Saved','Task created.');
+    openTaskForEdit(id);
+    renderAdminTasks();
+  }
+
+  function renderAdminTasks(){
+    if(!admTasksTbody) return;
+
+    const tasks = loadTasks();
+    const list = Array.isArray(tasks) ? tasks.slice() : [];
+
+    // Sort: updated desc
+    list.sort((a,b)=>{
+      const da = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const db = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return db - da;
+    });
+
+    const f = normLower(admTasksFilter && admTasksFilter.value) || 'all';
+    const q = normLower(admTasksSearch && admTasksSearch.value);
+
+    const filtered = list.filter(t=>{
+      const st = normLower(t.status || 'open');
+      if(f !== 'all' && st !== f) return false;
+      if(!q) return true;
+      const blob = [
+        t.code, t.title, t.description, t.type, t.eircodes, t.streets, t.suitableRoles,
+        t.volunteerEmail, t.volunteerName
+      ].map(x=>normLower(x)).join(' ');
+      return blob.includes(q);
+    });
+
+    const openN = list.filter(t=>normLower(t.status)==='open').length;
+    const assignedN = list.filter(t=>normLower(t.status)==='assigned').length;
+    const completedN = list.filter(t=>normLower(t.status)==='completed').length;
+    const archivedN = list.filter(t=>normLower(t.status)==='archived').length;
+    if(admTasksSummary){
+      admTasksSummary.textContent = `${list.length} total · ${openN} open · ${assignedN} assigned · ${completedN} completed · ${archivedN} archived`;
+    }
+
+    admTasksTbody.innerHTML = '';
+    if(!filtered.length){
+      if(admTasksEmpty) admTasksEmpty.style.display = 'block';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="8" class="tiny muted">No tasks match your filter.</td>`;
+      admTasksTbody.appendChild(tr);
+      return;
+    }
+    if(admTasksEmpty) admTasksEmpty.style.display = 'none';
+
+    filtered.forEach(t=>{
+      const st = normLower(t.status || 'open');
+      const assignedTo = t.volunteerEmail ? `${t.volunteerName || 'Volunteer'} (${t.volunteerEmail})` : '—';
+      const updated = t.updatedAt ? fmtDate(t.updatedAt) : '';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(t.code || '')}</td>
+        <td>${escapeHtml(t.title || '')}</td>
+        <td class="tiny">${escapeHtml(buildTargetLabel(t))}</td>
+        <td>${escapeHtml(t.dueDate ? t.dueDate : '')}</td>
+        <td><span class="pill">${escapeHtml(st || '')}</span></td>
+        <td class="tiny">${escapeHtml(assignedTo)}</td>
+        <td class="tiny muted">${escapeHtml(updated)}</td>
+        <td>
+          <div class="actions" style="justify-content:flex-end; gap:0.35rem; flex-wrap:wrap;">
+            <button type="button" class="btn small btn-line" data-task-edit="${escapeAttr(t.id)}">Edit</button>
+            <button type="button" class="btn-line small" data-task-del="${escapeAttr(t.id)}">Delete</button>
+          </div>
+        </td>
+      `;
+      admTasksTbody.appendChild(tr);
+    });
+
+    admTasksTbody.querySelectorAll('[data-task-edit]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openTaskForEdit(btn.getAttribute('data-task-edit')));
+    });
+    admTasksTbody.querySelectorAll('[data-task-del]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteTask(btn.getAttribute('data-task-del')));
+    });
+
+    // If no active editing selection, initialise form with next code for clarity.
+    if(!__admEditingTaskId && admTaskCode){
+      admTaskCode.value = nextTaskCode(list);
+    }
+  }
+
+  if(btnTaskRefresh) btnTaskRefresh.addEventListener('click', renderAdminTasks);
+  if(admTasksFilter) admTasksFilter.addEventListener('change', renderAdminTasks);
+  if(admTasksSearch) admTasksSearch.addEventListener('input', ()=> {
+    // slight debounce feel without timers (lightweight)
+    renderAdminTasks();
+  });
+
+  if(btnTaskNew) btnTaskNew.addEventListener('click', ()=>{
+    clearTaskForm();
+    renderAdminTasks();
+    setTaskMsg('New task.');
+  });
+
+  if(btnTaskClear) btnTaskClear.addEventListener('click', ()=>{
+    clearTaskForm();
+    renderAdminTasks();
+  });
+
+  if(btnTaskSave) btnTaskSave.addEventListener('click', saveTaskFromForm);
+
+  if(btnTaskDelete) btnTaskDelete.addEventListener('click', ()=>{
+    if(!__admEditingTaskId) return;
+    deleteTask(__admEditingTaskId);
+  });
+
+  /* ---------------- Residents table ---------------- */
+  const resBody = document.getElementById('resBody');
+  const resEmpty = document.getElementById('resEmpty');
+  const resSummary = document.getElementById('resSummary');
+
+  let selectedEmail = null;
+
+  function formatRoles(u){
+    const roles = [];
+    if(u.isCoordinator) roles.push('Coordinator');
+    if(u.isVolunteer) roles.push('Volunteer');
+    const vr = u.vol_roles || {};
+    const vCount = ['streetWatch','leaflets','tech','elderly','meetings','translation'].filter(k => !!vr[k]).length;
+    if(vCount) roles.push(vCount + ' volunteer role(s)');
+    return roles.join(', ') || '—';
+  }
+
+  function renderResidents(){
+    const users = loadUsers();
+    let list = users.slice();
+
+    const f = window.__resFilter;
+    if(f === 'subPending'){
+      list = list.filter(u => String(u.status||'pending').toLowerCase() === 'pending');
+    } else if(f === 'subApproved'){
+      list = list.filter(u => isApprovedStatus(u.status));
+    }
+
+    list.sort((a,b)=>{
+      const da = String(a.createdAt||a.date||'');
+      const db = String(b.createdAt||b.date||'');
+      return db.localeCompare(da);
+    });
+
+    resBody.innerHTML = '';
+    if(!list.length){
+      resEmpty.style.display = 'block';
+      resSummary.textContent = '';
+      return;
+    }
+    resEmpty.style.display = 'none';
+
+    const total = users.length;
+    const pending = users.filter(u => String(u.status||'').toLowerCase()==='pending').length;
+    const approved = users.filter(u => isApprovedStatus(u.status)).length;
+    resSummary.textContent = `Total: ${total} · Pending: ${pending} · Approved: ${approved}`;
+
+    list.forEach(u=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${u.regId || '—'}</td>
+        <td>${u.name || '—'}</td>
+        <td>${u.email || '—'}</td>
+        <td>${u.eircode || '—'}</td>
+        <td>${u.address || '—'}</td>
+        <td>${u.status || 'pending'}</td>
+        <td>${formatRoles(u)}</td>
+        <td>
+          <div class="actions" style="justify-content:flex-end; gap:0.35rem; flex-wrap:wrap;">
+            <button type="button" class="btn ghost" class="btn-line small" data-act="view" data-email="${encodeURIComponent(u.email||'')}">Edit</button>
+            <button type="button" class="btn small" data-act="approve" data-email="${encodeURIComponent(u.email||'')}" ${isApprovedStatus(u.status)?'disabled':''}>Approve</button>
+          </div>
+        </td>
+      `;
+      resBody.appendChild(tr);
+    });
+
+    resBody.querySelectorAll('button[data-act="view"]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openResident(decodeURIComponent(btn.dataset.email)));
+    });
+    resBody.querySelectorAll('button[data-act="approve"]').forEach(btn=>{
+      btn.addEventListener('click', ()=> approveResident(decodeURIComponent(btn.dataset.email)));
+    });
+  }
+
+  /* ---------------- Resident Modal ---------------- */
+  const modal = document.getElementById('modalResident');
+  const closeBtn = document.getElementById('btnCloseResident');
+  closeBtn.addEventListener('click', ()=> closeResidentModal());
+
+  ensureBackdrop(modal, closeResidentModal);
+
+  function closeResidentModal(){
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    selectedEmail = null;
+  }
+
+  function openResident(email){
+    const users = loadUsers();
+    const u = users.find(x => anwNormEmail(x.email) === anwNormEmail(email));
+    if(!u) return;
+
+    selectedEmail = u.email;
+
+    document.getElementById('mRegId').value = u.regId || '—';
+    document.getElementById('mStatus').value = u.status || 'pending';
+    document.getElementById('mName').value = u.name || '';
+    document.getElementById('mPhone').value = u.phone || '';
+    document.getElementById('mEmail').value = u.email || '';
+    document.getElementById('mEir').value = u.eircode || '';
+    const mAddr = document.getElementById('mAddress');
+    if(mAddr) mAddr.value = u.address || '';
+    document.getElementById('mType').value = u.type || '';
+    document.getElementById('mMgmt').value = u.managementCompany || '';
+
+    document.getElementById('mCoord').checked = !!u.isCoordinator;
+    document.getElementById('mVol').checked = !!u.isVolunteer;
+    document.getElementById('mAlertAdmin').checked = !!u.isAlertAdmin;
+
+    const vr = u.vol_roles || {};
+    document.getElementById('mVStreet').checked = !!vr.streetWatch;
+    document.getElementById('mVLeaf').checked = !!vr.leaflets;
+    document.getElementById('mVTech').checked = !!vr.tech;
+    document.getElementById('mVEld').checked = !!vr.elderly;
+    document.getElementById('mVMeet').checked = !!vr.meetings;
+    document.getElementById('mVTrans').checked = !!vr.translation;
+
+    document.getElementById('btnApprove').disabled = isApprovedStatus(u.status);
+    document.getElementById('mMsg').textContent = '';
+
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+  }
+
+  function updateUserFromModal(u){
+    u.name = document.getElementById('mName').value.trim();
+    u.phone = document.getElementById('mPhone').value.trim();
+    u.type = document.getElementById('mType').value;
+    u.managementCompany = document.getElementById('mMgmt').value.trim();
+
+    u.isCoordinator = document.getElementById('mCoord').checked;
+    u.isVolunteer = document.getElementById('mVol').checked;
+
+    u.vol_roles = u.vol_roles || {};
+    u.vol_roles.streetWatch = document.getElementById('mVStreet').checked;
+    u.vol_roles.leaflets    = document.getElementById('mVLeaf').checked;
+    u.vol_roles.tech        = document.getElementById('mVTech').checked;
+    u.vol_roles.elderly     = document.getElementById('mVEld').checked;
+    u.vol_roles.meetings    = document.getElementById('mVMeet').checked;
+    u.vol_roles.translation = document.getElementById('mVTrans').checked;
+  }
+
+  document.getElementById('btnSaveResident').addEventListener('click', ()=>{
+    if(!selectedEmail) return;
+    const users = loadUsers();
+    const idx = users.findIndex(x => anwNormEmail(x.email) === anwNormEmail(selectedEmail));
+    if(idx < 0) return;
+
+    const u = users[idx];
+    const prevStatus = String(u.status||'pending').toLowerCase();
+
+    updateUserFromModal(u);
+
+    // Saving does NOT change status
+    u.status = prevStatus === 'pending' ? 'pending' : (u.status || 'approved');
+
+    saveUsers(users);
+    document.getElementById('mMsg').textContent = 'Saved. (Status changes only when you click Approve.)';
+    renderResidents();
+  });
+
+  function approveResident(email){
+    if(!confirm('Approve this resident? A registration number will be assigned if missing.')) return;
+
+    const users = loadUsers();
+    const idx = users.findIndex(x => anwNormEmail(x.email) === anwNormEmail(email));
+    if(idx < 0) return;
+
+    const u = users[idx];
+    if(!u.regId){
+      u.regId = anwNextRegId();
+    }
+    u.status = 'active';
+    saveUsers(users);
+
+    renderResidents();
+    if(selectedEmail && anwNormEmail(selectedEmail) === anwNormEmail(u.email)){
+      openResident(u.email);
+    }
+  }
+
+  document.getElementById('btnApprove').addEventListener('click', ()=>{
+    if(!selectedEmail) return;
+    approveResident(selectedEmail);
+  });
+
+  document.getElementById('btnReject').addEventListener('click', ()=>{
+    if(!selectedEmail) return;
+    if(!confirm('Reject this registration? This will set status to rejected.')) return;
+
+    const users = loadUsers();
+    const idx = users.findIndex(x => anwNormEmail(x.email) === anwNormEmail(selectedEmail));
+    if(idx < 0) return;
+
+    users[idx].status = 'rejected';
+    saveUsers(users);
+    renderResidents();
+    openResident(selectedEmail);
+  });
+
+  /* ---------------- Elections: Manage ---------------- */
+  const elBody = document.getElementById('elBody');
+  const elEmpty = document.getElementById('elEmpty');
+  const elRole = document.getElementById('elRole');
+  const elStatus = document.getElementById('elStatus');
+  const elStart = document.getElementById('elStart');
+  const elEnd = document.getElementById('elEnd');
+  const elMsg = document.getElementById('elMsg');
+
+  function roleKeyFromLabel(val){
+    return String(val||'').toLowerCase();
+  }
+
+  function renderElections(){
+    const elections = loadElections();
+    elBody.innerHTML = '';
+    if(!elections.length){
+      elEmpty.style.display = 'block';
+      return;
+    }
+    elEmpty.style.display = 'none';
+
+    elections.forEach(e=>{
+      const tr = document.createElement('tr');
+      const winner = e.electedName || e.winnerName || e.electedEmail || '—';
+      tr.innerHTML = `
+        <td>${e.id || '—'}</td>
+        <td>${e.role === 'assistant' ? 'Assistant Area Coordinator' : 'Area Coordinator'}</td>
+        <td>${e.start || '—'} → ${e.end || '—'}</td>
+        <td>${e.status || '—'}</td>
+        <td>${winner}</td>
+        <td>
+          <div class="actions" style="justify-content:flex-end; gap:0.35rem; flex-wrap:wrap;">
+            <button class="btn-line small" type="button" data-act="editEl" data-id="${e.id}">Edit</button>
+            <button class="btn-line small" type="button" data-act="toggleEl" data-id="${e.id}">${String(e.status||'').toLowerCase()==='open'?'Close':'Open'}</button>
+            <button class="btn-line small" type="button" data-act="delEl" data-id="${e.id}">Delete</button>
+          </div>
+        </td>
+      `;
+      elBody.appendChild(tr);
+    });
+
+    elBody.querySelectorAll('button[data-act="editEl"]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const id = b.dataset.id;
+        const elections = loadElections();
+        const e = elections.find(x => String(x.id) === String(id));
+        if(!e) return;
+        elRole.value = e.role || '';
+        elStatus.value = e.status || 'open';
+        elStart.value = e.start || '';
+        elEnd.value = e.end || '';
+        elMsg.textContent = `Editing election: ${e.id}`;
+        window.__editingElectionId = e.id;
+      });
+    });
+
+    elBody.querySelectorAll('button[data-act="delEl"]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const id = b.dataset.id;
+        if(!confirm('Delete this election?')) return;
+        let elections = loadElections();
+        elections = elections.filter(x => String(x.id) !== String(id));
+        saveElections(elections);
+        renderElections();
+        renderResults();
+      });
+    });
+
+    elBody.querySelectorAll('button[data-act="toggleEl"]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const id = b.dataset.id;
+        const elections = loadElections();
+        const idx = elections.findIndex(x => String(x.id) === String(id));
+        if(idx < 0) return;
+
+        const e = elections[idx];
+        const curr = String(e.status||'open').toLowerCase();
+        if(curr === 'open'){
+          closeElectionWithRules(elections, idx);
+        } else {
+          if(!confirm('Re-open this election?')) return;
+          e.status = 'open';
+          saveElections(elections);
+          renderElections();
+          renderResults();
+        }
+      });
+    });
+  }
+
+  function clearElectionForm(){
+    elRole.value = '';
+    elStatus.value = 'open';
+    elStart.value = '';
+    elEnd.value = '';
+    elMsg.textContent = '';
+    window.__editingElectionId = null;
+  }  document.getElementById('btnCreateElection').addEventListener('click', ()=>{
+    const role = roleKeyFromLabel(elRole.value);
+    if(!role){
+      elMsg.textContent = 'Please select a role.';
+      return;
+    }
+    const elections = loadElections();
+    const id = window.__editingElectionId || ('EL-' + Date.now());
+
+    const existingIdx = elections.findIndex(e => String(e.id) === String(id));
+    const obj = {
+      id,
+      role,
+      start: elStart.value || '',
+      end: elEnd.value || '',
+      status: elStatus.value || 'open',
+      electedRegId: existingIdx >= 0 ? (elections[existingIdx].electedRegId || '') : '',
+      electedEmail: existingIdx >= 0 ? (elections[existingIdx].electedEmail || '') : '',
+      electedName: existingIdx >= 0 ? (elections[existingIdx].electedName || '') : ''
+    };
+
+    if(existingIdx >= 0){
+      elections[existingIdx] = { ...elections[existingIdx], ...obj };
+      elMsg.textContent = 'Election updated.';
+    } else {
+      elections.push(obj);
+      elMsg.textContent = 'Election created.';
+    }
+
+    saveElections(elections);
+    renderElections();
+    renderResults();
+    clearElectionForm();
+  });
+
+  /* ---------------- Elections: Candidates (Interest approvals) ---------------- */
+  const candBody = document.getElementById('candBody');
+  const candEmpty = document.getElementById('candEmpty');
+
+  function renderCandidates(){
+    const users = loadUsers();
+    const interests = users
+      .filter(u => u && u.interest && (u.interest.role || u.interest.text))
+      .map(u => u);
+
+    candBody.innerHTML = '';
+    if(!interests.length){
+      candEmpty.style.display = 'block';
+      return;
+    }
+    candEmpty.style.display = 'none';
+
+    interests.sort((a,b)=> String(b.interest?.date||'').localeCompare(String(a.interest?.date||'')));
+
+    interests.forEach(u=>{
+      const role = String(u.interest.role||'').toLowerCase();
+      const roleLabel = role === 'assistant' ? 'Assistant Area Coordinator' : 'Area Coordinator';
+      const st = String(u.interest.status||'pending').toLowerCase();
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${roleLabel}</td>
+        <td>${u.regId || '—'}</td>
+        <td>${u.name || '—'}</td>
+        <td>${u.email || '—'}</td>
+        <td>${st}</td>
+        <td>
+          <div class="actions" style="justify-content:flex-end; gap:0.35rem; flex-wrap:wrap;">
+            <button class="btn-line small" type="button" data-act="viewInt" data-email="${encodeURIComponent(u.email||'')}">View</button>
+            <button class="btn small" type="button" data-act="appInt" data-email="${encodeURIComponent(u.email||'')}" ${st==='approved'?'disabled':''}>Approve</button>
+            <button class="btn-line small" type="button" data-act="rejInt" data-email="${encodeURIComponent(u.email||'')}">Reject</button>
+          </div>
+        </td>
+      `;
+      candBody.appendChild(tr);
+    });
+
+    candBody.querySelectorAll('button[data-act="viewInt"]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const email = decodeURIComponent(b.dataset.email);
+        openInterestPreview(email);
+      });
+    });
+
+    candBody.querySelectorAll('button[data-act="appInt"]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const email = decodeURIComponent(b.dataset.email);
+        setInterestStatus(email, 'approved');
+      });
+    });
+
+    candBody.querySelectorAll('button[data-act="rejInt"]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const email = decodeURIComponent(b.dataset.email);
+        setInterestStatus(email, 'rejected');
+      });
+    });
+  }
+
+  /* Interest modal wiring */
+  const modalInterest = document.getElementById('modalInterest');
+  const btnCloseInterest = document.getElementById('btnCloseInterest');
+  const btnInterestApprove = document.getElementById('btnInterestApprove');
+  const btnInterestReject  = document.getElementById('btnInterestReject');
+
+  function closeInterestModal(){
+    modalInterest.classList.remove('show');
+    modalInterest.style.display = 'none';
+    window.__interestEmail = null;
+  }
+
+  ensureBackdrop(modalInterest, closeInterestModal);
+  btnCloseInterest.addEventListener('click', closeInterestModal);
+
+  btnInterestApprove.addEventListener('click', ()=>{
+    if(!window.__interestEmail) return;
+    setInterestStatus(window.__interestEmail, 'approved');
+    closeInterestModal();
+  });
+
+  btnInterestReject.addEventListener('click', ()=>{
+    if(!window.__interestEmail) return;
+    setInterestStatus(window.__interestEmail, 'rejected');
+    closeInterestModal();
+  });
+
+  function openInterestPreview(email){
+    const users = loadUsers();
+    const u = users.find(x => anwNormEmail(x.email) === anwNormEmail(email));
+    if(!u || !u.interest) return;
+
+    document.getElementById('iName').value = u.name || 'Candidate';
+    document.getElementById('iEmail').value = u.email || '—';
+    document.getElementById('iRole').value = (String(u.interest.role||'').toLowerCase()==='assistant')
+      ? 'Assistant Area Coordinator'
+      : 'Area Coordinator';
+    document.getElementById('iStatus').value = u.interest.status || 'pending';
+    document.getElementById('iDate').value = u.interest.date || '';
+    document.getElementById('iText').value = u.interest.text || '';
+
+    window.__interestEmail = u.email;
+
+    const st = String(u.interest.status||'pending').toLowerCase();
+    btnInterestApprove.disabled = (st === 'approved');
+
+    modalInterest.style.display = 'flex';
+    modalInterest.classList.add('show');
+  }
+
+  function setInterestStatus(email, status){
+    if(!confirm(`Set interest status to ${status}?`)) return;
+    const users = loadUsers();
+    const idx = users.findIndex(x => anwNormEmail(x.email) === anwNormEmail(email));
+    if(idx < 0) return;
+
+    users[idx].interest = users[idx].interest || {};
+    users[idx].interest.status = status;
+    saveUsers(users);
+
+    renderCandidates();
+    renderResults();
+  }
+
+  /* ---------------- Elections: Results ---------------- */
+  const resultsBox = document.getElementById('resultsBox');
+
+  function computeResultsForRole(role){
+    const users = loadUsers();
+    const votes = loadVotes();
+
+    const approvedHouseholds = users
+      .filter(u => isApprovedStatus(u.status) && u.regId)
+      .map(u => u.regId);
+
+    const totalHouseholds = approvedHouseholds.length;
+
+    const candidates = users.filter(u =>
+      u.regId &&
+      u.interest &&
+      String(u.interest.role||'').toLowerCase() === role &&
+      String(u.interest.status||'').toLowerCase() === 'approved'
+    );
+
+    const tally = {};
+    candidates.forEach(c => {
+      tally[c.regId] = { regId: c.regId, name: c.name || 'Candidate', email: c.email || '', votes: 0 };
+    });
+
+    Object.keys(votes || {}).forEach(k=>{
+      if(!k.endsWith('|' + role)) return;
+      const voterReg = k.split('|')[0];
+      if(!approvedHouseholds.includes(voterReg)) return;
+
+      const votedReg = votes[k];
+      if(tally[votedReg]) tally[votedReg].votes += 1;
+    });
+
+    const rows = Object.values(tally).sort((a,b)=> b.votes - a.votes);
+    const leader = rows[0] || null;
+    const leaderPct = leader && totalHouseholds ? (leader.votes / totalHouseholds) * 100 : 0;
+
+    return { totalHouseholds, rows, leader, leaderPct };
+  }
+
+  function renderResults(){
+    resultsBox.innerHTML = '';
+
+    const roles = ['area','assistant'];
+
+    roles.forEach(role=>{
+      const box = document.createElement('div');
+      box.className = 'card';
+      box.style.background = '#f9fafb';
+
+      const { totalHouseholds, rows, leader, leaderPct } = computeResultsForRole(role);
+      const roleLabel = role === 'assistant' ? 'Assistant Area Coordinator' : 'Area Coordinator';
+
+      let html = `<h4 style="margin-top:0;">${roleLabel}</h4>`;
+      html += `<p class="tiny muted" style="margin-top:0.25rem;">Approved households: ${totalHouseholds}</p>`;
+
+      if(!rows.length){
+        html += `<p class="tiny muted">No approved candidates for this role.</p>`;
+        box.innerHTML = html;
+        resultsBox.appendChild(box);
+        return;
+      }
+
+      html += `<div style="overflow-x:auto;"><table style="width:100%;">
+        <thead><tr><th>Reg No</th><th>Name</th><th>Votes</th><th>% of households</th></tr></thead><tbody>`;
+      rows.forEach(r=>{
+        const pct = totalHouseholds ? ((r.votes/totalHouseholds)*100) : 0;
+        html += `<tr><td>${r.regId}</td><td>${r.name}</td><td>${r.votes}</td><td>${pct.toFixed(1)}%</td></tr>`;
+      });
+      html += `</tbody></table></div>`;
+
+      if(leader){
+        html += `<p class="tiny" style="margin-top:0.5rem;"><strong>Leader:</strong> ${leader.name} (${leader.votes} vote(s), ${leaderPct.toFixed(1)}%)</p>`;
+      }
+      box.innerHTML = html;
+      resultsBox.appendChild(box);
+    });
+  }
+
+  /* ✅ NEW: persist elected winner into anw_users (profile sync) */
+  function markElectedWinner(role, leader, electionId){
+    if(!leader || !leader.regId) return;
+
+    const users = loadUsers();
+
+    // clear previous elected for same role (keep only one winner per role)
+    users.forEach(u=>{
+      if(!u) return;
+      if(String(u.electedRole||'').toLowerCase() === role){
+        delete u.electedRole;
+        delete u.electedAt;
+        delete u.electedElectionId;
+      }
+    });
+
+    const idx = users.findIndex(u => String(u.regId||'') === String(leader.regId));
+    if(idx >= 0){
+      users[idx].electedRole = role;
+      users[idx].electedAt = new Date().toISOString().slice(0,10);
+      users[idx].electedElectionId = electionId || '';
+    }
+
+    saveUsers(users);
+  }
+
+  function closeElectionWithRules(elections, idx){
+    const e = elections[idx];
+    const role = String(e.role||'').toLowerCase();
+
+    const { totalHouseholds, leader, leaderPct } = computeResultsForRole(role);
+
+    if(!confirm(`Close this election now?`)) return;
+
+    if(leader && totalHouseholds > 0 && leaderPct >= 60){
+      e.status = 'closed';
+      e.electedRegId = leader.regId;
+      e.electedName = leader.name;
+      e.electedEmail = leader.email;
+
+      // ✅ NEW: sync into user profile
+      markElectedWinner(role, leader, e.id);
+
+      saveElections(elections);
+      renderElections();
+      renderResults();
+      return;
+    }
+
+    const msg = leader
+      ? `Leader is at ${leaderPct.toFixed(1)}% (needs 60%). Close anyway WITHOUT declaring a winner?`
+      : 'No votes/candidates found. Close anyway?';
+
+    if(!confirm(msg)) return;
+
+    e.status = 'closed';
+    e.electedRegId = '';
+    e.electedName = '';
+    e.electedEmail = '';
+    saveElections(elections);
+    renderElections();
+    renderResults();
+  }
+
+  /* ---------------- Reports ---------------- */
+  const repBody = document.getElementById('repBody');
+  const repEmpty = document.getElementById('repEmpty');
+  const repMsg = document.getElementById('repMsg');
+  const repStatusFilter = document.getElementById('repStatusFilter');
+  const repSearch = document.getElementById('repSearch');
+
+  function fmtDateShort(iso){
+    const s = String(iso||'');
+    return s ? s.slice(0,10) : '—';
+  }
+
+  function renderReports(){
+    if(!repBody) return;
+    const incidents = loadIncidents();
+    const st = String(repStatusFilter.value||'all');
+    const q = String(repSearch.value||'').trim().toLowerCase();
+
+    let list = incidents.slice();
+    if(st !== 'all') list = list.filter(r => String(r.status||'submitted') === st);
+    if(q){
+      list = list.filter(r => {
+        const hay = [r.id, r.reporterEmail, r.location, r.category].map(x=>String(x||'').toLowerCase()).join(' | ');
+        return hay.includes(q);
+      });
+    }
+
+    list.sort((a,b)=> String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+
+    repBody.innerHTML = '';
+    if(!list.length){
+      repEmpty.style.display = 'block';
+      repMsg.textContent = incidents.length ? 'No reports match the filters.' : 'No reports submitted yet.';
+      return;
+    }
+    repEmpty.style.display = 'none';
+    repMsg.textContent = `Showing ${list.length} of ${incidents.length} total report(s).`;
+
+    list.forEach(r=>{
+      const tr = document.createElement('tr');
+      const status = String(r.status||'submitted');
+      tr.innerHTML = `
+        <td>${r.id || '—'}</td>
+        <td>${fmtDateShort(r.createdAt) || '—'}</td>
+        <td>${r.category || '—'}</td>
+        <td>${r.location || '—'}</td>
+        <td>${r.reporterEmail || '—'}</td>
+        <td>
+          <select class="input" data-role="status" data-id="${r.id}" style="min-width:140px;">
+            <option value="submitted" ${status==='submitted'?'selected':''}>submitted</option>
+            <option value="in_review" ${status==='in_review'?'selected':''}>in_review</option>
+            <option value="sent_to_garda" ${status==='sent_to_garda'?'selected':''}>sent_to_garda</option>
+            <option value="closed" ${status==='closed'?'selected':''}>closed</option>
+          </select>
+        </td>
+        <td>
+          <button type="button" class="btn-line small" data-act="view" data-id="${r.id}">View</button>
+          <button type="button" class="btn-line small" data-act="copy" data-id="${r.id}" style="margin-left:6px;">Copy email</button>
+          <button type="button" class="btn-line small" data-act="del" data-id="${r.id}" style="margin-left:6px;">Delete</button>
+        </td>
+      `;
+      repBody.appendChild(tr);
+    });
+  }
+
+  async function refreshReports(){
+    await anwInitStore();
+    renderReports();
+    renderResidentConsents();
+      renderResidentConsents();
+  }
+
+  // Filters
+  if(repStatusFilter) repStatusFilter.addEventListener('change', renderReports);
+  if(repSearch) repSearch.addEventListener('input', ()=>{ window.clearTimeout(window.__repT); window.__repT=setTimeout(renderReports, 150); });
+  const btnRepRefresh = document.getElementById('btnRepRefresh');
+  if(btnRepRefresh) btnRepRefresh.addEventListener('click', refreshReports);
+
+  const btnRepExport = document.getElementById('btnRepExport');
+  if(btnRepExport) btnRepExport.addEventListener('click', ()=>{
+    const list = loadIncidents();
+    toolsArea.value = JSON.stringify({ [KEY_INCIDENTS]: list }, null, 2);
+    toolsMsg.textContent = 'Exported reports into the text area.';
+    showAdminTab('tabTools');
+  });
+
+  // Status change
+  if(repBody) repBody.addEventListener('change', async (e)=>{
+    const sel = e.target.closest('select[data-role="status"]');
+    if(!sel) return;
+    const id = sel.dataset.id;
+    const incidents = loadIncidents();
+    const idx = incidents.findIndex(r => r.id === id);
+    if(idx < 0) return;
+    incidents[idx].status = sel.value;
+    incidents[idx].updatedAt = new Date().toISOString();
+    await saveIncidents(incidents);
+    repMsg.textContent = `Updated ${id} to ${sel.value}.`;
+  });
+
+  // Row actions
+  if(repBody) repBody.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    const act = btn.dataset.act;
+    const id = btn.dataset.id;
+    const incidents = loadIncidents();
+    const r = incidents.find(x => x.id === id);
+    if(!r) return;
+
+    if(act === 'view'){
+      // If we have coordinates but no cached address, reverse-geocode once and save into the incident.
+      if((!r.address) && (typeof r.lat === 'number') && (typeof r.lng === 'number')){
+        const addr = await reverseGeocodeOnce(r.lat, r.lng);
+        if(addr){
+          r.address = addr;
+          // Persist back to storage so we don't call Google again for this incident.
+          const idx2 = incidents.findIndex(x => x.id === id);
+          if(idx2 >= 0){ incidents[idx2] = r; await anwSave(KEY_INCIDENTS, incidents); }
+        }
+      }
+      const lines = [
+        `ID: ${r.id}`,
+        `Created: ${r.createdAt || '—'}`,
+        `Status: ${r.status || 'submitted'}`,
+        `Date/Time: ${(r.date||'—')} ${(r.time||'')}`.trim(),
+        `Category: ${r.category || '—'}`,
+        `Location: ${r.location || '—'}`,
+        `Address: ${r.address || '—'}`,
+        `Coords: ${(typeof r.lat==='number' && typeof r.lng==='number') ? (r.lat + ', ' + r.lng) : '—'}`,
+        `Reporter: ${r.reporterName || '—'}`,
+        `Email: ${r.reporterEmail || '—'}`,
+        `Phone: ${r.reporterPhone || '—'}`,
+        '',
+        'Description:',
+        String(r.description||'—')
+      ];
+      toolsArea.value = lines.join('\n');
+      toolsMsg.textContent = `Opened ${id} in the text area (Tools tab).`;
+      showAdminTab('tabTools');
+      return;
+    }
+
+    if(act === 'copy'){
+      const subject = `ANW Incident report ${r.id} — ${r.category || 'Incident'}`;
+      const body = [
+        'Aderrig Neighbourhood Watch — Incident report',
+        '',
+        `Report ID: ${r.id}`,
+        `Date/Time: ${r.date || '—'} ${r.time || ''}`.trim(),
+        `Category: ${r.category || '—'}`,
+        `Location: ${r.location || '—'}`,
+        `Address: ${r.address || '—'}`,
+        `Coords: ${(typeof r.lat==='number' && typeof r.lng==='number') ? (r.lat + ', ' + r.lng) : '—'}`,
+        '',
+        'Description:',
+        String(r.description||'—'),
+        '',
+        'Reporter (optional):',
+        `Name: ${r.reporterName || '—'}`,
+        `Email: ${r.reporterEmail || '—'}`,
+        `Phone: ${r.reporterPhone || '—'}`
+      ].join('\n');
+      try{
+        await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`);
+        repMsg.textContent = `Copied email for ${id}.`;
+      }catch(err){
+        repMsg.textContent = `Copy failed for ${id}.`;
+      }
+      return;
+    }
+
+    if(act === 'del'){
+      if(!confirm(`Delete ${id}? This cannot be undone.`)) return;
+      const next = incidents.filter(x => x.id !== id);
+      await saveIncidents(next);
+      renderReports();
+    }
+  });
+
+  /* ---------------- Tools ---------------- */
+  const toolsArea = document.getElementById('toolsArea');
+  const toolsMsg = document.getElementById('toolsMsg');
+
+  const btnExport = document.getElementById('btnExport');
+  if(btnExport) btnExport.addEventListener('click', ()=>{
+    const dump = {
+      [KEY_USERS]: loadUsers(),
+      [KEY_ELECTIONS]: loadElections(),
+      [KEY_VOTES]: loadVotes(),
+      [KEY_INCIDENTS]: loadIncidents(),
+      [KEY_TASKS]: loadTasks(),
+      [KEY_PROJECTS]: loadProjects(),
+      [KEY_PROJ_MON]: loadProjMon()
+    };
+    toolsArea.value = JSON.stringify(dump, null, 2);
+    toolsMsg.textContent = 'Exported into the text area.';
+  });
+
+  const btnImport = document.getElementById('btnImport');
+  if(btnImport) btnImport.addEventListener('click', ()=>{
+    const raw = toolsArea.value.trim();
+    if(!raw) { toolsMsg.textContent = 'Paste JSON first.'; return; }
+    if(!confirm('Import will overwrite current data for users, elections, votes and reports. Continue?')) return;
+    try{
+      const obj = JSON.parse(raw);
+      if(obj && obj[KEY_USERS]) saveUsers(obj[KEY_USERS]);
+      if(obj && obj[KEY_ELECTIONS]) saveElections(obj[KEY_ELECTIONS]);
+      if(obj && obj[KEY_VOTES]) saveVotes(obj[KEY_VOTES]);
+      if(obj && obj[KEY_INCIDENTS]) saveIncidents(obj[KEY_INCIDENTS]);
+      if(obj && obj[KEY_TASKS]) saveTasks(obj[KEY_TASKS]);
+      if(obj && obj[KEY_PROJECTS]) saveProjects(obj[KEY_PROJECTS]);
+      if(obj && obj[KEY_PROJ_MON]) saveProjMon(obj[KEY_PROJ_MON]);
+      toolsMsg.textContent = 'Imported.';
+      renderResidents();
+      renderElections();
+      renderCandidates();
+      renderResults();
+      renderReports();
+    }catch(e){
+      toolsMsg.textContent = 'Invalid JSON.';
+    }
+  });
+
+  const btnClearSession = document.getElementById('btnClearSession');
+  if(btnClearSession) btnClearSession.addEventListener('click', async ()=>{
+    if(!confirm('Clear current session (logged user)?')) return;
+    await anwSave(ANW_KEYS.LOGGED, null);
+    toolsMsg.textContent = 'Session cleared.';
+  });
+
+  const btnResetAll = document.getElementById('btnResetAll');
+  if(btnResetAll) btnResetAll.addEventListener('click', async ()=>{
+    await anwSave(KEY_USERS, null);
+    await anwSave(KEY_ELECTIONS, null);
+    await anwSave(KEY_VOTES, null);
+    await anwSave(KEY_INCIDENTS, null);
+    await anwSave(KEY_TASKS, null);
+    await anwSave(KEY_PROJECTS, null);
+    await anwSave(KEY_PROJ_MON, null);
+    toolsMsg.textContent = 'All data reset.';
+    renderResidents();
+    renderElections();
+    renderCandidates();
+    renderResults();
+    renderReports();
+  });
+
+  
+  /* ---------------- Resident consents (Tools) ---------------- */
+  const consentAlertsTbody = document.getElementById('consentAlertsTbody');
+  const consentTermsTbody  = document.getElementById('consentTermsTbody');
+  const consentAlertsEmpty = document.getElementById('consentAlertsEmpty');
+  const consentTermsEmpty  = document.getElementById('consentTermsEmpty');
+
+  function fmtDT(iso){
+    try{ return iso ? new Date(iso).toLocaleString() : '—'; }catch(e){ return iso || '—'; }
+  }
+
+  function boolTick(v){ return v ? '✓' : '—'; }
+
+  function renderResidentConsents(){
+    if(!consentAlertsTbody || !consentTermsTbody) return;
+
+    const users = loadUsers();
+
+    // Terms (mandatory) list
+    const residents = users.slice().sort((a,b)=> (a.name||'').localeCompare(b.name||''));
+    consentTermsTbody.innerHTML = '';
+    if(!residents.length){
+      if(consentTermsEmpty) consentTermsEmpty.style.display = 'block';
+    }else{
+      if(consentTermsEmpty) consentTermsEmpty.style.display = 'none';
+      residents.forEach(u=>{
+        const tr = document.createElement('tr');
+        const acceptedAt = u.termsAcceptedAt || u.createdAt;
+        tr.innerHTML = `
+          <td style="padding:10px; border-bottom:1px solid var(--line);">
+            <strong>${esc(u.name||'')}</strong><br>
+            <span class="tiny muted">${esc(u.email||'')}</span>
+          </td>
+          <td style="padding:10px; border-bottom:1px solid var(--line);">${esc(u.eircode||'')}</td>
+          <td style="text-align:center; padding:10px; border-bottom:1px solid var(--line);">${acceptedAt ? 'Accepted' : '—'}</td>
+          <td style="padding:10px; border-bottom:1px solid var(--line);">${fmtDT(acceptedAt)}</td>
+        `;
+        consentTermsTbody.appendChild(tr);
+      });
+    }
+
+    // Alert opt-ins (optional) list (only those who opted into at least one)
+    const opted = users.filter(u=>{
+      const ac = u.alertsConsent || {};
+      return !!ac.optIn;
+    }).sort((a,b)=> (a.name||'').localeCompare(b.name||''));
+
+    consentAlertsTbody.innerHTML = '';
+    if(!opted.length){
+      if(consentAlertsEmpty) consentAlertsEmpty.style.display = 'block';
+    }else{
+      if(consentAlertsEmpty) consentAlertsEmpty.style.display = 'none';
+      opted.forEach(u=>{
+        const ac = u.alertsConsent || {};
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="padding:10px; border-bottom:1px solid var(--line);">
+            <strong>${esc(u.name||'')}</strong><br>
+            <span class="tiny muted">${esc(u.email||'')}</span>
+          </td>
+          <td style="padding:10px; border-bottom:1px solid var(--line);">${esc(u.eircode||'')}</td>
+          <td style="text-align:center; padding:10px; border-bottom:1px solid var(--line);">${ac.optIn ? 'Yes' : 'No'}</td>
+          <td style="padding:10px; border-bottom:1px solid var(--line);">${fmtDT(ac.updatedAt)}</td>
+        `;
+        consentAlertsTbody.appendChild(tr);
+      });
+    }
+  }
+
+  document.getElementById('btnRefreshConsents')?.addEventListener('click', async ()=>{
+    try{ await anwInitStore(); }catch(e){}
+    renderResidentConsents();
+  });
+
+
+  // Export helpers (CSV)
+  function csvEscape(v){
+    const s = (v===null||v===undefined) ? '' : String(v);
+    if(/[",\n\r]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+    return s;
+  }
+  function downloadText(filename, text, mime){
+    const blob = new Blob([text], {type: mime || 'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+  }
+
+  function buildTermsCSV(){
+    const users = loadUsers().slice().sort((a,b)=> (a.name||'').localeCompare(b.name||''));
+    const rows = [];
+    rows.push(['Resident','Email','Eircode','Address','Accepted at (ISO)'].map(csvEscape).join(','));
+    users.forEach(u=>{
+      rows.push([
+        u.name||'',
+        u.email||'',
+        u.eircode||'',
+        u.address||'',
+        u.termsAcceptedAt||''
+      ].map(csvEscape).join(','));
+    });
+    return rows.join('\n');
+  }
+
+  function buildAlertsCSV(){
+    const users = loadUsers()
+      .filter(u=> !!(u.alertsConsent && u.alertsConsent.optIn))
+      .slice()
+      .sort((a,b)=> (a.name||'').localeCompare(b.name||''));
+    const rows = [];
+    rows.push(['Resident','Email','Eircode','Address','Opted in','Updated (ISO)'].map(csvEscape).join(','));
+    users.forEach(u=>{
+      const ac = u.alertsConsent || {};
+      rows.push([
+        u.name||'',
+        u.email||'',
+        u.eircode||'',
+        u.address||'',
+        ac.optIn ? 'Yes' : 'No',
+        ac.updatedAt||''
+      ].map(csvEscape).join(','));
+    });
+    return rows.join('\n');
+  }
+
+  document.getElementById('btnExportTermsCSV')?.addEventListener('click', ()=>{
+    const csv = buildTermsCSV();
+    const stamp = new Date().toISOString().replace(/[:.]/g,'-');
+    downloadText(`anw-privacy-terms-${stamp}.csv`, csv, 'text/csv;charset=utf-8');
+  });
+
+  document.getElementById('btnExportAlertsCSV')?.addEventListener('click', ()=>{
+    const csv = buildAlertsCSV();
+    const stamp = new Date().toISOString().replace(/[:.]/g,'-');
+    downloadText(`anw-alert-optin-${stamp}.csv`, csv, 'text/csv;charset=utf-8');
+  });
+
+
+/* ---------------- Init ---------------- */
+    const pmRefreshBtn=document.getElementById('pmRefreshBtn');
+  if(pmRefreshBtn) pmRefreshBtn.addEventListener('click', async ()=>{ try{ await anwInitStore(); }catch(e){} renderProjectsMonitoring(); });
+  const pmStoreNote = document.getElementById('pmStoreNote');
+  if(pmStoreNote){
+    pmStoreNote.style.display = (location && location.protocol === 'file:') ? 'block' : 'none';
+  }
+
+
+renderResidents();
+  renderElections();
+  renderCandidates();
+  renderResults();
+  renderReports();
+  renderResidentConsents();
+
+  showElectSub('subManage');
+
+
+  // ======================
+  // Backups (Netlify)
+  // ======================
+  const backupEnabled = document.getElementById('backupEnabled');
+  const backupFrequency = document.getElementById('backupFrequency');
+  const backupTime = document.getElementById('backupTime');
+  const backupRunNow = document.getElementById('backupRunNow');
+  const backupRefresh = document.getElementById('backupRefresh');
+  const backupTbody = document.getElementById('backupTbody');
+  const backupEmpty = document.getElementById('backupEmpty');
+  const backupMsg = document.getElementById('backupMsg');
+
+  const backupBadge = document.getElementById('backupBadge');
+  const backupLastRun = document.getElementById('backupLastRun');
+  const backupNextRun = document.getElementById('backupNextRun');
+  const backupCronText = document.getElementById('backupCronText');
+
+  // Cron schedule used by Netlify Scheduled Function (keep in sync with netlify.toml)
+  const BACKUP_CRON = "0 */6 * * *";
+
+  function cronDescription(cron){
+    if(!cron) return '—';
+    const parts = cron.trim().split(/\s+/);
+    if(parts.length !== 5) return cron;
+    const [min, hour, dom, mon, dow] = parts;
+
+    // every N hours: 0 */6 * * *
+    const mEveryHour = /^\*\/(\d+)$/.exec(hour);
+    if(min === '0' && mEveryHour && dom === '*' && mon === '*' && dow === '*'){
+      return `Every ${mEveryHour[1]} hours (UTC)`;
+    }
+
+    // daily at HH:MM: 0 2 * * *
+    const hNum = /^\d+$/.test(hour) ? parseInt(hour, 10) : null;
+    const minNum = /^\d+$/.test(min) ? parseInt(min, 10) : null;
+    if(hNum !== null && minNum !== null && dom === '*' && mon === '*' && dow === '*'){
+      return `Daily at ${String(hNum).padStart(2,'0')}:${String(minNum).padStart(2,'0')} (UTC)`;
+    }
+
+    // weekly at HH:MM on DOW: 0 2 * * 1
+    const dowNum = /^\d+$/.test(dow) ? parseInt(dow, 10) : null;
+    if(hNum !== null && minNum !== null && dom === '*' && mon === '*' && dowNum !== null){
+      const names = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const nm = names[dowNum] || `DOW ${dowNum}`;
+      return `Weekly on ${nm} at ${String(hNum).padStart(2,'0')}:${String(minNum).padStart(2,'0')} (UTC)`;
+    }
+
+    return cron;
+  }
+
+  function nextCronRunUTC(cron){
+    // Minimal cron next-run calculator for the patterns above.
+    const parts = (cron||'').trim().split(/\s+/);
+    if(parts.length !== 5) return null;
+    const [min, hour, dom, mon, dow] = parts;
+
+    const now = new Date();
+
+    // every N hours
+    const mEveryHour = /^\*\/(\d+)$/.exec(hour);
+    if(min === '0' && mEveryHour && dom === '*' && mon === '*' && dow === '*'){
+      const step = parseInt(mEveryHour[1], 10);
+      if(!step || step <= 0) return null;
+      // next boundary at minute 0 of an hour divisible by step
+      const utc = new Date(Date.UTC(
+        now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
+        now.getUTCHours(), 0, 0, 0
+      ));
+      // move to next hour boundary if we're past minute 0
+      if(now.getUTCMinutes() > 0 || now.getUTCSeconds() > 0 || now.getUTCMilliseconds() > 0){
+        utc.setUTCHours(utc.getUTCHours() + 1);
+      }
+      // advance until hour % step == 0
+      while(utc.getUTCHours() % step !== 0){
+        utc.setUTCHours(utc.getUTCHours() + 1);
+      }
+      return utc;
+    }
+
+    // daily or weekly fixed time
+    const hNum = /^\d+$/.test(hour) ? parseInt(hour, 10) : null;
+    const minNum = /^\d+$/.test(min) ? parseInt(min, 10) : null;
+    if(hNum === null || minNum === null) return null;
+
+    const candidate = new Date(Date.UTC(
+      now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
+      hNum, minNum, 0, 0
+    ));
+
+    // weekly
+    if(dom === '*' && mon === '*' && /^\d+$/.test(dow)){
+      const dowNum = parseInt(dow, 10);
+      // JS: 0=Sun..6=Sat. Cron often 0/7=Sun..6=Sat. We'll support 0-6.
+      const today = candidate.getUTCDay();
+      let delta = (dowNum - today + 7) % 7;
+      if(delta === 0 && candidate <= now) delta = 7;
+      candidate.setUTCDate(candidate.getUTCDate() + delta);
+      return candidate;
+    }
+
+    // daily
+    if(dom === '*' && mon === '*' && dow === '*'){
+      if(candidate <= now) candidate.setUTCDate(candidate.getUTCDate() + 1);
+      return candidate;
+    }
+
     return null;
   }
 
-  async function getToken(){
-    const u = await ensureIdentity();
-    if(!u) return null;
-    if(elWho) elWho.textContent = 'Logged in: ' + u.email;
+
+  function fmtUTCDate(d){
+    if(!d) return '—';
     try{
-      // gotrue-js user has jwt()
-      if(typeof u.jwt === 'function') return await u.jwt();
-    }catch(e){}
-    // Fallback: try to read token from user object (older widget)
-    return u.token && u.token.access_token ? u.token.access_token : null;
-  }
-
-  async function apiGetUsers(){
-    const token = await getToken();
-    if(!token) throw new Error('Not logged in. Please open /login.html and log in first.');
-    const url = API + '?key=' + encodeURIComponent(KEY);
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-    const data = await res.json().catch(()=> ({}));
-    if(!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
-    return Array.isArray(data.value) ? data.value : [];
-  }
-
-  async function apiSaveUsers(list){
-    const token = await getToken();
-    if(!token) throw new Error('Not logged in.');
-    const url = API + '?key=' + encodeURIComponent(KEY);
-    const res = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(list)
-    });
-    const data = await res.json().catch(()=> ({}));
-    if(!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
-    return true;
-  }
-
-  function render(users){
-    const rows = [];
-    for(const u of users){
-      const email = (u && u.email) ? String(u.email) : '';
-      const name = (u && u.name) ? String(u.name) : '';
-      const eir = (u && u.eircode) ? String(u.eircode) : '';
-      const role = (u && (u.role || u.residentType)) ? String(u.role || u.residentType) : '';
-      const status = (u && u.status) ? String(u.status) : 'pending';
-
-      rows.push(
-        '<tr>' +
-          '<td>' + escapeHtml(name) + '</td>' +
-          '<td>' + escapeHtml(email) + '</td>' +
-          '<td>' + escapeHtml(eir) + '</td>' +
-          '<td>' + escapeHtml(role) + '</td>' +
-          '<td>' + pill(status) + '</td>' +
-          '<td class="actions">' +
-            '<button class="btn btn-line tiny" data-act="approve" data-email="' + encodeAttr(email) + '">Approve</button>' +
-            '<button class="btn btn-line tiny" data-act="pending" data-email="' + encodeAttr(email) + '">Pending</button>' +
-            '<button class="btn btn-line tiny" data-act="suspend" data-email="' + encodeAttr(email) + '">Suspend</button>' +
-          '</td>' +
-        '</tr>'
-      );
+      // Display in local time but mention UTC in label already; keep consistent with other UI (fmtLocal)
+      return fmtLocal(d.toISOString());
+    }catch(e){
+      return '—';
     }
-    elRows.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="6" class="muted">No registrations yet.</td></tr>';
   }
 
-  function encodeAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
-  function escapeHtml(s){
-    return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  async function refresh(){
-    setMsg('', '');
-    elHint.textContent = '';
+  function estimateNextRunUTC(settings){
     try{
-      const users = await apiGetUsers();
-      render(users);
-
-      // Friendly hint: if the server only returns YOUR record (non-admin),
-      // it will be an array of length 1.
-      if(users.length === 1){
-        elHint.textContent = 'Tip: If you only see 1 record, the server thinks you are not admin yet. But your MASTER record should still be visible here.';
+      if(!settings || !settings.enabled) return null;
+      const t = (settings.time || '02:00').split(':');
+      const hh = parseInt(t[0]||'0',10);
+      const mm = parseInt(t[1]||'0',10);
+      const now = new Date();
+      // build candidate in UTC
+      const cand = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hh, mm, 0, 0));
+      let next = cand;
+      if(cand <= now){
+        if((settings.frequency||'daily') === 'weekly'){
+          next = new Date(cand.getTime() + 7*24*60*60*1000);
+        }else{
+          next = new Date(cand.getTime() + 24*60*60*1000);
+        }
+      }else{
+        if((settings.frequency||'daily') === 'weekly'){
+          // if weekly and candidate is in future today, keep today as next (closest)
+        }
       }
-      setMsg('Loaded ' + users.length + ' record(s).', 'ok');
+      return next;
     }catch(e){
-      setMsg(e.message || String(e), 'error');
+      return null;
     }
   }
 
-  async function setStatus(email, status){
-    setMsg('', '');
+  function applyBackupStatus(settings, latestISO){
+    if(backupBadge){
+      const on = !!(settings && settings.enabled);
+      backupBadge.textContent = on ? 'Enabled' : 'Disabled';
+      backupBadge.classList.toggle('ok', on);
+      backupBadge.classList.toggle('gray', !on);
+    }
+    if(backupLastRun){
+      backupLastRun.textContent = latestISO ? fmtLocal(latestISO) : '—';
+    }
+    if(backupCronText){
+      backupCronText.textContent = BACKUP_CRON + ' — ' + cronDescription(BACKUP_CRON);
+    }
+    if(backupNextRun){
+      const next = (!!(settings && settings.enabled)) ? nextCronRunUTC(BACKUP_CRON) : null;
+      backupNextRun.textContent = next ? fmtUTCDate(next) : '—';
+    }
+  }
+
+
+  const KEY_BACKUP_SETTINGS = 'anw_backup_settings';
+
+  function fmtLocal(iso){
+    if(!iso) return '—';
     try{
-      const users = await apiGetUsers();
-      const i = users.findIndex(x => String(x?.email||'').toLowerCase() === String(email||'').toLowerCase());
-      if(i < 0) throw new Error('User not found in list: ' + email);
-      users[i] = Object.assign({}, users[i], { status: status, updatedAt: new Date().toISOString() });
-      await apiSaveUsers(users);
-      await refresh();
-    }catch(e){
-      setMsg(e.message || String(e), 'error');
+      const d = new Date(iso);
+      return d.toLocaleString();
+    }catch(e){ return iso; }
+  }
+
+  async function loadBackupSettings(){
+    const s = anwLoad(KEY_BACKUP_SETTINGS, null);
+    return s || { enabled:false, frequency:'daily', time:'02:00', updatedAt:null };
+  }
+
+  async function saveBackupSettings(next){
+    const now = new Date().toISOString();
+    next.updatedAt = now;
+    await anwSave(KEY_BACKUP_SETTINGS, next);
+    return next;
+  }
+
+  async function refreshBackupUI(){
+    if(!backupEnabled) return;
+    const s = await loadBackupSettings();
+    backupEnabled.checked = !!s.enabled;
+    if(backupFrequency) backupFrequency.value = s.frequency || 'daily';
+    if(backupTime) backupTime.value = s.time || '02:00';
+    applyBackupStatus(s, null);
+  }
+
+  async function fetchJSON(url, opts){
+    opts = opts || {};
+    opts.headers = opts.headers || {};
+
+    // Attach Netlify Identity JWT so Functions can authorize (clientContext.user)
+    if (window.netlifyIdentity) {
+      const u = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
+      if (u) {
+        try {
+          const token = await u.jwt();
+          opts.headers.authorization = `Bearer ${token}`;
+        } catch (e) {
+          // If token fetch fails, proceed without it (Functions may return 401)
+        }
+      }
+    }
+
+    const res = await fetch(url, opts);
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    if(!res.ok){
+      const txt = await res.text().catch(()=> '');
+      throw new Error(txt || ('Request failed: ' + res.status));
+    }
+    if(ct.includes('application/json')) return await res.json();
+    const t = await res.text();
+    try{ return JSON.parse(t); }catch(e){ return { raw: t }; }
+  }
+
+
+  async function listBackups(){
+    if(!backupTbody) return;
+    backupMsg.textContent = '';
+    backupTbody.innerHTML = '';
+    backupEmpty.style.display = 'none';
+
+    // Works only on Netlify (or netlify dev). file:// won't have functions.
+    const isFile = location.protocol === 'file:';
+    if(isFile){
+      backupEmpty.style.display = 'block';
+      backupMsg.textContent = 'Backups are available when running on Netlify (or using netlify dev).';
+      return;
+    }
+
+    try{
+      const data = await fetchJSON('/.netlify/functions/backup-list');
+      const items = Array.isArray(data.items) ? data.items : [];
+      const s = await loadBackupSettings();
+      const latest = items.slice().sort((a,b)=> String(b.createdAt||'').localeCompare(String(a.createdAt||'')))[0];
+      applyBackupStatus(s, latest ? latest.createdAt : null);
+      if(!items.length){
+        backupEmpty.style.display = 'block';
+        return;
+      }
+      items.forEach(it=>{
+        const tr = document.createElement('tr');
+        const includes = Array.isArray(it.includes) ? it.includes.join(', ') : (it.includes || 'Central store');
+        tr.innerHTML = `
+          <td style="padding:10px; border-bottom:1px solid var(--line);">${esc(it.id || '')}</td>
+          <td style="padding:10px; border-bottom:1px solid var(--line);">${esc(fmtLocal(it.createdAt))}</td>
+          <td style="padding:10px; border-bottom:1px solid var(--line);">${esc(includes)}</td>
+          <td style="padding:10px; border-bottom:1px solid var(--line);">
+            <a class="btn-line small" href="/.netlify/functions/backup-download?id=${encodeURIComponent(it.id)}">Download</a>
+          </td>
+        `;
+        backupTbody.appendChild(tr);
+      });
+    }catch(err){
+      backupMsg.textContent = 'Backup functions are not available yet. Add the Netlify Functions from the setup notes.';
     }
   }
 
-  document.getElementById('btnRefresh').addEventListener('click', refresh);
+  async function runBackupNow(){
+    if(!backupRunNow) return;
+    backupMsg.textContent = '';
+    const isFile = location.protocol === 'file:';
+    if(isFile){
+      backupMsg.textContent = 'Run this on Netlify (or netlify dev) to create backups.';
+      return;
+    }
+    backupRunNow.disabled = true;
+    try{
+      const data = await fetchJSON('/.netlify/functions/backup-now', { method:'POST' });
+      backupMsg.textContent = 'Backup created: ' + (data.id || '');
+      await listBackups();
+    }catch(err){
+      backupMsg.textContent = 'Could not create backup. Please ensure the backup-now function is deployed.';
+    }finally{
+      backupRunNow.disabled = false;
+    }
+  }
 
-  document.getElementById('btnLogout').addEventListener('click', () => {
-    try{ window.netlifyIdentity.logout(); }catch(e){}
-    location.href = 'login.html';
+  async function onBackupSettingsChanged(){
+    const next = {
+      enabled: !!backupEnabled.checked,
+      frequency: backupFrequency ? backupFrequency.value : 'daily',
+      time: backupTime ? backupTime.value : '02:00'
+    };
+    await saveBackupSettings(next);
+    backupMsg.textContent = 'Backup schedule saved (applies when Netlify Scheduled Functions run).';
+  }
+
+  if(backupRefresh) backupRefresh.addEventListener('click', async ()=>{ await refreshBackupUI(); await listBackups(); });
+  if(backupRunNow) backupRunNow.addEventListener('click', runBackupNow);
+  if(backupEnabled) backupEnabled.addEventListener('change', onBackupSettingsChanged);
+  if(backupFrequency) backupFrequency.addEventListener('change', onBackupSettingsChanged);
+  if(backupTime) backupTime.addEventListener('change', onBackupSettingsChanged);
+
+  // Initialise backups UI
+  await refreshBackupUI();
+  await listBackups();
+
+})();
+
+  // Access Control tab (reload embedded panel)
+  document.getElementById('btnACReload')?.addEventListener('click', ()=>{
+    const f = document.getElementById('acFrame');
+    if(f) f.src = f.src;
   });
 
-  elRows.addEventListener('click', (ev) => {
-    const btn = ev.target && ev.target.closest ? ev.target.closest('button[data-act]') : null;
-    if(!btn) return;
-    const act = btn.getAttribute('data-act');
-    const email = btn.getAttribute('data-email');
-    if(!email) return;
+</script>
 
-    if(act === 'approve') return setStatus(email, 'active');
-    if(act === 'pending') return setStatus(email, 'pending');
-    if(act === 'suspend') return setStatus(email, 'suspended');
+
+<script>
+/* =========================
+   Access Control (FULL) — embedded in Admin
+   Uses anw_acl from Netlify store via app-core.js
+========================= */
+(function(){
+  const ROLES = [
+    { id:'resident', label:'Resident' },
+    { id:'street_admin', label:'Street Admin' },
+    { id:'area_coordinator', label:'Area Coordinator' },
+    { id:'aux_coordinator', label:'Aux Coordinator' },
+    { id:'project_support', label:'Project Support' },
+    { id:'platform_support', label:'Platform Support' },
+    { id:'owner', label:'Owner' }
+  ];
+
+  // Full matrix (pages + sub-tabs + actions)
+  const SECTIONS = [
+  { title:'Public pages', items:[
+      { perm:'page:home', label:'Home', level:'main' },
+      { perm:'page:about', label:'About', level:'main' },
+      { perm:'page:privacy', label:'Privacy', level:'main' },
+  ]},
+  { title:'Auth', items:[
+      { perm:'page:login', label:'Login / Register', level:'main' },
+  ]},
+  { title:'Dashboard', items:[
+      { perm:'page:dashboard', label:'Dashboard (main page)', level:'main' },
+      { perm:'dashboard:tab_profile', label:'Sub-tab: Profile', level:'sub' },
+      { perm:'dashboard:tab_interest', label:'Sub-tab: Interest', level:'sub' },
+      { perm:'dashboard:tab_elections', label:'Sub-tab: Elections', level:'sub' },
+      { perm:'dashboard:tab_notices', label:'Sub-tab: Notices', level:'sub' },
+      { perm:'dashboard:tab_garda', label:'Sub-tab: Garda & Safety', level:'sub' },
+      { perm:'action:dashboard_save_profile', label:'Action: Save profile', level:'action' },
+      { perm:'action:dashboard_submit_interest', label:'Action: Submit interest (elections)', level:'action' },
+  ]},
+  { title:'Report', items:[
+      { perm:'page:report', label:'Report (main page)', level:'main' },
+      { perm:'page:report-map', label:'Report map (report-map.html page)', level:'main' },
+
+      { perm:'report:tab_report_incident', label:'Sub-tab: Report incident', level:'sub' },
+      { perm:'report:tab_my_status', label:'Sub-tab: My reports status', level:'sub' },
+      { perm:'report:tab_incidents_map', label:'Sub-tab: Incidents map (button within Report)', level:'sub' },
+
+      { perm:'action:reports_create', label:'Action: Submit report (create incident)', level:'action' },
+      { perm:'action:reports_export', label:'Action: Export file', level:'action' },
+  ]},
+  { title:'Community alerts', items:[
+      { perm:'page:alerts', label:'Community alerts (main page)', level:'main' },
+      { perm:'alerts:tab_send', label:'Sub-tab: Send alert', level:'sub' },
+      { perm:'alerts:tab_contacts', label:'Sub-tab: Authorised contacts', level:'sub' },
+      { perm:'action:alerts_send', label:'Action: Send an alert', level:'action' },
+  ]},
+  { title:'Community projects', items:[
+      { perm:'page:projects', label:'Community projects (main page)', level:'main' },
+      { perm:'projects:tab_builder', label:'Sub-tab: Project builder', level:'sub' },
+      { perm:'projects:tab_published', label:'Sub-tab: Published projects', level:'sub' },
+      { perm:'projects:tab_monitoring', label:'Sub-tab: Monitoring', level:'sub' },
+      { perm:'action:projects_edit', label:'Action: Create / update projects', level:'action' },
+      { perm:'action:projects_monitor_view', label:'Action: View project monitoring', level:'action' },
+  ]},
+  { title:'Household', items:[
+      { perm:'page:household', label:'Household (main page)', level:'main' },
+      { perm:'household:tab_volunteers', label:'Sub-tab: Household volunteers', level:'sub' },
+      { perm:'household:tab_tasks', label:'Sub-tab: Volunteer tasks', level:'sub' },
+      { perm:'action:household_accept_task', label:'Action: Accept volunteer task', level:'action' },
+      { perm:'action:household_complete_task', label:'Action: Complete volunteer task', level:'action' },
+  ]},
+  { title:'Admin', items:[
+      { perm:'page:admin', label:'Admin (main page)', level:'main' },
+      { perm:'page:access_control', label:'Access control (live page — should be Owner only)', level:'main' },
+
+      { perm:'admin:tab_residents', label:'Tab: Residents', level:'sub' },
+      { perm:'admin:residents_pending', label:'Residents: Pending', level:'sub2' },
+      { perm:'admin:residents_approved', label:'Residents: Approved', level:'sub2' },
+      { perm:'admin:residents_all', label:'Residents: All', level:'sub2' },
+
+      { perm:'admin:tab_tasks', label:'Tab: Volunteer tasks', level:'sub' },
+
+      { perm:'admin:tab_elections', label:'Tab: Elections', level:'sub' },
+      { perm:'admin:elections_manage', label:'Elections: Manage', level:'sub2' },
+      { perm:'admin:elections_candidates', label:'Elections: Candidates', level:'sub2' },
+      { perm:'admin:elections_results', label:'Elections: Results', level:'sub2' },
+
+      { perm:'admin:tab_reports', label:'Tab: Reports', level:'sub' },
+      { perm:'admin:tab_projects_monitoring', label:'Tab: Projects monitoring', level:'sub' },
+      { perm:'admin:tab_tools', label:'Tab: Tools', level:'sub' },
+
+      { perm:'action:admin_residents_approve', label:'Action: Approve resident', level:'action' },
+      { perm:'action:admin_residents_reject', label:'Action: Reject resident', level:'action' },
+      { perm:'action:admin_residents_close', label:'Action: Close resident record', level:'action' },
+      { perm:'action:admin_tasks_save', label:'Action: Save volunteer tasks (admin)', level:'action' },
+      { perm:'action:admin_elections_create_update', label:'Action: Create / update election', level:'action' },
+      { perm:'action:admin_data_export', label:'Action: Export data', level:'action' },
+      { perm:'action:admin_data_import', label:'Action: Import data', level:'action' },
+      { perm:'action:admin_clear_session', label:'Action: Clear session', level:'action' },
+      { perm:'action:admin_reset_all', label:'Action: Reset ALL data', level:'action' },
+  ]},
+];
+
+  const els = {
+    tbody: () => document.getElementById('acTbody'),
+    save: () => document.getElementById('acSaveBtn'),
+    cancel: () => document.getElementById('acCancelBtn'),
+    badge: () => document.getElementById('acStatusBadge'),
+    msg: () => document.getElementById('acStatusMsg'),
+  };
+
+  let original = null;
+  let working = null;
+  let dirty = false;
+  let built = false;
+
+  function clone(v){ return JSON.parse(JSON.stringify(v || {})); }
+
+  function ensureOwner(acl){
+    Object.keys(acl).forEach(k=>{
+      const arr = Array.isArray(acl[k]) ? acl[k] : [];
+      if(!arr.includes('owner')) arr.push('owner');
+      acl[k] = Array.from(new Set(arr));
+    });
+    // safety defaults
+    if(!acl['page:admin']) acl['page:admin'] = ['street_admin','area_coordinator','aux_coordinator','owner'];
+    if(!acl['admin:tab_access_control']) acl['admin:tab_access_control'] = ['owner'];
+    return acl;
+  }
+
+  function setStatus(){
+    const badge = els.badge();
+    const msg = els.msg();
+    if(!badge) return;
+    if(dirty){
+      badge.className = 'tag gray';
+      badge.textContent = 'Not saved';
+      if(msg) msg.textContent = 'Unsaved changes. Click Save to apply.';
+    }else{
+      badge.className = 'tag ok';
+      badge.textContent = 'Saved';
+      if(msg) msg.textContent = 'All changes saved.';
+    }
+  }
+
+  function has(perm, role){
+    const arr = (working && working[perm]) || [];
+    return Array.isArray(arr) && arr.includes(role);
+  }
+
+  function toggle(perm, role){
+    if(role === 'owner') return; // lock owner
+    working[perm] = Array.isArray(working[perm]) ? working[perm] : [];
+    const arr = working[perm];
+    const i = arr.indexOf(role);
+    if(i >= 0) arr.splice(i, 1);
+    else arr.push(role);
+    // keep owner always
+    if(!arr.includes('owner')) arr.push('owner');
+    working[perm] = Array.from(new Set(arr)).sort();
+    dirty = true;
+    setStatus();
+  }
+
+  function esc(s){ return String(s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function escAttr(s){ return esc(s).replace(/'/g, '&#39;'); }
+
+  function badgeFor(level){
+    if(level === 'main') return 'PAGE';
+    if(level === 'sub') return 'SUB-TAB';
+    if(level === 'sub2') return 'SUB';
+    return 'ACTION';
+  }
+  function indentClass(level){
+    if(level === 'main') return 'ac-indent-0';
+    if(level === 'sub') return 'ac-indent-1';
+    if(level === 'sub2') return 'ac-indent-2';
+    return 'ac-indent-3';
+  }
+
+  function render(){
+    const tbody = els.tbody();
+    if(!tbody) return;
+
+    const rows = [];
+    for(const sec of SECTIONS){
+      rows.push(`<tr><td colspan="6" style="background:rgba(0,0,0,.03); font-weight:800;">${esc(sec.title)}</td></tr>`);
+      for(const it of sec.items){
+        const itemCell = `
+          <div class="ac-item ${indentClass(it.level)}">
+            <span class="ac-badge">${badgeFor(it.level)}</span>
+            <div style="min-width:0;">
+              <div>${esc(it.label)}</div>
+              <div class="ac-key">${esc(it.perm)}</div>
+            </div>
+          </div>
+        `;
+        const cells = ROLES.map(r=>{
+          const locked = r.id === 'owner';
+          const allowed = locked ? true : has(it.perm, r.id);
+          const cls = allowed ? 'ac-toggle allowed' : 'ac-toggle denied';
+          const sym = allowed ? '✓' : '✕';
+          const dis = locked ? 'disabled' : '';
+          return `<td style="text-align:center;">
+            <button type="button" class="${cls}" data-perm="${escAttr(it.perm)}" data-role="${escAttr(r.id)}" ${dis}>${sym}</button>
+          </td>`;
+        }).join('');
+        rows.push(`<tr><td style="text-align:left;">${itemCell}</td>${cells}</tr>`);
+      }
+    }
+
+    tbody.innerHTML = rows.join('');
+
+    tbody.querySelectorAll('button[data-perm][data-role]').forEach(btn=>{
+      if(btn.disabled) return;
+      btn.addEventListener('click', ()=>{
+        const perm = btn.getAttribute('data-perm');
+        const role = btn.getAttribute('data-role');
+        const now = has(perm, role);
+        toggle(perm, role);
+        const allowed = !now;
+        btn.classList.toggle('allowed', allowed);
+        btn.classList.toggle('denied', !allowed);
+        btn.textContent = allowed ? '✓' : '✕';
+      });
+    });
+
+    setStatus();
+  }
+
+  async function readAclFresh(){
+    // Prefer async getter (ensures we read from storage, not an empty in-memory cache)
+    if(typeof window.anwGetAcl === 'function'){
+      try{ return await window.anwGetAcl(); }catch(_){ /* fall back */ }
+    }
+    return clone(window.anwGetAclSync ? window.anwGetAclSync() : {});
+  }
+
+  async function load(){
+    // store ready
+    if(window.anwInitStore) await window.anwInitStore();
+
+    original = clone(await readAclFresh());
+    working = clone(original);
+    ensureOwner(working);
+    dirty = false;
+    render();
+    built = true;
+
+    // If running locally via file://, persistence can be unreliable depending on the browser.
+    try{
+      if(location.protocol === 'file:' && els.msg()){
+        els.msg().textContent = 'Note: you are running this page from your computer (file://). Some browsers do not persist local storage reliably in this mode. For a proper test, run via a local server or Netlify.';
+      }
+    }catch(_){ }
+  }
+
+  async function save(){
+    if(!built) return;
+    try{
+      ensureOwner(working);
+      if(window.anwSetAcl) await window.anwSetAcl(working);
+
+      // Verify we can read back what we wrote (prevents false “Saved”)
+      const verify = clone(await readAclFresh());
+      const wrote = JSON.stringify(ensureOwner(clone(working)));
+      const readb = JSON.stringify(ensureOwner(clone(verify)));
+      if(wrote !== readb){
+        throw new Error('ACL did not persist (read-back mismatch).');
+      }
+
+      original = clone(working);
+      dirty = false;
+      setStatus();
+      if(window.showToast) window.showToast('Saved', 'Access control updated.');
+    }catch(e){
+      console.error(e);
+      alert('Could not save access control. Please check Netlify Functions / connectivity.');
+    }
+  }
+
+  function cancel(){
+    if(!built) return;
+    working = clone(original);
+    dirty = false;
+    render();
+    if(typeof window.showAdminTab === 'function') window.showAdminTab('tabResidents');
+  }
+
+  // Button hooks
+  document.addEventListener('click', (e)=>{
+    if(e.target && e.target.id === 'acSaveBtn') save();
+    if(e.target && e.target.id === 'acCancelBtn') cancel();
+    if(e.target && e.target.id === 'acPrintBtn'){
+      // Ensure Access Control is visible, then print only this section
+      try{ if(typeof window.showAdminTab === 'function') window.showAdminTab('tabAccessControl'); }catch(_){ }
+      document.body.classList.add('print-access-control');
+      setTimeout(()=>{
+        window.print();
+        // small delay so the print dialog doesn't race the cleanup
+        setTimeout(()=>document.body.classList.remove('print-access-control'), 500);
+      }, 50);
+    }
   });
 
-  // Auto-load
-  refresh();
+  // Hook tab click: when Access Control tab opens, ensure we load+render.
+  function hookTabs(){
+    const btn = document.querySelector('.admin-tab[data-tab="tabAccessControl"]');
+    if(btn){
+      btn.addEventListener('click', ()=>{
+        // reload from store each time if not dirty
+        if(!built) load();
+        else if(!dirty){
+          (async ()=>{
+            original = clone(await readAclFresh());
+            working = clone(original);
+            ensureOwner(working);
+            render();
+          })();
+        }
+      });
+    }
+  }
+
+  /* =========================
+     Notices (Admin)
+     ========================= */
+
+  const ntTitle = document.getElementById('ntTitle');
+  const ntMessage = document.getElementById('ntMessage');
+  const ntCategory = document.getElementById('ntCategory');
+  const ntExpires = document.getElementById('ntExpires');
+  const ntAllLogged = document.getElementById('ntAllLogged');
+  const ntNonAdminOnly = document.getElementById('ntNonAdminOnly');
+  const ntRoleCbs = Array.from(document.querySelectorAll('.ntRole'));
+  const ntEirPrefixes = document.getElementById('ntEirPrefixes');
+  const ntStreets = document.getElementById('ntStreets');
+  const ntEircodes = document.getElementById('ntEircodes');
+  const ntEmails = document.getElementById('ntEmails');
+  const ntMsg = document.getElementById('ntMsg');
+  const ntList = document.getElementById('ntList');
+  const ntListMsg = document.getElementById('ntListMsg');
+
+  function normEir(v){ return String(v||'').replace(/\s+/g,'').toUpperCase(); }
+  function splitComma(v){
+    return String(v||'').split(',').map(x=>x.trim()).filter(Boolean);
+  }
+  function splitLines(v){
+    return String(v||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  }
+  function safeText(s){
+    return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function isoDateFromDateInput(v){
+    // date input provides YYYY-MM-DD; treat as end-of-day local
+    if(!v) return '';
+    try{
+      const d = new Date(v + 'T23:59:59');
+      return d.toISOString();
+    }catch{ return ''; }
+  }
+
+  function buildNoticeFromForm(){
+    const title = String(ntTitle?.value||'').trim();
+    const message = String(ntMessage?.value||'').trim();
+    if(!title || !message){
+      const err = new Error('Title and message are required.');
+      err.code = 'NT_REQUIRED';
+      throw err;
+    }
+
+    const roles = ntRoleCbs.filter(cb=>cb.checked).map(cb=>String(cb.value||'').trim()).filter(Boolean);
+    const prefixes = splitComma(ntEirPrefixes?.value).map(normEir).filter(Boolean);
+    const streets = splitComma(ntStreets?.value).map(x=>x.trim()).filter(Boolean);
+    const eircodes = splitLines(ntEircodes?.value).map(normEir).filter(Boolean);
+    const emails = splitLines(ntEmails?.value).map(anwNormEmail).filter(Boolean);
+
+    const include = {
+      allLoggedIn: !!ntAllLogged?.checked,
+      nonAdminOnly: !!ntNonAdminOnly?.checked,
+      roles,
+      eircodePrefixes: prefixes,
+      streets,
+      eircodes,
+      emails
+    };
+
+    // If user selects targeting other than all-logged, automatically uncheck all-logged
+    const hasSpecific = roles.length || prefixes.length || streets.length || eircodes.length || emails.length || include.nonAdminOnly;
+    if(hasSpecific && include.allLoggedIn){
+      include.allLoggedIn = false;
+      if(ntAllLogged) ntAllLogged.checked = false;
+    }
+
+    const notice = {
+      id: 'nt_' + Date.now() + '_' + Math.random().toString(16).slice(2,8),
+      title,
+      message,
+      category: String(ntCategory?.value || 'General'),
+      createdAt: new Date().toISOString(),
+      expiresAt: isoDateFromDateInput(ntExpires?.value) || '',
+      createdBy: anwGetLoggedEmail(),
+      home: {
+        enabled: !!document.getElementById('ntHomeEnabled')?.checked,
+        visibility: String(document.getElementById('ntHomeVisibility')?.value || 'private')
+      },
+      target: { include, exclude: { roles: [], eircodes: [], emails: [] } }
+    };
+
+    return notice;
+  }
+
+  async function loadNoticesFresh(){
+    try{
+      // Reload store cache (admin view) to ensure latest notices
+      if(typeof anwInitStore === 'function') await anwInitStore();
+    }catch{}
+    const v = anwLoad(KEY_NOTICES, []);
+    return Array.isArray(v) ? v : [];
+  }
+
+  function renderNoticesAdminList(list){
+    if(!ntList) return;
+    const arr = Array.isArray(list) ? list : [];
+    const sorted = arr.slice().sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
+
+    if(ntListMsg){
+      ntListMsg.textContent = sorted.length ? `${sorted.length} notice(s) saved.` : 'No notices saved yet.';
+    }
+
+    ntList.innerHTML = '';
+    sorted.forEach(n=>{
+      const wrap = document.createElement('div');
+      wrap.className = 'card';
+      wrap.style.margin = '0.75rem 0';
+      const exp = n?.expiresAt ? new Date(n.expiresAt) : null;
+      const expTxt = exp && !Number.isNaN(exp.getTime()) ? exp.toLocaleDateString() : '—';
+      wrap.innerHTML = `
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:800;">${safeText(n?.title||'Notice')}</div>
+            <div class="tiny muted" style="margin-top:4px;">${safeText(n?.message||'')}</div>
+            <div class="tiny muted" style="margin-top:6px;">
+              Category: ${safeText(n?.category||'General')} · Expires: ${safeText(expTxt)}
+              ${n?.home?.enabled ? `· Home: ${safeText(String(n.home.visibility||'private').toUpperCase())}` : ''}
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn-line tiny" data-act="delete" data-id="${safeText(n?.id||'')}">Delete</button>
+          </div>
+        </div>
+      `;
+      ntList.appendChild(wrap);
+    });
+
+    // delete handlers
+    ntList.querySelectorAll('button[data-act="delete"]').forEach(btn=>{
+      btn.addEventListener('click', async (e)=>{
+        e.preventDefault();
+        const id = btn.getAttribute('data-id') || '';
+        if(!id) return;
+        const ok = await confirmModal('Delete this notice? This cannot be undone.', 'Confirm');
+        if(!ok) return;
+        const current = await loadNoticesFresh();
+        const next = current.filter(x => String(x?.id||'') !== String(id));
+        await anwSave(KEY_NOTICES, next);
+        await renderNoticesAdmin();
+        toast('Notice deleted.', 'info');
+      });
+    });
+  }
+
+  async function renderNoticesAdmin(){
+    try{
+      const list = await loadNoticesFresh();
+      renderNoticesAdminList(list);
+    }catch(err){
+      if(ntListMsg) ntListMsg.textContent = 'Unable to load notices.';
+    }
+  }
+
+  const btnNtPublish = document.getElementById('btnNtPublish');
+  const btnNtClear = document.getElementById('btnNtClear');
+  const btnNtRefresh = document.getElementById('btnNtRefresh');
+  const btnNtExport = document.getElementById('btnNtExport');
+
+  if(btnNtClear){
+    btnNtClear.addEventListener('click', ()=>{
+      if(ntTitle) ntTitle.value = '';
+      if(ntMessage) ntMessage.value = '';
+      if(ntCategory) ntCategory.value = 'General';
+      if(ntExpires) ntExpires.value = '';
+      const ntHomeEnabled = document.getElementById('ntHomeEnabled');
+      const ntHomeVisibility = document.getElementById('ntHomeVisibility');
+      if(ntHomeEnabled) ntHomeEnabled.checked = false;
+      if(ntHomeVisibility) ntHomeVisibility.value = 'private';
+      if(ntAllLogged) ntAllLogged.checked = true;
+      if(ntNonAdminOnly) ntNonAdminOnly.checked = false;
+      ntRoleCbs.forEach(cb=> cb.checked = false);
+      if(ntEirPrefixes) ntEirPrefixes.value = '';
+      if(ntStreets) ntStreets.value = '';
+      if(ntEircodes) ntEircodes.value = '';
+      if(ntEmails) ntEmails.value = '';
+      if(ntMsg) ntMsg.textContent = '';
+    });
+  }
+
+  if(btnNtPublish){
+    btnNtPublish.addEventListener('click', async ()=>{
+      try{
+        if(ntMsg) ntMsg.textContent = '';
+        const notice = buildNoticeFromForm();
+        const current = await loadNoticesFresh();
+        const next = Array.isArray(current) ? current.slice() : [];
+        next.push(notice);
+        await anwSave(KEY_NOTICES, next);
+        await renderNoticesAdmin();
+        toast('Notice published.', 'success');
+        // keep message but clear targeting for speed
+      }catch(err){
+        if(ntMsg) ntMsg.textContent = err?.message || 'Unable to publish notice.';
+        modal(err?.message || 'Unable to publish notice.', 'Error');
+      }
+    });
+  }
+
+  if(btnNtRefresh){
+    btnNtRefresh.addEventListener('click', async ()=>{
+      await renderNoticesAdmin();
+      toast('Notices refreshed.', 'info');
+    });
+  }
+
+  if(btnNtExport){
+    btnNtExport.addEventListener('click', async ()=>{
+      const list = await loadNoticesFresh();
+      const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'anw_notices.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 250);
+    });
+  }
+
+  // Bin collection bulk import (creates scheduled Home notices; does NOT delete existing notices)
+  const binCsv = document.getElementById('binCsv');
+  const btnBinImport = document.getElementById('btnBinImport');
+  const binMsg = document.getElementById('binMsg');
+
+  function parseCsvLine(line){
+    const parts = line.split(',').map(s => s.trim()).filter(Boolean);
+    if(parts.length < 3) return null;
+    const dateStr = parts[0];
+    const provider = parts[1];
+    const bin = parts[2];
+    const visibility = (parts[3] || 'public').toLowerCase() === 'private' ? 'private' : 'public';
+    return { dateStr, provider, bin, visibility };
+  }
+
+  function toMiddayLocal(dateStr){
+    // Use midday to avoid DST edge-cases when parsing YYYY-MM-DD.
+    const d = new Date(dateStr + 'T12:00:00');
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function startOfDayIso(d){
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
+    return x.toISOString();
+  }
+
+  function endOfDayIso(d){
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
+    return x.toISOString();
+  }
+
+  function weekStartMonday(d){
+    // Monday as start of week (Ireland). JS getDay(): Sun=0..Sat=6
+    const day = d.getDay();
+    const offset = (day + 6) % 7; // Mon=0, Tue=1, ... Sun=6
+    const ws = new Date(d);
+    ws.setDate(d.getDate() - offset);
+    return ws;
+  }
+
+  function fmtWeekdayDate(d){
+    try{
+      return d.toLocaleDateString('en-IE', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+    }catch{
+      // fallback
+      const wd = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+      return wd + ' ' + d.toISOString().slice(0,10);
+    }
+  }
+
+  if(btnBinImport){
+    btnBinImport.addEventListener('click', async ()=>{
+      try{
+        if(binMsg) binMsg.textContent = '';
+        const raw = String(binCsv?.value || '').trim();
+        if(!raw){
+          if(binMsg) binMsg.textContent = 'Paste at least one line.';
+          return;
+        }
+        const lines = raw.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+        const parsed = lines.map(parseCsvLine).filter(Boolean);
+
+        if(!parsed.length){
+          if(binMsg) binMsg.textContent = 'No valid lines found. Expected: YYYY-MM-DD, Provider, Bin, public|private';
+          return;
+        }
+
+        const current = await loadNoticesFresh();
+        const next = Array.isArray(current) ? current.slice() : [];
+
+        let added = 0, skipped = 0;
+
+        for(const row of parsed){
+          const d = toMiddayLocal(row.dateStr);
+          if(!d){ skipped++; continue; }
+
+          const ws = weekStartMonday(d);
+          const we = new Date(ws);
+          we.setDate(ws.getDate() + 6);
+
+          const collectionLabel = fmtWeekdayDate(d);
+          const title = `Bin collection (${row.provider})`;
+          const message = `${row.provider}: ${row.bin} bin collection on ${collectionLabel}.`;
+
+          // Avoid duplicates (same provider + bin + date)
+          const exists = next.some(n =>
+            n && n.meta && n.meta.type === 'bin_collection' &&
+            String(n.meta.provider||'').toLowerCase() === String(row.provider).toLowerCase() &&
+            String(n.meta.bin||'').toLowerCase() === String(row.bin).toLowerCase() &&
+            String(n.meta.collectionDate||'') === row.dateStr
+          );
+          if(exists){ skipped++; continue; }
+
+          const notice = {
+            id: 'nt_' + Date.now() + '_' + Math.random().toString(16).slice(2,8),
+            title,
+            message,
+            category: 'Bins',
+            createdAt: new Date().toISOString(),
+            // Active for the week containing the collection date
+            startsAt: startOfDayIso(ws),
+            expiresAt: endOfDayIso(we),
+            createdBy: anwGetLoggedEmail(),
+            home: { enabled: true, visibility: row.visibility },
+            target: {
+              include: {
+                allLoggedIn: row.visibility !== 'public',
+                nonAdminOnly: false,
+                roles: [],
+                eircodePrefixes: [],
+                streets: [],
+                eircodes: [],
+                emails: []
+              },
+              exclude: { roles: [], eircodes: [], emails: [] }
+            },
+            meta: { type:'bin_collection', provider: row.provider, bin: row.bin, collectionDate: row.dateStr }
+          };
+
+          next.push(notice);
+          added++;
+        }
+
+        await anwSave(KEY_NOTICES, next);
+        await renderNoticesAdmin();
+        if(binMsg) binMsg.textContent = `Imported. Added: ${added}. Skipped (duplicates/invalid): ${skipped}.`;
+        toast(`Bin schedule imported. Added ${added}.`, 'success');
+      }catch(err){
+        if(binMsg) binMsg.textContent = err?.message || 'Unable to import schedule.';
+        modal(err?.message || 'Unable to import schedule.', 'Error');
+      }
+    });
+  }
+
+
+  /* =========================
+     HANDBOOK (Admin CRUD)
+     ========================= */
+
+  const hbCatTitle = document.getElementById('hbCatTitle');
+  const hbCatIcon = document.getElementById('hbCatIcon');
+  const hbCatOrder = document.getElementById('hbCatOrder');
+  const hbCatActive = document.getElementById('hbCatActive');
+  const hbCatBody = document.getElementById('hbCatBody');
+  const hbCatEmpty = document.getElementById('hbCatEmpty');
+  const hbCatMsg = document.getElementById('hbCatMsg');
+  const btnHbCatSave = document.getElementById('btnHbCatSave');
+  const btnHbCatClear = document.getElementById('btnHbCatClear');
+
+  const hbItemCategory = document.getElementById('hbItemCategory');
+  const hbItemTitle = document.getElementById('hbItemTitle');
+  const hbItemSummary = document.getElementById('hbItemSummary');
+  const hbItemType = document.getElementById('hbItemType');
+  const hbItemStatus = document.getElementById('hbItemStatus');
+  const hbItemUrl = document.getElementById('hbItemUrl');
+  const hbItemHeroUrl = document.getElementById('hbItemHeroUrl');
+  const hbItemContent = document.getElementById('hbItemContent');
+  const hbItemAttachments = document.getElementById('hbItemAttachments');
+  const hbItemMsg = document.getElementById('hbItemMsg');
+  const btnHbItemSave = document.getElementById('btnHbItemSave');
+  const btnHbItemClear = document.getElementById('btnHbItemClear');
+  const hbItemList = document.getElementById('hbItemList');
+  const hbItemEmpty = document.getElementById('hbItemEmpty');
+
+  let __hb = { categories: [] };
+  let __hbEditCatId = null;
+  let __hbEditItemId = null;
+
+  function hbSlug(s){
+    return String(s||'').toLowerCase().trim()
+      .replace(/&/g,'and')
+      .replace(/[^a-z0-9]+/g,'-')
+      .replace(/^-+|-+$/g,'');
+  }
+
+  function hbEnsure(){
+    if(!__hb || typeof __hb !== 'object') __hb = { categories: [] };
+    if(!Array.isArray(__hb.categories)) __hb.categories = [];
+  }
+
+  async function hbLoadFresh(){
+    hbEnsure();
+    try{
+      if(typeof anwFetchKey === 'function'){
+        const v = await anwFetchKey(KEY_HANDBOOK);
+        __hb = (v && typeof v === 'object') ? v : { categories: [] };
+      } else {
+        __hb = anwLoad(KEY_HANDBOOK, { categories: [] });
+      }
+    }catch(e){
+      __hb = anwLoad(KEY_HANDBOOK, { categories: [] });
+    }
+    hbEnsure();
+    return __hb;
+  }
+
+  async function hbSave(){
+    hbEnsure();
+    await anwSave(KEY_HANDBOOK, __hb);
+  }
+
+  function hbSort(){
+    __hb.categories.sort((a,b)=>{
+      const ao = Number(a.order ?? 9999);
+      const bo = Number(b.order ?? 9999);
+      if(ao !== bo) return ao - bo;
+      return String(a.title||'').localeCompare(String(b.title||''));
+    });
+  }
+
+  function hbGetCat(id){
+    return (__hb.categories||[]).find(c => String(c.id) === String(id));
+  }
+
+  function hbRenderItemsList(){
+    if(!hbItemList || !hbItemCategory) return;
+    const cat = hbGetCat(hbItemCategory.value);
+    const items = (cat && Array.isArray(cat.items)) ? cat.items : [];
+    if(hbItemEmpty) hbItemEmpty.style.display = items.length ? 'none' : 'block';
+
+    hbItemList.innerHTML = items
+      .slice()
+      .sort((a,b)=> String(a.title||'').localeCompare(String(b.title||'')))
+      .map(it => {
+        const badge = (it.isPublished === false) ? '<span class="tag gray">Draft</span>' : '<span class="tag ok">Published</span>';
+        const type = (String(it.type||'page').toLowerCase()==='link') ? 'Link' : 'Page';
+        return `
+          <div class="card" style="padding:12px 14px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+              <div>
+                <div style="font-weight:800; color:var(--brand);">${escapeHtml(it.title||'')}</div>
+                ${it.summary ? `<div class="tiny muted">${escapeHtml(it.summary)}</div>` : ''}
+                <div class="tiny muted" style="margin-top:6px;">${badge} <span class="tag gray">${type}</span></div>
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                <button class="btn-line small" type="button" data-hb-edit-item="${escapeHtml(it.id)}">Edit</button>
+                <button class="btn-line small" type="button" data-hb-del-item="${escapeHtml(it.id)}">Delete</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+  }
+
+  function hbRenderCats(){
+    hbSort();
+    if(!hbCatBody) return;
+    const cats = __hb.categories || [];
+    if(hbCatEmpty) hbCatEmpty.style.display = cats.length ? 'none' : 'block';
+
+    hbCatBody.innerHTML = cats.map(c => {
+      const status = (c.isActive === false) ? 'Inactive' : 'Active';
+      const statusClass = (c.isActive === false) ? 'tag gray' : 'tag ok';
+      return `
+        <tr>
+          <td><strong>${escapeHtml(c.icon||'')} ${escapeHtml(c.title||'')}</strong><div class="tiny muted">${escapeHtml(c.id||'')}</div></td>
+          <td>${escapeHtml(String(c.order ?? ''))}</td>
+          <td><span class="${statusClass}">${status}</span></td>
+          <td>
+            <button class="btn-line small" type="button" data-hb-edit-cat="${escapeHtml(c.id)}">Edit</button>
+            <button class="btn-line small" type="button" data-hb-del-cat="${escapeHtml(c.id)}">Delete</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // sync category dropdown
+    if(hbItemCategory){
+      const current = hbItemCategory.value || (cats[0] ? cats[0].id : '');
+      hbItemCategory.innerHTML = cats.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml((c.icon?c.icon+' ':'') + c.title)}</option>`).join('');
+      if(current) hbItemCategory.value = current;
+    }
+
+    hbRenderItemsList();
+  }
+
+  function hbClearCatForm(){
+    __hbEditCatId = null;
+    if(hbCatTitle) hbCatTitle.value = '';
+    if(hbCatIcon) hbCatIcon.value = '';
+    if(hbCatOrder) hbCatOrder.value = '';
+    if(hbCatActive) hbCatActive.checked = true;
+    if(hbCatMsg) hbCatMsg.textContent = '';
+  }
+
+  function hbClearItemForm(){
+    __hbEditItemId = null;
+    if(hbItemTitle) hbItemTitle.value = '';
+    if(hbItemSummary) hbItemSummary.value = '';
+    if(hbItemType) hbItemType.value = 'page';
+    if(hbItemStatus) hbItemStatus.value = 'published';
+    if(hbItemUrl) hbItemUrl.value = '';
+    if(hbItemHeroUrl) hbItemHeroUrl.value = '';
+    if(hbItemContent) hbItemContent.value = '';
+    if(hbItemAttachments) hbItemAttachments.value = '';
+    if(hbItemMsg) hbItemMsg.textContent = '';
+  }
+
+  function hbParseAttachments(text){
+    const lines = String(text||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    return lines.map(line => {
+      const parts = line.split('|').map(s=>s.trim());
+      const label = parts[0] || 'Open';
+      const url = parts[1] || '';
+      if(!url) return null;
+      return { label, url };
+    }).filter(Boolean);
+  }
+
+  async function hbInit(){
+    if(!document.getElementById('tabHandbook')) return;
+    await hbLoadFresh();
+    hbRenderCats();
+  }
+
+  // Category actions
+  if(btnHbCatClear) btnHbCatClear.addEventListener('click', hbClearCatForm);
+  if(btnHbCatSave) btnHbCatSave.addEventListener('click', async () => {
+    try{
+      hbEnsure();
+      if(hbCatMsg) hbCatMsg.textContent = '';
+
+      const title = String(hbCatTitle?.value||'').trim();
+      if(!title){ if(hbCatMsg) hbCatMsg.textContent = 'Please enter a category title.'; return; }
+      const icon = String(hbCatIcon?.value||'').trim();
+      const order = Number(hbCatOrder?.value||9999);
+      const isActive = !!hbCatActive?.checked;
+
+      let id = __hbEditCatId || hbSlug(title);
+      if(!id) id = 'cat-' + Math.random().toString(16).slice(2,8);
+
+      if(__hbEditCatId){
+        const c = hbGetCat(__hbEditCatId);
+        if(!c) throw new Error('Category not found.');
+        c.title = title;
+        c.icon = icon;
+        c.order = Number.isFinite(order) ? order : 9999;
+        c.isActive = isActive;
+      } else {
+        if(hbGetCat(id)) id = id + '-' + Math.random().toString(16).slice(2,6);
+        __hb.categories.push({ id, title, icon, order: Number.isFinite(order) ? order : 9999, isActive, items: [] });
+      }
+
+      await hbSave();
+      if(hbCatMsg) hbCatMsg.textContent = 'Saved.';
+      toast('Category saved', 'success');
+      hbClearCatForm();
+      hbRenderCats();
+    }catch(err){
+      if(hbCatMsg) hbCatMsg.textContent = err?.message || 'Unable to save category.';
+      modal(err?.message || 'Unable to save category.', 'Error');
+    }
+  });
+
+  if(hbCatBody){
+    hbCatBody.addEventListener('click', async (e) => {
+      const t = e.target;
+      const editId = t?.getAttribute ? t.getAttribute('data-hb-edit-cat') : null;
+      const delId = t?.getAttribute ? t.getAttribute('data-hb-del-cat') : null;
+      if(editId){
+        const c = hbGetCat(editId);
+        if(!c) return;
+        __hbEditCatId = c.id;
+        hbCatTitle.value = c.title || '';
+        hbCatIcon.value = c.icon || '';
+        hbCatOrder.value = (c.order ?? '');
+        hbCatActive.checked = (c.isActive !== false);
+        if(hbCatMsg) hbCatMsg.textContent = 'Editing category.';
+        return;
+      }
+      if(delId){
+        const c = hbGetCat(delId);
+        if(!c) return;
+        if(!confirm(`Delete category "${c.title}" and all its items?`)) return;
+        __hb.categories = (__hb.categories||[]).filter(x => x.id !== delId);
+        await hbSave();
+        toast('Category deleted', 'success');
+        hbRenderCats();
+        hbClearCatForm();
+        hbClearItemForm();
+      }
+    });
+  }
+
+  // Item actions
+  if(hbItemCategory){
+    hbItemCategory.addEventListener('change', () => {
+      hbClearItemForm();
+      hbRenderItemsList();
+    });
+  }
+
+  if(btnHbItemClear) btnHbItemClear.addEventListener('click', hbClearItemForm);
+
+  if(btnHbItemSave) btnHbItemSave.addEventListener('click', async () => {
+    try{
+      hbEnsure();
+      if(hbItemMsg) hbItemMsg.textContent = '';
+
+      const catId = hbItemCategory?.value || '';
+      const cat = hbGetCat(catId);
+      if(!cat){ if(hbItemMsg) hbItemMsg.textContent = 'Please select a category.'; return; }
+
+      const title = String(hbItemTitle?.value||'').trim();
+      if(!title){ if(hbItemMsg) hbItemMsg.textContent = 'Please enter an item title.'; return; }
+
+      const summary = String(hbItemSummary?.value||'').trim();
+      const type = (String(hbItemType?.value||'page').toLowerCase()==='link') ? 'link' : 'page';
+      const isPublished = (hbItemStatus?.value === 'draft') ? false : true;
+      const url = String(hbItemUrl?.value||'').trim();
+      const heroImage = String(hbItemHeroUrl?.value||'').trim();
+      const contentHtml = String(hbItemContent?.value||'').trim();
+      const attachments = hbParseAttachments(hbItemAttachments?.value||'');
+
+      if(type === 'link' && !url){ if(hbItemMsg) hbItemMsg.textContent = 'Link type requires an URL.'; return; }
+
+      let id = __hbEditItemId || hbSlug(title);
+      if(!id) id = 'item-' + Math.random().toString(16).slice(2,8);
+
+      if(!Array.isArray(cat.items)) cat.items = [];
+
+      if(__hbEditItemId){
+        const it = cat.items.find(x => x.id === __hbEditItemId);
+        if(!it) throw new Error('Item not found.');
+        Object.assign(it, { title, summary, type, url, heroImage, contentHtml, attachments, isPublished, updatedAt: new Date().toISOString() });
+      } else {
+        if(cat.items.some(x => x.id === id)) id = id + '-' + Math.random().toString(16).slice(2,6);
+        cat.items.push({ id, title, summary, type, url, heroImage, contentHtml, attachments, isPublished, updatedAt: new Date().toISOString() });
+      }
+
+      await hbSave();
+      if(hbItemMsg) hbItemMsg.textContent = 'Saved.';
+      toast('Item saved', 'success');
+      hbClearItemForm();
+      hbRenderCats();
+      hbRenderItemsList();
+    }catch(err){
+      if(hbItemMsg) hbItemMsg.textContent = err?.message || 'Unable to save item.';
+      modal(err?.message || 'Unable to save item.', 'Error');
+    }
+  });
+
+  if(hbItemList){
+    hbItemList.addEventListener('click', async (e) => {
+      const t = e.target;
+      const editId = t?.getAttribute ? t.getAttribute('data-hb-edit-item') : null;
+      const delId = t?.getAttribute ? t.getAttribute('data-hb-del-item') : null;
+      if(!editId && !delId) return;
+
+      const cat = hbGetCat(hbItemCategory?.value || '');
+      if(!cat) return;
+      cat.items = Array.isArray(cat.items) ? cat.items : [];
+
+      if(editId){
+        const it = cat.items.find(x => x.id === editId);
+        if(!it) return;
+        __hbEditItemId = it.id;
+        hbItemTitle.value = it.title || '';
+        hbItemSummary.value = it.summary || '';
+        hbItemType.value = (String(it.type||'page').toLowerCase()==='link') ? 'link' : 'page';
+        hbItemStatus.value = (it.isPublished === false) ? 'draft' : 'published';
+        hbItemUrl.value = it.url || '';
+        hbItemHeroUrl.value = it.heroImage || '';
+        hbItemContent.value = it.contentHtml || '';
+        const atts = Array.isArray(it.attachments) ? it.attachments : [];
+        hbItemAttachments.value = atts.map(a => `${a.label||'Open'} | ${a.url||''}`.trim()).join('\n');
+        if(hbItemMsg) hbItemMsg.textContent = 'Editing item.';
+        return;
+      }
+
+      if(delId){
+        const it = cat.items.find(x => x.id === delId);
+        if(!it) return;
+        if(!confirm(`Delete item "${it.title}"?`)) return;
+        cat.items = cat.items.filter(x => x.id !== delId);
+        await hbSave();
+        toast('Item deleted', 'success');
+        hbClearItemForm();
+        hbRenderItemsList();
+      }
+    });
+  }
+
+  // Initialize
+  hbInit();
+  // Start
+  hookTabs();
 })();
 </script>
 
+  <script src="assets/acl-guard.js"></script>
 </body>
 </html>
