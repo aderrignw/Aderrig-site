@@ -1,154 +1,283 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="anw-acl-key" content="page:login" />
+<title>Login / Register — Aderrig NW</title>
 
-  <!-- Netlify Identity -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+<script src="assets/app-core.js"></script>
 
-  <!-- Site assets -->
-  <link rel="stylesheet" href="assets/style.css" />
-
-  <!-- Identity init + core (order matters) -->
-  <script src="assets/identity.js"></script>
-  <script src="assets/app-core.js"></script>
-  <!-- Login is public; guard is not required, but harmless. Keep if you want. -->
-  <script src="assets/acl-guard.js"></script>
+<style>
+/* Page-local tweaks to match your site spacing */
+.wrap { max-width: 1100px; margin: 28px auto; padding: 0 16px; }
+.card-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+.card { background: #fff; border-radius: 18px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,.06); }
+.field { margin: 12px 0; }
+.field label { display:block; font-weight:600; margin-bottom:6px; }
+.field input { width:100%; padding: 12px 14px; border: 1px solid rgba(0,0,0,.15); border-radius: 12px; font-size: 16px; }
+.row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.btn { display:inline-flex; align-items:center; justify-content:center; padding: 10px 16px; border-radius: 999px; border: 1px solid rgba(0,0,0,.15); background:#fff; cursor:pointer; font-weight:700; }
+.btn.primary { background:#0a7; color:#fff; border-color: transparent; }
+.msg { margin-top: 10px; font-size: 14px; }
+.msg.error { color:#b00; }
+.msg.success { color:#0a7; }
+.msg.info { color:#555; }
+</style>
 </head>
 
 <body>
-  <div class="container">
-    <h2>Login</h2>
+<header class="site-header">
+<div class="brand">
+<a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
+<div class="brand-text">
+<h1>Aderrig NW</h1>
+<p class="muted">Adamstown</p>
+</div>
+</div>
+<nav class="nav">
+<a href="index.html">Home</a>
+<a href="about.html">About</a>
+<a href="report.html">Report</a>
+<a href="alerts.html">Community Alerts</a>
+<a href="projects.html">Community Projects</a>
+<a href="handbook.html">Handbook</a>
+<a href="login.html" class="active">Login / Register</a>
+<a class="active" href="dashboard.html">Dashboard</a>
+<a href="household.html">Household</a>
+<a href="admin.html">Admin</a>
+</nav>
+</header>
 
-    <input id="loginEmail" type="email" placeholder="Email" autocomplete="email" />
-    <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password" />
+<main class="wrap">
+  <section class="card-grid">
+    <div class="card">
+      <h2>Login</h2>
 
-    <button id="btnLogin" type="button">Enter</button>
-    <button id="btnLogout" type="button">Logout</button>
+      <div class="field">
+        <label for="loginEmail">Email</label>
+        <input id="loginEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+      </div>
 
-    <div id="loginMsg" class="tiny muted" style="margin-top:10px;"></div>
-  </div>
+      <div class="field">
+        <label for="loginEir">Eircode</label>
+        <input id="loginEir" type="text" placeholder="e.g., K78T2W8" />
+      </div>
+
+      <div class="field">
+        <label for="loginPass">Password</label>
+        <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" />
+      </div>
+
+      <div class="row">
+        <button class="btn" id="btnShowPass" type="button">Show</button>
+        <button class="btn primary" id="btnLogin" type="button">Enter</button>
+        <button class="btn" id="btnLogout" type="button">Logout</button>
+      </div>
+
+      <div id="loginMsg" class="msg"></div>
+      <div style="margin-top:10px;">
+        <a href="#" id="btnForgot">I forgot my password</a>
+      </div>
+      <div id="resetMsg" class="msg"></div>
+    </div>
+  </section>
+</main>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const loginEmail = document.getElementById("loginEmail");
-  const loginPass  = document.getElementById("loginPass");
-  const btnLogin   = document.getElementById("btnLogin");
-  const btnLogout  = document.getElementById("btnLogout");
-  const loginMsg   = document.getElementById("loginMsg");
+(function(){
+  // Fallback keys to avoid ReferenceError
+  window.ANW_KEYS = window.ANW_KEYS || {
+    SESSION: 'anw_session',
+    ACL: 'acl',
+    USERS: 'anw_users'
+  };
 
-  function setMsg(msg, type="") {
-    if(!loginMsg) return;
-    loginMsg.textContent = msg || "";
-    loginMsg.className = type ? ("msg " + type) : "tiny muted";
+  const loginEmail = document.getElementById('loginEmail');
+  const loginEir = document.getElementById('loginEir');
+  const loginPass = document.getElementById('loginPass');
+  const btnShowPass = document.getElementById('btnShowPass');
+  const btnLogin = document.getElementById('btnLogin');
+  const btnLogout = document.getElementById('btnLogout');
+  const btnForgot = document.getElementById('btnForgot');
+  const loginMsg = document.getElementById('loginMsg');
+  const resetMsg = document.getElementById('resetMsg');
+
+  function setMsg(el, text, cls){
+    if(!el) return;
+    el.textContent = text || '';
+    el.className = 'msg' + (cls ? (' ' + cls) : '');
   }
 
-  function disableLogin(disabled){
-    if(btnLogin) btnLogin.disabled = !!disabled;
-    if(btnLogin) btnLogin.style.opacity = disabled ? "0.7" : "1";
+  function normalizeEir(v) {
+    return String(v || '').trim().toUpperCase().replace(/\s+/g,'');
   }
 
-  async function doLogin(email, password){
-    if (!window.netlifyIdentity) throw new Error("Netlify Identity is not available.");
+  async function identityLogin(email, pass){
+    if(!window.netlifyIdentity) throw new Error('Netlify Identity not loaded.');
+    try { window.netlifyIdentity.init(); } catch(_){}
 
-    // Ensure identity is initialised (identity.js usually does this)
-    try { window.netlifyIdentity.init && window.netlifyIdentity.init(); } catch {}
-
-    // Use GoTrue client directly for custom forms
     const gt = window.netlifyIdentity.gotrue;
-    if (!gt || typeof gt.login !== "function") {
-      throw new Error("Netlify Identity GoTrue client is not ready (missing gotrue.login).");
+    if(!gt || typeof gt.login !== 'function'){
+      throw new Error('Netlify Identity not ready (gotrue.login missing).');
     }
-
-    // gotrue.login(email, password, remember)
-    await gt.login(email, password, true);
+    await gt.login(email, pass, true);
 
     const user = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
-    if (!user || !user.email) throw new Error("Login failed (no currentUser).");
+    if(!user) throw new Error('Login failed (no currentUser).');
     return user;
   }
 
-  async function syncAndValidate(email){
-    // Save session locally (used by app-core/guards)
-    if (typeof anwSave === "function") {
-      anwSave((window.ANW_KEYS && ANW_KEYS.SESSION) ? ANW_KEYS.SESSION : "anw_session", { email });
-    } else {
-      localStorage.setItem("anw_session", JSON.stringify({ email }));
+  async function fetchMyProfile(){
+    const user = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
+    if(!user || typeof user.jwt !== 'function') throw new Error('Not authenticated (missing user token).');
+    const token = await user.jwt();
+
+    const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(window.ANW_KEYS.USERS), {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+
+    if(!res.ok){
+      const t = await res.text().catch(()=> '');
+      throw new Error('Profile fetch failed (' + res.status + ')' + (t ? (': ' + t) : ''));
     }
 
-    // Sync store (ACL + USERS). USERS may be forbidden for non-admins; owner will pass.
-    if (typeof anwInitStore === "function") {
-      await anwInitStore();
-    } else if (typeof window.anwSyncFromServer === "function") {
-      await window.anwSyncFromServer();
+    const data = await res.json().catch(()=> ({}));
+
+    if(Array.isArray(data)){
+      const email = String((window.netlifyIdentity.currentUser()||{}).email || '').toLowerCase();
+      return data.find(u => String(u.email||'').toLowerCase() === email) || null;
     }
-
-    // If we CAN see anw_users, validate registration exists
-    const keyUsers = (window.ANW_KEYS && ANW_KEYS.USERS) ? ANW_KEYS.USERS : "anw_users";
-    const users = (typeof anwLoad === "function") ? anwLoad(keyUsers, []) : [];
-    const me = Array.isArray(users) ? users.find(u => (u && u.email || "").toLowerCase().trim() === email.toLowerCase().trim()) : null;
-
-    // If users store is unavailable (403), users may be empty — don't hard-block here.
-    // But if we DO have users and the user is missing, show a clear message.
-    if (Array.isArray(users) && users.length && !me) {
-      throw new Error("Login OK, but no registration found in anw_users for this email.");
-    }
-
-    return me;
+    if(data && data.me) return data.me;
+    return null;
   }
 
-  // ============ Handlers ============
-  if (btnLogin) {
-    btnLogin.addEventListener("click", async () => {
-      const email = (loginEmail?.value || "").trim();
-      const pass  = (loginPass?.value || "").trim();
+  function storeSession(email, eircode, me){
+    try {
+      localStorage.setItem(window.ANW_KEYS.SESSION, JSON.stringify({ email: email, eircode: eircode }));
+    } catch(_){}
 
-      if (!email || !pass) {
-        setMsg("Please enter email and password.", "error");
+    // Keep anw_users in localStorage so app-core/guards resolve role without extra calls
+    try {
+      if(me) localStorage.setItem(window.ANW_KEYS.USERS, JSON.stringify([me]));
+    } catch(_){}
+  }
+
+  function redirectToDashboard(){
+    window.location.replace('dashboard.html');
+  }
+
+  if(btnShowPass){
+    btnShowPass.addEventListener('click', () => {
+      const isPw = loginPass.type === 'password';
+      loginPass.type = isPw ? 'text' : 'password';
+      btnShowPass.textContent = isPw ? 'Hide' : 'Show';
+    });
+  }
+
+  if(btnLogin){
+    btnLogin.addEventListener('click', async () => {
+      setMsg(loginMsg, '', '');
+      setMsg(resetMsg, '', '');
+
+      const email = String(loginEmail.value||'').trim().toLowerCase();
+      const pass = String(loginPass.value||'').trim();
+      const eir = normalizeEir(loginEir.value||'');
+
+      if(!email || !pass){
+        setMsg(loginMsg, 'Please enter email and password.', 'error');
         return;
       }
 
-      disableLogin(true);
-      setMsg("Signing in…");
+      try{
+        setMsg(loginMsg, 'Logging in…', 'info');
+        await identityLogin(email, pass);
 
-      try {
-        await doLogin(email, pass);
-        await syncAndValidate(email);
+        const me = await fetchMyProfile();
+        if(!me){
+          try { window.netlifyIdentity.logout(); } catch(_){}
+          setMsg(loginMsg, 'Your profile is not registered. Please create an account first.', 'error');
+          return;
+        }
 
-        setMsg("Login successful. Redirecting…", "success");
-        window.location.href = "dashboard.html";
-      } catch (err) {
+        if(eir && normalizeEir(me.eircode || '') !== eir){
+          try { window.netlifyIdentity.logout(); } catch(_){}
+          setMsg(loginMsg, 'Eircode does not match this account.', 'error');
+          return;
+        }
+
+        const status = String(me.status || 'pending').toLowerCase();
+        if(status !== 'active'){
+          try { window.netlifyIdentity.logout(); } catch(_){}
+          setMsg(loginMsg, 'Your account is pending or blocked.', 'error');
+          return;
+        }
+
+        storeSession(email, eir, me);
+
+        // Sync ACL once (optional). If credits are tight, you can remove this block.
+        try {
+          if(typeof window.anwSyncFromServer === 'function'){
+            await window.anwSyncFromServer([window.ANW_KEYS.ACL]);
+          }
+        } catch(_){}
+
+        setMsg(loginMsg, 'Login successful. Redirecting…', 'success');
+        setTimeout(redirectToDashboard, 250);
+
+      }catch(err){
         console.error(err);
-        setMsg(err && err.message ? err.message : "Login error.", "error");
-      } finally {
-        disableLogin(false);
+        setMsg(loginMsg, err && err.message ? err.message : 'Login error.', 'error');
       }
     });
   }
 
-  // Enter key submits
-  [loginEmail, loginPass].forEach(el => {
+  [loginEmail, loginPass, loginEir].forEach(el => {
     if(!el) return;
-    el.addEventListener("keydown", (e) => {
-      if(e.key === "Enter"){
+    el.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
         e.preventDefault();
         btnLogin && btnLogin.click();
       }
     });
   });
 
-  if (btnLogout) {
-    btnLogout.addEventListener("click", async () => {
-      try { window.netlifyIdentity && window.netlifyIdentity.logout && window.netlifyIdentity.logout(); } catch {}
-      try { localStorage.removeItem((window.ANW_KEYS && ANW_KEYS.SESSION) ? ANW_KEYS.SESSION : "anw_session"); } catch {}
-      if(loginPass) loginPass.value = "";
-      setMsg("You have been logged out.", "info");
+  if(btnLogout){
+    btnLogout.addEventListener('click', async () => {
+      try { window.netlifyIdentity.logout(); } catch(_){}
+      try { localStorage.removeItem(window.ANW_KEYS.SESSION); } catch(_){}
+      setMsg(loginMsg, 'You have been logged out.', 'info');
+      if(loginPass) loginPass.value = '';
     });
   }
-});
-</script>
 
+  if(btnForgot){
+    btnForgot.addEventListener('click', async (e) => {
+      e.preventDefault();
+      setMsg(resetMsg, '', '');
+
+      const email = String(loginEmail.value||'').trim().toLowerCase();
+      if(!email){
+        setMsg(resetMsg, 'Please enter your email first.', 'error');
+        return;
+      }
+      if(!window.netlifyIdentity){
+        setMsg(resetMsg, 'Netlify Identity is not available.', 'error');
+        return;
+      }
+      try{
+        await window.netlifyIdentity.requestPasswordRecovery(email);
+        setMsg(resetMsg, 'Reset email sent. Please check your inbox.', 'success');
+      }catch(_){
+        setMsg(resetMsg, 'Could not send reset email. Please try again.', 'error');
+      }
+    });
+  }
+})();
+</script>
 </body>
 </html>
