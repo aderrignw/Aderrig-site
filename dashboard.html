@@ -1240,9 +1240,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const email = user.email?.toLowerCase();
     const profile = users.find(u => u.email?.toLowerCase() === email);
 
-    const st = String(profile?.status || "").toLowerCase();
-      const isApproved = (profile && (profile.approved === true || profile.active === true || st === "active" || st === "approved"));
-      if(!profile || !isApproved){
+    if(!profile || !(profile.approved || profile.active)){
       showNotice('Your account is logged in but not yet approved. Please wait for approval.');
       return;
     }
