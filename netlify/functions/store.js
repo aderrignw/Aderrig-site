@@ -28,7 +28,8 @@ exports.handler = async (event) => {
     const isAdminIdentity = user.app_metadata?.roles?.includes("admin") || false;
     const isOwnerFromDb = !!(dbUser && String(dbUser.role || '').toLowerCase() === "owner");
 
-    const masterEmail = String(process.env.MASTER_EMAIL || "").toLowerCase().trim();
+    // Master email (fallback hard-coded for this project). You can override with Netlify env var MASTER_EMAIL.
+    const masterEmail = String(process.env.MASTER_EMAIL || "claudiosantos1968@gmail.com").toLowerCase().trim();
     const hasOwnerAlready = users.some(u => String(u?.role || '').toLowerCase() === "owner");
     const isBootstrapOwner = !!(masterEmail && email === masterEmail && !hasOwnerAlready);
 
