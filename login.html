@@ -1,35 +1,47 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="anw-acl-key" content="page:login" />
+<meta charset="utf-8"/>
+<meta content="page:login" name="anw-acl-key"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>Login / Register — Aderrig NW</title>
+<link href="assets/style.css" rel="stylesheet"/>
+<script>
+(() => {
+  // ---------- Environment helpers ----------
+  const DEPLOYED_SITE_URL = "https://aderrignw.ie";
+  function isLocalhost(hostname){
+    const h = String(hostname||"").toLowerCase();
+    return h === "localhost" || h === "127.0.0.1" || h === "::1";
+  }
 
-<link rel="stylesheet" href="assets/style.css" />
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script src="assets/identity.js"></script>
-<script src="assets/app-core.js"></script>
-
-<style>
-/* Page-local tweaks to match your site spacing */
-.wrap { max-width: 1100px; margin: 28px auto; padding: 0 16px; }
-.card-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
-.card { background: #fff; border-radius: 18px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,.06); }
-.field { margin: 12px 0; }
-.field label { display:block; font-weight:600; margin-bottom:6px; }
-.field input { width:100%; padding: 12px 14px; border: 1px solid rgba(0,0,0,.15); border-radius: 12px; font-size: 16px; }
-.row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-.btn { display:inline-flex; align-items:center; justify-content:center; padding: 10px 16px; border-radius: 999px; border: 1px solid rgba(0,0,0,.15); background:#fff; cursor:pointer; font-weight:700; }
-.btn.primary { background:#0a7; color:#fff; border-color: transparent; }
-.msg { margin-top: 10px; font-size: 14px; }
-.msg.error { color:#b00; }
-.msg.success { color:#0a7; }
-.msg.info { color:#555; }
-</style>
+  // ---------- Ensure Netlify Identity is ready ----------
+  function ensureIdentityReady(cb){
+    if(!window.netlifyIdentity){ return cb(new Error("Netlify Identity widget not loaded")); }
+    const hostname = (window.location && window.location.hostname) ? window.location.hostname : "";
+    const siteUrl = isLocalhost(hostname) ? DEPLOYED_SITE_URL : (window.location && window.location.origin ? window.location.origin : DEPLOYED_SITE_URL);
+    try {
+      localStorage.setItem("netlifySiteURL", siteUrl);
+    } catch(e){}
+    try {
+      window.netlifyIdentity.init();
+    } catch(e){}
+    const start = Date.now();
+    (function tick(){
+      if(window.netlifyIdentity && window.netlifyIdentity.gotrue && typeof window.netlifyIdentity.gotrue.signup === "function"){
+        return cb(null);
+      }
+      if(Date.now() - start > 5000){
+        return cb(new Error("Netlify Identity not ready (gotrue.signup missing)."));
+      }
+      setTimeout(tick, 50);
+    })();
+  }
+  window.__ensureIdentityReady = ensureIdentityReady;
+})();
+</script>
 </head>
-
-<body>
+<body class="page-login">
 <header class="site-header">
 <div class="brand">
 <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
@@ -45,130 +57,213 @@
 <a href="alerts.html">Community Alerts</a>
 <a href="projects.html">Community Projects</a>
 <a href="handbook.html">Handbook</a>
-<a href="login.html" class="active">Login / Register</a>
-<a class="active" href="dashboard.html">Dashboard</a>
+<a class="active" href="login.html">Login / Register</a>
+<a href="dashboard.html">Dashboard</a>
 <a href="household.html">Household</a>
 <a href="admin.html">Admin</a>
 </nav>
 </header>
 
 <main class="wrap">
-  <section class="card-grid">
-    <div class="card">
-      <h2>Login</h2>
+<section class="card-grid">
+<div class="card">
+<h2>Login</h2>
 
-      <div class="field">
-        <label for="loginEmail">Email</label>
-        <input id="loginEmail" type="email" autocomplete="email" placeholder="you@example.com" />
-      </div>
+<label class="label">Email</label>
+<div class="input-wrap">
+<input autocomplete="email" id="loginEmail" placeholder="you@example.com" type="email"/>
+<span class="lock-ico" title="Protected"></span>
+</div>
 
-      <div class="field">
-        <label for="loginEir">Eircode</label>
-        <input id="loginEir" type="text" placeholder="e.g., K78T2W8" />
-      </div>
+<label class="label">Eircode</label>
+<div class="input-wrap">
+<input id="loginEir" placeholder="e.g., K78T2W8" type="text"/>
+<span class="lock-ico" title="Protected"></span>
+</div>
 
-      <div class="field">
-        <label for="loginPass">Password</label>
-        <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" />
-      </div>
+<label class="label">Password</label>
+<div class="input-wrap">
+<input autocomplete="current-password" id="loginPass" placeholder="••••••••" type="password"/>
+<span class="lock-ico" title="Protected"></span>
+</div>
 
-      <div class="row">
-        <button class="btn" id="btnShowPass" type="button">Show</button>
-        <button class="btn primary" id="btnLogin" type="button">Enter</button>
-        <button class="btn" id="btnLogout" type="button">Logout</button>
-      </div>
+<div class="btn-row">
+<button class="btn small" id="btnShowPass" type="button">Show</button>
+<button class="btn primary" id="btnLogin" type="button">Enter</button>
+<button class="btn" id="btnLogout" type="button">Logout</button>
+</div>
 
-      <div id="loginMsg" class="msg"></div>
-      <div style="margin-top:10px;">
-        <a href="#" id="btnForgot">I forgot my password</a>
-      </div>
-      <div id="resetMsg" class="msg"></div>
-    </div>
-  </section>
+<p class="msg" id="loginMsg"></p>
+<a class="link" href="#" id="btnForgot">I forgot my password</a>
+<p class="msg" id="resetMsg"></p>
+
+<div class="dev-tools" id="devTools" style="display:none; margin-top:16px;">
+  <h3>Dev tools (localhost only)</h3>
+  <div class="btn-row">
+    <button class="btn" id="btnDevRemoveEmail" type="button">Remove my email from registrations</button>
+    <button class="btn" id="btnDevWipeUsers" type="button">Wipe ALL registrations</button>
+  </div>
+  <p class="msg" id="devToolsMsg"></p>
+</div>
+
+</div>
+
+<div class="card">
+<h2>Create account</h2>
+
+<label class="label">Full name</label>
+<div class="input-wrap">
+<input autocomplete="name" id="regName" placeholder="Full name" type="text"/>
+</div>
+
+<label class="label">Email</label>
+<div class="input-wrap">
+<input autocomplete="email" id="regEmail" placeholder="you@example.com" type="email"/>
+</div>
+
+<label class="label">Eircode</label>
+<div class="input-wrap">
+<input id="regEir" placeholder="e.g., K78XXXX" type="text"/>
+</div>
+
+<label class="label">Full address</label>
+<div class="input-wrap">
+<input id="regAddress" placeholder="House number, street, area, county" type="text"/>
+</div>
+
+<label class="label">Phone number (+country code)</label>
+<div class="input-wrap">
+<input id="regPhone" placeholder="+353851234567 (international format)" type="text"/>
+</div>
+
+<label class="label">Password</label>
+<div class="input-wrap">
+<input autocomplete="new-password" id="regPass" type="password"/>
+</div>
+
+<label class="label">Confirm password</label>
+<div class="input-wrap">
+<input autocomplete="new-password" id="regPass2" type="password"/>
+</div>
+
+<label class="label">Resident type</label>
+<select id="regType">
+  <option value="resident">Resident</option>
+  <option value="landlord">Landlord</option>
+  <option value="property_manager">Property manager</option>
+</select>
+
+<label class="checkbox">
+<input id="regAgree" type="checkbox"/>
+<span>I agree to the community rules and understand my registration may require admin approval.</span>
+</label>
+
+<div class="btn-row">
+<button class="btn primary" id="btnRegister" type="button">Create account</button>
+<button class="btn" id="btnClearReg" type="button">Clear</button>
+</div>
+
+<p class="msg" id="regMsg"></p>
+</div>
+</section>
 </main>
 
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+<script src="assets/app-core.js"></script>
+<script src="assets/acl-guard.js"></script>
+
 <script>
-(function(){
-  // Fallback keys to avoid ReferenceError
-  window.ANW_KEYS = window.ANW_KEYS || {
-    SESSION: 'anw_session',
-    ACL: 'acl',
-    USERS: 'anw_users'
-  };
+(async function(){
+
+  const KEY_USERS = (window.ANW_KEYS && ANW_KEYS.USERS) ? ANW_KEYS.USERS : 'anw_users';
 
   const loginEmail = document.getElementById('loginEmail');
-  const loginEir = document.getElementById('loginEir');
-  const loginPass = document.getElementById('loginPass');
+  const loginEir   = document.getElementById('loginEir');
+  const loginPass  = document.getElementById('loginPass');
   const btnShowPass = document.getElementById('btnShowPass');
-  const btnLogin = document.getElementById('btnLogin');
-  const btnLogout = document.getElementById('btnLogout');
-  const btnForgot = document.getElementById('btnForgot');
-  const loginMsg = document.getElementById('loginMsg');
-  const resetMsg = document.getElementById('resetMsg');
+  const btnLogin   = document.getElementById('btnLogin');
+  const btnLogout  = document.getElementById('btnLogout');
+  const btnForgot  = document.getElementById('btnForgot');
+  const loginMsg   = document.getElementById('loginMsg');
+  const resetMsg   = document.getElementById('resetMsg');
+
+  const regName   = document.getElementById('regName');
+  const regEmail  = document.getElementById('regEmail');
+  const regEir    = document.getElementById('regEir');
+  const regPhone  = document.getElementById('regPhone');
+  const regAddress= document.getElementById('regAddress');
+  const regPass   = document.getElementById('regPass');
+  const regPass2  = document.getElementById('regPass2');
+  const regType   = document.getElementById('regType');
+  const regAgree  = document.getElementById('regAgree');
+  const btnRegister = document.getElementById('btnRegister');
+  const btnClearReg = document.getElementById('btnClearReg');
+  const regMsg = document.getElementById('regMsg');
 
   function setMsg(el, text, cls){
     if(!el) return;
     el.textContent = text || '';
-    el.className = 'msg' + (cls ? (' ' + cls) : '');
+    el.className = cls ? ('msg ' + cls) : 'msg';
+  }
+  function toast(msg, type){
+    try{
+      if(typeof window.anwToast === 'function'){ window.anwToast(msg, type); return; }
+    }catch(_){}
+  }
+  function modal(text, title){
+    try{
+      if(typeof window.anwModal === 'function'){ window.anwModal(text, title); return; }
+      alert((title ? (title + '\n\n') : '') + (text || ''));
+    }catch(_){}
   }
 
-  function normalizeEir(v) {
+  function normalizeEir(v){
     return String(v || '').trim().toUpperCase().replace(/\s+/g,'');
   }
-
-  async function identityLogin(email, pass){
-    if(!window.netlifyIdentity) throw new Error('Netlify Identity not loaded.');
-    try { window.netlifyIdentity.init(); } catch(_){}
-
-    const gt = window.netlifyIdentity.gotrue;
-    if(!gt || typeof gt.login !== 'function'){
-      throw new Error('Netlify Identity not ready (gotrue.login missing).');
-    }
-    await gt.login(email, pass, true);
-
-    const user = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
-    if(!user) throw new Error('Login failed (no currentUser).');
-    return user;
+  function isValidEir(v){
+    const x = normalizeEir(v);
+    return !!x && /^[A-Z0-9]+$/.test(x) && x.length >= 6 && x.length <= 8;
+  }
+  function normalizePhone(v){
+    return String(v||'').trim();
   }
 
-  async function fetchMyProfile(){
-    const user = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
-    if(!user || typeof user.jwt !== 'function') throw new Error('Not authenticated (missing user token).');
-    const token = await user.jwt();
-
-    const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(window.ANW_KEYS.USERS), {
-      method: 'GET',
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-
-    if(!res.ok){
-      const t = await res.text().catch(()=> '');
-      throw new Error('Profile fetch failed (' + res.status + ')' + (t ? (': ' + t) : ''));
-    }
-
-    const data = await res.json().catch(()=> ({}));
-
-    if(Array.isArray(data)){
-      const email = String((window.netlifyIdentity.currentUser()||{}).email || '').toLowerCase();
-      return data.find(u => String(u.email||'').toLowerCase() === email) || null;
-    }
-    if(data && data.me) return data.me;
-    return null;
+  const ATT_KEY = 'anw_login_attempts_v1';
+  function getAttemptState(email, eir){
+    const all = anwLoad(ATT_KEY, {}) || {};
+    const key = (String(email||'').toLowerCase() + '|' + normalizeEir(eir));
+    return all[key] || { fails:0, lockUntil:0, lastResetSentAt:0 };
   }
-
-  function storeSession(email, eircode, me){
-    try {
-      localStorage.setItem(window.ANW_KEYS.SESSION, JSON.stringify({ email: email, eircode: eircode }));
-    } catch(_){}
-
-    // Keep anw_users in localStorage so app-core/guards resolve role without extra calls
-    try {
-      if(me) localStorage.setItem(window.ANW_KEYS.USERS, JSON.stringify([me]));
-    } catch(_){}
+  function setAttemptState(email, eir, st){
+    const all = anwLoad(ATT_KEY, {}) || {};
+    const key = (String(email||'').toLowerCase() + '|' + normalizeEir(eir));
+    all[key] = st;
+    anwSave(ATT_KEY, all);
   }
+  function clearAttemptState(email, eir){
+    const all = anwLoad(ATT_KEY, {}) || {};
+    const key = (String(email||'').toLowerCase() + '|' + normalizeEir(eir));
+    delete all[key];
+    anwSave(ATT_KEY, all);
+  }
+  function lockRemainingMs(email, eir){
+    const st = getAttemptState(email, eir);
+    const now = Date.now();
+    return Math.max(0, Number(st.lockUntil||0) - now);
+  }
+  function formatMins(ms){
+    const m = Math.ceil(ms / 60000);
+    return m + ' minute' + (m===1?'':'s');
+  }
+  function applySoftLockUI(){}
 
-  function redirectToDashboard(){
-    window.location.replace('dashboard.html');
+  async function auditLog(action, email, eir){
+    try{
+      if(typeof window.anwAuditLog === 'function'){
+        await window.anwAuditLog(action, { email, eircode: eir });
+      }
+    }catch(_){}
   }
 
   if(btnShowPass){
@@ -179,105 +274,355 @@
     });
   }
 
+  async function showLoggedBannerIfAny(){
+    return;
+  }
+
+  // ---------- LOGIN ----------
   if(btnLogin){
     btnLogin.addEventListener('click', async () => {
       setMsg(loginMsg, '', '');
-      setMsg(resetMsg, '', '');
 
-      const email = String(loginEmail.value||'').trim().toLowerCase();
-      const pass = String(loginPass.value||'').trim();
-      const eir = normalizeEir(loginEir.value||'');
+      const email = (loginEmail.value || '').trim().toLowerCase();
+      const eir   = normalizeEir(loginEir.value || '');
+      const pass  = (loginPass.value || '').trim();
 
-      if(!email || !pass){
-        setMsg(loginMsg, 'Please enter email and password.', 'error');
+      if (!email || !eir || !pass) {
+        setMsg(loginMsg, 'Please fill all fields.', 'error');
+        toast('Please fill all fields.', 'warn');
+        modal('Please fill all fields before logging in.', 'Missing information');
+        return;
+      }
+
+      if (!isValidEir(eir)) {
+        setMsg(loginMsg, 'Please enter a valid Eircode.', 'error');
+        toast('Invalid Eircode.', 'warn');
+        modal('Please enter a valid Eircode (letters/numbers only).', 'Invalid Eircode');
+        return;
+      }
+
+      const rem = lockRemainingMs(email, eir);
+      if(rem > 0){
+        const msg = 'Too many failed attempts. Please wait ' + formatMins(rem) + ' and try again, or use “I forgot my password”.';
+        setMsg(loginMsg, msg, 'error');
+        toast('Login temporarily locked (' + formatMins(rem) + ').', 'warn');
+        modal(msg, 'Login temporarily locked');
+        applySoftLockUI();
+        return;
+      }
+
+      if (!window.netlifyIdentity) {
+        modal('Netlify Identity is not available on this page.', 'Error');
         return;
       }
 
       try{
-        setMsg(loginMsg, 'Logging in…', 'info');
-        await identityLogin(email, pass);
+        await new Promise((resolve, reject) => {
+          if (window.__ensureIdentityReady) return window.__ensureIdentityReady(err => err ? reject(err) : resolve());
+          try { window.netlifyIdentity.init(); } catch {}
+          if (window.netlifyIdentity?.gotrue?.login) return resolve();
+          reject(new Error('Netlify Identity not ready.'));
+        });
 
-        const me = await fetchMyProfile();
+        await window.netlifyIdentity.gotrue.login(email, pass, true);
+        clearAttemptState(email, eir);
+
+        const user = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
+        if(!user){ throw new Error('Login failed (no current user).'); }
+        let token = null;
+        try{
+          token = (typeof user.jwt === 'function') ? await user.jwt() : (user.token && user.token.access_token);
+        }catch{}
+        if(!token){ throw new Error('Login failed (missing token).'); }
+
+        const res = await fetch('/.netlify/functions/store?key=anw_users', {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        let payload = {};
+        try{ payload = await res.json(); }catch{ payload = {}; }
+
+        let me = null;
+        if(Array.isArray(payload)){
+          me = payload.find(x => (x && x.email || '').toLowerCase() === email);
+        }else if(payload && payload.me){
+          me = payload.me;
+        }else if(payload && payload.value && payload.value.me){
+          me = payload.value.me;
+        }
+
         if(!me){
-          try { window.netlifyIdentity.logout(); } catch(_){}
+          try{ window.netlifyIdentity.logout(); } catch {}
           setMsg(loginMsg, 'Your profile is not registered. Please create an account first.', 'error');
+          toast('Profile not found. Please register.', 'error');
           return;
         }
 
-        if(eir && normalizeEir(me.eircode || '') !== eir){
-          try { window.netlifyIdentity.logout(); } catch(_){}
+        if(normalizeEir(me.eircode || '') !== eir){
+          try{ window.netlifyIdentity.logout(); } catch {}
           setMsg(loginMsg, 'Eircode does not match this account.', 'error');
+          toast('Eircode mismatch.', 'error');
+          modal('The Eircode entered does not match the registered address for this email.', 'Eircode mismatch');
           return;
         }
 
-        const status = String(me.status || 'pending').toLowerCase();
+        const status = (me.status || 'pending').toLowerCase();
+        if(status === 'suspended'){
+          try{ window.netlifyIdentity.logout(); } catch {}
+          setMsg(loginMsg, 'Your account is blocked.', 'error');
+          toast('Account blocked.', 'error');
+          return;
+        }
         if(status !== 'active'){
-          try { window.netlifyIdentity.logout(); } catch(_){}
-          setMsg(loginMsg, 'Your account is pending or blocked.', 'error');
+          try{ window.netlifyIdentity.logout(); } catch {}
+          setMsg(loginMsg, 'Your registration is pending approval by an ANW admin.', 'error');
+          toast('Pending admin approval.', 'warn');
+          modal('Your account is pending approval. Please wait for an admin to approve your registration.', 'Pending approval');
           return;
         }
 
-        storeSession(email, eir, me);
+        try{
+          localStorage.setItem((window.ANW_KEYS && ANW_KEYS.SESSION) ? ANW_KEYS.SESSION : 'anw_session',
+            JSON.stringify({ email: me.email, role: (me.role || 'resident'), status: status, eircode: (me.eircode || '') })
+          );
+          localStorage.setItem(KEY_USERS, JSON.stringify([me]));
+        }catch{}
 
-        // Sync ACL once (optional). If credits are tight, you can remove this block.
-        try {
-          if(typeof window.anwSyncFromServer === 'function'){
-            await window.anwSyncFromServer([window.ANW_KEYS.ACL]);
-          }
-        } catch(_){}
+        setMsg(loginMsg, 'Login successful. Redirecting...', 'ok');
+        toast('Login successful.', 'success');
 
-        setMsg(loginMsg, 'Login successful. Redirecting…', 'success');
-        setTimeout(redirectToDashboard, 250);
+        await auditLog('LOGIN_OK', email, eir);
+        setTimeout(() => { window.location.replace('dashboard.html'); }, 300);
 
       }catch(err){
-        console.error(err);
-        setMsg(loginMsg, err && err.message ? err.message : 'Login error.', 'error');
+        try{
+          const st = getAttemptState(email, eir);
+          const fails = Number(st.fails||0) + 1;
+          let lockUntil = Number(st.lockUntil||0);
+          if(fails >= 5){
+            lockUntil = Date.now() + 15*60*1000;
+          }
+          setAttemptState(email, eir, { fails, lockUntil, lastResetSentAt: Number(st.lastResetSentAt||0) });
+          applySoftLockUI();
+        }catch(_){}
+
+        const msg = (err && err.message) ? err.message : 'Login failed.';
+        setMsg(loginMsg, msg, 'error');
+        toast('Login failed.', 'error');
       }
     });
   }
 
-  [loginEmail, loginPass, loginEir].forEach(el => {
-    if(!el) return;
-    el.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter'){
-        e.preventDefault();
-        btnLogin && btnLogin.click();
+  // ---------- LOGOUT ----------
+  if (btnLogout) {
+    btnLogout.addEventListener('click', async () => {
+      try{ window.netlifyIdentity.logout(); } catch {}
+      if (loginPass)  loginPass.value  = '';
+      setMsg(loginMsg, 'You have been logged out.', '');
+      toast('Logged out.', 'info');
+      try{ await showLoggedBannerIfAny(); }catch{}
+      applySoftLockUI();
+    });
+  }
+
+  // ---------- Dev tools (localhost only) ----------
+  (function initDevTools(){
+    try{
+      const host = String(location.hostname || "").toLowerCase();
+      const isLocal = (host === "localhost" || host === "127.0.0.1" || host === "::1");
+      const box = document.getElementById("devTools");
+      if(!isLocal || !box) return;
+
+      box.style.display = "";
+      const msg = document.getElementById("devToolsMsg");
+      const btnRemove = document.getElementById("btnDevRemoveEmail");
+      const btnWipe = document.getElementById("btnDevWipeUsers");
+
+      function setMsgLocal(t, ok){
+        if(!msg) return;
+        msg.textContent = t || "";
+        msg.style.color = ok ? "var(--ok,#0a7)" : "var(--danger,#b00)";
+      }
+
+      async function devDelete(url){
+        const res = await fetch(url, { method: "DELETE" });
+        const data = await res.json().catch(()=> ({}));
+        if(!res.ok || data.ok === false) throw new Error(data.error || data.message || "Dev reset failed");
+        return data;
+      }
+
+      if(btnRemove){
+        btnRemove.addEventListener("click", async () => {
+          const email = (document.getElementById("loginEmail")?.value || document.getElementById("regEmail")?.value || "").trim();
+          if(!email){ setMsgLocal("Enter your email first (Login or Register box).", false); return; }
+          if(!confirm(`DEV: Remove ${email} from registrations?`)) return;
+          try{
+            setMsgLocal("Removing…", true);
+            const data = await devDelete(`/.netlify/functions/store?key=anw_users&dev_reset=1&email=${encodeURIComponent(email)}`);
+            setMsgLocal(`Done. Removed ${data.removed || 0} record(s). You can register again.`, true);
+          }catch(e){
+            setMsgLocal(e.message || String(e), false);
+          }
+        });
+      }
+
+      if(btnWipe){
+        btnWipe.addEventListener("click", async () => {
+          if(!confirm("DEV: This will wipe ALL registrations (anw_users). Continue?")) return;
+          try{
+            setMsgLocal("Wiping…", true);
+            await devDelete(`/.netlify/functions/store?key=anw_users&dev_reset=1`);
+            setMsgLocal("Done. All registrations wiped.", true);
+          }catch(e){
+            setMsgLocal(e.message || String(e), false);
+          }
+        });
+      }
+    }catch(_){}
+  })();
+
+  // ---------- REGISTER ----------
+  if(btnRegister){
+    btnRegister.addEventListener('click', async () => {
+      setMsg(regMsg, '', '');
+
+      const name  = (regName.value || '').trim();
+      const email = (regEmail.value || '').trim().toLowerCase();
+      const eir   = normalizeEir(regEir.value || '');
+      const phone = normalizePhone(regPhone.value || '');
+      const address = (regAddress.value || '').trim();
+      const pass  = (regPass.value || '').trim();
+      const pass2 = (regPass2.value || '').trim();
+      const type  = (regType.value || 'resident');
+      const agree = !!(regAgree && regAgree.checked);
+
+      if(!name || !email || !eir || !phone || !address || !pass || !pass2){
+        setMsg(regMsg, 'Please fill all fields.', 'error'); return;
+      }
+      if(!agree){
+        setMsg(regMsg, 'Please confirm agreement.', 'error'); return;
+      }
+      if(!isValidEir(eir)){
+        setMsg(regMsg, 'Please enter a valid Eircode.', 'error'); return;
+      }
+      if(pass.length < 8){
+        setMsg(regMsg, 'Password must be at least 8 characters.', 'error'); return;
+      }
+      if(pass !== pass2){
+        setMsg(regMsg, 'Passwords do not match.', 'error'); return;
+      }
+      if (!window.netlifyIdentity) {
+        modal('Netlify Identity is not available on this page.', 'Error');
+        return;
+      }
+
+      try{
+        await new Promise((resolve,reject)=> window.__ensureIdentityReady ? window.__ensureIdentityReady(err=> err?reject(err):resolve()) : resolve());
+
+        const gt = window.netlifyIdentity.gotrue;
+        if(!gt || typeof gt.signup !== 'function'){
+          throw new Error('Netlify Identity not ready (gotrue.signup missing)');
+        }
+        await gt.signup(email, pass, { full_name: name });
+        await window.netlifyIdentity.gotrue.login(email, pass, true);
+
+        await anwInitStore();
+        let users = anwLoad(KEY_USERS, []);
+        if(!Array.isArray(users)) users = [];
+
+        if (users.some(x => (x.email||'').toLowerCase() === email)){
+          setMsg(regMsg, 'This email is already registered.', 'error');
+          return;
+        }
+
+        const rec = {
+          name,
+          email,
+          eircode: eir,
+          phone,
+          address,
+          type,
+          role: 'resident',
+          status: 'pending',
+          created_at: new Date().toISOString()
+        };
+
+        users.push(rec);
+        anwSave(KEY_USERS, users);
+
+        try{
+          await fetch('/.netlify/functions/store', {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json' },
+            body: JSON.stringify({ key: KEY_USERS, value: users })
+          });
+        }catch(_){}
+
+        setMsg(regMsg, 'Registration created. Pending admin approval.', 'ok');
+        toast('Registration created. Pending approval.', 'success');
+        modal('Your registration was created and is pending admin approval.', 'Registration created');
+
+        await auditLog('REGISTER_OK', email, eir);
+
+        try{ window.netlifyIdentity.logout(); } catch {}
+
+      }catch(err){
+        setMsg(regMsg, (err && err.message) ? err.message : 'Registration failed.', 'error');
       }
     });
-  });
+  }
 
-  if(btnLogout){
-    btnLogout.addEventListener('click', async () => {
-      try { window.netlifyIdentity.logout(); } catch(_){}
-      try { localStorage.removeItem(window.ANW_KEYS.SESSION); } catch(_){}
-      setMsg(loginMsg, 'You have been logged out.', 'info');
-      if(loginPass) loginPass.value = '';
+  if(btnClearReg){
+    btnClearReg.addEventListener('click', () => {
+      if(regName) regName.value = '';
+      if(regEmail) regEmail.value = '';
+      if(regEir) regEir.value = '';
+      if(regPhone) regPhone.value = '';
+      if(regAddress) regAddress.value = '';
+      if(regPass) regPass.value = '';
+      if(regPass2) regPass2.value = '';
+      if(regAgree) regAgree.checked = false;
+      if(regType) regType.value = 'resident';
+      setMsg(regMsg, '', '');
     });
   }
 
   if(btnForgot){
     btnForgot.addEventListener('click', async (e) => {
       e.preventDefault();
-      setMsg(resetMsg, '', '');
+      setMsg(resetMsg,'','');
 
-      const email = String(loginEmail.value||'').trim().toLowerCase();
+      const email = (loginEmail.value||'').trim().toLowerCase();
       if(!email){
-        setMsg(resetMsg, 'Please enter your email first.', 'error');
+        setMsg(resetMsg,'Please enter your email first.','error');
+        toast('Enter email first.','warn');
         return;
       }
-      if(!window.netlifyIdentity){
-        setMsg(resetMsg, 'Netlify Identity is not available.', 'error');
+      if (!window.netlifyIdentity) {
+        modal('Netlify Identity is not available on this page.', 'Error');
         return;
       }
       try{
         await window.netlifyIdentity.requestPasswordRecovery(email);
-        setMsg(resetMsg, 'Reset email sent. Please check your inbox.', 'success');
-      }catch(_){
+        setMsg(resetMsg, 'Reset email sent. Please check your inbox.', 'ok');
+        toast('Reset email sent.', 'success');
+      }catch(e){
         setMsg(resetMsg, 'Could not send reset email. Please try again.', 'error');
+        toast('Reset failed.', 'error');
       }
     });
   }
+
+  if(window.netlifyIdentity){
+    window.netlifyIdentity.on('login', () => { showLoggedBannerIfAny(); });
+    window.netlifyIdentity.on('logout', () => { showLoggedBannerIfAny(); });
+  }
+
+  await showLoggedBannerIfAny();
+
 })();
 </script>
+
 </body>
 </html>
