@@ -5,28 +5,10 @@
 <meta charset="utf-8"/>
 <meta content="page:projects" name="anw-acl-key"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<!-- Prevent protected-page "flash" before auth redirect (runs before first paint) -->
-<style>html.anw-preauth-hide{visibility:hidden}</style>
+<!-- Auth pre-check disabled (temporary public mode) -->
 <script>
   (function(){
-    try {
-      if (location && location.protocol === 'file:') return;
-      var k = document.querySelector('meta[name="anw-acl-key"]');
-      var pageKey = k ? String(k.getAttribute('content') || '').trim() : '';
-      var isPublic = (pageKey === 'page:home' || pageKey === 'page:about' || pageKey === 'page:privacy' || pageKey === 'page:login');
-      if (isPublic) return;
-
-      document.documentElement.classList.add('anw-preauth-hide');
-      var cachedUser = null;
-      try { cachedUser = localStorage.getItem('netlify.auth.user'); } catch (e) { cachedUser = null; }
-      if (!cachedUser) {
-        location.replace('login.html');
-        return;
-      }
-      document.documentElement.classList.remove('anw-preauth-hide');
-    } catch (e) {
-      try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
-    }
+    try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
   })();
 </script>
 <title>Community Projects — Aderrig NW</title>
@@ -1452,6 +1434,11 @@ async function loadStore(){
       if(!mainEl.style.minHeight) mainEl.style.minHeight = '60vh';
     }
 
+    if(window.ANW_PUBLIC_MODE){
+      allowContent();
+      return;
+    }
+
     const user = await ensureIdentityUser();
     if(!user){
       showGate('Login required', 'This is an . Please log in or register to continue.', 'login+signup');
@@ -1582,6 +1569,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const profile = user ? await getProfile(user) : null;
 
   const canOpen = (tabKey) => {
+    if (window.ANW_PUBLIC_MODE) return true;
     const acl = isFile ? localPreviewAcl : (getAclSync() || getDefaultAcl() || {});
     const feature = featureFor(tabKey);
     const allowed = acl[feature] || [];
