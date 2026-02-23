@@ -4,28 +4,10 @@
 <meta charset="utf-8" />
   <meta name="anw-acl-key" content="page:admin" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<!-- Prevent protected-page "flash" before auth redirect (runs before first paint) -->
-<style>html.anw-preauth-hide{visibility:hidden}</style>
+<!-- Auth pre-check disabled (temporary public mode) -->
 <script>
   (function(){
-    try {
-      if (location && location.protocol === 'file:') return;
-      var k = document.querySelector('meta[name="anw-acl-key"]');
-      var pageKey = k ? String(k.getAttribute('content') || '').trim() : '';
-      var isPublic = (pageKey === 'page:home' || pageKey === 'page:about' || pageKey === 'page:privacy' || pageKey === 'page:login');
-      if (isPublic) return;
-
-      document.documentElement.classList.add('anw-preauth-hide');
-      var cachedUser = null;
-      try { cachedUser = localStorage.getItem('netlify.auth.user'); } catch (e) { cachedUser = null; }
-      if (!cachedUser) {
-        location.replace('login.html');
-        return;
-      }
-      document.documentElement.classList.remove('anw-preauth-hide');
-    } catch (e) {
-      try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
-    }
+    try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
   })();
 </script>
 <title>Admin Panel — Aderrig NW</title>
@@ -1440,6 +1422,14 @@ async function runAdminGate() {
   const identityUser = await adminEnsureIdentityReady();
 
   adminDisableAll();
+
+  // Temporary public mode: enable all admin tabs/features for UI/layout work.
+  if(window.ANW_PUBLIC_MODE){
+    adminSetGateMessage('');
+    adminEnableTabs();
+    adminApplyRoleVisibility('owner');
+    return;
+  }
 
   const email = (identityUser && identityUser.email) ? String(identityUser.email||'') :
                 ((window.anwGetLoggedEmail && window.anwGetLoggedEmail()) ? String(window.anwGetLoggedEmail()||'') : '');
