@@ -1,38 +1,45 @@
 const { getStore } = require("@netlify/blobs");
 
+function makeStore() {
+  const siteID = process.env.NETLIFY_SITE_ID;
+  const token = process.env.NETLIFY_API_TOKEN;
+
+  if (siteID && token) {
+    return getStore({ name: "anw-store", siteID, token });
+  }
+  return getStore("anw-store");
+}
+
 exports.handler = async (event) => {
   try {
-    const store = getStore("anw-store");
+    const store = makeStore();
 
     const user = event.context.clientContext?.user;
     if (!user || !user.email) {
       return { statusCode: 401, body: JSON.stringify({ error: "Not authenticated" }) };
     }
-
     const email = String(user.email).toLowerCase().trim();
 
-    // Load registrations (anw_users)
     const rawUsers = await store.get("anw_users", { type: "json" });
     const users = Array.isArray(rawUsers) ? rawUsers : [];
 
     const dbUser = users.find(u => u?.email && String(u.email).toLowerCase().trim() === email);
 
     const isAdminIdentity = user.app_metadata?.roles?.includes("admin") || false;
-    const isOwnerFromDb = !!(dbUser && dbUser.role === "owner");
-    const isAdmin = isAdminIdentity || isOwnerFromDb;
+    const isOwnerFromDb = !!(dbUser && String(dbUser.role || '').toLowerCase() === "owner");
+
+    const masterEmail = String(process.env.MASTER_EMAIL || "").toLowerCase().trim();
+    const hasOwnerAlready = users.some(u => String(u?.role || '').toLowerCase() === "owner");
+    const isBootstrapOwner = !!(masterEmail && email === masterEmail && !hasOwnerAlready);
+
+    const isAdmin = isAdminIdentity || isOwnerFromDb || isBootstrapOwner;
 
     if (event.httpMethod === "GET") {
       const key = event.queryStringParameters?.key;
-      if (!key) {
-        return { statusCode: 400, body: JSON.stringify({ error: "Missing key" }) };
-      }
+      if (!key) return { statusCode: 400, body: JSON.stringify({ error: "Missing key" }) };
 
-      // ✅ Special safe read for anw_users
       if (key === "anw_users") {
-        if (isAdmin) {
-          return { statusCode: 200, body: JSON.stringify(users) };
-        }
-        // non-admin sees only themselves
+        if (isAdmin) return { statusCode: 200, body: JSON.stringify(users) };
         return { statusCode: 200, body: JSON.stringify({ me: dbUser || null }) };
       }
 
@@ -47,9 +54,10 @@ exports.handler = async (event) => {
 
       const body = JSON.parse(event.body || "{}");
       const { key, value } = body;
+      if (!key) return { statusCode: 400, body: JSON.stringify({ error: "Missing key" }) };
 
-      if (!key) {
-        return { statusCode: 400, body: JSON.stringify({ error: "Missing key" }) };
+      if (isBootstrapOwner && key !== "anw_users") {
+        return { statusCode: 403, body: JSON.stringify({ error: "Bootstrap owner can only write anw_users" }) };
       }
 
       await store.set(key, value);
@@ -60,9 +68,6 @@ exports.handler = async (event) => {
 
   } catch (error) {
     console.error("STORE FUNCTION ERROR:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Internal server error", details: error.message })
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: "Internal server error", details: error.message }) };
   }
 };
