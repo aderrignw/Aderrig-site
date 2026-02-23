@@ -1,111 +1,114 @@
+// assets/acl-guard.js
+// ACL guard (pages + features). Compatible with your HTML:
+// - page key via meta[name="anw-acl-key"] (fallback legacy anw-page)
+// - feature key via data-acl-feature (fallback legacy data-feature-acl)
+
 (function () {
-  function getLoggedRoleSafe() {
-    try {
-      if (typeof anwGetLoggedRole === 'function') return anwGetLoggedRole() || 'resident';
-      return 'resident';
-    } catch (e) {
-      console.warn('Erro ao obter role:', e);
-      return 'resident';
-    }
+  // If you're restructuring and want everything visible/public,
+  // keep ANW_PUBLIC_MODE=true (set in assets/app-core.js).
+  function isPublicMode(){
+    try { return !!window.ANW_PUBLIC_MODE; } catch { return false; }
   }
 
   function isLoggedIn() {
     try {
-      if (typeof anwIsLoggedIn === 'function') return !!anwIsLoggedIn();
-      return !!(window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function' && window.netlifyIdentity.currentUser());
+      if (typeof anwIsLoggedIn === "function") return !!anwIsLoggedIn();
+      return !!(window.netlifyIdentity && window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser());
     } catch {
       return false;
     }
   }
 
-  async function loadAclFresh() {
-    try {
-      if (typeof anwInitStore === 'function') await anwInitStore();
-      if (typeof anwLoad === 'function') return anwLoad((window.ANW_KEYS && ANW_KEYS.ACL) ? ANW_KEYS.ACL : 'acl', {});
-      return {};
-    } catch (e) {
-      console.warn('Erro ao carregar ACL:', e);
-      return {};
-    }
+  function getRole() {
+    try { return (typeof anwGetLoggedRole === "function" ? anwGetLoggedRole() : "resident") || "resident"; }
+    catch { return "resident"; }
   }
 
-  function pageKeyFromMeta() {
-    const meta1 = document.querySelector('meta[name="anw-acl-key"]');
-    if (meta1 && meta1.getAttribute('content')) return meta1.getAttribute('content');
-
-    const meta2 = document.querySelector('meta[name="anw-page"]');
-    if (meta2 && meta2.getAttribute('content')) return meta2.getAttribute('content');
-
+  function getPageKey() {
+    const m1 = document.querySelector('meta[name="anw-acl-key"]');
+    if (m1 && m1.getAttribute("content")) return m1.getAttribute("content");
+    const m2 = document.querySelector('meta[name="anw-page"]');
+    if (m2 && m2.getAttribute("content")) return m2.getAttribute("content");
     return null;
   }
 
-  function classifyPage(pageKey, acl) {
-    if (!pageKey) return 'Public';
-    if (!acl || !acl[pageKey]) return 'Public';
-    return acl[pageKey];
+  function loadAcl() {
+    try {
+      return (typeof anwLoad === "function") ? anwLoad((window.ANW_KEYS && ANW_KEYS.ACL) ? ANW_KEYS.ACL : "acl", {}) : {};
+    } catch { return {}; }
   }
 
-  function applyNavAcl(acl, role) {
-    document.querySelectorAll('[data-acl]').forEach(el => {
-      const rule = el.getAttribute('data-acl');
-      if (!rule) return;
-
-      if (rule === 'Public') return;
-
-      if (rule === 'Authenticated' && !isLoggedIn()) {
-        el.style.display = 'none';
-        return;
+  async function ensureFresh() {
+    try {
+      if (typeof anwInitStore === "function" && isLoggedIn()) {
+        await anwInitStore();
       }
+    } catch {}
+  }
 
-      if (rule !== 'Public' && rule !== 'Authenticated') {
-        if (role !== rule && role !== 'owner') el.style.display = 'none';
-      }
+  function classify(rule) {
+    if (!rule) return "Public";
+    return rule;
+  }
+
+  function ruleAllows(rule, role) {
+    if (isPublicMode()) return true;
+    rule = classify(rule);
+    if (rule === "Public") return true;
+    if (rule === "Authenticated") return isLoggedIn();
+    // role-based
+    if (role === "owner") return true;
+    return role === rule;
+  }
+
+  function applyNav(role, acl) {
+    document.querySelectorAll("[data-acl]").forEach((el) => {
+      const rule = el.getAttribute("data-acl");
+      if (!ruleAllows(rule, role)) el.style.display = "none";
     });
   }
 
-  function applyFeatureAcl(acl, role) {
+  function applyFeatures(role, acl) {
     const nodes = [
-      ...Array.from(document.querySelectorAll('[data-acl-feature]')),
-      ...Array.from(document.querySelectorAll('[data-feature-acl]'))
+      ...document.querySelectorAll("[data-acl-feature]"),
+      ...document.querySelectorAll("[data-feature-acl]"),
     ];
-
-    nodes.forEach(el => {
-      const rule = el.getAttribute('data-acl-feature') || el.getAttribute('data-feature-acl');
-      if (!rule) return;
-
-      if (rule === 'Public') return;
-
-      if (rule === 'Authenticated' && !isLoggedIn()) {
-        el.style.display = 'none';
-        return;
-      }
-
-      if (rule !== 'Public' && rule !== 'Authenticated') {
-        if (role !== rule && role !== 'owner') el.style.display = 'none';
-      }
+    nodes.forEach((el) => {
+      const rule = el.getAttribute("data-acl-feature") || el.getAttribute("data-feature-acl");
+      if (!ruleAllows(rule, role)) el.style.display = "none";
     });
   }
 
-  function enforcePageAcl(acl, role) {
-    const pageKey = pageKeyFromMeta();
-    const rule = classifyPage(pageKey, acl);
+  function enforcePage(role, acl) {
+    if (isPublicMode()) return;
+    const key = getPageKey();
+    const rule = key && acl ? acl[key] : "Public";
+    const r = classify(rule);
 
-    if (rule === 'Public') return;
+    if (r === "Public") return;
 
-    if (rule === 'Authenticated') {
-      if (!isLoggedIn()) location.replace('login.html');
+    if (r === "Authenticated" && !isLoggedIn()) {
+      location.replace("login.html");
       return;
     }
 
-    if (role !== rule && role !== 'owner') location.replace('dashboard.html');
+    if (r !== "Public" && r !== "Authenticated") {
+      if (role !== "owner" && role !== r) {
+        location.replace("dashboard.html");
+      }
+    }
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    const acl = await loadAclFresh();
-    const role = getLoggedRoleSafe();
-
-    applyNavAcl(acl || {}, role);
-    applyFeatureAcl(acl || {}, role);
-    enforcePageAcl(acl || {}, role);
+  document.addEventListener("DOMContentLoaded", async () => {
+    if (isPublicMode()) {
+      // Do not hide nav/features and do not redirect pages.
+      return;
+    }
+    await ensureFresh();
+    const acl = loadAcl() || {};
+    const role = getRole();
+    applyNav(role, acl);
+    applyFeatures(role, acl);
+    enforcePage(role, acl);
   });
 })();
