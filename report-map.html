@@ -9,28 +9,10 @@
 <meta charset="utf-8"/>
 <meta content="page:report-map" name="anw-acl-key"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<!-- Prevent protected-page "flash" before auth redirect (runs before first paint) -->
-<style>html.anw-preauth-hide{visibility:hidden}</style>
+<!-- Auth pre-check disabled (temporary public mode) -->
 <script>
   (function(){
-    try {
-      if (location && location.protocol === 'file:') return;
-      var k = document.querySelector('meta[name="anw-acl-key"]');
-      var pageKey = k ? String(k.getAttribute('content') || '').trim() : '';
-      var isPublic = (pageKey === 'page:home' || pageKey === 'page:about' || pageKey === 'page:privacy' || pageKey === 'page:login');
-      if (isPublic) return;
-
-      document.documentElement.classList.add('anw-preauth-hide');
-      var cachedUser = null;
-      try { cachedUser = localStorage.getItem('netlify.auth.user'); } catch (e) { cachedUser = null; }
-      if (!cachedUser) {
-        location.replace('login.html');
-        return;
-      }
-      document.documentElement.classList.remove('anw-preauth-hide');
-    } catch (e) {
-      try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
-    }
+    try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
   })();
 </script>
 <title>Incidents map — Aderrig NW</title>
@@ -356,30 +338,36 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   const user = await ensureIdentityUser();
-  if(!user){
-    hideProtected();
-    showNotice('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to view the incidents map.');
-    return;
-  }
+  if(window.ANW_PUBLIC_MODE){
+    // Temporary public mode: show everything, no gating.
+    showProtected();
+    hideNotice();
+  } else {
+    if(!user){
+      hideProtected();
+      showNotice('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to view the incidents map.');
+      return;
+    }
 
-  const profile = await getRegistryProfile(user);
-  if(!profile){
-    hideProtected();
-    showNotice('Your account is logged in, but you are not registered/approved yet. Please wait for approval.');
-    return;
-  }
+    const profile = await getRegistryProfile(user);
+    if(!profile){
+      hideProtected();
+      showNotice('Your account is logged in, but you are not registered/approved yet. Please wait for approval.');
+      return;
+    }
 
-  const status = String(profile.status || profile.accountStatus || '').toLowerCase();
-  const approved = (profile.approved === true) || (profile.active === true) || status === 'active' || status === 'approved';
-  if(!approved){
-    hideProtected();
-    showNotice('Your account is not approved yet. Please wait for approval.');
-    return;
-  }
+    const status = String(profile.status || profile.accountStatus || '').toLowerCase();
+    const approved = (profile.approved === true) || (profile.active === true) || status === 'active' || status === 'approved';
+    if(!approved){
+      hideProtected();
+      showNotice('Your account is not approved yet. Please wait for approval.');
+      return;
+    }
 
-  // Allowed
-  showProtected();
-  hideNotice();
+    // Allowed
+    showProtected();
+    hideNotice();
+  }
 
   // Wire up controls (avoid "dead" buttons)
   const btnFit = document.getElementById('btnMapFit');
