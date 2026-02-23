@@ -1428,6 +1428,7 @@ async function runAdminGate() {
     adminSetGateMessage('');
     adminEnableTabs();
     adminApplyRoleVisibility('owner');
+    __adminAccessGranted = true;
     return;
   }
 
@@ -1456,7 +1457,9 @@ async function runAdminGate() {
     return;
   }
 
-  adminSetGateMessage('');
+    __adminAccessGranted = true;
+
+adminSetGateMessage('');
   adminEnableTabs();
   adminApplyRoleVisibility(role);
 }
