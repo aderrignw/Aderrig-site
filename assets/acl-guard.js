@@ -1,15 +1,7 @@
-// assets/acl-guard.js
-// Guard de acesso baseado em ACL + role do usuário
-// Fixes:
-// - Reads page key from meta[name="anw-acl-key"] (and legacy meta[name="anw-page"])
-// - Applies feature ACL using [data-acl-feature] (and legacy [data-feature-acl])
-
 (function () {
   function getLoggedRoleSafe() {
     try {
-      if (typeof anwGetLoggedRole === 'function') {
-        return anwGetLoggedRole() || 'resident';
-      }
+      if (typeof anwGetLoggedRole === 'function') return anwGetLoggedRole() || 'resident';
       return 'resident';
     } catch (e) {
       console.warn('Erro ao obter role:', e);
@@ -20,7 +12,6 @@
   function isLoggedIn() {
     try {
       if (typeof anwIsLoggedIn === 'function') return !!anwIsLoggedIn();
-      // Fallback: check Identity user
       return !!(window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function' && window.netlifyIdentity.currentUser());
     } catch {
       return false;
@@ -29,12 +20,8 @@
 
   async function loadAclFresh() {
     try {
-      if (typeof anwInitStore === 'function') {
-        await anwInitStore(); // ensures ACL + (if permitted) users are synced
-      }
-      if (typeof anwLoad === 'function') {
-        return anwLoad((window.ANW_KEYS && ANW_KEYS.ACL) ? ANW_KEYS.ACL : 'acl', {});
-      }
+      if (typeof anwInitStore === 'function') await anwInitStore();
+      if (typeof anwLoad === 'function') return anwLoad((window.ANW_KEYS && ANW_KEYS.ACL) ? ANW_KEYS.ACL : 'acl', {});
       return {};
     } catch (e) {
       console.warn('Erro ao carregar ACL:', e);
@@ -46,7 +33,7 @@
     const meta1 = document.querySelector('meta[name="anw-acl-key"]');
     if (meta1 && meta1.getAttribute('content')) return meta1.getAttribute('content');
 
-    const meta2 = document.querySelector('meta[name="anw-page"]'); // legacy
+    const meta2 = document.querySelector('meta[name="anw-page"]');
     if (meta2 && meta2.getAttribute('content')) return meta2.getAttribute('content');
 
     return null;
@@ -71,15 +58,12 @@
       }
 
       if (rule !== 'Public' && rule !== 'Authenticated') {
-        if (role !== rule && role !== 'owner') {
-          el.style.display = 'none';
-        }
+        if (role !== rule && role !== 'owner') el.style.display = 'none';
       }
     });
   }
 
   function applyFeatureAcl(acl, role) {
-    // Support both attribute names
     const nodes = [
       ...Array.from(document.querySelectorAll('[data-acl-feature]')),
       ...Array.from(document.querySelectorAll('[data-feature-acl]'))
@@ -97,9 +81,7 @@
       }
 
       if (rule !== 'Public' && rule !== 'Authenticated') {
-        if (role !== rule && role !== 'owner') {
-          el.style.display = 'none';
-        }
+        if (role !== rule && role !== 'owner') el.style.display = 'none';
       }
     });
   }
@@ -115,10 +97,7 @@
       return;
     }
 
-    // Owner has access to everything
-    if (role !== rule && role !== 'owner') {
-      location.replace('dashboard.html');
-    }
+    if (role !== rule && role !== 'owner') location.replace('dashboard.html');
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
