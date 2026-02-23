@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <base href="/" />
+
 <meta charset="utf-8" />
   <meta name="anw-acl-key" content="page:admin" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -1319,7 +1321,8 @@ Bin schedule | https://..."></textarea>
   }
 
   // When not authorised, we still allow clicking tabs, but we prevent showing the private content.
-  let __adminAccessGranted = false;
+  // __adminAccessGranted is declared earlier (var) to avoid TDZ issues
+  __adminAccessGranted = false;
   // ADMIN_GLOBAL_CLICK_BLOCKER: stop tabs from opening when gate is not granted
   try {
     document.addEventListener('click', (e) => {
@@ -1423,12 +1426,18 @@ async function runAdminGate() {
 
   adminDisableAll();
 
+  // Internal gate flag used by click blockers
+  var __adminAccessGranted = false;
+
+
   // Temporary public mode: enable all admin tabs/features for UI/layout work.
   if(window.ANW_PUBLIC_MODE){
-    adminSetGateMessage('');
-    adminEnableTabs();
-    adminApplyRoleVisibility('owner');
+    
     __adminAccessGranted = true;
+adminSetGateMessage('');
+  __adminAccessGranted = true;
+  adminEnableTabs();
+    adminApplyRoleVisibility('owner');
     return;
   }
 
@@ -1457,9 +1466,7 @@ async function runAdminGate() {
     return;
   }
 
-    __adminAccessGranted = true;
-
-adminSetGateMessage('');
+  adminSetGateMessage('');
   adminEnableTabs();
   adminApplyRoleVisibility(role);
 }
