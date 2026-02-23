@@ -1,134 +1,208 @@
-/ assets/app-core.js
+// assets/app-core.js
+// Core helpers (storage + auth + role + minimal server sync)
+//
+// Goals:
+// - Never crash pages if ANW_KEYS is missing
+// - Avoid repeated Netlify Function calls (credit saving) using TTL cache
+// - Keep owner/admin recognition consistent
+
 window.ANW_KEYS = window.ANW_KEYS || {
-  SESSION: 'anw_session',
-  ACL: 'acl',
-  USERS: 'anw_users',
-  NOTICES: 'notices',
-  ELECTIONS: 'elections',
-  VOTES: 'votes',
-  PROJECTS: 'projects',
-  PROJECT_MONITORING: 'project_monitoring',
-  TASKS: 'tasks',
-  INCIDENTS: 'incidents',
-  HANDBOOK: 'handbook',
-  LOGGED: 'logged'
+  SESSION: "anw_session",
+  USERS: "anw_users",
+  ACL: "acl",
 };
 
-function anwSave(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+// ---------------------------
+// Temporary public mode + master owner
+// ---------------------------
+// You asked to keep the site 100% public while you restructure.
+// To re-enable gating later, set this to false.
+window.ANW_PUBLIC_MODE = true;
+
+// Master email (always treated as owner)
+window.ANW_MASTER_EMAIL = "claudiosantos1968@gmail.com";
+
+// ---------------------------
+// Storage helpers
+// ---------------------------
+function anwSave(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
 function anwLoad(key, fallback) {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return fallback;
     return JSON.parse(raw);
   } catch (e) {
-    console.warn('Erro ao carregar do storage:', e);
+    console.warn("Erro ao carregar do storage:", e);
     return fallback;
   }
 }
 
-function anwNormEmail(email){ return String(email || '').trim().toLowerCase(); }
-
-function anwIsLoggedIn() { const s = anwLoad(ANW_KEYS.SESSION, null); return !!(s && s.email); }
-function anwGetSession() { return anwLoad(ANW_KEYS.SESSION, null); }
-function anwGetLoggedEmail(){
-  const s = anwGetSession();
-  if (s && s.email) return String(s.email);
-  try{
-    const u = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-    if (u && u.email) return String(u.email);
-  }catch{}
-  return '';
-}
-function anwLogout() {
-  try { window.netlifyIdentity && window.netlifyIdentity.logout && window.netlifyIdentity.logout(); } catch {}
-  localStorage.removeItem(ANW_KEYS.SESSION);
-  window.location.href = 'login.html';
+function anwNormEmail(v) {
+  return String(v || "").trim().toLowerCase();
 }
 
-function anwGetLoggedRole() {
+function anwIsMasterEmail(email) {
   try {
-    const email = anwNormEmail(anwGetLoggedEmail());
-    if (!email) return 'resident';
-    const users = anwLoad(ANW_KEYS.USERS, []);
-    if (!Array.isArray(users)) return 'resident';
-    const found = users.find(u => anwNormEmail(u && u.email) === email);
-    if (!found) return 'resident';
-    if (String(found.role || '').toLowerCase() === 'owner') return 'owner';
-    return String(found.role || 'resident').toLowerCase();
-  } catch (e) {
-    console.warn('Erro ao obter role do usuário:', e);
-    return 'resident';
+    return anwNormEmail(email) === anwNormEmail(window.ANW_MASTER_EMAIL);
+  } catch {
+    return false;
   }
 }
 
-async function anwGetIdentityToken(){
-  try{
+// ---------------------------
+// Auth session
+// ---------------------------
+function anwIsLoggedIn() {
+  const session = anwLoad(ANW_KEYS.SESSION, null);
+  return !!(session && session.email);
+}
+
+function anwGetSession() {
+  return anwLoad(ANW_KEYS.SESSION, null);
+}
+
+function anwGetLoggedEmail() {
+  const s = anwGetSession();
+  if (s && s.email) return String(s.email);
+  try {
     const u = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-    if (!u || typeof u.jwt !== 'function') return null;
+    if (u && u.email) return String(u.email);
+  } catch {}
+  return "";
+}
+
+function anwLogout() {
+  try { window.netlifyIdentity && window.netlifyIdentity.logout && window.netlifyIdentity.logout(); } catch {}
+  localStorage.removeItem(ANW_KEYS.SESSION);
+  window.location.href = "login.html";
+}
+
+// ---------------------------
+// Role resolution
+// ---------------------------
+function anwGetLoggedRole() {
+  try {
+    const email = anwNormEmail(anwGetLoggedEmail());
+    if (!email) return "resident";
+
+    // Master email is always owner.
+    if (anwIsMasterEmail(email)) return "owner";
+
+    const users = anwLoad(ANW_KEYS.USERS, []);
+    if (!Array.isArray(users)) return "resident";
+
+    const me = users.find(u => anwNormEmail(u && u.email) === email);
+    if (!me) return "resident";
+
+    const role = String(me.role || "resident").toLowerCase();
+    if (role === "owner") return "owner";
+    return role;
+  } catch (e) {
+    console.warn("Erro ao obter role do usuário:", e);
+    return "resident";
+  }
+}
+
+// ---------------------------
+// Server sync (Netlify Function) with TTL cache
+// ---------------------------
+async function anwGetIdentityToken() {
+  try {
+    const u = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+    if (!u || typeof u.jwt !== "function") return null;
     return await u.jwt();
-  }catch{
+  } catch {
     return null;
   }
 }
 
-async function anwFetchStoreKey(key){
+async function anwFetchStoreKey(key) {
   const token = await anwGetIdentityToken();
-  if(!token) throw new Error('Not authenticated (missing token).');
-  const url = `/.netlify/functions/store?key=${encodeURIComponent(key)}`;
-  const res = await fetch(url, { method: 'GET', headers: { 'Authorization': `Bearer ${token}` } });
-  if(!res.ok){
-    let details = '';
-    try{ details = await res.text(); }catch{}
-    const msg = `Store GET failed (${res.status}) for "${key}"` + (details ? `: ${details}` : '');
-    const err = new Error(msg);
-    err.status = res.status;
-    throw err;
+  if (!token) throw new Error("Not authenticated (missing token)");
+
+  const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+    method: "GET",
+    headers: { Authorization: "Bearer " + token },
+  });
+
+  if (!res.ok) {
+    let t = "";
+    try { t = await res.text(); } catch {}
+    throw new Error(`Store GET failed ${res.status} for ${key}${t ? ": " + t : ""}`);
   }
   return await res.json();
 }
 
+// TTL per key to save credits
+function _syncKeyTsName(key){ return `anw_sync_ts__${key}`; }
+function _shouldSync(key, ttlMs){
+  const ts = Number(localStorage.getItem(_syncKeyTsName(key)) || "0");
+  return (Date.now() - ts) > ttlMs;
+}
+function _markSynced(key){
+  localStorage.setItem(_syncKeyTsName(key), String(Date.now()));
+}
+
+// Public: sync keys (default: acl + anw_users)
 window.anwSyncFromServer = async function(keys, ttlMs){
   const list = Array.isArray(keys) && keys.length ? keys : [ANW_KEYS.ACL, ANW_KEYS.USERS];
-  const ttl = Number.isFinite(ttlMs) ? ttlMs : (10 * 60 * 1000);
+  const ttl = Number.isFinite(ttlMs) ? ttlMs : 10 * 60 * 1000; // 10 minutes
+
   const email = anwNormEmail(anwGetLoggedEmail());
-  if(!email) return;
+  if (!email) return;
 
-  const now = Date.now();
-  const cacheKey = 'anw_last_sync_v1';
-  const last = Number(anwLoad(cacheKey, 0) || 0);
-  if(ttl > 0 && (now - last) < ttl) return;
-
-  for(const k of list){
-    try{
+  for (const k of list) {
+    if (!_shouldSync(k, ttl)) continue;
+    try {
       const data = await anwFetchStoreKey(k);
-      if(k === ANW_KEYS.USERS && data && !Array.isArray(data) && data.me){
-        anwSave(k, [data.me]);
+
+      if (k === ANW_KEYS.USERS) {
+        // Store can return array (admin) or {me:...}
+        if (Array.isArray(data)) {
+          anwSave(k, data);
+        } else if (data && data.me) {
+          anwSave(k, [data.me]);
+        } else {
+          // keep as-is
+        }
       } else {
         anwSave(k, data);
       }
-    }catch(err){
-      console.warn(`[anwSyncFromServer] ${err && err.message ? err.message : err}`);
+      _markSynced(k);
+    } catch (e) {
+      console.warn(`[anwSyncFromServer] ${e && e.message ? e.message : e}`);
+      // don't mark synced; it will retry after TTL
     }
   }
-  anwSave(cacheKey, now);
 };
 
 async function anwInitStore() {
   try {
-    if (typeof window.anwSyncFromServer === 'function') await window.anwSyncFromServer();
+    if (window.anwSyncFromServer) {
+      await window.anwSyncFromServer([ANW_KEYS.ACL, ANW_KEYS.USERS]);
+    }
   } catch (e) {
-    console.warn('Erro ao inicializar store:', e);
+    console.warn("Erro ao inicializar store:", e);
   }
 }
 
+// ---------------------------
+// UI helper
+// ---------------------------
 function anwDisplayLoggedUser() {
-  const el = document.getElementById('anw-logged-user');
+  const el = document.getElementById("anw-logged-user");
   if (!el) return;
   const email = anwGetLoggedEmail();
-  el.textContent = email ? email : '';
+  el.textContent = email || "";
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  await anwInitStore();
+document.addEventListener("DOMContentLoaded", async () => {
+  // Do not force sync for anonymous visitors
+  if (anwIsLoggedIn()) {
+    await anwInitStore();
+  }
   anwDisplayLoggedUser();
 });
