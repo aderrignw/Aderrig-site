@@ -5,35 +5,10 @@
 <meta charset="utf-8"/>
 <meta content="page:report" name="anw-acl-key"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<!-- Prevent protected-page "flash" before auth redirect (runs before first paint) -->
-<style>html.anw-preauth-hide{visibility:hidden}</style>
+<!-- Auth pre-check disabled (temporary public mode) -->
 <script>
   (function(){
-    try {
-      if (location && location.protocol === 'file:') return;
-      var k = document.querySelector('meta[name="anw-acl-key"]');
-      var pageKey = k ? String(k.getAttribute('content') || '').trim() : '';
-      var isPublic = (pageKey === 'page:home' || pageKey === 'page:about' || pageKey === 'page:privacy' || pageKey === 'page:login');
-      if (isPublic) return;
-
-      // Hide the document immediately to avoid showing protected content briefly.
-      document.documentElement.classList.add('anw-preauth-hide');
-
-      // Fast synchronous auth check via Netlify Identity local cache.
-      // If not present, redirect before rendering any protected content.
-      var cachedUser = null;
-      try { cachedUser = localStorage.getItem('netlify.auth.user'); } catch (e) { cachedUser = null; }
-      if (!cachedUser) {
-        location.replace('login.html');
-        return;
-      }
-
-      // User appears logged-in; allow paint (ACL guard will still enforce role-based rules).
-      document.documentElement.classList.remove('anw-preauth-hide');
-    } catch (e) {
-      // Fail open (do not block rendering) to avoid breaking the page.
-      try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
-    }
+    try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
   })();
 </script>
 <title>Report — Aderrig Neighbourhood Watch</title>
@@ -285,7 +260,7 @@
 // --- PRIVATE PAGE gate: must be logged in + registered + approved ---
   const returnTo = location.pathname + location.search + location.hash;
   const user = await anwEnsureIdentityUser();
-  if(!user){
+  if(!window.ANW_PUBLIC_MODE && !user){
     try { sessionStorage.setItem('anw_return_to', returnTo); } catch(_) {}
     anwShowAccessOverlay(
       'This page is private. Please log in to continue.',
