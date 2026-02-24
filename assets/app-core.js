@@ -1,4 +1,4 @@
-// assets/app-core.js
+
 // Core helpers (storage + auth + role + minimal server sync)
 //
 // Goals:
@@ -106,6 +106,25 @@ function anwGetLoggedRole() {
   }
 }
 
+
+// ---------------------------
+// Master bootstrap (client-side fallback)
+// ---------------------------
+// If the server store is temporarily unavailable, keep the master email usable.
+function anwEnsureMasterLocalUser() {
+  try {
+    const email = anwNormEmail(anwGetLoggedEmail());
+    if (!email || !anwIsMasterEmail(email)) return;
+
+    const users = anwLoad(ANW_KEYS.USERS, []);
+    const list = Array.isArray(users) ? users : [];
+    const has = list.some(u => anwNormEmail(u?.email) === email);
+    if (!has) {
+      list.unshift({ email, role: "owner", status: "active", approved: true, name: "Owner" });
+      anwSave(ANW_KEYS.USERS, list);
+    }
+  } catch {}
+}
 // ---------------------------
 // Server sync (Netlify Function) with TTL cache
 // ---------------------------
@@ -174,6 +193,8 @@ window.anwSyncFromServer = async function(keys, ttlMs){
       _markSynced(k);
     } catch (e) {
       console.warn(`[anwSyncFromServer] ${e && e.message ? e.message : e}`);
+      // If store is down, keep master usable locally
+      anwEnsureMasterLocalUser();
       // don't mark synced; it will retry after TTL
     }
   }
@@ -204,5 +225,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (anwIsLoggedIn()) {
     await anwInitStore();
   }
+  anwEnsureMasterLocalUser();
   anwDisplayLoggedUser();
 });
