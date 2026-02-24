@@ -1,19 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-<script>
-/* Ensure relative assets/links work both on Netlify (pretty routes) and when opened via file:// */
-(function(){
-  try{
-    var base = document.createElement('base');
-    base.href = (location.protocol === 'file:') ? './' : '/';
-    // Put it as the first element inside <head>
-    document.head.insertBefore(base, document.head.firstChild);
-  }catch(e){}
-})();
-</script>
-
 <meta charset="utf-8"/>
 <meta content="page:login" name="anw-acl-key"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
@@ -836,7 +823,6 @@ const volMeetings    = document.getElementById('volMeetings');
   })();
 
   // ---------- REGISTER (Netlify Identity + KV profile) ----------
- (Netlify Identity + KV profile) ----------
   if(btnRegister){
     btnRegister.addEventListener('click', async () => {
       setMsg(regMsg, '', '');
