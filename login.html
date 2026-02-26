@@ -123,17 +123,6 @@
 })();
 </script>
 
-
-<script>
-  // Master bootstrap (fix for ReferenceError: MASTER_EMAIL is not defined)
-  // Used by some ACL/login logic to guarantee the first admin/owner can always access the system.
-  // You can change these later, but keep them consistent with your Netlify Identity user.
-  var MASTER_EMAIL = "claudiosantos1968@gmail.com";
-  var MASTER_EIRCODE = "K78T2W8";
-  // Accept both labels for the master account (some pages use "owner", others "admin")
-  var MASTER_ROLE_ALIASES = ["owner","admin"];
-</script>
-
 </head>
 <body class="page-login">
 <header class="site-header">
