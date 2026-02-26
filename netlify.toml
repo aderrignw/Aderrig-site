@@ -12,3 +12,15 @@
 
 [functions."backup-scheduled"]
   schedule = "0 */6 * * *"
+# Ensure Netlify Identity confirm links and pretty /login route work
+[[redirects]]
+  from = "/login"
+  to = "/login.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/.netlify/identity/*"
+  to = "/.netlify/identity/:splat"
+  status = 200
+  force = true
