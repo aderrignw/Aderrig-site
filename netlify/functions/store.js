@@ -1,8 +1,8 @@
 const { getStore } = require("@netlify/blobs");
 
 function makeStore() {
-  const siteID = process.env.NETLIFY_BLOBS_SITE_ID || process.env.NETLIFY_SITE_ID;
-  const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN;
+  const siteID = process.env.NETLIFY_SITE_ID;
+  const token = process.env.NETLIFY_API_TOKEN;
 
   if (siteID && token) {
     return getStore({ name: "anw-store", siteID, token });
