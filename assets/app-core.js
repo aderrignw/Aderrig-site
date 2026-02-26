@@ -112,16 +112,8 @@ function anwGetLoggedRole() {
 async function anwGetIdentityToken() {
   try {
     const u = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-    if (!u) return null;
-
-    // Prefer access token when available
-    const access = u.token && u.token.access_token ? u.token.access_token : null;
-    if (access) return access;
-
-    // Fallback to JWT (force refresh)
-    if (typeof u.jwt === "function") return await u.jwt(true);
-
-    return null;
+    if (!u || typeof u.jwt !== "function") return null;
+    return await u.jwt();
   } catch {
     return null;
   }
