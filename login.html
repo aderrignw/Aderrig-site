@@ -1,20 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-<script>
-/* Ensure relative assets work on Netlify pretty routes and on file:// preview */
-(function(){
-  const MASTER_EMAIL = "claudiosantos1968@gmail.com";
-  const MASTER_EIRCODE = "K78T2W8";
-  try{
-    var base = document.createElement('base');
-    base.href = (location.protocol === 'file:') ? './' : '/';
-    document.head.insertBefore(base, document.head.firstChild);
-  }catch(e){}
-})();
-</script>
-
 <meta charset="utf-8"/>
 <meta content="page:login" name="anw-acl-key"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
@@ -135,6 +121,17 @@
   }
   window.__ensureIdentityReady = ensureIdentityReady;
 })();
+</script>
+
+
+<script>
+  // Master bootstrap (fix for ReferenceError: MASTER_EMAIL is not defined)
+  // Used by some ACL/login logic to guarantee the first admin/owner can always access the system.
+  // You can change these later, but keep them consistent with your Netlify Identity user.
+  var MASTER_EMAIL = "claudiosantos1968@gmail.com";
+  var MASTER_EIRCODE = "K78T2W8";
+  // Accept both labels for the master account (some pages use "owner", others "admin")
+  var MASTER_ROLE_ALIASES = ["owner","admin"];
 </script>
 
 </head>
@@ -625,15 +622,7 @@ const volMeetings    = document.getElementById('volMeetings');
         return;
       }
 
-      // Master eircode guard
-      if(email === (MASTER_EMAIL || '').toLowerCase() && eir !== MASTER_EIRCODE){
-        setMsg(loginMsg, 'Please enter the master Eircode (K78T2W8).', 'error');
-        toast('Master Eircode required.', 'warn');
-        modal('Please enter Eircode K78T2W8 for the master account.', 'Eircode');
-        return;
-      }
-
-if (!isValidEir(eir)) {
+      if (!isValidEir(eir)) {
         setMsg(loginMsg, 'Please enter a valid Eircode.', 'error');
         toast('Invalid Eircode.', 'warn');
         modal('Please enter a valid Eircode (letters/numbers only).', 'Invalid Eircode');
@@ -678,16 +667,7 @@ if (!isValidEir(eir)) {
           return;
         }
 
-        // Master bypass: never block master on eircode check (bootstrap will enforce correct eircode in anw_users)
-        if(email === (MASTER_EMAIL || '').toLowerCase()){
-          setMsg(loginMsg, 'Login successful. Redirecting...', 'ok');
-          toast('Login successful.', 'success');
-          try{ await auditLog('LOGIN_OK', email, eir); }catch{}
-          setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
-          return;
-        }
-
-if(normalizeEir(me.eircode || '') !== eir){
+        if(normalizeEir(me.eircode || '') !== eir){
           try{ window.netlifyIdentity.logout(); } catch {}
           setMsg(loginMsg, 'Eircode does not match this account.', 'error');
           toast('Eircode mismatch.', 'error');
@@ -854,7 +834,7 @@ if(normalizeEir(me.eircode || '') !== eir){
   })();
 
   // ---------- REGISTER (Netlify Identity + KV profile) ----------
-  // (Netlify Identity + KV profile) ----------
+ (Netlify Identity + KV profile) ----------
   if(btnRegister){
     btnRegister.addEventListener('click', async () => {
       setMsg(regMsg, '', '');
