@@ -9,7 +9,7 @@
 
     <p>
       <a
-        href="{{ .ConfirmationURL }}&redirect=/login"
+        href="{{ .SiteURL }}/.netlify/identity/confirm?token={{ .Token }}&type=invite&redirect=/login"
         style="display:inline-block;padding:12px 18px;background:#1f7a55;color:#fff;text-decoration:none;border-radius:8px;"
       >
         Accept invitation
