@@ -29,15 +29,55 @@ exports.handler = async (event) => {
     const isOwnerFromDb = !!(dbUser && String(dbUser.role || '').toLowerCase() === "owner");
 
     // Master email (fallback hard-coded for this project). You can override with Netlify env var MASTER_EMAIL.
-    const masterEmail = String(process.env.MASTER_EMAIL || "claudiosantos1968@gmail.com").toLowerCase().trim();
-    const hasOwnerAlready = users.some(u => String(u?.role || '').toLowerCase() === "owner");
-    const isBootstrapOwner = !!(masterEmail && email === masterEmail && !hasOwnerAlready);
+    const masterEmail = String(process.env.MASTER_EMAIL || "").toLowerCase().trim();
+    const isMaster = !!(masterEmail && email === masterEmail);
+    const hasOwnerAlready = users.some(u => String(u?.role || "").toLowerCase() === "owner");
+    const isBootstrapOwner = !!(isMaster && !hasOwnerAlready);
 
-    const isAdmin = isAdminIdentity || isOwnerFromDb || isBootstrapOwner;
+    const isAdmin = isMaster || isAdminIdentity || isOwnerFromDb || isBootstrapOwner;
 
     if (event.httpMethod === "GET") {
       const key = event.queryStringParameters?.key;
       if (!key) return { statusCode: 400, body: JSON.stringify({ error: "Missing key" }) };
+
+      // Allow non-admin users to create their own registration record (pending) in anw_users.
+      // Admins can write any key/value as before.
+      if (!isAdmin) {
+        if (key !== "anw_users") {
+          return { statusCode: 403, body: JSON.stringify({ error: "Write not allowed (admin/owner only)" }) };
+        }
+        // value must be an object with matching email
+        if (!value || typeof value !== "object") {
+          return { statusCode: 400, body: JSON.stringify({ error: "Invalid registration payload" }) };
+        }
+        const vEmail = String(value.email || "").toLowerCase().trim();
+        if (!vEmail || vEmail !== email) {
+          return { statusCode: 403, body: JSON.stringify({ error: "Email mismatch" }) };
+        }
+        // prevent duplicates by email or eircode
+        const vEir = String(value.eircode || "").toUpperCase().replace(/\s+/g, "").trim();
+        if (!vEir) {
+          return { statusCode: 400, body: JSON.stringify({ error: "Missing eircode" }) };
+        }
+        if (users.some(u => String(u.email||"").toLowerCase() === vEmail)) {
+          return { statusCode: 409, body: JSON.stringify({ error: "A user with this email address has already been registered" }) };
+        }
+        if (users.some(u => String(u.eircode||"").toUpperCase().replace(/\s+/g, "").trim() === vEir)) {
+          return { statusCode: 409, body: JSON.stringify({ error: "This Eircode is already registered" }) };
+        }
+        const nowIso = new Date().toISOString();
+        const record = {
+          ...value,
+          email: vEmail,
+          eircode: vEir,
+          status: String(value.status || "pending"),
+          createdAt: value.createdAt || nowIso,
+          regDate: value.regDate || nowIso
+        };
+        users.push(record);
+        await store.set("anw_users", users, { type: "json" });
+        return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+      }
 
       if (key === "anw_users") {
         if (isAdmin) return { statusCode: 200, body: JSON.stringify(users) };
@@ -50,71 +90,9 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === "POST") {
       const body = JSON.parse(event.body || "{}");
-      const { key, value, mode } = body;
+      const { key, value } = body;
       if (!key) return { statusCode: 400, body: JSON.stringify({ error: "Missing key" }) };
 
-      // Allow authenticated non-admin users to self-register into anw_users (append only)
-      if (!isAdmin) {
-        if (key === "anw_users" && mode === "self_register") {
-          if (!userEmail) {
-            return { statusCode: 401, body: JSON.stringify({ error: "Not authenticated" }) };
-          }
-          if (!value || typeof value !== "object") {
-            return { statusCode: 400, body: JSON.stringify({ error: "Invalid registration payload" }) };
-          }
-
-          // Load current list (array)
-          let users = (await store.get("anw_users", { type: "json" })) || [];
-          if (!Array.isArray(users)) users = [];
-
-          const email = String(value.email || "").toLowerCase().trim();
-          const eircode = String(value.eircode || "").toUpperCase().replace(/\s+/g, "").trim();
-          if (!email || email !== userEmail) {
-            return { statusCode: 400, body: JSON.stringify({ error: "Email mismatch" }) };
-          }
-          if (!eircode) {
-            return { statusCode: 400, body: JSON.stringify({ error: "Missing eircode" }) };
-          }
-
-          if (users.some(u => String(u.email || "").toLowerCase() === email)) {
-            return { statusCode: 409, body: JSON.stringify({ error: "Email already registered" }) };
-          }
-          if (users.some(u => String(u.eircode || "").toUpperCase().replace(/\s+/g, "") === eircode)) {
-            return { statusCode: 409, body: JSON.stringify({ error: "Eircode already registered" }) };
-          }
-
-          const nowIso = new Date().toISOString();
-          const safeUser = {
-            name: String(value.name || ""),
-            email,
-            eircode,
-            address: String(value.address || ""),
-            phone: String(value.phone || ""),
-            type: String(value.type || value.residentType || ""),
-            residentType: String(value.residentType || value.type || ""),
-            managementCompany: String(value.managementCompany || value.mgmt || ""),
-            coordinator: !!value.coordinator,
-            isCoordinator: !!value.isCoordinator || !!value.coordinator,
-            volunteer: !!value.volunteer,
-            isVolunteer: !!value.isVolunteer || !!value.volunteer,
-            vol_roles: (value.vol_roles && typeof value.vol_roles === "object") ? value.vol_roles : {},
-            termsAccepted: !!value.termsAccepted,
-            termsAcceptedAt: value.termsAcceptedAt || nowIso,
-            alertsConsent: value.alertsConsent || null,
-            status: "pending",
-            createdAt: value.createdAt || nowIso,
-            regDate: value.regDate || nowIso
-          };
-
-          users.push(safeUser);
-          await store.set("anw_users", users);
-          return { statusCode: 200, body: JSON.stringify({ ok: true, created: true }) };
-        }
-
-        return { statusCode: 403, body: JSON.stringify({ error: "Write not allowed (admin/owner only)" }) };
-      }
-
-      
       if (isBootstrapOwner && key !== "anw_users") {
         return { statusCode: 403, body: JSON.stringify({ error: "Bootstrap owner can only write anw_users" }) };
       }
