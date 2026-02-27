@@ -569,7 +569,9 @@ const volMeetings    = document.getElementById('volMeetings');
     try{ await anwInitStore(); } catch {}
 
     const users = anwLoad(KEY_USERS, []);
-    const me = Array.isArray(users) ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase()) : null;
+    const me = Array.isArray(users)
+      ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase())
+      : (users && users.me ? users.me : null);
 
     const status = (me && me.status ? me.status : 'pending').toLowerCase();
     const statusLabel =
@@ -644,12 +646,12 @@ const volMeetings    = document.getElementById('volMeetings');
 
         // now we have a token, load store and validate eircode + approval
         await anwInitStore();
-        const users = anwLoad(KEY_USERS, []);
+        const users = await anwSyncFromServer(KEY_USERS).catch(()=> anwLoad(KEY_USERS, null));
         const me = Array.isArray(users)
           ? users.find(x => (x.email||'').toLowerCase() === email)
-          : null;
+          : (users && users.me ? users.me : null);
 
-        if(!me){
+if(!me){
           try{ window.netlifyIdentity.logout(); } catch {}
           setMsg(loginMsg, 'Your profile is not registered. Please create an account first.', 'error');
           toast('Profile not found. Please register.', 'error');
@@ -895,60 +897,11 @@ const volMeetings    = document.getElementById('volMeetings');
         await window.netlifyIdentity.gotrue.login(email, pass, true);
 
         await anwInitStore();
-        let users = anwLoad(KEY_USERS, []);
-        if(!Array.isArray(users)) users = [];
 
-        if (users.some(x => (x.email||'').toLowerCase() === email)) {
-          toast('Email already registered.', 'error');
-          modal('This email is already registered.', 'Duplicate');
-          try{ window.netlifyIdentity.logout(); } catch {}
-          return;
-        }
-        if (users.some(x => normalizeEir(x.eircode||'') === eir)) {
-          toast('Eircode already registered.', 'error');
-          modal('This Eircode is already registered. Only one account per residence is allowed.', 'Duplicate');
-          try{ window.netlifyIdentity.logout(); } catch {}
-          return;
-        }
+        // Server-side self registration (append-only)
+        await anwSelfRegister(newUser);
 
-        const newUser = {
-          name: name,
-          email: email,
-          eircode: eir,
-          address: address,
-          phone: phone,
-
-          termsAcceptedAt: nowIso,
-          termsAccepted: true,
-
-          alertsConsent: {
-            optIn: optInAlerts,
-            updatedAt: nowIso,
-            history: [ { at: nowIso, optIn: optInAlerts, source: 'register' } ]
-          },
-
-          type: type,
-          residentType: type,
-
-          managementCompany: mgmt,
-
-          coordinator: coord,
-          isCoordinator: coord,
-
-          volunteer: volunteerMaster,
-          isVolunteer: volunteerMaster,
-
-          vol_roles: vr,
-
-          status: 'pending',
-          createdAt: nowIso,
-          regDate: nowIso
-        };
-
-        users.push(newUser);
-        await anwSave(KEY_USERS, users);
-
-        try{ window.netlifyIdentity.logout(); } catch {}
+try{ window.netlifyIdentity.logout(); } catch {}
 
         setMsg(regMsg, 'Account created! Your registration is pending admin approval.', 'ok');
         toast('Account created. Pending approval.', 'success');
