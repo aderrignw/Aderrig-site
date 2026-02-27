@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8" />
+<head>
+  <base href="/" />
+
+<meta charset="utf-8" />
   <meta name="anw-acl-key" content="page:admin" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <!-- Auth pre-check disabled (temporary public mode) -->
@@ -10,11 +13,8 @@
   })();
 </script>
 <title>Admin Panel — Aderrig NW</title>
-<script>
-  // Temporary public mode: keep Admin usable even if global scripts fail
-  window.ANW_PUBLIC_MODE = true;
-  window.ANW_MASTER_EMAIL = "claudiosantos1968@gmail.com";
-</script>
+<link rel="stylesheet" href="assets/style.css" />
+
 
 <style>
   /* Backups status badge */
@@ -111,35 +111,13 @@
   footer.site-footer .page-access { position: absolute; left: 0; color: green; font-weight: normal; }
 </style>
 
-
-  <script>
-    // Force temporary public mode so all Admin UI (tabs/sub-tabs) is usable without login.
-    window.ANW_PUBLIC_MODE = true;
-    window.ANW_MASTER_EMAIL = "claudiosantos1968@gmail.com";
-
-    (function loadAssets(){
-      var prefix = (location.protocol === 'file:') ? '' : '/';
-      function addCss(href){
-        var l=document.createElement('link'); l.rel='stylesheet'; l.href=href; document.head.appendChild(l);
-      }
-      function addJs(src, defer){
-        var s=document.createElement('script'); s.src=src; if(defer) s.defer=true; document.head.appendChild(s);
-      }
-      addCss(prefix + 'assets/style.css');
-      addJs('https://identity.netlify.com/v1/netlify-identity-widget.js', true);
-      addJs(prefix + 'assets/identity.js', true);
-      addJs(prefix + 'assets/app-core.js', true);
-      addJs(prefix + 'assets/acl-guard.js', true);
-    })();
-  </script>
-
 </head>
 
 <body>
 
 <header class="site-header">
   <div class="brand">
-    <a href="index.html" class="site-logo"><img src="/assets/logo/logo.png" alt="Aderrig Neighbourhood Watch" class="logo-img"></a>
+    <a href="index.html" class="site-logo"><img src="assets/logo/logo.png" alt="Aderrig Neighbourhood Watch" class="logo-img"></a>
     <div class="brand-text">
         <h1>Aderrig NW</h1>
         <p class="muted">Adamstown</p>
@@ -250,6 +228,8 @@
           <input id="mPhone" type="text">
         </div>
       </div>
+
+      $1
 
       <div class="field">
         <label>Address</label>
@@ -1259,6 +1239,9 @@ Bin schedule | https://..."></textarea>
 
 
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+
+<script src="assets/app-core.js"></script>
 <script>
 (async function(){
   await anwInitStore();
@@ -1317,17 +1300,9 @@ Bin schedule | https://..."></textarea>
      Admin Gate + Role Tabs (Dashboard reference)
      ========================= */
   const ADMIN_TAB_PERMS = {"tabResidents": ["street_admin", "platform_support", "owner"], "tabTasks": ["street_admin", "platform_support", "owner"], "tabElections": ["street_admin", "platform_support", "owner"], "tabReports": ["street_admin", "platform_support", "owner"], "tabNotices": ["street_admin", "platform_support", "owner"], "tabHandbook": ["street_admin", "platform_support", "owner"], "tabProjects": ["project_support", "volunteer", "platform_support", "owner"], "tabAccessControl": ["platform_support", "owner"], "tabTools": ["platform_support"]};
+  const ADMIN_ALLOWED_ROLES = new Set(["owner", "platform_support", "project_support", "street_admin", "volunteer"]);
 
-  // Temporary public mode: allow OWNER on every admin tab so nothing is hidden
-  if (window.ANW_PUBLIC_MODE) {
-    try {
-      Object.keys(ADMIN_TAB_PERMS).forEach((k) => {
-        const arr = ADMIN_TAB_PERMS[k];
-        if (Array.isArray(arr) && !arr.includes('owner')) arr.push('owner');
-      });
-    } catch (_) {}
-  }
-function adminSetGateMessage(htmlText) {
+  function adminSetGateMessage(htmlText) {
     const el = document.getElementById('adminGateMsg');
     if(!el) return;
     if(!htmlText) { el.style.display='none'; el.innerHTML=''; }
@@ -1347,7 +1322,7 @@ function adminSetGateMessage(htmlText) {
 
   // When not authorised, we still allow clicking tabs, but we prevent showing the private content.
   // __adminAccessGranted is declared earlier (var) to avoid TDZ issues
-  let __adminAccessGranted = !!window.ANW_PUBLIC_MODE;
+  __adminAccessGranted = false;
   // ADMIN_GLOBAL_CLICK_BLOCKER: stop tabs from opening when gate is not granted
   try {
     document.addEventListener('click', (e) => {
@@ -1450,12 +1425,18 @@ async function runAdminGate() {
   const identityUser = await adminEnsureIdentityReady();
 
   adminDisableAll();
+
   // Internal gate flag used by click blockers
+  var __adminAccessGranted = false;
+
+
   // Temporary public mode: enable all admin tabs/features for UI/layout work.
-  if (window.ANW_PUBLIC_MODE) {
+  if(window.ANW_PUBLIC_MODE){
+    
     __adminAccessGranted = true;
-    adminSetGateMessage('');
-    adminEnableTabs();
+adminSetGateMessage('');
+  __adminAccessGranted = true;
+  adminEnableTabs();
     adminApplyRoleVisibility('owner');
     return;
   }
@@ -4438,5 +4419,6 @@ renderResidents();
 })();
 </script>
 
-  </body>
+  <script src="assets/acl-guard.js"></script>
+</body>
 </html>
