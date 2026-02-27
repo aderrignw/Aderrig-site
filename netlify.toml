@@ -1,4 +1,20 @@
+[build]
+  publish = "."
+  command = "npm ci"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[functions."backup-scheduled"]
+  schedule = "0 */6 * * *"
+
+# Ensure /login works (Identity invites use redirect=/login)
 [[redirects]]
   from = "/login"
   to = "/login.html"
-  status = 200
+  status = 301
+  force = true
