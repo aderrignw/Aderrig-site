@@ -569,9 +569,7 @@ const volMeetings    = document.getElementById('volMeetings');
     try{ await anwInitStore(); } catch {}
 
     const users = anwLoad(KEY_USERS, []);
-    const me = Array.isArray(users)
-      ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase())
-      : (users && users.me ? users.me : null);
+    const me = Array.isArray(users) ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase()) : null;
 
     const status = (me && me.status ? me.status : 'pending').toLowerCase();
     const statusLabel =
@@ -646,12 +644,13 @@ const volMeetings    = document.getElementById('volMeetings');
 
         // now we have a token, load store and validate eircode + approval
         await anwInitStore();
-        const users = await anwSyncFromServer(KEY_USERS).catch(()=> anwLoad(KEY_USERS, null));
+        const users = anwLoad(KEY_USERS, []);
+        // store.js returns full array for admins, or { me } for residents
         const me = Array.isArray(users)
           ? users.find(x => (x.email||'').toLowerCase() === email)
           : (users && users.me ? users.me : null);
 
-if(!me){
+        if(!me){
           try{ window.netlifyIdentity.logout(); } catch {}
           setMsg(loginMsg, 'Your profile is not registered. Please create an account first.', 'error');
           toast('Profile not found. Please register.', 'error');
@@ -825,7 +824,7 @@ if(!me){
   })();
 
   // ---------- REGISTER (Netlify Identity + KV profile) ----------
-// (Netlify Identity + KV profile) ----------
+  // ---------- REGISTER (Netlify Identity + KV profile) ----------
   if(btnRegister){
     btnRegister.addEventListener('click', async () => {
       setMsg(regMsg, '', '');
@@ -897,11 +896,80 @@ if(!me){
         await window.netlifyIdentity.gotrue.login(email, pass, true);
 
         await anwInitStore();
+        let users = anwLoad(KEY_USERS, []);
+        if(!Array.isArray(users)) users = [];
 
-        // Server-side self registration (append-only)
-        await anwSelfRegister(newUser);
+        if (users.some(x => (x.email||'').toLowerCase() === email)) {
+          toast('Email already registered.', 'error');
+          modal('This email is already registered.', 'Duplicate');
+          try{ window.netlifyIdentity.logout(); } catch {}
+          return;
+        }
+        if (users.some(x => normalizeEir(x.eircode||'') === eir)) {
+          toast('Eircode already registered.', 'error');
+          modal('This Eircode is already registered. Only one account per residence is allowed.', 'Duplicate');
+          try{ window.netlifyIdentity.logout(); } catch {}
+          return;
+        }
 
-try{ window.netlifyIdentity.logout(); } catch {}
+        const newUser = {
+          name: name,
+          email: email,
+          eircode: eir,
+          address: address,
+          phone: phone,
+
+          termsAcceptedAt: nowIso,
+          termsAccepted: true,
+
+          alertsConsent: {
+            optIn: optInAlerts,
+            updatedAt: nowIso,
+            history: [ { at: nowIso, optIn: optInAlerts, source: 'register' } ]
+          },
+
+          type: type,
+          residentType: type,
+
+          managementCompany: mgmt,
+
+          coordinator: coord,
+          isCoordinator: coord,
+
+          volunteer: volunteerMaster,
+          isVolunteer: volunteerMaster,
+
+          vol_roles: vr,
+
+          status: 'pending',
+          createdAt: nowIso,
+          regDate: nowIso
+        };
+
+        users.push(newUser);
+        await anwSave(KEY_USERS, users);
+
+        // Persist to server (append only this user) so Admin can see and approve
+        try{
+          const cu = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
+          const token = cu && (await cu.jwt());
+          if(token){
+            const resp = await fetch('/.netlify/functions/store', {
+              method: 'POST',
+              headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
+              body: JSON.stringify({ key: KEY_USERS, action: 'append_me', value: newUser })
+            });
+            const data = await resp.json().catch(()=> ({}));
+            if(!resp.ok || data.ok === false){
+              throw new Error(data.error || data.message || ('Server save failed ('+resp.status+')'));
+            }
+          }
+        }catch(e){
+          // Do not block UX; admin can still approve once record syncs, but surface a warning.
+          console.warn('Could not save profile to server:', e);
+        }
+
+        try{ window.netlifyIdentity.logout(); } catch {}
 
         setMsg(regMsg, 'Account created! Your registration is pending admin approval.', 'ok');
         toast('Account created. Pending approval.', 'success');
