@@ -1,6 +1,8 @@
 /* netlify/functions/store.js
-   Fixed: Explicit Netlify Blobs credentials (NETLIFY_BLOBS_SITE_ID / NETLIFY_BLOBS_TOKEN)
-   and robust Identity detection.
+   Robust Netlify Blobs init:
+   - Works whether @netlify/blobs expects (name, opts) OR ({ name, siteID, token }) style.
+   - Uses explicit NETLIFY_BLOBS_SITE_ID / NETLIFY_BLOBS_TOKEN to avoid MissingBlobsEnvironmentError.
+   - Includes safe env debug endpoint: ?key=__env
 */
 const { getStore } = require("@netlify/blobs");
 
@@ -25,18 +27,9 @@ function isMasterEmail(email) {
   return !!master && normEmail(email) === master;
 }
 
-/**
- * IMPORTANT:
- * Some Netlify environments do NOT auto-configure @netlify/blobs for Functions runtime.
- * In that case you MUST pass siteID + token manually.
- */
-function getCentralStore(context) {
-  const fixed = String(process.env.CENTRAL_STORE_NAME || "").trim();
-  const storeName = fixed || (context?.site?.id ? `kv_${context.site.id}` : "kv_default");
-
+function getBlobsCreds() {
   const siteID = String(process.env.NETLIFY_BLOBS_SITE_ID || "").trim();
   const token = String(process.env.NETLIFY_BLOBS_TOKEN || "").trim();
-
   if (!siteID || !token) {
     const missing = [
       !siteID ? "NETLIFY_BLOBS_SITE_ID" : null,
@@ -48,14 +41,59 @@ function getCentralStore(context) {
       )}. Check Environment variables scopes: Functions + Runtime (Production).`
     );
   }
+  return { siteID, token };
+}
 
-  // Be defensive about option key casing across versions
-  const opts = { siteID, siteId: siteID, token };
-  return getStore(storeName, opts);
+/**
+ * Some versions of @netlify/blobs support:
+ *   getStore(name, { siteID, token })
+ * Others support:
+ *   getStore({ name, siteID, token })
+ * This helper tries both + handles siteId casing.
+ */
+function createStore(storeName) {
+  const { siteID, token } = getBlobsCreds();
+
+  const optsVariants = [
+    { siteID, token },
+    { siteId: siteID, token },
+    { siteID, siteId: siteID, token },
+  ];
+
+  // 1) try (name, opts)
+  for (const opts of optsVariants) {
+    try {
+      return getStore(storeName, opts);
+    } catch (e) {
+      const msg = String(e && e.message ? e.message : e);
+      if (!msg.includes("MissingBlobsEnvironmentError")) throw e;
+    }
+  }
+
+  // 2) try ({ name, ...opts })
+  for (const opts of optsVariants) {
+    try {
+      return getStore({ name: storeName, ...opts });
+    } catch (e) {
+      const msg = String(e && e.message ? e.message : e);
+      if (!msg.includes("MissingBlobsEnvironmentError")) throw e;
+    }
+  }
+
+  // If we got here, surface the original error clearly
+  throw new Error(
+    "MissingBlobsEnvironmentError: unable to initialize Netlify Blobs store even though credentials are present. " +
+      "This usually means the installed @netlify/blobs package expects a different initialization signature."
+  );
+}
+
+function getCentralStore(context) {
+  const fixed = String(process.env.CENTRAL_STORE_NAME || "").trim();
+  const storeName = fixed || (context?.site?.id ? `kv_${context.site.id}` : "kv_default");
+  return createStore(storeName);
 }
 
 async function getIdentityUser(event, context) {
-  // Preferred: Netlify injects this when a valid JWT is provided.
   const ctxUser = context?.clientContext?.user;
   if (ctxUser?.email) return ctxUser;
 
@@ -90,7 +128,7 @@ exports.handler = async (event, context) => {
     const key = String(event.queryStringParameters?.key || "").trim();
     if (!key) return json(400, { ok: false, error: "Missing key" });
 
-    // Debug helper: /store?key=__env (safe: only booleans)
+    // Safe debug endpoint (only booleans)
     if (event.httpMethod === "GET" && key === "__env") {
       return json(200, {
         ok: true,
