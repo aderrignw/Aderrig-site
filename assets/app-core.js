@@ -109,20 +109,12 @@ function anwGetLoggedRole() {
 // ---------------------------
 // Server sync (Netlify Function) with TTL cache
 // ---------------------------
-async async function anwGetIdentityToken() {
+async function anwGetIdentityToken() {
   try {
-    const u = (window.netlifyIdentity && window.netlifyIdentity.currentUser) ? window.netlifyIdentity.currentUser() : null;
-    if (!u) return null;
-
-    if (typeof u.jwt === "function") {
-      const t = await u.jwt();
-      return t || null;
-    }
-
-    const t = u.token && (u.token.access_token || u.token.token);
-    return t ? String(t) : null;
-  } catch (e) {
-    console.warn("anwGetIdentityToken failed:", e);
+    const u = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+    if (!u || typeof u.jwt !== "function") return null;
+    return await u.jwt();
+  } catch {
     return null;
   }
 }
@@ -214,3 +206,44 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   anwDisplayLoggedUser();
 });
+
+
+// Export globals (some pages expect these on window)
+window.anwSave = anwSave;
+window.anwLoad = anwLoad;
+window.anwInitStore = anwInitStore;
+window.anwIsLoggedIn = anwIsLoggedIn;
+window.anwGetLoggedEmail = anwGetLoggedEmail;
+window.anwGetLoggedRole = anwGetLoggedRole;
+window.anwLogout = anwLogout;
+
+// Lightweight client-side store facade for legacy calls
+window.anwStore = window.anwStore || {
+  init: anwInitStore,
+  load: anwLoad,
+  save: anwSave
+};
+// Backward-compat typo seen in some builds
+window.anwlntStore = window.anwlntStore || window.anwStore;
+
+async function anwFetchStorePost(key, payload){
+  const token = await anwGetIdentityToken();
+  if (!token) throw new Error("Not authenticated (missing token)");
+  const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    body: JSON.stringify(payload || {})
+  });
+  if (!res.ok){
+    let t = "";
+    try { t = await res.text(); } catch {}
+    throw new Error(`Store POST failed ${res.status} for ${key}${t ? ": " + t : ""}`);
+  }
+  return await res.json();
+}
+window.anwStoreAppendMe = async function(profile){
+  return await anwFetchStorePost(ANW_KEYS.USERS, { action: "append_me", profile: profile || {} });
+};
+window.anwStoreAdminSaveUsers = async function(usersArray){
+  return await anwFetchStorePost(ANW_KEYS.USERS, { action: "admin_save_users", users: usersArray || [] });
+};
