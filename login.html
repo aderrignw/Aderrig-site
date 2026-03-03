@@ -306,8 +306,8 @@
     </div>
   </div>
 </footer>
-<!-- Netlify Identity Widget -->
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script><script src="assets/identity.js"></script><script src="assets/app-core.js"></script>
+
+
 <script>
 (async function () {
   'use strict';
@@ -460,7 +460,19 @@ const volMeetings    = document.getElementById('volMeetings');
   // Force volunteer options closed on load
   if(volBox) volBox.hidden = true;
 
-  // ---------- Volunteer options toggle ----------
+  
+  // Pressing Enter in any login field triggers the Enter button
+  [loginEmail, loginEir, loginPass].forEach((el)=>{
+    if(!el) return;
+    el.addEventListener('keydown', (ev)=>{
+      if(ev.key === 'Enter'){
+        ev.preventDefault();
+        if(btnLogin && !btnLogin.disabled) btnLogin.click();
+      }
+    });
+  });
+
+// ---------- Volunteer options toggle ----------
   function setVolunteerVisible(on){
     if(!volBox) return;
     volBox.hidden = !on;
@@ -515,6 +527,24 @@ const volMeetings    = document.getElementById('volMeetings');
       }
     }catch{}
   }
+
+
+  // ---------- Enter key submits login ----------
+  function wireEnterToLogin(){
+    try{
+      const fields = [loginEmail, loginEir, loginPass];
+      fields.forEach(f=>{
+        if(!f) return;
+        f.addEventListener('keydown', (ev)=>{
+          if(ev.key === 'Enter'){
+            ev.preventDefault();
+            if(btnLogin && !btnLogin.disabled) btnLogin.click();
+          }
+        });
+      });
+    }catch(_){}
+  }
+  wireEnterToLogin();
 
   // ---------- Show/Hide password ----------
   if(btnShow){
@@ -822,8 +852,7 @@ const volMeetings    = document.getElementById('volMeetings');
     }catch(_){}
   })();
 
-  // ---------- REGISTER // (Netlify Identity + KV profile) ----------
- // (Netlify Identity + KV profile) ----------
+  // ---------- REGISTER (Netlify Identity + KV profile) ----------
   if(btnRegister){
     btnRegister.addEventListener('click', async () => {
       setMsg(regMsg, '', '');
@@ -889,44 +918,64 @@ const volMeetings    = document.getElementById('volMeetings');
         if(!gt || typeof gt.signup !== 'function'){
           throw new Error('Netlify Identity not ready (gotrue.signup missing)');
         }
-                // Try to sign up. If the user already exists (e.g. invited), continue with login.
-        try {
-          await gt.signup(email, pass, { full_name: name });
-        } catch (eSignup) {
-          const msg = String(eSignup && (eSignup.message || eSignup.error || (eSignup.json && (eSignup.json.error_description || eSignup.json.error))) || eSignup || "");
-          const already = /already\s+registered|already\s+exists|registered/i.test(msg);
-          if (!already) throw eSignup;
-        }
-
+        await gt.signup(email, pass, { full_name: name });
         await new Promise((resolve,reject)=>{ if(window.__ensureIdentityReady) return window.__ensureIdentityReady(err=>err?reject(err):resolve()); try{ window.netlifyIdentity.init(); }catch{} return (window.netlifyIdentity?.gotrue?.login)?resolve():reject(new Error('Netlify Identity not ready')); });
 
-        // Log in (needed to obtain JWT for store)
         await window.netlifyIdentity.gotrue.login(email, pass, true);
 
-        // Save profile to server (anw_users) as append_me
         await anwInitStore();
-        const uJwtUser = window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-        const token = (uJwtUser && typeof uJwtUser.jwt === 'function') ? await uJwtUser.jwt() : null;
-        if(!token) throw new Error('Missing identity token (cannot save registration)');
+        let users = anwLoad(KEY_USERS, []);
+        if(!Array.isArray(users)) users = [];
 
-        const resSave = await fetch('/.netlify/functions/store', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify({ key: KEY_USERS, action: 'append_me', value: newUser })
-        });
-
-        if(!resSave.ok){
-          let t=''; try{ t = await resSave.text(); }catch{}
-          if(resSave.status !== 409){
-            throw new Error('Server registration save failed ' + resSave.status + (t?(': '+t):''));
-          }
+        if (users.some(x => (x.email||'').toLowerCase() === email)) {
+          toast('Email already registered.', 'error');
+          modal('This email is already registered.', 'Duplicate');
+          try{ window.netlifyIdentity.logout(); } catch {}
+          return;
+        }
+        if (users.some(x => normalizeEir(x.eircode||'') === eir)) {
+          toast('Eircode already registered.', 'error');
+          modal('This Eircode is already registered. Only one account per residence is allowed.', 'Duplicate');
+          try{ window.netlifyIdentity.logout(); } catch {}
+          return;
         }
 
-        try{ await window.anwSyncFromServer([KEY_USERS], 0); }catch{}
+        const newUser = {
+          name: name,
+          email: email,
+          eircode: eir,
+          address: address,
+          phone: phone,
 
+          termsAcceptedAt: nowIso,
+          termsAccepted: true,
+
+          alertsConsent: {
+            optIn: optInAlerts,
+            updatedAt: nowIso,
+            history: [ { at: nowIso, optIn: optInAlerts, source: 'register' } ]
+          },
+
+          type: type,
+          residentType: type,
+
+          managementCompany: mgmt,
+
+          coordinator: coord,
+          isCoordinator: coord,
+
+          volunteer: volunteerMaster,
+          isVolunteer: volunteerMaster,
+
+          vol_roles: vr,
+
+          status: 'pending',
+          createdAt: nowIso,
+          regDate: nowIso
+        };
+
+        users.push(newUser);
+        await anwSave(KEY_USERS, users);
 
         try{ window.netlifyIdentity.logout(); } catch {}
 
@@ -1019,6 +1068,14 @@ if(btnCancelReset && resetBlock){
 
 })();
 </script>
+
+
+<!-- Netlify Identity Widget -->
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+<!-- IMPORTANT: app-core must load before acl-guard and before page inline scripts that call anwInitStore -->
+<script src="assets/app-core.js"></script>
 <script src="assets/acl-guard.js"></script>
+
 </body>
 </html>
