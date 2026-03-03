@@ -1,3 +1,7 @@
+/* netlify/functions/store.js
+   Fixed: Explicit Netlify Blobs credentials (NETLIFY_BLOBS_SITE_ID / NETLIFY_BLOBS_TOKEN)
+   and robust Identity detection.
+*/
 const { getStore } = require("@netlify/blobs");
 
 function json(statusCode, body, extraHeaders = {}) {
@@ -22,52 +26,52 @@ function isMasterEmail(email) {
 }
 
 /**
- * Use an explicit siteID/token so the function works even when the runtime
- * doesn't auto-configure Netlify Blobs (prevents MissingBlobsEnvironmentError).
+ * IMPORTANT:
+ * Some Netlify environments do NOT auto-configure @netlify/blobs for Functions runtime.
+ * In that case you MUST pass siteID + token manually.
  */
-function makeStore(context) {
-  const siteID = String(process.env.NETLIFY_BLOBS_SITE_ID || process.env.NETLIFY_SITE_ID || "").trim();
-  const token = String(process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN || "").trim();
+function getCentralStore(context) {
+  const fixed = String(process.env.CENTRAL_STORE_NAME || "").trim();
+  const storeName = fixed || (context?.site?.id ? `kv_${context.site.id}` : "kv_default");
+
+  const siteID = String(process.env.NETLIFY_BLOBS_SITE_ID || "").trim();
+  const token = String(process.env.NETLIFY_BLOBS_TOKEN || "").trim();
 
   if (!siteID || !token) {
+    const missing = [
+      !siteID ? "NETLIFY_BLOBS_SITE_ID" : null,
+      !token ? "NETLIFY_BLOBS_TOKEN" : null,
+    ].filter(Boolean);
     throw new Error(
-      "Missing NETLIFY_BLOBS_SITE_ID/NETLIFY_BLOBS_TOKEN env vars. Add them to Netlify (Functions/Runtime scope)."
+      `Missing Netlify Blobs credentials in function runtime: ${missing.join(
+        ", "
+      )}. Check Environment variables scopes: Functions + Runtime (Production).`
     );
   }
 
-  const fixed = String(process.env.CENTRAL_STORE_NAME || "").trim();
-  const storeName =
-    fixed ||
-    (context && context.site && context.site.id ? `kv_${context.site.id}` : `kv_${siteID}`);
-
-  return getStore(storeName, { siteID, token });
+  // Be defensive about option key casing across versions
+  const opts = { siteID, siteId: siteID, token };
+  return getStore(storeName, opts);
 }
 
-function getAuthHeader(event) {
-  return (
-    (event.headers && (event.headers.authorization || event.headers.Authorization)) ||
-    ""
-  );
-}
-
-/**
- * Prefer Netlify-injected Identity context (fast + reliable).
- * Fallback: call GoTrue endpoint using an ABSOLUTE URL (Node fetch requires absolute).
- */
 async function getIdentityUser(event, context) {
-  const ctxUser = context && context.clientContext && context.clientContext.user;
-  if (ctxUser && ctxUser.email) return ctxUser;
+  // Preferred: Netlify injects this when a valid JWT is provided.
+  const ctxUser = context?.clientContext?.user;
+  if (ctxUser?.email) return ctxUser;
 
-  const auth = getAuthHeader(event);
+  const auth = event.headers?.authorization || event.headers?.Authorization || "";
   if (!auth.toLowerCase().startsWith("bearer ")) return null;
+
   const token = auth.slice(7).trim();
   if (!token) return null;
 
-  const proto = String(event.headers?.["x-forwarded-proto"] || event.headers?.["X-Forwarded-Proto"] || "https")
-    .split(",")[0]
-    .trim();
+  const proto =
+    String(event.headers?.["x-forwarded-proto"] || event.headers?.["X-Forwarded-Proto"] || "https")
+      .split(",")[0]
+      .trim();
   const host = event.headers?.host || event.headers?.Host || "";
-  const base = String(process.env.URL || process.env.DEPLOY_PRIME_URL || (host ? `${proto}://${host}` : "")).trim();
+  const base =
+    String(process.env.URL || process.env.DEPLOY_PRIME_URL || (host ? `${proto}://${host}` : "")).trim();
   if (!base) return null;
 
   try {
@@ -83,12 +87,23 @@ async function getIdentityUser(event, context) {
 
 exports.handler = async (event, context) => {
   try {
-    const key = event.queryStringParameters?.key ? String(event.queryStringParameters.key) : "";
+    const key = String(event.queryStringParameters?.key || "").trim();
     if (!key) return json(400, { ok: false, error: "Missing key" });
 
-    const store = makeStore(context);
+    // Debug helper: /store?key=__env (safe: only booleans)
+    if (event.httpMethod === "GET" && key === "__env") {
+      return json(200, {
+        ok: true,
+        has_NETLIFY_BLOBS_SITE_ID: !!String(process.env.NETLIFY_BLOBS_SITE_ID || "").trim(),
+        has_NETLIFY_BLOBS_TOKEN: !!String(process.env.NETLIFY_BLOBS_TOKEN || "").trim(),
+        CENTRAL_STORE_NAME: String(process.env.CENTRAL_STORE_NAME || "").trim() || null,
+      });
+    }
+
+    const store = getCentralStore(context);
+
     const user = await getIdentityUser(event, context);
-    const email = user && user.email ? normEmail(user.email) : "";
+    const email = user?.email ? normEmail(user.email) : "";
     const master = isMasterEmail(email);
 
     async function loadValue(defaultVal) {
@@ -96,20 +111,18 @@ exports.handler = async (event, context) => {
       return v == null ? defaultVal : v;
     }
 
-    // GET
     if (event.httpMethod === "GET") {
       const data = await loadValue(key === "anw_users" ? [] : {});
       if (key === "anw_users") {
         if (master) return json(200, Array.isArray(data) ? data : []);
         if (!email) return json(401, { ok: false, error: "Not authenticated" });
         const arr = Array.isArray(data) ? data : [];
-        const me = arr.find((u) => normEmail(u && u.email) === email) || null;
+        const me = arr.find((u) => normEmail(u?.email) === email) || null;
         return json(200, { me });
       }
       return json(200, data);
     }
 
-    // POST
     if (event.httpMethod === "POST") {
       let body = {};
       try {
@@ -137,16 +150,13 @@ exports.handler = async (event, context) => {
             email,
             status: profile.status || (master ? "active" : "pending"),
             role: profile.role || (master ? "owner" : "resident"),
+            createdAt: profile.createdAt || now,
             updatedAt: now,
           };
 
-          const idx = arr.findIndex((u) => normEmail(u && u.email) === email);
-          if (idx >= 0) {
-            // Update existing record (prevents being stuck as pending)
-            arr[idx] = { ...arr[idx], ...record };
-          } else {
-            arr.push({ ...record, createdAt: profile.createdAt || now });
-          }
+          const idx = arr.findIndex((u) => normEmail(u?.email) === email);
+          if (idx >= 0) arr[idx] = { ...arr[idx], ...record };
+          else arr.push(record);
 
           await store.set(key, arr, { type: "json" });
           return json(200, { ok: true, me: record });
@@ -162,7 +172,6 @@ exports.handler = async (event, context) => {
         return json(400, { ok: false, error: "Unknown action" });
       }
 
-      // Other keys: master-only writes
       if (!master) return json(403, { ok: false, error: "Admin only" });
       await store.set(key, body.value ?? body, { type: "json" });
       return json(200, { ok: true });
