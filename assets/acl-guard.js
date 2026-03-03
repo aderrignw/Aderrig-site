@@ -80,7 +80,7 @@
   }
 
   function enforcePage(role, acl) {
-    if (isPublicMode()) return;
+    if(isPublicMode()) return;
     const key = getPageKey();
     const rule = key && acl ? acl[key] : "Public";
     const r = classify(rule);
