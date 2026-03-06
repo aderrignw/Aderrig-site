@@ -1266,9 +1266,13 @@ Bin schedule | https://..."></textarea>
 
 
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/app-core.js"></script>
+<script src="assets/acl-guard.js"></script>
 <script>
 (async function(){
-  await anwInitStore();
+  if (typeof window.anwInitStore === "function") {
+    try { await window.anwInitStore(); } catch(e) {}
+  }
   'use strict';
 
   const KEY_USERS = ANW_KEYS.USERS;
@@ -1277,7 +1281,7 @@ Bin schedule | https://..."></textarea>
   const KEY_INCIDENTS = ANW_KEYS.INCIDENTS;
   const KEY_TASKS = ANW_KEYS.TASKS;
   const KEY_NOTICES = ANW_KEYS.NOTICES || 'anw_notices';
-  const KEY_HANDBOOK = ANW_KEYS.HANDBOOK || "anw_handbook";
+  const KEY_HANDBOOK = (window.ANW_KEYS && window.ANW_KEYS.HANDBOOK) ? window.ANW_KEYS.HANDBOOK : "anw_handbook";
 
 
   const KEY_PROJECTS = ANW_KEYS.PROJECTS;
@@ -1285,7 +1289,7 @@ Bin schedule | https://..."></textarea>
 
 
   function loadUsers(){ return anwLoad(KEY_USERS, []); }
-  function saveUsers(list){ anwSave(KEY_USERS, list); }
+  async function saveUsers(list){ return await anwSave(KEY_USERS, list); }
   function loadElections(){ return anwLoad(KEY_ELECTIONS, []); }
   function saveElections(list){ anwSave(KEY_ELECTIONS, list); }
   function loadVotes(){ return anwLoad(KEY_VOTES, {}); }
@@ -1531,7 +1535,7 @@ setTimeout(runAdminGate, 0);
     renderResidents();
   }
   resBtns.forEach(b => b.addEventListener('click', ()=> showResSub(b.dataset.subtab)));
-  window.__resFilter = 'subPending';
+  window.__resFilter = 'subApproved';
 
   const electBtns = document.querySelectorAll('.elect-tab');
   const electPanels = document.querySelectorAll('.elect-subtab');
@@ -4446,7 +4450,5 @@ renderResidents();
 </script>
 
   
-<script src="assets/app-core.js"></script>
-<script src="assets/acl-guard.js"></script>
 </body>
 </html>
