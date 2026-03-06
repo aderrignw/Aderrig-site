@@ -551,13 +551,14 @@ function setActive(which) {
       return;
     }
     const user = await ensureIdentityUser();
-    if(!user){
+    const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function' ? String(window.anwGetLoggedEmail()||'') : '').toLowerCase().trim();
+    if(!user && !fallbackEmail){
       hidePanels();
       showNotice('Community Alerts is available to registered members. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to continue.');
       return;
     }
 
-    const profile = await getRegistryProfile(user);
+    const profile = await getRegistryProfile(user || { email: fallbackEmail });
     if(!profile || !isApproved(profile)){
       hidePanels();
       showNotice('Your account is logged in, but you are not registered/approved yet. Please wait for approval.');
