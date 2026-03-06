@@ -430,7 +430,7 @@
 <script>
 (async function(){
   'use strict';
-  await anwInitStore();
+  try { if (typeof window.anwInitStore === 'function') await window.anwInitStore(); } catch(e) { console.warn(e); }
 
   function toast(msg, type){
     try{
@@ -464,12 +464,31 @@
   const KEY_USERS     = ANW_KEYS.USERS;
   const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
 
-  const loggedEmail = anwGetLoggedEmail();
-  const users = anwLoad(KEY_USERS, []);
-  const me = Array.isArray(users)
-    ? users.find(u => anwNormEmail(u.email) === anwNormEmail(loggedEmail))
-    : null;
+  async function ensureIdentityUser(){
+    if(!window.netlifyIdentity) return null;
+    return await new Promise((resolve)=>{
+      let done = false;
+      const finish = (u)=>{ if(done) return; done = true; resolve(u || null); };
+      try{
+        window.netlifyIdentity.on('init', finish);
+        window.netlifyIdentity.init();
+      }catch(e){}
+      setTimeout(()=>{
+        try{
+          const u = (typeof window.netlifyIdentity.currentUser === 'function') ? window.netlifyIdentity.currentUser() : null;
+          finish(u);
+        }catch(e){ finish(null); }
+      }, 500);
+    });
+  }
 
+  const identityUser = await ensureIdentityUser();
+  const resolvedEmail = ((identityUser && identityUser.email) || (typeof anwGetLoggedEmail === 'function' ? anwGetLoggedEmail() : '') || '').trim();
+  let users = anwLoad(KEY_USERS, []);
+  if(!Array.isArray(users)) users = [];
+  let me = resolvedEmail ? users.find(u => anwNormEmail(u.email) === anwNormEmail(resolvedEmail)) : null;
+
+  const loggedEmail = resolvedEmail;
   const notLoggedBox = document.getElementById('dbNotLogged');
   const profileArea = document.getElementById('dbProfileArea');
 
@@ -1212,7 +1231,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   const user = await ensureIdentityUser();
-  if(!window.ANW_PUBLIC_MODE && !user){
+  const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function' ? String(window.anwGetLoggedEmail()||'') : '').toLowerCase().trim();
+  if(!window.ANW_PUBLIC_MODE && !user && !fallbackEmail){
     showNotice('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access your dashboard.');
     return;
   }
@@ -1224,10 +1244,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try{
     const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
-    const email = user.email?.toLowerCase();
-    const profile = users.find(u => u.email?.toLowerCase() === email);
+    const email = String((user && user.email) || fallbackEmail || '').toLowerCase().trim();
+    const profile = Array.isArray(users) ? users.find(u => String(u.email||'').toLowerCase().trim() === email) : null;
+    const status = String(profile?.status || profile?.accountStatus || '').toLowerCase();
+    const approved = !!(profile && ((profile.approved === true) || (profile.active === true) || status === 'active' || status === 'approved'));
 
-    if(!profile || !(profile.approved || profile.active)){
+    if(!profile){
+      showNotice('Your account is logged in, but your resident profile was not found yet.');
+      return;
+    }
+    if(!approved){
       showNotice('Your account is logged in but not yet approved. Please wait for approval.');
       return;
     }
