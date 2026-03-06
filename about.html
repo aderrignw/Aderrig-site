@@ -274,9 +274,8 @@ main p {
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script><script src="assets/identity.js"></script><script src="assets/app-core.js"></script>
 <script>
     (async function () {
-  try {
-    await anwInitStore();
-// Tab switching between About and Team
+  try { if (typeof window.anwInitStore === 'function') await window.anwInitStore(); } catch(e) { console.warn(e); }
+      // Tab switching between About and Team
       const aboutTab = document.getElementById('tabAbout');
       const teamTab = document.getElementById('tabTeam');
       const btnAbout = document.getElementById('btnTabAbout');
@@ -307,7 +306,8 @@ main p {
       if (btnAbout && btnTeam) {
         btnAbout.addEventListener('click', showAbout);
         btnTeam.addEventListener('click', showTeam);
-        setActive(btnAbout); // initial state
+        if ((window.location.hash || '').toLowerCase() === '#team') showTeam();
+        else showAbout();
       }
     })();
 
@@ -998,8 +998,7 @@ main p {
       // Render on load
       renderTeamTable();
 
-    } catch (e) { console.error('about init failed', e); }
-})();;
+    })();
   </script>
 <footer class="site-footer">
   <div class="footer-row">
