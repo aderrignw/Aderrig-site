@@ -338,18 +338,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   const user = await ensureIdentityUser();
+  const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function' ? String(window.anwGetLoggedEmail()||'') : '').toLowerCase().trim();
   if(window.ANW_PUBLIC_MODE){
     // Temporary public mode: show everything, no gating.
     showProtected();
     hideNotice();
   } else {
-    if(!user){
+    if(!user && !fallbackEmail){
       hideProtected();
       showNotice('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to view the incidents map.');
       return;
     }
 
-    const profile = await getRegistryProfile(user);
+    const profile = await getRegistryProfile(user || { email: fallbackEmail });
     if(!profile){
       hideProtected();
       showNotice('Your account is logged in, but you are not registered/approved yet. Please wait for approval.');
