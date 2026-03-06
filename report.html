@@ -260,7 +260,8 @@
 // --- PRIVATE PAGE gate: must be logged in + registered + approved ---
   const returnTo = location.pathname + location.search + location.hash;
   const user = await anwEnsureIdentityUser();
-  if(!window.ANW_PUBLIC_MODE && !user){
+  const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function' ? String(window.anwGetLoggedEmail()||'') : '').toLowerCase().trim();
+  if(!window.ANW_PUBLIC_MODE && !user && !fallbackEmail){
     try { sessionStorage.setItem('anw_return_to', returnTo); } catch(_) {}
     anwShowAccessOverlay(
       'This page is private. Please log in to continue.',
@@ -426,9 +427,9 @@
   }
 
   // ---------------- Prefill from session/user ----------------
-  const loggedEmail = anwGetLoggedEmail();
+  const loggedEmail = (((user && user.email) || (typeof anwGetLoggedEmail === 'function' ? anwGetLoggedEmail() : '') || '')).toLowerCase().trim();
   const users = loadUsers();
-  const me = users.find(u => anwNormEmail(u.email) === loggedEmail) || null;
+  const me = users.find(u => anwNormEmail(u.email) === anwNormEmail(loggedEmail)) || null;
 
   // Registry / approval enforcement (no auto-redirect)
   if(!me){
