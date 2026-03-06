@@ -75,6 +75,8 @@
   .msg.error{ color:#b02a37; }
 
 #resetBlock[hidden]{display:none !important;}
+  .notice{margin:10px 0;padding:12px 14px;border-radius:12px;border:1px solid rgba(31,122,79,.18);background:rgba(31,122,79,.06);color:#163224}
+  .notice strong{color:#1f7a4f}
 </style>
 <style id="page-access-style">
   footer.site-footer { position: relative; }
@@ -123,6 +125,12 @@
 })();
 </script>
 
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+<script src="assets/app-core.js"></script>
+<script src="assets/acl-guard.js"></script>
+
 </head>
 <body class="page-login">
 <header class="site-header">
@@ -152,6 +160,7 @@
 <section class="card" id="login">
 <h2>Login</h2>
 <p class="muted" id="loggedBanner" style="margin-bottom:0.75rem; display:none;"></p>
+<div id="loginAccountBox" class="notice" style="display:none; margin-bottom:0.75rem;"></div>
 <div class="field">
 <label>Email</label>
 <input autocomplete="email" id="loginEmail" type="email"/>
@@ -359,47 +368,6 @@
     return /^\+\d+$/.test(p);
   }
 
-  // ---------- Server store helpers (Netlify Function) ----------
-  async function storeGet(key, fallback){
-    const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), {
-      method: 'GET',
-      cache: 'no-store',
-      headers: { 'Accept': 'application/json' }
-    });
-    const text = await res.text();
-    let data = fallback;
-    try { data = JSON.parse(text); } catch(_) {}
-    if(!res.ok){
-      throw new Error((data && data.error) || ('Store GET failed (' + res.status + ')'));
-    }
-    return (data == null ? fallback : data);
-  }
-  async function storeSet(key, value){
-    const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), {
-      method: 'POST',
-      cache: 'no-store',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(value)
-    });
-    const text = await res.text();
-    let data = {};
-    try { data = JSON.parse(text); } catch(_) {}
-    if(!res.ok || (data && data.ok === false)){
-      throw new Error((data && data.error) || ('Store POST failed (' + res.status + ')'));
-    }
-    return data;
-  }
-  async function getUsers(){
-    const data = await storeGet(KEY_USERS, []);
-    return Array.isArray(data) ? data : [];
-  }
-  async function saveUsers(users){
-    return await storeSet(KEY_USERS, Array.isArray(users) ? users : []);
-  }
-  function getMasterEmail(){
-    return String((window.ANW_MASTER_EMAIL || '')).trim().toLowerCase();
-  }
-
   function attemptKey(email, eir){
     const e = (email || '').trim().toLowerCase();
     const r = normalizeEir(eir || '');
@@ -446,7 +414,40 @@
   // DOM
   const registerSection = document.getElementById('register');
   const loggedBanner    = document.getElementById('loggedBanner');
+  const loginAccountBox = document.getElementById('loginAccountBox');
   const btnLogout       = document.getElementById('btnLogout');
+  const loginCard       = document.getElementById('login');
+
+  function toggleLoggedInView(isLoggedIn){
+    try{
+      const hideIds = ['btnLogin','btnShow','lnkForgot'];
+      hideIds.forEach(id=>{
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.style.display = isLoggedIn ? 'none' : '';
+      });
+      const reset = document.getElementById('resetBlock');
+      if(reset && isLoggedIn) reset.hidden = true;
+      ['loginEmail','loginEir','loginPass'].forEach(id=>{
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.disabled = !!isLoggedIn;
+      });
+      const loginHeading = loginCard ? loginCard.querySelector('h2') : null;
+      if(loginHeading) loginHeading.textContent = isLoggedIn ? 'Your account' : 'Login';
+    }catch(_){}
+  }
+
+  async function loadUsersDirect(){
+    try{
+      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(KEY_USERS), { cache:'no-store' });
+      const txt = await res.text();
+      const data = JSON.parse(txt);
+      return Array.isArray(data) ? data : [];
+    }catch(_){
+      return [];
+    }
+  }
 
   const loginEmail = document.getElementById('loginEmail');
   const loginEir   = document.getElementById('loginEir');
@@ -557,8 +558,11 @@ const volMeetings    = document.getElementById('volMeetings');
     if(!email || !eir) return;
 
     try{
-      const users = await getUsers();
-      const u = users.find(x => (x.email||'').toLowerCase() === email && normalizeEir(x.eircode||'') === eir) || null;
+      await anwInitStore();
+      const users = anwLoad(KEY_USERS, []);
+      const u = Array.isArray(users)
+        ? users.find(x => (x.email||'').toLowerCase() === email && normalizeEir(x.eircode||'') === eir)
+        : null;
       if(u && u.address){
         loginAddr.value = u.address;
         loginAddrWrap.style.display = 'block';
@@ -628,36 +632,59 @@ const volMeetings    = document.getElementById('volMeetings');
 
     if (!u || !u.email) {
       if (loggedBanner) loggedBanner.style.display = 'none';
+      if (loginAccountBox) loginAccountBox.style.display = 'none';
       if (btnLogout) btnLogout.style.display = 'none';
       if (registerSection) registerSection.style.display = 'block';
+      toggleLoggedInView(false);
       applySoftLockUI();
       return;
     }
 
-    let users = [];
-    try{ users = await getUsers(); } catch {}
-    const me = users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase()) || null;
+    try{ if(typeof window.anwInitStore === 'function') await window.anwInitStore(); } catch {}
 
-    const status = (me && me.status ? me.status : 'pending').toLowerCase();
+    let users = [];
+    try{
+      users = await loadUsersDirect();
+      if ((!users || !users.length) && typeof window.anwLoad === 'function') {
+        users = anwLoad(KEY_USERS, []);
+      }
+    }catch(_){ users = []; }
+
+    const me = Array.isArray(users)
+      ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase())
+      : null;
+
+    const status = String((me && me.status) ? me.status : 'active').toLowerCase();
+    const role = String((me && me.role) ? me.role : 'resident').toLowerCase();
     const statusLabel =
       status === 'active' ? 'active' :
+      status === 'approved' ? 'approved' :
       status === 'suspended' ? 'blocked' :
+      status === 'blocked' ? 'blocked' :
       'pending approval';
 
     if (loggedBanner) {
       loggedBanner.innerHTML =
-        'You are logged in as <strong>' + (me?.name || u.email) + '</strong>' +
-        (me?.eircode ? (' (Eircode: ' + (me.eircode) + '). ') : '. ') +
-        'Your registration is <strong>' + statusLabel + '</strong>. ' +
-        '<a href="dashboard.html" class="link">Open your dashboard</a>.';
+        'Logged in as <strong>' + (me?.name || u.user_metadata?.full_name || u.email) + '</strong>' +
+        ' · Status: <strong>' + statusLabel + '</strong>' +
+        ' · Role: <strong>' + role + '</strong>.';
       loggedBanner.style.display = 'block';
     }
 
-    if (btnLogout) btnLogout.style.display = 'inline-block';
-
-    if (registerSection) {
-      registerSection.style.display = (status === 'active') ? 'none' : 'block';
+    if (loginAccountBox) {
+      loginAccountBox.innerHTML =
+        '<strong>Name:</strong> ' + (me?.name || u.user_metadata?.full_name || u.email) + '<br>' +
+        '<strong>Email:</strong> ' + (u.email || '') +
+        (me?.eircode ? ('<br><strong>Eircode:</strong> ' + me.eircode) : '') +
+        '<br><strong>Status:</strong> ' + statusLabel +
+        '<br><strong>Role:</strong> ' + role +
+        '<br><a class="link" href="dashboard.html">Open your dashboard</a>';
+      loginAccountBox.style.display = 'block';
     }
+
+    if (btnLogout) btnLogout.style.display = 'inline-block';
+    if (registerSection) registerSection.style.display = 'none';
+    toggleLoggedInView(true);
 
     try{ await updateLoginAddressPreview(); } catch {}
   }
@@ -710,36 +737,17 @@ const volMeetings    = document.getElementById('volMeetings');
         clearAttemptState(email, eir);
 
         // now we have a token, load store and validate eircode + approval
-        let users = await getUsers();
-        let me = users.find(x => (x.email||'').toLowerCase() === email) || null;
+        await anwInitStore();
+        const users = anwLoad(KEY_USERS, []);
+        const me = Array.isArray(users)
+          ? users.find(x => (x.email||'').toLowerCase() === email)
+          : null;
 
         if(!me){
-          const nowIso = new Date().toISOString();
-          const isMaster = !!getMasterEmail() && getMasterEmail() === email;
-          me = {
-            name: (window.netlifyIdentity.currentUser()?.user_metadata?.full_name || email.split('@')[0]),
-            email: email,
-            eircode: eir,
-            address: '',
-            phone: '',
-            termsAcceptedAt: nowIso,
-            termsAccepted: true,
-            alertsConsent: { optIn: true, updatedAt: nowIso, history: [ { at: nowIso, optIn: true, source: 'login-repair' } ] },
-            type: 'owner',
-            residentType: 'owner',
-            managementCompany: '',
-            coordinator: false,
-            isCoordinator: false,
-            volunteer: false,
-            isVolunteer: false,
-            vol_roles: {},
-            status: isMaster ? 'active' : 'pending',
-            role: isMaster ? 'owner' : 'resident',
-            createdAt: nowIso,
-            regDate: nowIso
-          };
-          users.push(me);
-          await saveUsers(users);
+          try{ window.netlifyIdentity.logout(); } catch {}
+          setMsg(loginMsg, 'Your profile is not registered. Please create an account first.', 'error');
+          toast('Profile not found. Please register.', 'error');
+          return;
         }
 
         if(normalizeEir(me.eircode || '') !== eir){
@@ -974,38 +982,27 @@ const volMeetings    = document.getElementById('volMeetings');
         if(!gt || typeof gt.signup !== 'function'){
           throw new Error('Netlify Identity not ready (gotrue.signup missing)');
         }
+        await gt.signup(email, pass, { full_name: name });
+        await new Promise((resolve,reject)=>{ if(window.__ensureIdentityReady) return window.__ensureIdentityReady(err=>err?reject(err):resolve()); try{ window.netlifyIdentity.init(); }catch{} return (window.netlifyIdentity?.gotrue?.login)?resolve():reject(new Error('Netlify Identity not ready')); });
 
-        let signupError = null;
-        try{
-          await gt.signup(email, pass, { full_name: name });
-        }catch(err){
-          signupError = err;
-        }
+        await window.netlifyIdentity.gotrue.login(email, pass, true);
 
-        let users = await getUsers();
+        await anwInitStore();
+        let users = anwLoad(KEY_USERS, []);
+        if(!Array.isArray(users)) users = [];
+
         if (users.some(x => (x.email||'').toLowerCase() === email)) {
-          toast('Email already registered in the site profile list.', 'error');
-          modal('This email already has a site profile. Please log in instead.', 'Duplicate');
+          toast('Email already registered.', 'error');
+          modal('This email is already registered.', 'Duplicate');
+          try{ window.netlifyIdentity.logout(); } catch {}
           return;
         }
         if (users.some(x => normalizeEir(x.eircode||'') === eir)) {
           toast('Eircode already registered.', 'error');
           modal('This Eircode is already registered. Only one account per residence is allowed.', 'Duplicate');
+          try{ window.netlifyIdentity.logout(); } catch {}
           return;
         }
-
-        // If Identity says user already exists, still repair/create the site profile.
-        if(signupError){
-          const em = (signupError && (signupError.message || signupError.error || (signupError.json && (signupError.json.error_description || signupError.json.error))))
-            ? (signupError.message || signupError.error || (signupError.json && (signupError.json.error_description || signupError.json.error)))
-            : String(signupError);
-          if(!/already been registered|already registered|email not confirmed/i.test(em)){
-            throw signupError;
-          }
-        }
-
-        const nowIso = new Date().toISOString();
-        const isMaster = !!getMasterEmail() && getMasterEmail() === email;
 
         const newUser = {
           name: name,
@@ -1013,38 +1010,41 @@ const volMeetings    = document.getElementById('volMeetings');
           eircode: eir,
           address: address,
           phone: phone,
+
           termsAcceptedAt: nowIso,
           termsAccepted: true,
+
           alertsConsent: {
             optIn: optInAlerts,
             updatedAt: nowIso,
             history: [ { at: nowIso, optIn: optInAlerts, source: 'register' } ]
           },
+
           type: type,
           residentType: type,
+
           managementCompany: mgmt,
+
           coordinator: coord,
           isCoordinator: coord,
+
           volunteer: volunteerMaster,
           isVolunteer: volunteerMaster,
+
           vol_roles: vr,
-          status: isMaster ? 'active' : 'pending',
-          role: isMaster ? 'owner' : 'resident',
+
+          status: 'pending',
           createdAt: nowIso,
           regDate: nowIso
         };
 
         users.push(newUser);
-        await saveUsers(users);
+        await anwSave(KEY_USERS, users);
 
-        setMsg(
-          regMsg,
-          isMaster
-            ? 'Account created! You can now log in.'
-            : 'Account created! Check your email if confirmation is required, then wait for admin approval.',
-          'ok'
-        );
-        toast('Account created.', 'success');
+        try{ window.netlifyIdentity.logout(); } catch {}
+
+        setMsg(regMsg, 'Account created! Your registration is pending admin approval.', 'ok');
+        toast('Account created. Pending approval.', 'success');
 
         regName.value = '';
         regEmail.value = '';
@@ -1061,7 +1061,8 @@ const volMeetings    = document.getElementById('volMeetings');
         regAlertOptIn.checked = false;
         setVolunteerVisible(false);
 
-        setTimeout(() => { window.location.href = 'login.html'; }, 1200);
+        setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+
       }catch(e){
         toast('Registration failed.', 'error');
         const em = (e && (e.message || e.error || (e.json && (e.json.error_description || e.json.error))))
@@ -1131,14 +1132,6 @@ if(btnCancelReset && resetBlock){
 
 })();
 </script>
-
-
-<!-- Netlify Identity Widget -->
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script src="assets/identity.js"></script>
-<!-- IMPORTANT: app-core must load before acl-guard and before page inline scripts that call anwInitStore -->
-<script src="assets/app-core.js"></script>
-<script src="assets/acl-guard.js"></script>
 
 </body>
 </html>
