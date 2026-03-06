@@ -323,7 +323,7 @@
 <script>
 (async function(){
   'use strict';
-  await anwInitStore();
+  try { if (typeof window.anwInitStore === 'function') await window.anwInitStore(); } catch(e) { console.warn(e); }
 
   // --- UI helpers (site-style modal/toast) ---
   function anwToast(msg, type) {
@@ -393,7 +393,17 @@
   function loadTasks(){ return anwLoad(KEY_TASKS, []) || []; }
   async function saveTasks(tasks){ await anwSave(KEY_TASKS, tasks || []); }
 
-  function loggedEmail(){ return (anwGetLoggedEmail() || '').trim().toLowerCase(); }
+  function loggedEmail(){
+    try {
+      const a = (typeof anwGetLoggedEmail === 'function') ? String(anwGetLoggedEmail() || '') : '';
+      if(a.trim()) return a.trim().toLowerCase();
+    } catch(e) {}
+    try {
+      const u = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function' ? window.netlifyIdentity.currentUser() : null;
+      if(u && u.email) return String(u.email).trim().toLowerCase();
+    } catch(e) {}
+    return '';
+  }
 
   function getLoggedUser(){
     const em = loggedEmail();
@@ -846,9 +856,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const user = await ensureIdentityUser();
-  if(!user) return;
+  const fallbackEmail = getLoggedEmail();
+  if(!user && !fallbackEmail) return;
 
-  const profile = await getProfile(user);
+  const profile = await getProfile(user || { email: fallbackEmail });
   if(!profile) { setGateState('not_registered'); return; }
 
   const status = String(profile.status || profile.accountStatus || '').toLowerCase();
