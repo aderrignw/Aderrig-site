@@ -1,22 +1,18 @@
 import { getStore } from "@netlify/blobs";
 
-export default async (req, context) => {
+export default async (req) => {
 
   const url = new URL(req.url);
   const key = url.searchParams.get("key");
 
   if (!key) {
-    return new Response(
-      JSON.stringify({ ok: false, error: "missing key" }),
-      { status: 400 }
-    );
+    return new Response(JSON.stringify({ error: "missing key" }), { status: 400 });
   }
 
   const store = getStore("aderrig-nw");
 
   try {
 
-    // ---------- GET ----------
     if (req.method === "GET") {
 
       let raw = await store.get(key);
@@ -27,13 +23,13 @@ export default async (req, context) => {
       }
 
       try {
-        const parsed = JSON.parse(raw);
-        return new Response(JSON.stringify(parsed), {
+        const data = JSON.parse(raw);
+        return new Response(JSON.stringify(data), {
           headers: { "Content-Type": "application/json" }
         });
-      } catch (e) {
 
-        // JSON corrompido -> reparar
+      } catch {
+
         await store.set(key, "[]");
 
         return new Response(JSON.stringify([]), {
@@ -42,7 +38,6 @@ export default async (req, context) => {
       }
     }
 
-    // ---------- POST ----------
     if (req.method === "POST") {
 
       const body = await req.text();
@@ -51,32 +46,22 @@ export default async (req, context) => {
 
       try {
         parsed = JSON.parse(body);
-      } catch (e) {
-        return new Response(
-          JSON.stringify({ ok: false, error: "invalid JSON body" }),
-          { status: 400 }
-        );
+      } catch {
+        return new Response(JSON.stringify({ error: "invalid json" }), { status: 400 });
       }
 
       await store.set(key, JSON.stringify(parsed));
 
-      return new Response(
-        JSON.stringify({ ok: true }),
-        { headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
-    return new Response(
-      JSON.stringify({ ok: false, error: "method not allowed" }),
-      { status: 405 }
-    );
+    return new Response(JSON.stringify({ error: "method not allowed" }), { status: 405 });
 
   } catch (err) {
 
-    return new Response(
-      JSON.stringify({ ok: false, error: err.message }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
 
   }
 };
