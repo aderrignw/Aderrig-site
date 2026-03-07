@@ -86,10 +86,6 @@
   }
 </style>
 
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script src="assets/identity.js"></script>
-<script src="assets/app-core.js"></script>
-<script src="assets/acl-guard.js"></script>
 <script>
 // --- Netlify Identity: make it work reliably on localhost (netlify dev) ---
 (function () {
@@ -156,6 +152,16 @@
 <section class="card" id="login">
 <h2>Login</h2>
 <p class="muted" id="loggedBanner" style="margin-bottom:0.75rem; display:none;"></p>
+<div id="loggedAccountCard" class="card" style="display:none; margin-bottom:1rem; padding:16px;">
+  <h3 style="margin-top:0; margin-bottom:10px;">Your account</h3>
+  <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;">
+    <div><strong>Name:</strong> <span id="accName">—</span></div>
+    <div><strong>Email:</strong> <span id="accEmail">—</span></div>
+    <div><strong>Status:</strong> <span id="accStatus">—</span></div>
+    <div><strong>Role:</strong> <span id="accRole">—</span></div>
+    <div><strong>Eircode:</strong> <span id="accEircode">—</span></div>
+  </div>
+</div>
 <div class="field">
 <label>Email</label>
 <input autocomplete="email" id="loginEmail" type="email"/>
@@ -409,6 +415,12 @@
   // DOM
   const registerSection = document.getElementById('register');
   const loggedBanner    = document.getElementById('loggedBanner');
+  const loggedAccountCard = document.getElementById('loggedAccountCard');
+  const accName = document.getElementById('accName');
+  const accEmail = document.getElementById('accEmail');
+  const accStatus = document.getElementById('accStatus');
+  const accRole = document.getElementById('accRole');
+  const accEircode = document.getElementById('accEircode');
   const btnLogout       = document.getElementById('btnLogout');
 
   const loginEmail = document.getElementById('loginEmail');
@@ -620,10 +632,19 @@ const volMeetings    = document.getElementById('volMeetings');
       loggedBanner.style.display = 'block';
     }
 
+    if (loggedAccountCard) {
+      if (accName) accName.textContent = me?.name || '—';
+      if (accEmail) accEmail.textContent = u.email || '—';
+      if (accStatus) accStatus.textContent = statusLabel;
+      if (accRole) accRole.textContent = me?.role || 'resident';
+      if (accEircode) accEircode.textContent = me?.eircode || '—';
+      loggedAccountCard.style.display = 'block';
+    }
+
     if (btnLogout) btnLogout.style.display = 'inline-block';
 
     if (registerSection) {
-      registerSection.style.display = (status === 'active') ? 'none' : 'block';
+      registerSection.style.display = 'none';
     }
 
     try{ await updateLoginAddressPreview(); } catch {}
@@ -1045,12 +1066,8 @@ if(btnCancelReset && resetBlock){
         return;
       }
       try{
-        // Make sure Identity is initialised before requesting recovery.
-        try{
-          if (typeof window.netlifyIdentity.init === 'function') window.netlifyIdentity.init();
-        }catch(_){}
         await window.netlifyIdentity.requestPasswordRecovery(email);
-        setMsg(resetMsg, 'Reset email sent. Please check your inbox (including Spam/Promotions).', 'ok');
+        setMsg(resetMsg, 'Reset email sent. Please check your inbox.', 'ok');
         toast('Reset email sent.', 'success');
 
         // also update cooldown stamp for this browser (if eircode exists)
@@ -1060,16 +1077,7 @@ if(btnCancelReset && resetBlock){
           setAttemptState(email, eir, { fails: Number(st.fails||0), lockUntil: Number(st.lockUntil||0), lastResetSentAt: Date.now() });
         }
       }catch(e){
-        const errText = String((e && (e.message || e.error || e.error_description)) || '').toLowerCase();
-        let msg = 'Could not send reset email. Please try again.';
-        if(errText.includes('email') && errText.includes('disabled')){
-          msg = 'Password reset email is not enabled in Netlify Identity yet. Please enable Identity email/reset in Netlify settings.';
-        }else if(errText.includes('not found') || errText.includes('no user')){
-          msg = 'This email was not found in the login system.';
-        }else if(errText.includes('confirm')){
-          msg = 'This account needs email confirmation first before password reset can work.';
-        }
-        setMsg(resetMsg, msg, 'error');
+        setMsg(resetMsg, 'Could not send reset email. Please try again.', 'error');
         toast('Reset failed.', 'error');
       }
     });
@@ -1086,6 +1094,13 @@ if(btnCancelReset && resetBlock){
 })();
 </script>
 
+
+<!-- Netlify Identity Widget -->
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+<!-- IMPORTANT: app-core must load before acl-guard and before page inline scripts that call anwInitStore -->
+<script src="assets/app-core.js"></script>
+<script src="assets/acl-guard.js"></script>
 
 </body>
 </html>
