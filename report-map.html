@@ -152,8 +152,13 @@ async function ensureMapsKey(){
   if(GOOGLE_MAPS_API_KEY && !String(GOOGLE_MAPS_API_KEY).includes("{{")) return GOOGLE_MAPS_API_KEY;
   try{
     const res = await fetch('/.netlify/functions/config', { cache: 'no-store' });
-    const data = await res.json();
-    const k = data && data.googleMapsApiKey;
+    const data = await res.json().catch(()=>null);
+    const k = data && (
+      data.googleMapsApiKey ||
+      data.GOOGLE_MAPS_BROWSER_KEY ||
+      data.GOOGLE_MAPS_API_KEY ||
+      data.google_maps_browser_key
+    );
     if(k) GOOGLE_MAPS_API_KEY = k;
   }catch(e){}
   return GOOGLE_MAPS_API_KEY;
@@ -171,7 +176,7 @@ async function loadGoogleMaps() {
     if(el) {
       el.innerHTML = '<div style="padding:28px; text-align:center; color:#6d7680;">' +
         '<strong>Google Maps not configured</strong><br><br>' +
-        'Set <code>GOOGLE_MAPS_BROWSER_KEY</code> in Netlify Environment variables (or configure <code>/.netlify/functions/config</code>) to enable the interactive map.' +
+        'Set <code>GOOGLE_MAPS_BROWSER_KEY</code> in Netlify Environment variables. If you already set it, make sure <code>/.netlify/functions/config</code> returns the key to the browser page.' +
         '</div>';
     }
     return;
