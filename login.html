@@ -75,8 +75,6 @@
   .msg.error{ color:#b02a37; }
 
 #resetBlock[hidden]{display:none !important;}
-  .notice{margin:10px 0;padding:12px 14px;border-radius:12px;border:1px solid rgba(31,122,79,.18);background:rgba(31,122,79,.06);color:#163224}
-  .notice strong{color:#1f7a4f}
 </style>
 <style id="page-access-style">
   footer.site-footer { position: relative; }
@@ -88,6 +86,10 @@
   }
 </style>
 
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+<script src="assets/app-core.js"></script>
+<script src="assets/acl-guard.js"></script>
 <script>
 // --- Netlify Identity: make it work reliably on localhost (netlify dev) ---
 (function () {
@@ -125,12 +127,6 @@
 })();
 </script>
 
-
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script src="assets/identity.js"></script>
-<script src="assets/app-core.js"></script>
-<script src="assets/acl-guard.js"></script>
-
 </head>
 <body class="page-login">
 <header class="site-header">
@@ -160,7 +156,6 @@
 <section class="card" id="login">
 <h2>Login</h2>
 <p class="muted" id="loggedBanner" style="margin-bottom:0.75rem; display:none;"></p>
-<div id="loginAccountBox" class="notice" style="display:none; margin-bottom:0.75rem;"></div>
 <div class="field">
 <label>Email</label>
 <input autocomplete="email" id="loginEmail" type="email"/>
@@ -414,40 +409,7 @@
   // DOM
   const registerSection = document.getElementById('register');
   const loggedBanner    = document.getElementById('loggedBanner');
-  const loginAccountBox = document.getElementById('loginAccountBox');
   const btnLogout       = document.getElementById('btnLogout');
-  const loginCard       = document.getElementById('login');
-
-  function toggleLoggedInView(isLoggedIn){
-    try{
-      const hideIds = ['btnLogin','btnShow','lnkForgot'];
-      hideIds.forEach(id=>{
-        const el = document.getElementById(id);
-        if(!el) return;
-        el.style.display = isLoggedIn ? 'none' : '';
-      });
-      const reset = document.getElementById('resetBlock');
-      if(reset && isLoggedIn) reset.hidden = true;
-      ['loginEmail','loginEir','loginPass'].forEach(id=>{
-        const el = document.getElementById(id);
-        if(!el) return;
-        el.disabled = !!isLoggedIn;
-      });
-      const loginHeading = loginCard ? loginCard.querySelector('h2') : null;
-      if(loginHeading) loginHeading.textContent = isLoggedIn ? 'Your account' : 'Login';
-    }catch(_){}
-  }
-
-  async function loadUsersDirect(){
-    try{
-      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(KEY_USERS), { cache:'no-store' });
-      const txt = await res.text();
-      const data = JSON.parse(txt);
-      return Array.isArray(data) ? data : [];
-    }catch(_){
-      return [];
-    }
-  }
 
   const loginEmail = document.getElementById('loginEmail');
   const loginEir   = document.getElementById('loginEir');
@@ -632,59 +594,37 @@ const volMeetings    = document.getElementById('volMeetings');
 
     if (!u || !u.email) {
       if (loggedBanner) loggedBanner.style.display = 'none';
-      if (loginAccountBox) loginAccountBox.style.display = 'none';
       if (btnLogout) btnLogout.style.display = 'none';
       if (registerSection) registerSection.style.display = 'block';
-      toggleLoggedInView(false);
       applySoftLockUI();
       return;
     }
 
-    try{ if(typeof window.anwInitStore === 'function') await window.anwInitStore(); } catch {}
+    try{ await anwInitStore(); } catch {}
 
-    let users = [];
-    try{
-      users = await loadUsersDirect();
-      if ((!users || !users.length) && typeof window.anwLoad === 'function') {
-        users = anwLoad(KEY_USERS, []);
-      }
-    }catch(_){ users = []; }
+    const users = anwLoad(KEY_USERS, []);
+    const me = Array.isArray(users) ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase()) : null;
 
-    const me = Array.isArray(users)
-      ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase())
-      : null;
-
-    const status = String((me && me.status) ? me.status : 'active').toLowerCase();
-    const role = String((me && me.role) ? me.role : 'resident').toLowerCase();
+    const status = (me && me.status ? me.status : 'pending').toLowerCase();
     const statusLabel =
       status === 'active' ? 'active' :
-      status === 'approved' ? 'approved' :
       status === 'suspended' ? 'blocked' :
-      status === 'blocked' ? 'blocked' :
       'pending approval';
 
     if (loggedBanner) {
       loggedBanner.innerHTML =
-        'Logged in as <strong>' + (me?.name || u.user_metadata?.full_name || u.email) + '</strong>' +
-        ' · Status: <strong>' + statusLabel + '</strong>' +
-        ' · Role: <strong>' + role + '</strong>.';
+        'You are logged in as <strong>' + (me?.name || u.email) + '</strong>' +
+        (me?.eircode ? (' (Eircode: ' + (me.eircode) + '). ') : '. ') +
+        'Your registration is <strong>' + statusLabel + '</strong>. ' +
+        '<a href="dashboard.html" class="link">Open your dashboard</a>.';
       loggedBanner.style.display = 'block';
     }
 
-    if (loginAccountBox) {
-      loginAccountBox.innerHTML =
-        '<strong>Name:</strong> ' + (me?.name || u.user_metadata?.full_name || u.email) + '<br>' +
-        '<strong>Email:</strong> ' + (u.email || '') +
-        (me?.eircode ? ('<br><strong>Eircode:</strong> ' + me.eircode) : '') +
-        '<br><strong>Status:</strong> ' + statusLabel +
-        '<br><strong>Role:</strong> ' + role +
-        '<br><a class="link" href="dashboard.html">Open your dashboard</a>';
-      loginAccountBox.style.display = 'block';
-    }
-
     if (btnLogout) btnLogout.style.display = 'inline-block';
-    if (registerSection) registerSection.style.display = 'none';
-    toggleLoggedInView(true);
+
+    if (registerSection) {
+      registerSection.style.display = (status === 'active') ? 'none' : 'block';
+    }
 
     try{ await updateLoginAddressPreview(); } catch {}
   }
@@ -1105,8 +1045,12 @@ if(btnCancelReset && resetBlock){
         return;
       }
       try{
+        // Make sure Identity is initialised before requesting recovery.
+        try{
+          if (typeof window.netlifyIdentity.init === 'function') window.netlifyIdentity.init();
+        }catch(_){}
         await window.netlifyIdentity.requestPasswordRecovery(email);
-        setMsg(resetMsg, 'Reset email sent. Please check your inbox.', 'ok');
+        setMsg(resetMsg, 'Reset email sent. Please check your inbox (including Spam/Promotions).', 'ok');
         toast('Reset email sent.', 'success');
 
         // also update cooldown stamp for this browser (if eircode exists)
@@ -1116,7 +1060,16 @@ if(btnCancelReset && resetBlock){
           setAttemptState(email, eir, { fails: Number(st.fails||0), lockUntil: Number(st.lockUntil||0), lastResetSentAt: Date.now() });
         }
       }catch(e){
-        setMsg(resetMsg, 'Could not send reset email. Please try again.', 'error');
+        const errText = String((e && (e.message || e.error || e.error_description)) || '').toLowerCase();
+        let msg = 'Could not send reset email. Please try again.';
+        if(errText.includes('email') && errText.includes('disabled')){
+          msg = 'Password reset email is not enabled in Netlify Identity yet. Please enable Identity email/reset in Netlify settings.';
+        }else if(errText.includes('not found') || errText.includes('no user')){
+          msg = 'This email was not found in the login system.';
+        }else if(errText.includes('confirm')){
+          msg = 'This account needs email confirmation first before password reset can work.';
+        }
+        setMsg(resetMsg, msg, 'error');
         toast('Reset failed.', 'error');
       }
     });
@@ -1132,6 +1085,7 @@ if(btnCancelReset && resetBlock){
 
 })();
 </script>
+
 
 </body>
 </html>
