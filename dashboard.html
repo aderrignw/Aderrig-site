@@ -483,12 +483,11 @@
   }
 
   const identityUser = await ensureIdentityUser();
-  const resolvedEmail = ((identityUser && identityUser.email) || (typeof anwGetLoggedEmail === 'function' ? anwGetLoggedEmail() : '') || '').trim();
+  const loggedEmail = String((identityUser && identityUser.email) || (typeof anwGetLoggedEmail === 'function' ? anwGetLoggedEmail() : '') || '').trim();
   let users = anwLoad(KEY_USERS, []);
   if(!Array.isArray(users)) users = [];
-  let me = resolvedEmail ? users.find(u => anwNormEmail(u.email) === anwNormEmail(resolvedEmail)) : null;
+  const me = loggedEmail ? users.find(u => anwNormEmail(u.email) === anwNormEmail(loggedEmail)) : null;
 
-  const loggedEmail = resolvedEmail;
   const notLoggedBox = document.getElementById('dbNotLogged');
   const profileArea = document.getElementById('dbProfileArea');
 
@@ -1231,8 +1230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   const user = await ensureIdentityUser();
-  const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function' ? String(window.anwGetLoggedEmail()||'') : '').toLowerCase().trim();
-  if(!window.ANW_PUBLIC_MODE && !user && !fallbackEmail){
+  if(!window.ANW_PUBLIC_MODE && !user){
     showNotice('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access your dashboard.');
     return;
   }
@@ -1244,16 +1242,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try{
     const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
-    const email = String((user && user.email) || fallbackEmail || '').toLowerCase().trim();
-    const profile = Array.isArray(users) ? users.find(u => String(u.email||'').toLowerCase().trim() === email) : null;
-    const status = String(profile?.status || profile?.accountStatus || '').toLowerCase();
-    const approved = !!(profile && ((profile.approved === true) || (profile.active === true) || status === 'active' || status === 'approved'));
+    const email = user.email?.toLowerCase();
+    const profile = users.find(u => u.email?.toLowerCase() === email);
 
-    if(!profile){
-      showNotice('Your account is logged in, but your resident profile was not found yet.');
-      return;
-    }
-    if(!approved){
+    if(!profile || !(profile.approved || profile.active)){
       showNotice('Your account is logged in but not yet approved. Please wait for approval.');
       return;
     }
