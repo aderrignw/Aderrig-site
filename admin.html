@@ -286,12 +286,14 @@
         <label class="chk"><input id="mAlertAdmin" type="checkbox" disabled> <span>Community Alerts admin (set after approval)</span></label>
 
         <div style="margin:0.5rem 0 0 1.25rem;">
-          <p class="tiny muted" style="margin:0 0 0.25rem;">Volunteer roles (6):</p>
+          <p class="tiny muted" style="margin:0 0 0.25rem;">Volunteer roles (8):</p>
           <div style="display:grid; grid-template-columns:repeat(2, minmax(180px, 1fr)); column-gap:18px; row-gap:4px;">
             <label class="chk"><input id="mVStreet" type="checkbox"> <span>Street watch / patrols</span></label>
             <label class="chk"><input id="mVLeaf" type="checkbox"> <span>Distribute leaflets</span></label>
             <label class="chk"><input id="mVTech" type="checkbox"> <span>Tech support</span></label>
             <label class="chk"><input id="mVEld" type="checkbox"> <span>Elderly checks</span></label>
+            <label class="chk"><input id="mVClean" type="checkbox"> <span>Community clean-up</span></label>
+            <label class="chk"><input id="mVPark" type="checkbox"> <span>Parking assistance</span></label>
             <label class="chk"><input id="mVMeet" type="checkbox"> <span>Meeting organiser</span></label>
             <label class="chk"><input id="mVTrans" type="checkbox"> <span>Translation</span></label>
           </div>
@@ -1270,9 +1272,7 @@ Bin schedule | https://..."></textarea>
 <script src="assets/acl-guard.js"></script>
 <script>
 (async function(){
-  if (typeof window.anwInitStore === "function") {
-    try { await window.anwInitStore(); } catch(e) {}
-  }
+  try { if (typeof window.anwInitStore === "function") await window.anwInitStore(); } catch(e) { console.warn(e); }
   'use strict';
 
   const KEY_USERS = ANW_KEYS.USERS;
@@ -2092,7 +2092,7 @@ setTimeout(runAdminGate, 0);
     if(u.isCoordinator) roles.push('Coordinator');
     if(u.isVolunteer) roles.push('Volunteer');
     const vr = u.vol_roles || {};
-    const vCount = ['streetWatch','leaflets','tech','elderly','meetings','translation'].filter(k => !!vr[k]).length;
+    const vCount = ['streetWatch','leaflets','tech','elderly','cleanUp','parkingAssistance','meetings','translation'].filter(k => !!vr[k]).length;
     if(vCount) roles.push(vCount + ' volunteer role(s)');
     return roles.join(', ') || '—';
   }
@@ -2154,6 +2154,14 @@ setTimeout(runAdminGate, 0);
       btn.addEventListener('click', ()=> approveResident(decodeURIComponent(btn.dataset.email)));
     });
   }
+  resBody.addEventListener('click', (ev)=>{
+    const btn = ev.target.closest('button[data-act]');
+    if(!btn) return;
+    const email = decodeURIComponent(btn.dataset.email || '');
+    if(btn.dataset.act === 'view') openResident(email);
+    if(btn.dataset.act === 'approve') approveResident(email);
+  });
+
 
   /* ---------------- Resident Modal ---------------- */
   const modal = document.getElementById('modalResident');
@@ -2195,6 +2203,8 @@ setTimeout(runAdminGate, 0);
     document.getElementById('mVLeaf').checked = !!vr.leaflets;
     document.getElementById('mVTech').checked = !!vr.tech;
     document.getElementById('mVEld').checked = !!vr.elderly;
+    document.getElementById('mVClean').checked = !!(vr.cleanUp || vr.cleanup);
+    document.getElementById('mVPark').checked = !!vr.parkingAssistance;
     document.getElementById('mVMeet').checked = !!vr.meetings;
     document.getElementById('mVTrans').checked = !!vr.translation;
 
@@ -2219,11 +2229,16 @@ setTimeout(runAdminGate, 0);
     u.vol_roles.leaflets    = document.getElementById('mVLeaf').checked;
     u.vol_roles.tech        = document.getElementById('mVTech').checked;
     u.vol_roles.elderly     = document.getElementById('mVEld').checked;
+    u.vol_roles.cleanUp     = document.getElementById('mVClean').checked;
+    u.vol_roles.parkingAssistance = document.getElementById('mVPark').checked;
     u.vol_roles.meetings    = document.getElementById('mVMeet').checked;
     u.vol_roles.translation = document.getElementById('mVTrans').checked;
+
+    const hasVolunteerRole = !!Object.values(u.vol_roles).some(Boolean);
+    if(hasVolunteerRole) u.isVolunteer = true;
   }
 
-  document.getElementById('btnSaveResident').addEventListener('click', ()=>{
+  document.getElementById('btnSaveResident').addEventListener('click', async ()=>{
     if(!selectedEmail) return;
     const users = loadUsers();
     const idx = users.findIndex(x => anwNormEmail(x.email) === anwNormEmail(selectedEmail));
@@ -2237,12 +2252,13 @@ setTimeout(runAdminGate, 0);
     // Saving does NOT change status
     u.status = prevStatus === 'pending' ? 'pending' : (u.status || 'approved');
 
-    saveUsers(users);
+    await saveUsers(users);
     document.getElementById('mMsg').textContent = 'Saved. (Status changes only when you click Approve.)';
     renderResidents();
+    openResident(selectedEmail);
   });
 
-  function approveResident(email){
+  async function approveResident(email){
     if(!confirm('Approve this resident? A registration number will be assigned if missing.')) return;
 
     const users = loadUsers();
@@ -2254,7 +2270,7 @@ setTimeout(runAdminGate, 0);
       u.regId = anwNextRegId();
     }
     u.status = 'active';
-    saveUsers(users);
+    await saveUsers(users);
 
     renderResidents();
     if(selectedEmail && anwNormEmail(selectedEmail) === anwNormEmail(u.email)){
