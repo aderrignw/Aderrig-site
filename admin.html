@@ -233,30 +233,40 @@
       </div>
       <div class="modal-body">
         <div class="grid-2" style="gap:1rem;">
-        <div class="field">
-          <label>Registration No</label>
-          <input id="mRegId" type="text" disabled>
+          <div class="field">
+            <label>Registration No</label>
+            <input id="mRegId" type="text" disabled>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <input id="mStatus" type="text" disabled>
+          </div>
         </div>
-        <div class="field">
-          <label>Status</label>
-          <input id="mStatus" type="text" disabled>
-      </div>
-      <div class="modal-footer" id="residentFooterActions">
-        <!-- Buttons move here -->
-      </div>
-</div>
+
+        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
+          <div class="field">
+            <label>Email</label>
+            <input id="mEmail" type="email" disabled>
+          </div>
+          <div class="field">
+            <label>Eircode</label>
+            <input id="mEir" type="text" disabled>
+          </div>
+        </div>
+
+        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
+          <div class="field">
+            <label>Full name</label>
+            <input id="mName" type="text">
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input id="mPhone" type="text">
+          </div>
+        </div>
       </div>
 
-      <div class="grid-2" style="gap:1rem;">
-        <div class="field">
-          <label>Full name</label>
-          <input id="mName" type="text">
-        </div>
-        <div class="field">
-          <label>Phone</label>
-          <input id="mPhone" type="text">
-        </div>
-      </div>
+      <div class="modal-footer" id="residentFooterActions"></div>
 
       <div class="field">
         <label>Address</label>
@@ -285,8 +295,8 @@
         <label class="chk"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
         <label class="chk"><input id="mAlertAdmin" type="checkbox" disabled> <span>Community Alerts admin (set after approval)</span></label>
 
-        <div style="margin:0.5rem 0 0 1.25rem;">
-          <p class="tiny muted" style="margin:0 0 0.25rem;">Volunteer roles (8):</p>
+        <div id="mVolunteerRolesWrap" style="margin:0.5rem 0 0 1.25rem;">
+          <p class="tiny muted" style="margin:0 0 0.25rem;">Volunteer roles (8): select one or more extra functions for this resident.</p>
           <div style="display:grid; grid-template-columns:repeat(2, minmax(180px, 1fr)); column-gap:18px; row-gap:4px;">
             <label class="chk"><input id="mVStreet" type="checkbox"> <span>Street watch / patrols</span></label>
             <label class="chk"><input id="mVLeaf" type="checkbox"> <span>Distribute leaflets</span></label>
@@ -298,12 +308,24 @@
             <label class="chk"><input id="mVTrans" type="checkbox"> <span>Translation</span></label>
           </div>
         </div>
+
+        <div style="margin:0.9rem 0 0 1.25rem; padding:0.85rem 1rem; border:1px solid var(--line); border-radius:14px; background:#fafcfb;">
+          <p style="margin:0 0 0.35rem; font-weight:700;">About page / public team display</p>
+          <p class="tiny muted" style="margin:0 0 0.5rem;">Only checked roles will appear in the public roster on the About page. Existing residents can be updated here without changing the registration form.</p>
+          <div style="display:grid; grid-template-columns:repeat(2, minmax(220px, 1fr)); column-gap:18px; row-gap:4px;">
+            <label class="chk"><input id="mAboutStreet" type="checkbox"> <span>Show in About → Street Coordinator</span></label>
+            <label class="chk"><input id="mAboutProject" type="checkbox"> <span>Show in About → Project Volunteers</span></label>
+            <label class="chk"><input id="mAboutPlatform" type="checkbox"> <span>Show in About → Platform / Admin Support</span></label>
+          </div>
+        </div>
       </div>
 
       <p class="tiny muted" id="mMsg" style="margin-top:0.5rem;"></p>
 
       <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
         <button type="button" class="btn-line small" id="btnReject">Reject</button>
+        <button type="button" class="btn-line small" id="btnSuspendResident">Suspend</button>
+        <button type="button" class="btn-line small" id="btnRemoveResident">Remove</button>
         <button type="button" class="btn small" id="btnSaveResident">Save</button>
         <button type="button" class="btn small" id="btnApprove">Approve</button>
       </div>
@@ -767,6 +789,11 @@
         <div class="field">
           <label>Schedule lines</label>
           <textarea id="binCsv" rows="6" placeholder="2026-02-03, Panda, Green, public&#10;2026-02-10, Panda, Black, public"></textarea>
+        </div>
+        <div class="field">
+          <label>CSV file (optional)</label>
+          <input id="binCsvFile" type="file" accept=".csv,text/csv" />
+          <p class="tiny muted" style="margin-top:6px;">You can select a Panda CSV file. The system will read the file automatically, ignore a header row like <code>date,provider,bin,visibility</code>, and fill the schedule lines for import.</p>
         </div>
         <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
           <button type="button" class="btn btn-line" id="btnBinImport">Import schedule</button>
@@ -2088,6 +2115,15 @@ setTimeout(runAdminGate, 0);
 
   let selectedEmail = null;
 
+  function getPublicTeamRoles(u){
+    const aboutRoles = (u && (u.aboutRoles || u.teamRoles || u.publicRoles || {})) || {};
+    const out = [];
+    if (u && (u.isCoordinator || aboutRoles.streetCoordinator)) out.push('Street Coordinator');
+    if (aboutRoles.projectVolunteer) out.push('Project Volunteers');
+    if (aboutRoles.platformAdminSupport) out.push('Platform / Admin Support');
+    return out;
+  }
+
   function formatRoles(u){
     const roles = [];
     if(u.isCoordinator) roles.push('Coordinator');
@@ -2095,6 +2131,8 @@ setTimeout(runAdminGate, 0);
     const vr = u.vol_roles || {};
     const vCount = ['streetWatch','leaflets','tech','elderly','cleanUp','parkingAssistance','meetings','translation'].filter(k => !!vr[k]).length;
     if(vCount) roles.push(vCount + ' volunteer role(s)');
+    const publicRoles = getPublicTeamRoles(u);
+    if(publicRoles.length) roles.push('About: ' + publicRoles.join(', '));
     return roles.join(', ') || '—';
   }
 
@@ -2142,6 +2180,8 @@ setTimeout(runAdminGate, 0);
           <div class="actions" style="justify-content:flex-end; gap:0.35rem; flex-wrap:wrap;">
             <button type="button" class="btn ghost" class="btn-line small" data-act="view" data-email="${encodeURIComponent(u.email||'')}">Edit</button>
             <button type="button" class="btn small" data-act="approve" data-email="${encodeURIComponent(u.email||'')}" ${isApprovedStatus(u.status)?'disabled':''}>Approve</button>
+            <button type="button" class="btn-line small" data-act="suspend" data-email="${encodeURIComponent(u.email||'')}" ${String(u.status||'').toLowerCase()==='suspended' || String(u.status||'').toLowerCase()==='removed'?'disabled':''}>Suspend</button>
+            <button type="button" class="btn-line small" data-act="remove" data-email="${encodeURIComponent(u.email||'')}" ${String(u.status||'').toLowerCase()==='removed'?'disabled':''}>Remove</button>
           </div>
         </td>
       `;
@@ -2154,6 +2194,12 @@ setTimeout(runAdminGate, 0);
     resBody.querySelectorAll('button[data-act="approve"]').forEach(btn=>{
       btn.addEventListener('click', ()=> approveResident(decodeURIComponent(btn.dataset.email)));
     });
+    resBody.querySelectorAll('button[data-act="suspend"]').forEach(btn=>{
+      btn.addEventListener('click', ()=> suspendResident(decodeURIComponent(btn.dataset.email)));
+    });
+    resBody.querySelectorAll('button[data-act="remove"]').forEach(btn=>{
+      btn.addEventListener('click', ()=> removeResident(decodeURIComponent(btn.dataset.email)));
+    });
   }
   resBody.addEventListener('click', (ev)=>{
     const btn = ev.target.closest('button[data-act]');
@@ -2161,6 +2207,8 @@ setTimeout(runAdminGate, 0);
     const email = decodeURIComponent(btn.dataset.email || '');
     if(btn.dataset.act === 'view') openResident(email);
     if(btn.dataset.act === 'approve') approveResident(email);
+    if(btn.dataset.act === 'suspend') suspendResident(email);
+    if(btn.dataset.act === 'remove') removeResident(email);
   });
 
 
@@ -2170,6 +2218,37 @@ setTimeout(runAdminGate, 0);
   closeBtn.addEventListener('click', ()=> closeResidentModal());
 
   ensureBackdrop(modal, closeResidentModal);
+
+  function syncVolunteerRoleState(){
+    const wrap = document.getElementById('mVolunteerRolesWrap');
+    const isVolunteer = !!document.getElementById('mVol')?.checked;
+    if(!wrap) return;
+    wrap.classList.toggle('disabled', !isVolunteer);
+  }
+
+  function bindResidentModalHelpers(){
+    const vol = document.getElementById('mVol');
+    if(vol && !vol.__anwBound){
+      vol.addEventListener('change', syncVolunteerRoleState);
+      vol.__anwBound = true;
+    }
+    ['mVStreet','mVLeaf','mVTech','mVEld','mVClean','mVPark','mVMeet','mVTrans'].forEach(id=>{
+      const cb = document.getElementById(id);
+      if(cb && !cb.__anwBound){
+        cb.addEventListener('change', ()=>{
+          if(cb.checked){
+            const volBox = document.getElementById('mVol');
+            if(volBox) volBox.checked = true;
+          }
+          syncVolunteerRoleState();
+        });
+        cb.__anwBound = true;
+      }
+    });
+    syncVolunteerRoleState();
+  }
+
+  bindResidentModalHelpers();
 
   function closeResidentModal(){
     modal.classList.remove('show');
@@ -2199,6 +2278,11 @@ setTimeout(runAdminGate, 0);
     document.getElementById('mVol').checked = !!u.isVolunteer;
     document.getElementById('mAlertAdmin').checked = !!u.isAlertAdmin;
 
+    const aboutRoles = (u.aboutRoles || u.teamRoles || u.publicRoles || {});
+    document.getElementById('mAboutStreet').checked = !!(u.isCoordinator || aboutRoles.streetCoordinator);
+    document.getElementById('mAboutProject').checked = !!aboutRoles.projectVolunteer;
+    document.getElementById('mAboutPlatform').checked = !!aboutRoles.platformAdminSupport;
+
     const vr = u.vol_roles || {};
     document.getElementById('mVStreet').checked = !!vr.streetWatch;
     document.getElementById('mVLeaf').checked = !!vr.leaflets;
@@ -2209,8 +2293,24 @@ setTimeout(runAdminGate, 0);
     document.getElementById('mVMeet').checked = !!vr.meetings;
     document.getElementById('mVTrans').checked = !!vr.translation;
 
-    document.getElementById('btnApprove').disabled = isApprovedStatus(u.status);
-    document.getElementById('mMsg').textContent = '';
+    const currentStatus = String(u.status || 'pending').toLowerCase();
+    document.getElementById('btnApprove').disabled = (currentStatus === 'active');
+    const suspendBtn = document.getElementById('btnSuspendResident');
+    const removeBtn = document.getElementById('btnRemoveResident');
+    if(suspendBtn){
+      suspendBtn.disabled = (currentStatus === 'removed');
+      suspendBtn.textContent = currentStatus === 'suspended' ? 'Suspended' : 'Suspend';
+    }
+    if(removeBtn){
+      removeBtn.disabled = (currentStatus === 'removed');
+      removeBtn.textContent = currentStatus === 'removed' ? 'Removed' : 'Remove';
+    }
+    document.getElementById('mMsg').textContent = currentStatus === 'removed'
+      ? 'This resident is marked as removed. The record stays in storage for audit and backup retention, and may be purged automatically after 6 months.'
+      : currentStatus === 'suspended'
+        ? 'This resident is suspended. They cannot access the site until approved again.'
+        : '';
+    syncVolunteerRoleState();
 
     modal.style.display = 'flex';
     modal.classList.add('show');
@@ -2224,6 +2324,12 @@ setTimeout(runAdminGate, 0);
 
     u.isCoordinator = document.getElementById('mCoord').checked;
     u.isVolunteer = document.getElementById('mVol').checked;
+    u.isAlertAdmin = document.getElementById('mAlertAdmin').checked;
+
+    u.aboutRoles = u.aboutRoles || {};
+    u.aboutRoles.streetCoordinator = document.getElementById('mAboutStreet').checked || u.isCoordinator;
+    u.aboutRoles.projectVolunteer = document.getElementById('mAboutProject').checked;
+    u.aboutRoles.platformAdminSupport = document.getElementById('mAboutPlatform').checked;
 
     u.vol_roles = u.vol_roles || {};
     u.vol_roles.streetWatch = document.getElementById('mVStreet').checked;
@@ -2237,6 +2343,7 @@ setTimeout(runAdminGate, 0);
 
     const hasVolunteerRole = !!Object.values(u.vol_roles).some(Boolean);
     if(hasVolunteerRole) u.isVolunteer = true;
+    if(!hasVolunteerRole && !document.getElementById('mVol').checked) u.isVolunteer = false;
   }
 
   document.getElementById('btnSaveResident').addEventListener('click', async ()=>{
@@ -2259,6 +2366,27 @@ setTimeout(runAdminGate, 0);
     openResident(selectedEmail);
   });
 
+  function stampResidentStatus(u, nextStatus){
+    const now = new Date().toISOString();
+    u.status = nextStatus;
+    u.statusChangedAt = now;
+    if(nextStatus === 'active'){
+      u.approvedAt = u.approvedAt || now;
+      u.suspendedAt = null;
+      u.removedAt = null;
+      u.removePurgeAfter = null;
+    }
+    if(nextStatus === 'suspended'){
+      u.suspendedAt = now;
+      u.removedAt = null;
+      u.removePurgeAfter = null;
+    }
+    if(nextStatus === 'removed'){
+      u.removedAt = now;
+      u.removePurgeAfter = new Date(Date.now() + (180 * 24 * 60 * 60 * 1000)).toISOString();
+    }
+  }
+
   async function approveResident(email){
     if(!confirm('Approve this resident? A registration number will be assigned if missing.')) return;
 
@@ -2270,7 +2398,7 @@ setTimeout(runAdminGate, 0);
     if(!u.regId){
       u.regId = anwNextRegId();
     }
-    u.status = 'active';
+    stampResidentStatus(u, 'active');
     await saveUsers(users);
 
     renderResidents();
@@ -2279,9 +2407,45 @@ setTimeout(runAdminGate, 0);
     }
   }
 
+  async function suspendResident(email){
+    if(!email) return;
+    if(!confirm('Suspend this resident? They will remain in the system, but will not be able to log in until approved again.')) return;
+
+    const users = loadUsers();
+    const idx = users.findIndex(x => anwNormEmail(x.email) === anwNormEmail(email));
+    if(idx < 0) return;
+
+    stampResidentStatus(users[idx], 'suspended');
+    await saveUsers(users);
+    renderResidents();
+    if(selectedEmail && anwNormEmail(selectedEmail) === anwNormEmail(email)) openResident(email);
+  }
+
+  async function removeResident(email){
+    if(!email) return;
+    if(!confirm('Remove this resident safely? The record will NOT be physically deleted now. It will be marked as removed, hidden from active use, and can be purged automatically after 6 months.')) return;
+
+    const users = loadUsers();
+    const idx = users.findIndex(x => anwNormEmail(x.email) === anwNormEmail(email));
+    if(idx < 0) return;
+
+    stampResidentStatus(users[idx], 'removed');
+    await saveUsers(users);
+    renderResidents();
+    if(selectedEmail && anwNormEmail(selectedEmail) === anwNormEmail(email)) openResident(email);
+  }
+
   document.getElementById('btnApprove').addEventListener('click', ()=>{
     if(!selectedEmail) return;
     approveResident(selectedEmail);
+  });
+  document.getElementById('btnSuspendResident').addEventListener('click', ()=>{
+    if(!selectedEmail) return;
+    suspendResident(selectedEmail);
+  });
+  document.getElementById('btnRemoveResident').addEventListener('click', ()=>{
+    if(!selectedEmail) return;
+    removeResident(selectedEmail);
   });
 
   document.getElementById('btnReject').addEventListener('click', ()=>{
@@ -4055,6 +4219,42 @@ renderResidents();
       const wd = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
       return wd + ' ' + d.toISOString().slice(0,10);
     }
+  }
+
+
+  const binCsvFile = document.getElementById('binCsvFile');
+
+  async function importBinCsvFile(file){
+    if(!file) return;
+    const text = await file.text();
+    const rawLines = String(text || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    if(!rawLines.length){
+      if(binMsg) binMsg.textContent = 'Selected file is empty.';
+      return;
+    }
+    const normalized = rawLines.filter((line, idx) => {
+      const lower = line.toLowerCase();
+      if(idx === 0 && /date\s*,\s*provider\s*,\s*bin/.test(lower)) return false;
+      return true;
+    });
+    if(binCsv){
+      binCsv.value = normalized.join('\n');
+    }
+    if(binMsg){
+      binMsg.textContent = 'CSV loaded. Review the schedule lines and click "Import schedule".';
+    }
+  }
+
+  if(binCsvFile){
+    binCsvFile.addEventListener('change', async (ev) => {
+      try{
+        if(binMsg) binMsg.textContent = '';
+        const file = ev.target && ev.target.files && ev.target.files[0];
+        await importBinCsvFile(file);
+      }catch(err){
+        if(binMsg) binMsg.textContent = err?.message || 'Unable to read CSV file.';
+      }
+    });
   }
 
   if(btnBinImport){
