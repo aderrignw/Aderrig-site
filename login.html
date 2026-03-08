@@ -620,7 +620,7 @@ const volMeetings    = document.getElementById('volMeetings');
     const status = (me && me.status ? me.status : 'pending').toLowerCase();
     const statusLabel =
       status === 'active' ? 'active' :
-      status === 'suspended' ? 'blocked' :
+      (status === 'suspended' || status === 'removed') ? 'blocked' :
       'pending approval';
 
     if (loggedBanner) {
@@ -720,7 +720,7 @@ const volMeetings    = document.getElementById('volMeetings');
         }
 
         const status = (me.status || 'pending').toLowerCase();
-        if(status === 'suspended'){
+        if(status === 'suspended' || status === 'removed'){
           try{ window.netlifyIdentity.logout(); } catch {}
           setMsg(loginMsg, 'Your account is blocked.', 'error');
           toast('Account blocked.', 'error');
