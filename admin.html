@@ -1229,6 +1229,7 @@ Bin schedule | https://..."></textarea>
             <th style="min-width:220px;">Created</th>
             <th style="min-width:260px;">Includes</th>
             <th style="width:140px;">Download</th>
+            <th style="width:140px;">Restore</th>
           </tr>
         </thead>
         <tbody id="backupTbody"></tbody>
@@ -3373,11 +3374,42 @@ renderResidents();
           <td style="padding:10px; border-bottom:1px solid var(--line);">
             <a class="btn-line small" href="/.netlify/functions/backup-download?id=${encodeURIComponent(it.id)}">Download</a>
           </td>
+          <td style="padding:10px; border-bottom:1px solid var(--line);">
+            <button type="button" class="btn-line small" data-restore-backup="${esc(it.id || '')}">Restore</button>
+          </td>
         `;
+        const restoreBtn = tr.querySelector('[data-restore-backup]');
+        if(restoreBtn){
+          restoreBtn.addEventListener('click', ()=> restoreBackup(String(it.id || '')));
+        }
         backupTbody.appendChild(tr);
       });
     }catch(err){
       backupMsg.textContent = 'Backup functions are not available yet. Add the Netlify Functions from the setup notes.';
+    }
+  }
+
+
+  async function restoreBackup(id){
+    if(!id) return;
+    const isFile = location.protocol === 'file:';
+    if(isFile){
+      backupMsg.textContent = 'Run this on Netlify (or netlify dev) to restore backups.';
+      return;
+    }
+    const typed = window.prompt('Type RESTORE to confirm restoring backup ' + id + '.\n\nThis will replace the current stored data with the selected snapshot.\nA safety backup of the current data will be created automatically first.', '');
+    if(typed !== 'RESTORE') return;
+    backupMsg.textContent = 'Restoring backup ' + id + '...';
+    try{
+      const data = await fetchJSON('/.netlify/functions/restore-backup', {
+        method:'POST',
+        headers:{ 'content-type':'application/json' },
+        body: JSON.stringify({ id })
+      });
+      backupMsg.textContent = 'Backup restored successfully: ' + (data.id || id) + (data.safetyBackupId ? (' (safety backup: ' + data.safetyBackupId + ')') : '');
+      await listBackups();
+    }catch(err){
+      backupMsg.textContent = 'Could not restore backup. ' + (err && err.message ? err.message : 'Please ensure the restore-backup function is deployed.');
     }
   }
 
