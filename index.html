@@ -78,6 +78,12 @@
         +353 (0)1 666 7300 · <a href="mailto:lucan.ds@garda.ie">lucan.ds@garda.ie</a>
 </p>
 </section>
+
+<section class="card home-notices-section" id="homeNoticesSection">
+<h3 class="home-notices-title"><span class="home-notices-title__icon" aria-hidden="true">📢</span><span>Community Notices</span></h3>
+<div class="home-notices-list" id="homeNoticeList" aria-live="polite"></div>
+</section>
+
 <section class="card">
 <h3>Quick links</h3>
 <div class="grid cols-3">
@@ -89,14 +95,6 @@
 </main>
 <!-- Core secured app logic -->
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script><script src="assets/identity.js"></script><script src="assets/app-core.js"></script>
-
-  <!-- Home Notices (message area) -->
-  <div id="homeNoticeBar" class="home-notice-bar home-notice-bar--info" role="status" aria-live="polite">
-    <span class="home-notice-bar__icon" aria-hidden="true" data-home-notice-icon>ℹ️</span>
-    <div class="home-notice-bar__text" data-home-notice-text>Test: Message area — information will appear here.</div>
-    <button class="home-notice-btn" type="button" aria-label="Previous message" data-home-notice-prev>&lsaquo;</button>
-    <button class="home-notice-btn" type="button" aria-label="Next message" data-home-notice-next>&rsaquo;</button>
-  </div>
 
   <!-- Community Support (sponsor logos) -->
   <div id="sponsorsFooter" class="sponsors sponsors--footer"></div>
