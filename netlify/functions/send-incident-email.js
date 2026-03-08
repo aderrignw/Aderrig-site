@@ -2,7 +2,10 @@
 // Sends the incident report email via Resend, including optional attachments.
 // IMPORTANT: Set these environment variables in Netlify:
 // - RESEND_API_KEY = your Resend API key
-// - RESEND_FROM   = a verified sender, e.g. "reports@aderrignw.ie" (or use onboarding@resend.dev while testing)
+// - RESEND_FROM   = a verified sender, e.g. "Aderrig NW Reports <reports@aderrignw.ie>"
+//
+// Note: email cannot safely be sent *from* the resident's address unless that mailbox is
+// authenticated and authorized on the mail provider. This function sends from the site's verified address and uses Reply-To so Garda replies go back to the resident.
 
 export async function handler(event) {
   const corsHeaders = {
@@ -47,6 +50,8 @@ export async function handler(event) {
   const subject = String(payload.subject || "").trim();
   const text = String(payload.text || "").trim();
   const attachments = Array.isArray(payload.attachments) ? payload.attachments : [];
+  const replyToEmail = String(payload.replyToEmail || "").trim().toLowerCase();
+  const replyToName = String(payload.replyToName || "").trim();
 
   if (!to || !subject || !text) {
     return {
@@ -65,7 +70,12 @@ export async function handler(event) {
       content: String(a.content), // base64
     }));
 
-  const from = process.env.RESEND_FROM || "onboarding@resend.dev";
+  const from = process.env.RESEND_FROM || "Aderrig NW Reports <onboarding@resend.dev>";
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const replyTo = (replyToEmail && emailRegex.test(replyToEmail))
+    ? (replyToName ? `${replyToName} <${replyToEmail}>` : replyToEmail)
+    : null;
 
   try {
     const resendRes = await fetch("https://api.resend.com/emails", {
@@ -79,6 +89,7 @@ export async function handler(event) {
         to: [to],
         subject,
         text,
+        reply_to: replyTo || undefined,
         attachments: safeAttachments.length ? safeAttachments : undefined,
       }),
     });
