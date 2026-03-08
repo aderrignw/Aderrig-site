@@ -37,6 +37,49 @@ function isPrivileged(context){
 }
 
 
+
+
+const REMOVAL_RETENTION_MS = 180 * 24 * 60 * 60 * 1000;
+
+function parseISO(value){
+  const ms = Date.parse(String(value || ""));
+  return Number.isFinite(ms) ? ms : NaN;
+}
+
+function shouldPurgeRemovedUser(user, now = Date.now()){
+  const status = String(user?.status || "").toLowerCase().trim();
+  if (status !== "removed") return false;
+
+  const explicit = parseISO(user?.removePurgeAfter);
+  if (Number.isFinite(explicit)) return explicit <= now;
+
+  const removedAt = parseISO(user?.removedAt || user?.statusChangedAt);
+  if (Number.isFinite(removedAt)) return (removedAt + REMOVAL_RETENTION_MS) <= now;
+
+  return false;
+}
+
+async function purgeExpiredRemovedResidents(store){
+  const users = (await store.get("anw_users", { type: "json" })) ?? [];
+  if (!Array.isArray(users) || !users.length) return { purged: 0, remaining: Array.isArray(users) ? users.length : 0 };
+
+  const kept = [];
+  let purged = 0;
+  for (const user of users) {
+    if (shouldPurgeRemovedUser(user)) {
+      purged += 1;
+      continue;
+    }
+    kept.push(user);
+  }
+
+  if (purged > 0) {
+    await store.set("anw_users", kept, { metadata: { updatedAt: new Date().toISOString(), reason: "purge-expired-removed-users" } });
+  }
+
+  return { purged, remaining: kept.length };
+}
+
 const DATA_KEYS = [
   "anw_users",
   "anw_incidents",
@@ -64,9 +107,11 @@ export default async (req, context) => {
   try {
     const store = getCentralStore(context);
 
+    const purgeResult = await purgeExpiredRemovedResidents(store);
+
     const createdAt = new Date().toISOString();
     const id = `BKP-${createdAt.replace(/[:.]/g, "-")}`;
-    const snapshot = { id, createdAt, includes: DATA_KEYS, data: {} };
+    const snapshot = { id, createdAt, includes: DATA_KEYS, purgeResult, data: {} };
 
     for (const key of DATA_KEYS) {
       const v = await store.get(key, { type: "json" });
@@ -78,11 +123,11 @@ export default async (req, context) => {
     const indexKey = "anw_backups_index";
     const idx = (await store.get(indexKey, { type: "json" })) ?? { items: [] };
     idx.items = Array.isArray(idx.items) ? idx.items : [];
-    idx.items.unshift({ id, createdAt, includes: DATA_KEYS });
+    idx.items.unshift({ id, createdAt, includes: DATA_KEYS, purgeResult });
     idx.items = idx.items.slice(0, 100);
     await store.set(indexKey, idx, { metadata: { updatedAt: createdAt } });
 
-    return new Response(JSON.stringify({ ok: true, id }), {
+    return new Response(JSON.stringify({ ok: true, id, purgeResult }), {
       status: 200,
       headers: { "content-type": "application/json; charset=utf-8", "cache-control":"no-store" }
     });
