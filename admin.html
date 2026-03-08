@@ -3,9 +3,6 @@
 <head><meta charset="utf-8" />
   <meta name="anw-acl-key" content="page:admin" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<script>
-  document.documentElement.classList.add('admin-booting');
-</script>
 <!-- Auth pre-check disabled (temporary public mode) -->
 <script>
   (function(){
@@ -13,11 +10,6 @@
   })();
 </script>
 <title>Admin Panel — Aderrig NW</title>
-<style>
-  html.admin-booting main.wrap { visibility:hidden; }
-  html.admin-booting #modalResident,
-  html.admin-booting .modal { display:none !important; }
-</style>
 <script>
   // Temporary public mode: keep Admin usable even if global scripts fail
   window.ANW_PUBLIC_MODE = true;
@@ -167,7 +159,7 @@
     <a href="alerts.html">Community Alerts</a>
     <a href="projects.html">Community Projects</a>
 <a href="handbook.html">Handbook</a>
-    <a href="login.html" id="navAccountLink">Login / Register</a>
+    <a href="login.html">Login / Register</a>
     <a href="dashboard.html">Dashboard</a>
     <a href="household.html">Household</a>
     <a href="admin.html" class="active" >Admin</a>
@@ -1421,15 +1413,7 @@ function adminSetGateMessage(htmlText) {
 
   let __adminBootComplete = false;
   function adminMarkReady(){
-    if(__adminBootComplete) return;
     __adminBootComplete = true;
-    try{
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{
-        document.documentElement.classList.remove('admin-booting');
-      }));
-    }catch(_){
-      document.documentElement.classList.remove('admin-booting');
-    }
   }
 
   async function adminEnsureStoreReady(){
@@ -4749,31 +4733,5 @@ setTimeout(runAdminGate, 0);
 </script>
 
   
-
-<script>
-(function(){
-  function updateAccountNavLink(){
-    var link = document.getElementById('navAccountLink');
-    if(!link) return;
-    var user = null;
-    try{ user = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function') ? window.netlifyIdentity.currentUser() : null; }catch(_){ user = null; }
-    link.textContent = (user && user.email) ? 'My Account' : 'Login / Register';
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', updateAccountNavLink, { once:true });
-  } else {
-    updateAccountNavLink();
-  }
-  try{
-    if(window.netlifyIdentity){
-      window.netlifyIdentity.on('init', updateAccountNavLink);
-      window.netlifyIdentity.on('login', updateAccountNavLink);
-      window.netlifyIdentity.on('logout', updateAccountNavLink);
-    }
-  }catch(_){ }
-  window.updateAccountNavLink = updateAccountNavLink;
-})();
-</script>
-
 </body>
 </html>
