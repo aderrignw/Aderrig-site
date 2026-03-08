@@ -167,7 +167,7 @@
 </div>
 <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
 <button class="btn btn-line" id="btnCopy" type="button">Copy</button>
-<button class="btn" id="btnSendEmail" type="button">Send email (with attachments)</button>
+<button class="btn" id="btnSendEmail" type="button">Send securely (with attachments)</button>
 <button class="btn" id="btnMailto" type="button">Open email</button>
 </div>
 <p class="tiny muted" id="copyMsg" style="margin:0.5rem 0 0;"></p>
@@ -579,23 +579,33 @@ const d = new Date();
     }
   });
 
-  
   document.getElementById('btnSendEmail').addEventListener('click', async ()=>{
     try{
       const to = anwNormEmail(document.getElementById('rGarda').value) || '';
       if(!to){
-        alert('Please enter a recipient email in the Garda/Manager Email field before sending.');
+        alert('Please enter a recipient email in the Garda station email field before sending.');
         return;
       }
 
+      const previewPayload = ensurePreviewFromCurrentForm();
+      if(!previewPayload) return;
+
+      const replyToEmail = anwNormEmail(document.getElementById('rEmail').value) || '';
+      const replyToName = document.getElementById('rName').value.trim() || '';
+
       const files = Array.from(document.getElementById('rFiles').files || []);
-      // Convert to base64 (Resend expects base64 content)
       const attachments = [];
+      let totalBytes = 0;
       for(const f of files){
-        // Safety: avoid very large files in free plans / browser memory
         const maxBytes = 10 * 1024 * 1024; // 10 MB each
         if(f.size > maxBytes){
           alert(`File too large: ${f.name} (${Math.round(f.size/1024/1024)}MB). Please keep each file under 10MB.`);
+          return;
+        }
+        totalBytes += Number(f.size || 0);
+        const maxTotal = 20 * 1024 * 1024;
+        if(totalBytes > maxTotal){
+          alert('Total attachment size is too large. Please keep all files together under 20MB.');
           return;
         }
         const b64 = await new Promise((resolve, reject)=>{
@@ -609,9 +619,11 @@ const d = new Date();
 
       const payload = {
         to,
-        subject: pSubject.value,
-        text: pBody.value,
-        attachments
+        subject: previewPayload.subject,
+        text: previewPayload.body,
+        attachments,
+        replyToEmail,
+        replyToName
       };
 
       const res = await fetch('/.netlify/functions/send-incident-email', {
@@ -627,12 +639,16 @@ const d = new Date();
         return;
       }
 
-      alert('Email sent successfully (attachments included).');
+      alert(replyToEmail
+        ? 'Email sent successfully. Replies will go to the resident email provided.'
+        : 'Email sent successfully.');
     }catch(err){
       console.error(err);
       alert('Error sending email. Check console logs.');
     }
   });
+
+;
 
 document.getElementById('btnMailto').addEventListener('click', ()=>{
     const to = anwNormEmail(document.getElementById('rGarda').value) || '';
