@@ -1129,3 +1129,60 @@ nav a .anw-nav-badge{
     text-align:center;
   }
 }
+
+
+/* =========================
+   Header/nav fit fix
+   Keeps all main tabs visible on desktop; only scrolls on smaller widths
+   ========================= */
+.site-header{
+  align-items:center;
+  gap:14px;
+}
+
+.site-logo{
+  margin-right:4px;
+}
+
+.logo-img{
+  height:36px;
+  max-width:180px;
+}
+
+.nav{
+  min-width:0;
+  margin-left:0;
+  justify-content:flex-start;
+  gap:4px;
+  overflow-x:visible;
+  scrollbar-width:none;
+}
+
+.nav::-webkit-scrollbar{
+  display:none;
+}
+
+.nav a{
+  padding:6px 8px;
+  font-size:.84rem;
+  letter-spacing:-0.01em;
+}
+
+@media (max-width: 1320px){
+  .logo-img{ max-width:170px; }
+  .nav{ gap:2px; }
+  .nav a{ padding:6px 7px; font-size:.82rem; }
+}
+
+@media (max-width: 1180px){
+  .site-header{ gap:10px; }
+  .logo-img{ height:34px; max-width:160px; }
+  .nav a{ padding:6px 6px; font-size:.80rem; }
+}
+
+@media (max-width: 1040px){
+  .nav{
+    overflow-x:auto;
+    justify-content:flex-start;
+  }
+}
