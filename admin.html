@@ -167,7 +167,7 @@
     <a href="alerts.html">Community Alerts</a>
     <a href="projects.html">Community Projects</a>
 <a href="handbook.html">Handbook</a>
-    <a href="login.html">Login / Register</a>
+    <a href="login.html" id="navAccountLink">Login / Register</a>
     <a href="dashboard.html">Dashboard</a>
     <a href="household.html">Household</a>
     <a href="admin.html" class="active" >Admin</a>
@@ -4749,5 +4749,31 @@ setTimeout(runAdminGate, 0);
 </script>
 
   
+
+<script>
+(function(){
+  function updateAccountNavLink(){
+    var link = document.getElementById('navAccountLink');
+    if(!link) return;
+    var user = null;
+    try{ user = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function') ? window.netlifyIdentity.currentUser() : null; }catch(_){ user = null; }
+    link.textContent = (user && user.email) ? 'My Account' : 'Login / Register';
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', updateAccountNavLink, { once:true });
+  } else {
+    updateAccountNavLink();
+  }
+  try{
+    if(window.netlifyIdentity){
+      window.netlifyIdentity.on('init', updateAccountNavLink);
+      window.netlifyIdentity.on('login', updateAccountNavLink);
+      window.netlifyIdentity.on('logout', updateAccountNavLink);
+    }
+  }catch(_){ }
+  window.updateAccountNavLink = updateAccountNavLink;
+})();
+</script>
+
 </body>
 </html>
