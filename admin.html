@@ -2363,7 +2363,8 @@ setTimeout(runAdminGate, 0);
     await saveUsers(users);
     document.getElementById('mMsg').textContent = 'Saved. (Status changes only when you click Approve.)';
     renderResidents();
-    openResident(selectedEmail);
+    if(window.showToast) window.showToast('Saved', 'Resident updated.');
+    closeResidentModal();
   });
 
   function stampResidentStatus(u, nextStatus){
@@ -2402,9 +2403,8 @@ setTimeout(runAdminGate, 0);
     await saveUsers(users);
 
     renderResidents();
-    if(selectedEmail && anwNormEmail(selectedEmail) === anwNormEmail(u.email)){
-      openResident(u.email);
-    }
+    if(window.showToast) window.showToast('Approved', 'Resident approved.');
+    closeResidentModal();
   }
 
   async function suspendResident(email){
@@ -2418,7 +2418,8 @@ setTimeout(runAdminGate, 0);
     stampResidentStatus(users[idx], 'suspended');
     await saveUsers(users);
     renderResidents();
-    if(selectedEmail && anwNormEmail(selectedEmail) === anwNormEmail(email)) openResident(email);
+    if(window.showToast) window.showToast('Suspended', 'Resident suspended.');
+    closeResidentModal();
   }
 
   async function removeResident(email){
@@ -2432,23 +2433,24 @@ setTimeout(runAdminGate, 0);
     stampResidentStatus(users[idx], 'removed');
     await saveUsers(users);
     renderResidents();
-    if(selectedEmail && anwNormEmail(selectedEmail) === anwNormEmail(email)) openResident(email);
+    if(window.showToast) window.showToast('Removed', 'Resident marked as removed.');
+    closeResidentModal();
   }
 
-  document.getElementById('btnApprove').addEventListener('click', ()=>{
+  document.getElementById('btnApprove').addEventListener('click', async ()=>{
     if(!selectedEmail) return;
-    approveResident(selectedEmail);
+    await approveResident(selectedEmail);
   });
-  document.getElementById('btnSuspendResident').addEventListener('click', ()=>{
+  document.getElementById('btnSuspendResident').addEventListener('click', async ()=>{
     if(!selectedEmail) return;
-    suspendResident(selectedEmail);
+    await suspendResident(selectedEmail);
   });
-  document.getElementById('btnRemoveResident').addEventListener('click', ()=>{
+  document.getElementById('btnRemoveResident').addEventListener('click', async ()=>{
     if(!selectedEmail) return;
-    removeResident(selectedEmail);
+    await removeResident(selectedEmail);
   });
 
-  document.getElementById('btnReject').addEventListener('click', ()=>{
+  document.getElementById('btnReject').addEventListener('click', async ()=>{
     if(!selectedEmail) return;
     if(!confirm('Reject this registration? This will set status to rejected.')) return;
 
@@ -2457,9 +2459,11 @@ setTimeout(runAdminGate, 0);
     if(idx < 0) return;
 
     users[idx].status = 'rejected';
-    saveUsers(users);
+    users[idx].statusChangedAt = new Date().toISOString();
+    await saveUsers(users);
     renderResidents();
-    openResident(selectedEmail);
+    if(window.showToast) window.showToast('Rejected', 'Registration rejected.');
+    closeResidentModal();
   });
 
   /* ---------------- Elections: Manage ---------------- */
