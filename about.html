@@ -370,6 +370,15 @@ main p {
         return st === 'approved' || st === 'active';
       }
 
+      function getAboutRoles(u) {
+        const base = (u && (u.aboutRoles || u.teamRoles || u.publicRoles || {})) || {};
+        return {
+          streetCoordinator: !!(u && (u.isCoordinator || base.streetCoordinator)),
+          projectVolunteer: !!base.projectVolunteer,
+          platformAdminSupport: !!base.platformAdminSupport
+        };
+      }
+
       function getLoggedUser() {
         const email = (window.anwGetLoggedEmail ? anwGetLoggedEmail() : anwGetLoggedEmail()) || '';
         if (!email) return null;
@@ -905,7 +914,11 @@ main p {
         // Approved members list by role
         let members = [];
         if (roleId === 'street-coordinator'){
-          members = (users || []).filter(u => isApprovedUser(u) && !!u.isCoordinator);
+          members = (users || []).filter(u => {
+            if (!isApprovedUser(u)) return false;
+            const aboutRoles = getAboutRoles(u);
+            return !!aboutRoles.streetCoordinator;
+          });
           members.forEach(m => {
             const nm = (m.name || m.fullName || m.email || 'Member');
             const st = streetFromAddress(m.address || m.addr || m.location || '');
@@ -914,14 +927,22 @@ main p {
             ulMembers.appendChild(li);
           });
         } else if (roleId === 'project-volunteer'){
-          members = (users || []).filter(u => isApprovedUser(u) && !!u.isVolunteer);
+          members = (users || []).filter(u => {
+            if (!isApprovedUser(u)) return false;
+            const aboutRoles = getAboutRoles(u);
+            return !!aboutRoles.projectVolunteer;
+          });
           members.forEach(m => {
             const li = document.createElement('li');
             li.textContent = (m.name || m.fullName || m.email || 'Volunteer');
             ulMembers.appendChild(li);
           });
         } else if (roleId === 'platform-admin-support'){
-          members = (users || []).filter(u => isApprovedUser(u) && (isAdminUser(u) || !!u.isPlatformSupport));
+          members = (users || []).filter(u => {
+            if (!isApprovedUser(u)) return false;
+            const aboutRoles = getAboutRoles(u);
+            return !!aboutRoles.platformAdminSupport;
+          });
           members.forEach(m => {
             const li = document.createElement('li');
             li.textContent = (m.name || m.fullName || m.email || 'Support');
