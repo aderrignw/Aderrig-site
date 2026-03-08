@@ -3,6 +3,9 @@
 <head><meta charset="utf-8" />
   <meta name="anw-acl-key" content="page:admin" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<script>
+  document.documentElement.classList.add('admin-booting');
+</script>
 <!-- Auth pre-check disabled (temporary public mode) -->
 <script>
   (function(){
@@ -10,6 +13,11 @@
   })();
 </script>
 <title>Admin Panel — Aderrig NW</title>
+<style>
+  html.admin-booting main.wrap { visibility:hidden; }
+  html.admin-booting #modalResident,
+  html.admin-booting .modal { display:none !important; }
+</style>
 <script>
   // Temporary public mode: keep Admin usable even if global scripts fail
   window.ANW_PUBLIC_MODE = true;
@@ -1411,6 +1419,16 @@ function adminSetGateMessage(htmlText) {
 
   let __adminGateText = '';
 
+  function adminMarkReady(){
+    try{
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        document.documentElement.classList.remove('admin-booting');
+      }));
+    }catch(_){
+      document.documentElement.classList.remove('admin-booting');
+    }
+  }
+
   function adminHookTabClicks() {
     const btns = Array.from(document.querySelectorAll('.admin-tab'));
     btns.forEach(b => {
@@ -1496,6 +1514,7 @@ async function runAdminGate() {
     adminSetGateMessage('');
     adminEnableTabs();
     adminApplyRoleVisibility('owner');
+    adminMarkReady();
     return;
   }
 
@@ -1503,17 +1522,20 @@ async function runAdminGate() {
                 ((window.anwGetLoggedEmail && window.anwGetLoggedEmail()) ? String(window.anwGetLoggedEmail()||'') : '');
   if(!email) {
     adminSetGateMessage('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access Admin.');
+    adminMarkReady();
     return;
   }
 
   const prof = await adminGetProfileByEmail(email);
   if(!prof) {
     adminSetGateMessage('Your account is logged in, but you are not registered/approved yet. Please wait for approval.');
+    adminMarkReady();
     return;
   }
 
   if(!adminIsApproved(prof)) {
     adminSetGateMessage('Your account is not approved yet. Please wait for approval.');
+    adminMarkReady();
     return;
   }
 
@@ -1521,12 +1543,14 @@ async function runAdminGate() {
 
   if(!ADMIN_ALLOWED_ROLES.has(role)) {
     adminSetGateMessage('Access restricted: your role does not have permission to use Admin.');
+    adminMarkReady();
     return;
   }
 
   adminSetGateMessage('');
   adminEnableTabs();
   adminApplyRoleVisibility(role);
+  adminMarkReady();
 }
 
 
@@ -1539,6 +1563,7 @@ async function runAdminGate() {
     }
   } catch(e) {}
 setTimeout(runAdminGate, 0);
+setTimeout(adminMarkReady, 1200);
 
 
   /* ---------------- Tabs ---------------- */
