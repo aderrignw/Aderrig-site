@@ -1419,7 +1419,10 @@ function adminSetGateMessage(htmlText) {
 
   let __adminGateText = '';
 
+  let __adminBootComplete = false;
   function adminMarkReady(){
+    if(__adminBootComplete) return;
+    __adminBootComplete = true;
     try{
       requestAnimationFrame(()=>requestAnimationFrame(()=>{
         document.documentElement.classList.remove('admin-booting');
@@ -1427,6 +1430,20 @@ function adminSetGateMessage(htmlText) {
     }catch(_){
       document.documentElement.classList.remove('admin-booting');
     }
+  }
+
+  async function adminEnsureStoreReady(){
+    const attempts = [0, 120, 280];
+    let lastUsers = [];
+    for(const waitMs of attempts){
+      if(waitMs) await new Promise(r=>setTimeout(r, waitMs));
+      try{ if(typeof window.anwInitStore === 'function') await window.anwInitStore(); }catch(e){}
+      try{
+        lastUsers = loadUsers();
+        if(Array.isArray(lastUsers) && lastUsers.length) return lastUsers;
+      }catch(e){}
+    }
+    return Array.isArray(lastUsers) ? lastUsers : [];
   }
 
   function adminHookTabClicks() {
@@ -1514,7 +1531,6 @@ async function runAdminGate() {
     adminSetGateMessage('');
     adminEnableTabs();
     adminApplyRoleVisibility('owner');
-    adminMarkReady();
     return;
   }
 
@@ -1522,20 +1538,17 @@ async function runAdminGate() {
                 ((window.anwGetLoggedEmail && window.anwGetLoggedEmail()) ? String(window.anwGetLoggedEmail()||'') : '');
   if(!email) {
     adminSetGateMessage('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access Admin.');
-    adminMarkReady();
     return;
   }
 
   const prof = await adminGetProfileByEmail(email);
   if(!prof) {
     adminSetGateMessage('Your account is logged in, but you are not registered/approved yet. Please wait for approval.');
-    adminMarkReady();
     return;
   }
 
   if(!adminIsApproved(prof)) {
     adminSetGateMessage('Your account is not approved yet. Please wait for approval.');
-    adminMarkReady();
     return;
   }
 
@@ -1543,14 +1556,12 @@ async function runAdminGate() {
 
   if(!ADMIN_ALLOWED_ROLES.has(role)) {
     adminSetGateMessage('Access restricted: your role does not have permission to use Admin.');
-    adminMarkReady();
     return;
   }
 
   adminSetGateMessage('');
   adminEnableTabs();
   adminApplyRoleVisibility(role);
-  adminMarkReady();
 }
 
 
@@ -1558,12 +1569,12 @@ async function runAdminGate() {
   
   try {
     if(window.netlifyIdentity){
-      window.netlifyIdentity.on('login', () => setTimeout(runAdminGate, 0));
+      window.netlifyIdentity.on('login', async () => { try{ await adminEnsureStoreReady(); }catch(e){} setTimeout(()=>{ runAdminGate(); renderResidents(); }, 0); });
       window.netlifyIdentity.on('logout', () => setTimeout(runAdminGate, 0));
+      window.netlifyIdentity.on('init', async () => { try{ await adminEnsureStoreReady(); }catch(e){} setTimeout(()=>{ runAdminGate(); renderResidents(); }, 0); });
     }
   } catch(e) {}
 setTimeout(runAdminGate, 0);
-setTimeout(adminMarkReady, 1200);
 
 
   /* ---------------- Tabs ---------------- */
@@ -1588,7 +1599,7 @@ setTimeout(adminMarkReady, 1200);
     renderResidents();
   }
   resBtns.forEach(b => b.addEventListener('click', ()=> showResSub(b.dataset.subtab)));
-  window.__resFilter = 'subApproved';
+  window.__resFilter = 'subAll';
 
   const electBtns = document.querySelectorAll('.elect-tab');
   const electPanels = document.querySelectorAll('.elect-subtab');
@@ -3295,13 +3306,24 @@ setTimeout(adminMarkReady, 1200);
     pmStoreNote.style.display = (location && location.protocol === 'file:') ? 'block' : 'none';
   }
 
+  async function adminInitialRender(){
+    try{ await adminEnsureStoreReady(); }catch(e){}
+    try{ runAdminGate(); }catch(e){}
+    try{ showAdminTab('tabResidents'); }catch(e){}
+    try{ showResSub(window.__resFilter || 'subAll'); }catch(e){ renderResidents(); }
+    renderElections();
+    renderCandidates();
+    renderResults();
+    renderReports();
+    renderResidentConsents();
+    adminMarkReady();
+  }
 
-renderResidents();
-  renderElections();
-  renderCandidates();
-  renderResults();
-  renderReports();
-  renderResidentConsents();
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', ()=>{ adminInitialRender(); }, { once:true });
+  }else{
+    adminInitialRender();
+  }
 
   showElectSub('subManage');
 
