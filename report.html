@@ -120,7 +120,7 @@
       </p>
         <label for="rFiles">Attachments (photos/videos)</label>
         <input id="rFiles" type="file" multiple accept="image/*,video/*,.pdf,.doc,.docx,.heic" />
-        <p class="help">You can add multiple files. Files are only sent as email attachments (not stored on the website) — the site keeps only the filenames in the report.</p>
+        <p class="help">You can add multiple files. Files are only sent as email attachments (not stored on the website) — the site keeps only the file name, size and format in the report. The file contents are never stored on the website.</p>
 
 </div>
 <h3 style="margin-top:1rem;">Your details (optional)</h3>
@@ -361,6 +361,51 @@
 
   function escapeNL(s){ return String(s||'').replace(/\r\n/g,'\n'); }
 
+  function formatBytes(bytes){
+    const n = Number(bytes);
+    if(!Number.isFinite(n) || n < 0) return 'unknown size';
+    if(n < 1024) return `${n} B`;
+    const units = ['KB','MB','GB'];
+    let value = n / 1024;
+    let idx = 0;
+    while(value >= 1024 && idx < units.length - 1){
+      value = value / 1024;
+      idx += 1;
+    }
+    return `${value.toFixed(value >= 10 || idx === 0 ? 0 : 1)} ${units[idx]}`;
+  }
+
+  function normalizeAttachmentMeta(file){
+    if(!file) return null;
+    if(typeof file === 'string'){
+      return { filename: file, size: null, type: '' };
+    }
+    return {
+      filename: String(file.filename || file.name || '').trim(),
+      size: Number.isFinite(Number(file.size)) ? Number(file.size) : null,
+      type: String(file.type || file.mimeType || '').trim()
+    };
+  }
+
+  function getSelectedAttachmentMetadata(){
+    return Array.from(document.getElementById('rFiles').files || []).map(f => ({
+      filename: f.name,
+      size: Number(f.size || 0),
+      type: String(f.type || '').trim()
+    }));
+  }
+
+  function formatAttachmentLines(attachments){
+    const list = Array.isArray(attachments) ? attachments.map(normalizeAttachmentMeta).filter(a => a && a.filename) : [];
+    if(!list.length) return ['—'];
+    return list.map(a => {
+      const parts = [a.filename];
+      if(a.size !== null) parts.push(formatBytes(a.size));
+      if(a.type) parts.push(a.type);
+      return `- ${parts.join(' — ')}`;
+    });
+  }
+
   function buildEmailPayload(report){
     const subj = `ANW Incident report ${report.id} — ${report.category || 'Incident'}`;
     const lines = [
@@ -379,8 +424,8 @@
       `Email: ${report.reporterEmail || '—'}`,
       `Phone: ${report.reporterPhone || '—'}`,
       '',
-      'Attachments (filenames only):',
-      ...(report.attachments && report.attachments.length ? report.attachments : ['—']),
+      'Attachments (metadata only — files are not stored on the website):',
+      ...formatAttachmentLines(report.attachments),
       '',
       'Note: Attachments are included automatically when using the “Send email (with attachments)” button.'
     ];
@@ -492,7 +537,7 @@ const d = new Date();
       reporterEmail: anwNormEmail(document.getElementById('rEmail').value),
       reporterPhone: document.getElementById('rPhone').value.trim(),
       gardaEmail: anwNormEmail(document.getElementById('rGarda').value),
-      attachments: Array.from(document.getElementById('rFiles').files || []).map(f => f.name)
+      attachments: getSelectedAttachmentMetadata()
     };
   }
 
