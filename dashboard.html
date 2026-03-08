@@ -912,8 +912,7 @@
     const statusEl = document.getElementById('gardaStatus');
     const chipsEl  = document.getElementById('gardaChips');
     const listEl   = document.getElementById('gardaList');
-    const fallbackEl = document.getElementById('gardaFallback');
-
+    
     const PRESET = {
       categories: ['Fraud / Economic Crime','Cyber Crime','Burglary & Theft','Drugs','Domestic Abuse','Traffic Matters','Community Policing','Other'],
       linksByCategory: {
@@ -941,7 +940,9 @@
       ],
       'Community Policing': [
         { title:'Community policing', url:'https://www.garda.ie/en/crime-prevention/community-policing/community-policing.html', snippet:'How Garda community policing works and how residents can engage locally.' },
-        { title:'Community engagement', url:'https://www.garda.ie/en/crime-prevention/community-engagement/', snippet:'Neighbourhood Watch and other community engagement initiatives and resources.' }
+        { title:'Community engagement', url:'https://www.garda.ie/en/crime-prevention/community-engagement/', snippet:'Neighbourhood Watch and other community engagement initiatives and resources.' },
+        { title:'Neighbourhood Watch', url:'https://www.garda.ie/en/crime-prevention/community-engagement/neighbourhood-watch.html', snippet:'Official Garda guidance on starting and supporting a local Neighbourhood Watch scheme.' },
+        { title:'Community Alert', url:'https://www.garda.ie/en/crime-prevention/community-engagement/community-alert.html', snippet:'Official Garda guidance on Community Alert for local safety and support.' }
       ],
       'Other': [
         { title:'Crime prevention (main hub)', url:'https://www.garda.ie/en/crime-prevention/', snippet:'Main Garda crime prevention hub with practical guidance and official resources.' },
@@ -1087,56 +1088,77 @@
     }
 
     async function loadGardaFeed(){
+      // Always render stable preset links immediately so the panel never looks empty.
+      renderPreset();
       setStatus('Loading Garda updates…');
       try{
-        // Browser direct fetch to garda.ie is commonly blocked by CORS; use a server-side proxy function.
-        const res = await fetch('/.netlify/functions/garda-feed', { cache: 'no-store' });
+        const controller = ('AbortController' in window) ? new AbortController() : null;
+        const timer = controller ? setTimeout(() => controller.abort(), 6000) : null;
+
+        const res = await fetch('/.netlify/functions/garda-feed', {
+          cache: 'no-store',
+          signal: controller ? controller.signal : undefined
+        });
+
+        if (timer) clearTimeout(timer);
         if(!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
 
-        // Accept both schemas:
-        // 1) { items: [...] } (alerts-style feed)
-        // 2) { categories: [...] } (curated links feed)
-        let itemsRaw = [];
-        if (Array.isArray(data.items)) {
-          itemsRaw = data.items;
-        } else if (Array.isArray(data.categories)) {
-          itemsRaw = data.categories.map(c => ({
-            title: c.label || c.title || 'Official link',
-            url: c.url || '',
-            category: c.label || c.category || 'Other',
-            date: 'Official link',
-            snippet: c.snippet || ''
-          }));
-        }
+        const recentItems = Array.isArray(data.recent)
+          ? data.recent.map(x => ({
+              title: x.title || 'Official Garda update',
+              url: x.url || '',
+              category: x.category || 'Other',
+              date: x.date || 'Latest update',
+              snippet: x.snippet || ''
+            }))
+          : [];
 
-        const items = filterItems(itemsRaw);
+        const categoryItems = Array.isArray(data.categories)
+          ? data.categories.map(c => ({
+              title: c.title || c.label || 'Official Garda resource',
+              url: c.url || '',
+              category: c.category || c.label || 'Other',
+              date: 'Official link',
+              snippet: c.snippet || ''
+            }))
+          : [];
 
-        // Only show fallback if we truly have nothing valid to show
+        const items = filterItems([...recentItems, ...categoryItems]);
         if(!items.length){
           setStatus('Official Garda resources');
-          showFallback();
+          renderPreset();
           return;
         }
-        setStatus('Official Garda resources (source: Garda.ie)');
-        if (fallbackEl) fallbackEl.style.display = 'none';
-        render(items.slice(0, 40));
+
+        const recentCount = recentItems.length;
+        setStatus(recentCount
+          ? `Official Garda resources + ${recentCount} latest update${recentCount === 1 ? '' : 's'}`
+          : 'Official Garda resources (source: Garda.ie)');
+        render(items.slice(0, 60));
       }catch(e){
         console.warn('garda-feed failed', e);
         setStatus('Official Garda resources');
-        showFallback();
+        renderPreset();
       }
     }
 
     let loaded = false;
+    function ensureGardaLoaded(){
+      if(loaded) return;
+      loaded = true;
+      loadGardaFeed();
+    }
+
     document.querySelectorAll('.dash-tab').forEach(b => {
       b.addEventListener('click', () => {
         if(b.dataset.tab !== 'tabGarda') return;
-        if(loaded) return;
-        loaded = true;
-        loadGardaFeed();
+        ensureGardaLoaded();
       });
     });
+
+    const activeTab = document.querySelector('.dash-tab.active[data-tab="tabGarda"]');
+    if(activeTab) ensureGardaLoaded();
   })();
 
 })();
