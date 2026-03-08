@@ -140,7 +140,7 @@
 <a href="alerts.html">Community Alerts</a>
 <a href="projects.html">Community Projects</a>
 <a href="handbook.html">Handbook</a>
-<a class="active" href="login.html">Login / Register</a>
+<a class="active" href="login.html" id="navAccountLink">Login / Register</a>
 <a href="dashboard.html">Dashboard</a>
 <a href="household.html">Household</a>
 <a href="admin.html">Admin</a>
@@ -160,7 +160,46 @@
     <div><strong>Status:</strong> <span id="accStatus">—</span></div>
     <div><strong>Role:</strong> <span id="accRole">—</span></div>
     <div><strong>Eircode:</strong> <span id="accEircode">—</span></div>
+    <div><strong>Phone:</strong> <span id="accPhone">—</span></div>
+    <div><strong>Logged in for:</strong> <span id="accLoggedFor">—</span></div>
   </div>
+  <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+    <a class="btn" href="dashboard.html" id="btnOpenDashboard">Open dashboard</a>
+  </div>
+</div>
+<div id="accountUpdateCard" class="card" style="display:none; margin-bottom:1rem; padding:16px;">
+  <h3 style="margin-top:0; margin-bottom:10px;">Update your profile</h3>
+  <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;">
+    <div class="field" style="margin:0;">
+      <label>Full name</label>
+      <input id="updName" type="text" />
+    </div>
+    <div class="field" style="margin:0;">
+      <label>Phone</label>
+      <input id="updPhone" type="tel" placeholder="+353851234567" />
+    </div>
+    <div class="field" style="margin:0;">
+      <label>Resident type</label>
+      <select id="updType">
+        <option value="">Select…</option>
+        <option value="owner">Owner</option>
+        <option value="tenant">Tenant</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="field" style="margin:0;">
+      <label>Management company</label>
+      <input id="updMgmt" type="text" />
+    </div>
+  </div>
+  <label class="chk" style="margin-top:10px;">
+    <input id="updAlerts" type="checkbox" />
+    <span>Send me community alerts (Email/SMS/WhatsApp).</span>
+  </label>
+  <div class="actions" style="justify-content:flex-end; gap:8px; margin-top:10px;">
+    <button class="btn" id="btnSaveProfile" type="button">Save profile</button>
+  </div>
+  <div class="msg" id="profileMsg"></div>
 </div>
 <div class="field">
 <label>Email</label>
@@ -412,6 +451,68 @@
   }
   function minutesToMs(m){ return m * 60 * 1000; }
 
+function updateAccountNavLink(){
+  if(!navAccountLink) return;
+  const u = window.netlifyIdentity && window.netlifyIdentity.currentUser
+    ? window.netlifyIdentity.currentUser()
+    : null;
+  navAccountLink.textContent = (u && u.email) ? 'My Account' : 'Login / Register';
+}
+
+function sessionKey(email){
+  return 'anw_session_started:' + String(email || '').toLowerCase();
+}
+function ensureSessionStarted(email){
+  const key = sessionKey(email);
+  let ts = 0;
+  try{ ts = Number(sessionStorage.getItem(key) || 0); }catch{}
+  if(!ts){
+    ts = Date.now();
+    try{ sessionStorage.setItem(key, String(ts)); }catch{}
+  }
+  return ts;
+}
+let loggedTimer = null;
+function formatDuration(ms){
+  const totalMin = Math.max(0, Math.floor(ms / 60000));
+  const days = Math.floor(totalMin / 1440);
+  const hours = Math.floor((totalMin % 1440) / 60);
+  const mins = totalMin % 60;
+  const parts = [];
+  if(days) parts.push(days + 'd');
+  if(hours || days) parts.push(hours + 'h');
+  parts.push(mins + 'm');
+  return parts.join(' ');
+}
+function startLoggedTimer(email){
+  stopLoggedTimer();
+  const started = ensureSessionStarted(email);
+  function tick(){ if(accLoggedFor) accLoggedFor.textContent = formatDuration(Date.now() - started); }
+  tick();
+  loggedTimer = setInterval(tick, 60000);
+}
+function stopLoggedTimer(){
+  if(loggedTimer){ clearInterval(loggedTimer); loggedTimer = null; }
+  if(accLoggedFor) accLoggedFor.textContent = '—';
+}
+function setLoggedInUI(isLoggedIn){
+  const loginCard = document.getElementById('login');
+  if(loginCard){
+    loginCard.querySelectorAll('.field').forEach((el)=>{
+      if(el === loginAddrWrap) return;
+      el.style.display = isLoggedIn ? 'none' : '';
+    });
+    const actions = loginCard.querySelector('.actions');
+    if(actions) actions.style.display = isLoggedIn ? 'none' : '';
+  }
+  if(lnkForgot && lnkForgot.parentElement) lnkForgot.parentElement.style.display = isLoggedIn ? 'none' : '';
+  if(resetBlock) resetBlock.hidden = true;
+  if(loginAddrWrap) loginAddrWrap.style.display = isLoggedIn ? 'none' : 'none';
+  if(loggedAccountCard) loggedAccountCard.style.display = isLoggedIn ? 'block' : 'none';
+  if(accountUpdateCard) accountUpdateCard.style.display = isLoggedIn ? 'block' : 'none';
+  if(btnLogout) btnLogout.style.display = isLoggedIn ? 'inline-block' : 'none';
+}
+
   // DOM
   const registerSection = document.getElementById('register');
   const loggedBanner    = document.getElementById('loggedBanner');
@@ -421,6 +522,17 @@
   const accStatus = document.getElementById('accStatus');
   const accRole = document.getElementById('accRole');
   const accEircode = document.getElementById('accEircode');
+  const accPhone = document.getElementById('accPhone');
+  const accLoggedFor = document.getElementById('accLoggedFor');
+  const accountUpdateCard = document.getElementById('accountUpdateCard');
+  const updName = document.getElementById('updName');
+  const updPhone = document.getElementById('updPhone');
+  const updType = document.getElementById('updType');
+  const updMgmt = document.getElementById('updMgmt');
+  const updAlerts = document.getElementById('updAlerts');
+  const btnSaveProfile = document.getElementById('btnSaveProfile');
+  const profileMsg = document.getElementById('profileMsg');
+  const navAccountLink = document.getElementById('navAccountLink');
   const btnLogout       = document.getElementById('btnLogout');
 
   const loginEmail = document.getElementById('loginEmail');
@@ -599,58 +711,69 @@ const volMeetings    = document.getElementById('volMeetings');
   }
 
   // ---------- Banner + registration hide logic (after login only) ----------
-  async function showLoggedBannerIfAny() {
-    const u = window.netlifyIdentity && window.netlifyIdentity.currentUser
-      ? window.netlifyIdentity.currentUser()
-      : null;
+  
+async function showLoggedBannerIfAny() {
+  const u = window.netlifyIdentity && window.netlifyIdentity.currentUser
+    ? window.netlifyIdentity.currentUser()
+    : null;
 
-    if (!u || !u.email) {
-      if (loggedBanner) loggedBanner.style.display = 'none';
-      if (btnLogout) btnLogout.style.display = 'none';
-      if (registerSection) registerSection.style.display = 'block';
-      applySoftLockUI();
-      return;
-    }
+  updateAccountNavLink();
 
-    try{ await anwInitStore(); } catch {}
-
-    const users = anwLoad(KEY_USERS, []);
-    const me = Array.isArray(users) ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase()) : null;
-
-    const status = (me && me.status ? me.status : 'pending').toLowerCase();
-    const statusLabel =
-      status === 'active' ? 'active' :
-      (status === 'suspended' || status === 'removed') ? 'blocked' :
-      'pending approval';
-
-    if (loggedBanner) {
-      loggedBanner.innerHTML =
-        'You are logged in as <strong>' + (me?.name || u.email) + '</strong>' +
-        (me?.eircode ? (' (Eircode: ' + (me.eircode) + '). ') : '. ') +
-        'Your registration is <strong>' + statusLabel + '</strong>. ' +
-        '<a href="dashboard.html" class="link">Open your dashboard</a>.';
-      loggedBanner.style.display = 'block';
-    }
-
-    if (loggedAccountCard) {
-      if (accName) accName.textContent = me?.name || '—';
-      if (accEmail) accEmail.textContent = u.email || '—';
-      if (accStatus) accStatus.textContent = statusLabel;
-      if (accRole) accRole.textContent = me?.role || 'resident';
-      if (accEircode) accEircode.textContent = me?.eircode || '—';
-      loggedAccountCard.style.display = 'block';
-    }
-
-    if (btnLogout) btnLogout.style.display = 'inline-block';
-
-    if (registerSection) {
-      registerSection.style.display = 'none';
-    }
-
-    try{ await updateLoginAddressPreview(); } catch {}
+  if (!u || !u.email) {
+    if (loggedBanner) loggedBanner.style.display = 'none';
+    if (loggedAccountCard) loggedAccountCard.style.display = 'none';
+    if (accountUpdateCard) accountUpdateCard.style.display = 'none';
+    if (registerSection) registerSection.style.display = 'block';
+    setLoggedInUI(false);
+    stopLoggedTimer();
+    applySoftLockUI();
+    return;
   }
 
-  // ---------- LOGIN (Netlify Identity) ----------
+  try{ await anwInitStore(); } catch {}
+
+  const users = anwLoad(KEY_USERS, []);
+  const me = Array.isArray(users) ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase()) : null;
+
+  const status = (me && me.status ? me.status : 'pending').toLowerCase();
+  const statusLabel =
+    status === 'active' ? 'active' :
+    (status === 'suspended' || status === 'removed') ? 'blocked' :
+    'pending approval';
+
+  if (loggedBanner) {
+    loggedBanner.innerHTML =
+      'You are logged in as <strong>' + (me?.name || u.email) + '</strong>' +
+      (me?.eircode ? (' (Eircode: ' + (me.eircode) + '). ') : '. ') +
+      'Your registration is <strong>' + statusLabel + '</strong>.';
+    loggedBanner.style.display = 'block';
+  }
+
+  if (loggedAccountCard) {
+    if (accName) accName.textContent = me?.name || '—';
+    if (accEmail) accEmail.textContent = u.email || '—';
+    if (accStatus) accStatus.textContent = statusLabel;
+    if (accRole) accRole.textContent = me?.role || (me?.coordinator ? 'coordinator' : (me?.volunteer ? 'volunteer' : 'resident'));
+    if (accEircode) accEircode.textContent = me?.eircode || '—';
+    if (accPhone) accPhone.textContent = me?.phone || '—';
+    loggedAccountCard.style.display = 'block';
+  }
+
+  if (updName) updName.value = me?.name || '';
+  if (updPhone) updPhone.value = me?.phone || '';
+  if (updType) updType.value = me?.residentType || me?.type || '';
+  if (updMgmt) updMgmt.value = me?.managementCompany || '';
+  if (updAlerts) updAlerts.checked = !!(me?.alertsConsent?.optIn);
+  if (accountUpdateCard) accountUpdateCard.style.display = 'block';
+
+  setLoggedInUI(true);
+  if (registerSection) registerSection.style.display = 'none';
+  startLoggedTimer(u.email || '');
+
+  try{ await updateLoginAddressPreview(); } catch {}
+}
+
+// ---------- LOGIN (Netlify Identity) ----------
   if(btnLogin){
     btnLogin.addEventListener('click', async () => {
       setMsg(loginMsg, '', '');
@@ -738,6 +861,8 @@ const volMeetings    = document.getElementById('volMeetings');
         toast('Login successful.', 'success');
 
         await auditLog('LOGIN_OK', email, eir);
+        try{ sessionStorage.setItem(sessionKey(email), String(Date.now())); }catch{}
+        updateAccountNavLink();
 
         setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
 
@@ -816,7 +941,8 @@ const volMeetings    = document.getElementById('volMeetings');
       if (loginPass)  loginPass.value  = '';
       setMsg(loginMsg, 'You have been logged out.', '');
       toast('Logged out.', 'info');
-      await showLoggedBannerIfAny();
+      updateAccountNavLink();
+  await showLoggedBannerIfAny();
       applySoftLockUI();
     });
   }
@@ -1083,9 +1209,51 @@ if(btnCancelReset && resetBlock){
     });
   }
 
+
+if (btnSaveProfile) {
+  btnSaveProfile.addEventListener('click', async () => {
+    setMsg(profileMsg, '', '');
+    const u = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+    if(!u || !u.email){
+      setMsg(profileMsg, 'Please log in first.', 'error');
+      return;
+    }
+    const newName = (updName.value || '').trim();
+    const newPhone = normalizePhone(updPhone.value || '');
+    const newType = (updType.value || '').trim();
+    const newMgmt = (updMgmt.value || '').trim();
+    if(!newName){ setMsg(profileMsg, 'Please enter your name.', 'error'); return; }
+    if(newPhone && !isValidPhone(newPhone)){ setMsg(profileMsg, 'Please use international phone format, e.g. +353851234567.', 'error'); return; }
+    try{
+      await anwInitStore();
+      let users = anwLoad(KEY_USERS, []);
+      if(!Array.isArray(users)) users = [];
+      const idx = users.findIndex(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase());
+      if(idx < 0){ setMsg(profileMsg, 'Profile not found.', 'error'); return; }
+      const nowIso = new Date().toISOString();
+      users[idx].name = newName;
+      users[idx].phone = newPhone;
+      users[idx].residentType = newType || users[idx].residentType || users[idx].type || '';
+      users[idx].type = newType || users[idx].type || '';
+      users[idx].managementCompany = newMgmt;
+      users[idx].alertsConsent = users[idx].alertsConsent || {};
+      users[idx].alertsConsent.optIn = !!updAlerts.checked;
+      users[idx].alertsConsent.updatedAt = nowIso;
+      users[idx].alertsConsent.history = Array.isArray(users[idx].alertsConsent.history) ? users[idx].alertsConsent.history : [];
+      users[idx].alertsConsent.history.push({ at: nowIso, optIn: !!updAlerts.checked, source: 'self-service' });
+      await anwSave(KEY_USERS, users);
+      setMsg(profileMsg, 'Profile updated successfully.', 'ok');
+      await showLoggedBannerIfAny();
+    }catch(err){
+      const em = err && (err.message || err.error) ? (err.message || err.error) : String(err);
+      setMsg(profileMsg, 'Could not update profile: ' + em, 'error');
+    }
+  });
+}
+
   if(window.netlifyIdentity){
-    window.netlifyIdentity.on('login', () => { showLoggedBannerIfAny(); });
-    window.netlifyIdentity.on('logout', () => { showLoggedBannerIfAny(); });
+    window.netlifyIdentity.on('login', () => { updateAccountNavLink(); showLoggedBannerIfAny(); });
+    window.netlifyIdentity.on('logout', () => { updateAccountNavLink(); showLoggedBannerIfAny(); });
   }
 
   await showLoggedBannerIfAny();
