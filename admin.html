@@ -6,10 +6,25 @@
 <!-- Auth pre-check disabled (temporary public mode) -->
 <script>
   (function(){
-    try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
+    try {
+      document.documentElement.classList.remove('anw-preauth-hide');
+      document.documentElement.classList.remove('admin-booting');
+      window.addEventListener('load', function(){ try{ document.documentElement.classList.remove('admin-booting'); }catch(_){} }, { once:true });
+    } catch (_) {}
   })();
 </script>
 <title>Admin Panel — Aderrig NW</title>
+<script>
+  function updateAdminLoginNavLabel(){
+    try{
+      const u = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function') ? window.netlifyIdentity.currentUser() : null;
+      document.querySelectorAll('nav.nav a[href="login.html"]').forEach(a => {
+        a.textContent = u ? 'My Account' : 'Login / Register';
+      });
+    }catch(_){ }
+  }
+  window.addEventListener('DOMContentLoaded', updateAdminLoginNavLabel);
+</script>
 <script>
   // Temporary public mode: keep Admin usable even if global scripts fail
   window.ANW_PUBLIC_MODE = true;
@@ -793,7 +808,7 @@
         <div class="field">
           <label>CSV file (optional)</label>
           <input id="binCsvFile" type="file" accept=".csv,text/csv" />
-          <p class="tiny muted" style="margin-top:6px;">You can select a Panda CSV file. The system will read the file automatically, ignore a header row like <code>date,provider,bin,visibility</code>, and fill the schedule lines for import.</p>
+          <p class="tiny muted" style="margin-top:6px;">You can select a Panda CSV file. The system will read the file automatically, ignore a header row like <code>date,provider,bin,visibility</code>, fill the schedule lines, and import them as public Home notices when you click Import schedule.</p>
         </div>
         <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
           <button type="button" class="btn btn-line" id="btnBinImport">Import schedule</button>
@@ -1303,17 +1318,16 @@ Bin schedule | https://..."></textarea>
   try { if (typeof window.anwInitStore === "function") await window.anwInitStore(); } catch(e) { console.warn(e); }
   'use strict';
 
-  const KEY_USERS = ANW_KEYS.USERS;
-  const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
-  const KEY_VOTES = ANW_KEYS.VOTES;
-  const KEY_INCIDENTS = ANW_KEYS.INCIDENTS;
-  const KEY_TASKS = ANW_KEYS.TASKS;
-  const KEY_NOTICES = ANW_KEYS.NOTICES || 'anw_notices';
-  const KEY_HANDBOOK = (window.ANW_KEYS && window.ANW_KEYS.HANDBOOK) ? window.ANW_KEYS.HANDBOOK : "anw_handbook";
-
-
-  const KEY_PROJECTS = ANW_KEYS.PROJECTS;
-  const KEY_PROJ_MON = ANW_KEYS.PROJECT_MONITORING;
+  const KEYS = window.ANW_KEYS || {};
+  const KEY_USERS = KEYS.USERS || 'anw_users';
+  const KEY_ELECTIONS = KEYS.ELECTIONS || 'anw_elections';
+  const KEY_VOTES = KEYS.VOTES || 'anw_votes';
+  const KEY_INCIDENTS = KEYS.INCIDENTS || 'anw_incidents';
+  const KEY_TASKS = KEYS.TASKS || 'anw_tasks';
+  const KEY_NOTICES = KEYS.NOTICES || KEYS.KEY_NOTICES || 'anw_notices';
+  const KEY_HANDBOOK = KEYS.HANDBOOK || 'anw_handbook';
+  const KEY_PROJECTS = KEYS.PROJECTS || 'anw_projects';
+  const KEY_PROJ_MON = KEYS.PROJECT_MONITORING || 'anw_project_monitoring';
 
 
   function loadUsers(){ return anwLoad(KEY_USERS, []); }
@@ -1423,6 +1437,8 @@ function adminSetGateMessage(htmlText) {
       document.documentElement.classList.remove('admin-booting');
     }
   }
+  try{ window.addEventListener('load', adminMarkReady, { once:true }); }catch(_){ }
+  try{ setTimeout(adminMarkReady, 1800); }catch(_){ }
 
   async function adminEnsureStoreReady(){
     const attempts = [0, 120, 280];
@@ -4219,18 +4235,121 @@ setTimeout(runAdminGate, 0);
   const btnBinImport = document.getElementById('btnBinImport');
   const binMsg = document.getElementById('binMsg');
 
+  function csvSplitLine(line){
+    const out = [];
+    let cur = '';
+    let inQuotes = false;
+    for(let i=0;i<String(line||'').length;i++){
+      const ch = line[i];
+      if(ch === '"'){
+        if(inQuotes && line[i+1] === '"'){
+          cur += '"';
+          i++;
+        }else{
+          inQuotes = !inQuotes;
+        }
+      }else if((ch === ',' || ch === ';' || ch === '	') && !inQuotes){
+        out.push(cur.trim());
+        cur = '';
+      }else{
+        cur += ch;
+      }
+    }
+    out.push(cur.trim());
+    return out.filter((_, idx, arr)=> !(idx === arr.length - 1 && !arr[idx]));
+  }
+
+  function normalizeBinLabel(value){
+    const raw = String(value || '').trim();
+    if(!raw) return '';
+    const lower = raw.toLowerCase();
+    if(/brown|organic|food|compost/.test(lower)) return 'Brown';
+    if(/green|recycl/.test(lower)) return 'Green';
+    if(/black|general|refuse|waste/.test(lower)) return 'Black';
+    return raw.replace(/\s*bin\s*/ig, ' ').replace(/\s+/g, ' ').trim().replace(/^./, c => c.toUpperCase());
+  }
+
+  function normalizeProviderLabel(value){
+    const raw = String(value || '').trim();
+    if(!raw) return 'Panda';
+    if(/panda/i.test(raw)) return 'Panda';
+    return raw.replace(/\s+/g, ' ').trim();
+  }
+
+  function parseLooseDate(value){
+    const raw = String(value || '').trim();
+    if(!raw) return '';
+    if(/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    let m = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+    if(m){
+      const dd = String(m[1]).padStart(2,'0');
+      const mm = String(m[2]).padStart(2,'0');
+      const yyyy = m[3];
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    m = raw.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+    if(m){
+      const yyyy = m[1];
+      const mm = String(m[2]).padStart(2,'0');
+      const dd = String(m[3]).padStart(2,'0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    return '';
+  }
+
   function parseCsvLine(line){
-    const parts = line.split(',').map(s => s.trim()).filter(Boolean);
-    if(parts.length < 3) return null;
-    const dateStr = parts[0];
-    const provider = parts[1];
-    const bin = parts[2];
-    const visibility = (parts[3] || 'public').toLowerCase() === 'private' ? 'private' : 'public';
+    const parts = csvSplitLine(line);
+    if(parts.length < 2) return null;
+    let dateStr = '';
+    let provider = '';
+    let bin = '';
+    let visibility = 'public';
+
+    for(const part of parts){
+      if(!dateStr){
+        const maybe = parseLooseDate(part);
+        if(maybe){ dateStr = maybe; continue; }
+      }
+      if(!provider && /panda|provider|collection company|hauler/i.test(part)){
+        provider = normalizeProviderLabel(part.replace(/provider|collection company|hauler/ig,'').trim() || part);
+        continue;
+      }
+      if(!bin && /green|black|brown|organic|food|general|refuse|recycl/i.test(part)){
+        bin = normalizeBinLabel(part);
+        continue;
+      }
+      if(/public|private/i.test(part)){
+        visibility = /private/i.test(part) ? 'private' : 'public';
+      }
+    }
+
+    if(!dateStr && parts[0]) dateStr = parseLooseDate(parts[0]);
+    if(!provider && parts[1]) provider = normalizeProviderLabel(parts[1]);
+    if(!bin){
+      const candidate = parts.find(p => /green|black|brown|organic|food|general|refuse|recycl/i.test(p)) || parts[2] || '';
+      bin = normalizeBinLabel(candidate);
+    }
+    provider = normalizeProviderLabel(provider);
+
+    if(!dateStr || !bin) return null;
     return { dateStr, provider, bin, visibility };
   }
 
+  function parseCsvTextToScheduleLines(text){
+    const rows = String(text || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    if(!rows.length) return [];
+    return rows
+      .filter((row, idx) => {
+        const lower = row.toLowerCase();
+        if(idx === 0 && /(date|collection date).*(provider|company|hauler|service)?.*(bin|waste|stream)/i.test(lower)) return false;
+        return true;
+      })
+      .map(parseCsvLine)
+      .filter(Boolean)
+      .map(row => `${row.dateStr}, ${row.provider}, ${row.bin}, public`);
+  }
+
   function toMiddayLocal(dateStr){
-    // Use midday to avoid DST edge-cases when parsing YYYY-MM-DD.
     const d = new Date(dateStr + 'T12:00:00');
     return isNaN(d.getTime()) ? null : d;
   }
@@ -4246,9 +4365,8 @@ setTimeout(runAdminGate, 0);
   }
 
   function weekStartMonday(d){
-    // Monday as start of week (Ireland). JS getDay(): Sun=0..Sat=6
     const day = d.getDay();
-    const offset = (day + 6) % 7; // Mon=0, Tue=1, ... Sun=6
+    const offset = (day + 6) % 7;
     const ws = new Date(d);
     ws.setDate(d.getDate() - offset);
     return ws;
@@ -4258,33 +4376,26 @@ setTimeout(runAdminGate, 0);
     try{
       return d.toLocaleDateString('en-IE', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
     }catch{
-      // fallback
       const wd = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
       return wd + ' ' + d.toISOString().slice(0,10);
     }
   }
-
 
   const binCsvFile = document.getElementById('binCsvFile');
 
   async function importBinCsvFile(file){
     if(!file) return;
     const text = await file.text();
-    const rawLines = String(text || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-    if(!rawLines.length){
-      if(binMsg) binMsg.textContent = 'Selected file is empty.';
+    const normalized = parseCsvTextToScheduleLines(text);
+    if(!normalized.length){
+      if(binMsg) binMsg.textContent = 'No valid Panda CSV rows were found. Expected a date and bin type in each row.';
       return;
     }
-    const normalized = rawLines.filter((line, idx) => {
-      const lower = line.toLowerCase();
-      if(idx === 0 && /date\s*,\s*provider\s*,\s*bin/.test(lower)) return false;
-      return true;
-    });
     if(binCsv){
       binCsv.value = normalized.join('\n');
     }
     if(binMsg){
-      binMsg.textContent = 'CSV loaded. Review the schedule lines and click "Import schedule".';
+      binMsg.textContent = 'CSV loaded. Review the schedule lines and click "Import schedule". Entries will be saved as public Home notices automatically.';
     }
   }
 
@@ -4313,28 +4424,24 @@ setTimeout(runAdminGate, 0);
         const parsed = lines.map(parseCsvLine).filter(Boolean);
 
         if(!parsed.length){
-          if(binMsg) binMsg.textContent = 'No valid lines found. Expected: YYYY-MM-DD, Provider, Bin, public|private';
+          if(binMsg) binMsg.textContent = 'No valid lines found. Expected: YYYY-MM-DD, Provider, Bin';
           return;
         }
 
         const current = await loadNoticesFresh();
         const next = Array.isArray(current) ? current.slice() : [];
-
         let added = 0, skipped = 0;
 
         for(const row of parsed){
           const d = toMiddayLocal(row.dateStr);
           if(!d){ skipped++; continue; }
-
           const ws = weekStartMonday(d);
           const we = new Date(ws);
           we.setDate(ws.getDate() + 6);
-
           const collectionLabel = fmtWeekdayDate(d);
           const title = `Bin collection (${row.provider})`;
           const message = `${row.provider}: ${row.bin} bin collection on ${collectionLabel}.`;
 
-          // Avoid duplicates (same provider + bin + date)
           const exists = next.some(n =>
             n && n.meta && n.meta.type === 'bin_collection' &&
             String(n.meta.provider||'').toLowerCase() === String(row.provider).toLowerCase() &&
@@ -4343,20 +4450,23 @@ setTimeout(runAdminGate, 0);
           );
           if(exists){ skipped++; continue; }
 
-          const notice = {
+          next.push({
             id: 'nt_' + Date.now() + '_' + Math.random().toString(16).slice(2,8),
             title,
             message,
             category: 'Bins',
             createdAt: new Date().toISOString(),
-            // Active for the week containing the collection date
             startsAt: startOfDayIso(ws),
             expiresAt: endOfDayIso(we),
             createdBy: anwGetLoggedEmail(),
-            home: { enabled: true, visibility: row.visibility },
+            public: true,
+            isPublic: true,
+            published: true,
+            status: 'public',
+            home: { enabled: true, visibility: 'public' },
             target: {
               include: {
-                allLoggedIn: row.visibility !== 'public',
+                allLoggedIn: false,
                 nonAdminOnly: false,
                 roles: [],
                 eircodePrefixes: [],
@@ -4366,16 +4476,14 @@ setTimeout(runAdminGate, 0);
               },
               exclude: { roles: [], eircodes: [], emails: [] }
             },
-            meta: { type:'bin_collection', provider: row.provider, bin: row.bin, collectionDate: row.dateStr }
-          };
-
-          next.push(notice);
+            meta: { type:'bin_collection', provider: row.provider, bin: row.bin, collectionDate: row.dateStr, source: 'panda_csv' }
+          });
           added++;
         }
 
         await anwSave(KEY_NOTICES, next);
         await renderNoticesAdmin();
-        if(binMsg) binMsg.textContent = `Imported. Added: ${added}. Skipped (duplicates/invalid): ${skipped}.`;
+        if(binMsg) binMsg.textContent = `Schedule imported successfully. Added ${added}. Skipped ${skipped}. All imported Panda entries are public and enabled for Home automatically.`;
         toast(`Bin schedule imported. Added ${added}.`, 'success');
       }catch(err){
         if(binMsg) binMsg.textContent = err?.message || 'Unable to import schedule.';
