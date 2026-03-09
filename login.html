@@ -140,7 +140,7 @@
 <a href="alerts.html">Community Alerts</a>
 <a href="projects.html">Community Projects</a>
 <a href="handbook.html">Handbook</a>
-<a class="active" href="login.html" id="navAccountLink">Login / Register</a>
+<a class="active" href="login.html">Login / Register</a>
 <a href="dashboard.html">Dashboard</a>
 <a href="household.html">Household</a>
 <a href="admin.html">Admin</a>
@@ -152,29 +152,38 @@
 <section class="card" id="login">
 <h2>Login</h2>
 <p class="muted" id="loggedBanner" style="margin-bottom:0.75rem; display:none;"></p>
-<div id="loggedAccountCard" class="card" style="display:none; margin-bottom:1rem; padding:16px;">
-  <h3 style="margin-top:0; margin-bottom:10px;">My account</h3>
-  <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;">
-    <div><strong>Name:</strong> <span id="accName">—</span></div>
-    <div><strong>Email:</strong> <span id="accEmail">—</span></div>
-    <div><strong>Status:</strong> <span id="accStatus">—</span></div>
-    <div><strong>Role:</strong> <span id="accRole">—</span></div>
-    <div><strong>Eircode:</strong> <span id="accEircode">—</span></div>
-    <div><strong>Phone:</strong> <span id="accPhone">—</span></div>
-    <div><strong>Volunteer roles:</strong> <span id="accVolunteerRoles">—</span></div>
-    <div><strong>Logged in for:</strong> <span id="accLoggedFor">—</span></div>
-  </div>
-  <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(17,24,39,.10);">
-    <h4 style="margin:0 0 10px 0;">Update your profile</h4>
+<div id="loggedAccountWrap" style="display:none; margin-bottom:1rem;">
+  <div id="loggedAccountCard" class="card" style="margin-bottom:1rem; padding:16px;">
+    <h3 style="margin-top:0; margin-bottom:10px;">My Account</h3>
     <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;">
-      <div class="field" style="margin:0;"><label>Full name</label><input id="profName" type="text"/></div>
-      <div class="field" style="margin:0;"><label>Phone</label><input id="profPhone" type="text"/></div>
-      <div class="field" style="margin:0;"><label>Eircode</label><input id="profEir" type="text" disabled/></div>
-      <div class="field" style="margin:0;"><label>Status</label><input id="profStatus" type="text" disabled/></div>
+      <div><strong>Name:</strong> <span id="accName">—</span></div>
+      <div><strong>Email:</strong> <span id="accEmail">—</span></div>
+      <div><strong>Status:</strong> <span id="accStatus">—</span></div>
+      <div><strong>Role:</strong> <span id="accRole">—</span></div>
+      <div><strong>Eircode:</strong> <span id="accEircode">—</span></div>
+      <div><strong>Phone:</strong> <span id="accPhone">—</span></div>
+      <div style="grid-column:1 / -1;"><strong>Volunteer roles:</strong> <span id="accVolunteerRoles">—</span></div>
+      <div style="grid-column:1 / -1;"><strong>Logged in for:</strong> <span id="accSessionTime">—</span></div>
     </div>
-    <div class="actions" style="justify-content:space-between; margin-top:10px;">
+  </div>
+  <div id="profileUpdateCard" class="card" style="padding:16px;">
+    <h3 style="margin-top:0; margin-bottom:10px;">Update your profile</h3>
+    <div class="field">
+      <label>Full name</label>
+      <input id="updName" type="text" />
+    </div>
+    <div class="field">
+      <label>Phone number</label>
+      <input id="updPhone" type="tel" />
+    </div>
+    <label class="chk" style="margin-top:8px;">
+      <input id="updAlertsOptIn" type="checkbox" />
+      <span>Send me community alerts (Email/SMS/WhatsApp)</span>
+    </label>
+    <div class="actions" style="justify-content:flex-end; gap:8px; margin-top:12px;">
       <button class="btn btn-line" id="btnOpenDashboard" type="button">Open dashboard</button>
-      <button class="btn" id="btnProfileSave" type="button">Update profile</button>
+      <button class="btn btn-line" id="btnAccountLogout" type="button">Logout</button>
+      <button class="btn" id="btnUpdateProfile" type="button">Save profile</button>
     </div>
     <div class="msg" id="profileMsg"></div>
   </div>
@@ -431,24 +440,24 @@
 
   // DOM
   const registerSection = document.getElementById('register');
-  const navAccountLink = document.getElementById('navAccountLink');
-  const profileMsg = document.getElementById('profileMsg');
-  const profName = document.getElementById('profName');
-  const profPhone = document.getElementById('profPhone');
-  const profEir = document.getElementById('profEir');
-  const profStatus = document.getElementById('profStatus');
-  const btnProfileSave = document.getElementById('btnProfileSave');
-  const btnOpenDashboard = document.getElementById('btnOpenDashboard');
-  const accPhone = document.getElementById('accPhone');
-  const accVolunteerRoles = document.getElementById('accVolunteerRoles');
-  const accLoggedFor = document.getElementById('accLoggedFor');
-  const loggedBanner    = document.getElementById('loggedBanner');
+  const loggedBanner      = document.getElementById('loggedBanner');
+  const loggedAccountWrap = document.getElementById('loggedAccountWrap');
   const loggedAccountCard = document.getElementById('loggedAccountCard');
   const accName = document.getElementById('accName');
   const accEmail = document.getElementById('accEmail');
   const accStatus = document.getElementById('accStatus');
   const accRole = document.getElementById('accRole');
   const accEircode = document.getElementById('accEircode');
+  const accPhone = document.getElementById('accPhone');
+  const accVolunteerRoles = document.getElementById('accVolunteerRoles');
+  const accSessionTime = document.getElementById('accSessionTime');
+  const updName = document.getElementById('updName');
+  const updPhone = document.getElementById('updPhone');
+  const updAlertsOptIn = document.getElementById('updAlertsOptIn');
+  const btnUpdateProfile = document.getElementById('btnUpdateProfile');
+  const btnOpenDashboard = document.getElementById('btnOpenDashboard');
+  const btnAccountLogout = document.getElementById('btnAccountLogout');
+  const profileMsg = document.getElementById('profileMsg');
   const btnLogout       = document.getElementById('btnLogout');
 
   const loginEmail = document.getElementById('loginEmail');
@@ -626,21 +635,12 @@ const volMeetings    = document.getElementById('volMeetings');
     }
   }
 
-  function formatLoggedInFor(loginAt){
-    if(!loginAt) return 'just now';
-    const diff = Math.max(0, Date.now() - loginAt);
-    const mins = Math.floor(diff/60000);
-    if(mins < 1) return 'less than a minute';
-    if(mins < 60) return mins + (mins === 1 ? ' minute' : ' minutes');
-    const hours = Math.floor(mins/60);
-    if(hours < 24) return hours + (hours === 1 ? ' hour' : ' hours');
-    const days = Math.floor(hours/24);
-    return days + (days === 1 ? ' day' : ' days');
-  }
+  let accountTimer = null;
 
-  function setAccountNav(loggedIn){
-    if(!navAccountLink) return;
-    navAccountLink.textContent = loggedIn ? 'My Account' : 'Login / Register';
+  function updateLoginNavLabel(isLoggedIn){
+    document.querySelectorAll('nav.nav a[href="login.html"]').forEach(a => {
+      a.textContent = isLoggedIn ? 'My Account' : 'Login / Register';
+    });
   }
 
   function getVolunteerRolesText(me){
@@ -651,35 +651,83 @@ const volMeetings    = document.getElementById('volMeetings');
       ['tech', 'Tech support'],
       ['elderly', 'Elderly checks'],
       ['cleanup', 'Community clean-up'],
+      ['parking', 'Parking assistance'],
       ['meetings', 'Meeting organiser'],
-      ['translation', 'Translation'],
-      ['parking', 'Parking assistance']
+      ['translation', 'Translation']
     ];
     const picked = map.filter(([key]) => !!me.vol_roles[key]).map(([,label]) => label);
     return picked.length ? picked.join(', ') : '—';
   }
 
-  function getRoleText(me){
-    if(!me) return 'resident';
+  function getMainRoleText(me){
     const roles = [];
-    if(me.isCoordinator || me.coordinator) roles.push('Street Coordinator');
-    if(me.isVolunteer || me.volunteer) roles.push('Volunteer');
-    if(me.role && !roles.length) roles.push(String(me.role));
+    if(me && (me.isCoordinator || me.coordinator)) roles.push('Street Coordinator');
+    if(me && (me.isVolunteer || me.volunteer)) roles.push('Volunteer');
+    if(me && me.role && roles.length === 0) roles.push(String(me.role));
     return roles.length ? roles.join(', ') : 'resident';
   }
 
-  async function saveOwnProfile(userEmail){
-    try{
-      await anwInitStore();
-      const users = anwLoad(KEY_USERS, []);
-      const idx = Array.isArray(users) ? users.findIndex(x => (x.email||'').toLowerCase() === String(userEmail||'').toLowerCase()) : -1;
-      if(idx < 0) throw new Error('Profile not found.');
-      users[idx] = { ...users[idx], name: String((profName?.value||'').trim() || users[idx].name || ''), phone: String((profPhone?.value||'').trim() || '') };
-      await anwSave(KEY_USERS, users);
-      return users[idx];
-    }catch(err){
-      throw err;
+  function formatElapsed(ms){
+    const totalSec = Math.max(0, Math.floor(ms / 1000));
+    const hours = Math.floor(totalSec / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    if(hours > 0) return hours + 'h ' + mins + 'm';
+    return mins + 'm';
+  }
+
+  function stopAccountTimer(){
+    if(accountTimer){
+      clearInterval(accountTimer);
+      accountTimer = null;
     }
+  }
+
+  function startAccountTimer(){
+    stopAccountTimer();
+    let startedAt = 0;
+    try{ startedAt = Number(localStorage.getItem('anw_login_started_at') || '0'); }catch(_){}
+    if(!startedAt){
+      startedAt = Date.now();
+      try{ localStorage.setItem('anw_login_started_at', String(startedAt)); }catch(_){}
+    }
+    function tick(){
+      if(accSessionTime) accSessionTime.textContent = formatElapsed(Date.now() - startedAt);
+    }
+    tick();
+    accountTimer = setInterval(tick, 30000);
+  }
+
+  function setLoggedInUi(isLoggedIn){
+    const loginFieldEmail = loginEmail ? loginEmail.closest('.field') : null;
+    const loginFieldEir   = loginEir ? loginEir.closest('.field') : null;
+    const loginFieldPass  = loginPass ? loginPass.closest('.field') : null;
+    const loginActions    = btnLogin ? btnLogin.closest('.actions') : null;
+    const forgotWrap      = lnkForgot ? lnkForgot.closest('p') : null;
+
+    [loginFieldEmail, loginFieldEir, loginAddrWrap, loginFieldPass, loginActions, forgotWrap, resetBlock].forEach(el => {
+      if(!el) return;
+      el.style.display = isLoggedIn ? 'none' : '';
+    });
+
+    if(registerSection) registerSection.style.display = isLoggedIn ? 'none' : 'block';
+    if(loggedAccountWrap) loggedAccountWrap.style.display = isLoggedIn ? 'block' : 'none';
+    if(btnLogout) btnLogout.style.display = 'none';
+    updateLoginNavLabel(isLoggedIn);
+    if(!isLoggedIn) stopAccountTimer();
+  }
+
+  async function performLogout(){
+    try{ window.netlifyIdentity.logout(); } catch {}
+    try{
+      const sKey = (window.ANW_KEYS && ANW_KEYS.SESSION) ? ANW_KEYS.SESSION : 'anw_session';
+      localStorage.removeItem(sKey);
+      localStorage.removeItem('anw_login_started_at');
+    }catch{}
+    if(loginPass) loginPass.value = '';
+    setMsg(loginMsg, 'You have been logged out.', '');
+    toast('Logged out.', 'info');
+    await showLoggedBannerIfAny();
+    applySoftLockUI();
   }
 
   // ---------- Banner + registration hide logic (after login only) ----------
@@ -690,17 +738,8 @@ const volMeetings    = document.getElementById('volMeetings');
 
     if (!u || !u.email) {
       if (loggedBanner) loggedBanner.style.display = 'none';
-      if (loggedAccountCard) loggedAccountCard.style.display = 'none';
-      if (btnLogout) btnLogout.style.display = 'none';
-      if (registerSection) registerSection.style.display = 'block';
-      if (loginEmail) loginEmail.closest('.field').style.display = '';
-      if (loginEir) loginEir.closest('.field').style.display = '';
-      if (loginPass) loginPass.closest('.field').style.display = '';
-      if (btnLogin) btnLogin.style.display = '';
-      if (btnShow) btnShow.style.display = '';
-      if (lnkForgot && lnkForgot.closest('p')) lnkForgot.closest('p').style.display = '';
-      if (resetBlock) resetBlock.hidden = true;
-      setAccountNav(false);
+      if (loggedAccountWrap) loggedAccountWrap.style.display = 'none';
+      setLoggedInUi(false);
       applySoftLockUI();
       return;
     }
@@ -708,7 +747,9 @@ const volMeetings    = document.getElementById('volMeetings');
     try{ await anwInitStore(); } catch {}
 
     const users = anwLoad(KEY_USERS, []);
-    const me = Array.isArray(users) ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase()) : null;
+    const me = Array.isArray(users)
+      ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase())
+      : null;
 
     const status = (me && me.status ? me.status : 'pending').toLowerCase();
     const statusLabel =
@@ -718,8 +759,7 @@ const volMeetings    = document.getElementById('volMeetings');
 
     if (loggedBanner) {
       loggedBanner.innerHTML =
-        'You are logged in as <strong>' + (me?.name || u.email) + '</strong>' +
-        (me?.eircode ? (' (Eircode: ' + (me.eircode) + '). ') : '. ') +
+        'You are logged in as <strong>' + (me?.name || u.email) + '</strong>. ' +
         'Your registration is <strong>' + statusLabel + '</strong>.';
       loggedBanner.style.display = 'block';
     }
@@ -727,33 +767,17 @@ const volMeetings    = document.getElementById('volMeetings');
     if (accName) accName.textContent = me?.name || '—';
     if (accEmail) accEmail.textContent = u.email || '—';
     if (accStatus) accStatus.textContent = statusLabel;
-    if (accRole) accRole.textContent = getRoleText(me);
+    if (accRole) accRole.textContent = getMainRoleText(me);
     if (accEircode) accEircode.textContent = me?.eircode || '—';
     if (accPhone) accPhone.textContent = me?.phone || '—';
     if (accVolunteerRoles) accVolunteerRoles.textContent = getVolunteerRolesText(me);
-    try{
-      const token = u && typeof u.jwt === 'function' ? (await u.jwt()) : null;
-      const iat = token && token.exp ? null : null;
-    }catch{}
-    const loginAt = Number(sessionStorage.getItem('anwLoginAt') || Date.now());
-    if (accLoggedFor) accLoggedFor.textContent = formatLoggedInFor(loginAt);
 
-    if (profName) profName.value = me?.name || '';
-    if (profPhone) profPhone.value = me?.phone || '';
-    if (profEir) profEir.value = me?.eircode || '';
-    if (profStatus) profStatus.value = statusLabel;
+    if (updName) updName.value = me?.name || '';
+    if (updPhone) updPhone.value = me?.phone || '';
+    if (updAlertsOptIn) updAlertsOptIn.checked = !!(me && me.alertsConsent && me.alertsConsent.optIn);
 
-    if (loggedAccountCard) loggedAccountCard.style.display = 'block';
-    if (btnLogout) btnLogout.style.display = 'inline-block';
-    if (registerSection) registerSection.style.display = 'none';
-    if (loginEmail) loginEmail.closest('.field').style.display = 'none';
-    if (loginEir) loginEir.closest('.field').style.display = 'none';
-    if (loginPass) loginPass.closest('.field').style.display = 'none';
-    if (btnLogin) btnLogin.style.display = 'none';
-    if (btnShow) btnShow.style.display = 'none';
-    if (lnkForgot && lnkForgot.closest('p')) lnkForgot.closest('p').style.display = 'none';
-    if (resetBlock) resetBlock.hidden = true;
-    setAccountNav(true);
+    setLoggedInUi(true);
+    startAccountTimer();
 
     try{ await updateLoginAddressPreview(); } catch {}
   }
@@ -842,13 +866,14 @@ const volMeetings    = document.getElementById('volMeetings');
           return;
         }
 
-        try{ sessionStorage.setItem('anwLoginAt', String(Date.now())); }catch(_){}
         setMsg(loginMsg, 'Login successful.', 'ok');
         toast('Login successful.', 'success');
 
+        try{ localStorage.setItem('anw_login_started_at', String(Date.now())); }catch(_){}
+
         await auditLog('LOGIN_OK', email, eir);
 
-        if(loginPass) loginPass.value = '';
+        if (loginPass) loginPass.value = '';
         await showLoggedBannerIfAny();
 
       }catch(err){
@@ -918,16 +943,19 @@ const volMeetings    = document.getElementById('volMeetings');
   // ---------- LOGOUT ----------
   if (btnLogout) {
     btnLogout.addEventListener('click', async () => {
-      try{ window.netlifyIdentity.logout(); } catch {}
-      try{
-        const sKey = (window.ANW_KEYS && ANW_KEYS.SESSION) ? ANW_KEYS.SESSION : 'anw_session';
-        localStorage.removeItem(sKey);
-      }catch{}
-      if (loginPass)  loginPass.value  = '';
-      setMsg(loginMsg, 'You have been logged out.', '');
-      toast('Logged out.', 'info');
-      await showLoggedBannerIfAny();
-      applySoftLockUI();
+      await performLogout();
+    });
+  }
+
+  if (btnAccountLogout) {
+    btnAccountLogout.addEventListener('click', async () => {
+      await performLogout();
+    });
+  }
+
+  if (btnOpenDashboard) {
+    btnOpenDashboard.addEventListener('click', () => {
+      window.location.href = 'dashboard.html';
     });
   }
 
@@ -1193,37 +1221,63 @@ if(btnCancelReset && resetBlock){
     });
   }
 
-  if(btnOpenDashboard){
-    btnOpenDashboard.addEventListener('click', ()=>{ window.location.href = 'dashboard.html'; });
-  }
-  if(btnProfileSave){
-    btnProfileSave.addEventListener('click', async ()=>{
+  if (btnUpdateProfile) {
+    btnUpdateProfile.addEventListener('click', async () => {
+      setMsg(profileMsg, '', '');
+
+      const u = window.netlifyIdentity && window.netlifyIdentity.currentUser
+        ? window.netlifyIdentity.currentUser()
+        : null;
+
+      if (!u || !u.email) {
+        setMsg(profileMsg, 'You must be logged in.', 'error');
+        return;
+      }
+
       try{
-        const u = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-        if(!u || !u.email) throw new Error('You are not logged in.');
-        const updated = await saveOwnProfile(u.email);
+        await anwInitStore();
+        let users = anwLoad(KEY_USERS, []);
+        if(!Array.isArray(users)) users = [];
+
+        const idx = users.findIndex(x => (x.email || '').toLowerCase() === (u.email || '').toLowerCase());
+        if(idx < 0){
+          setMsg(profileMsg, 'Your profile could not be found.', 'error');
+          return;
+        }
+
+        users[idx].name = (updName.value || '').trim();
+        users[idx].phone = (updPhone.value || '').trim();
+
+        const nowIso = new Date().toISOString();
+        if(!users[idx].alertsConsent || typeof users[idx].alertsConsent !== 'object'){
+          users[idx].alertsConsent = { optIn:false, updatedAt:nowIso, history:[] };
+        }
+
+        users[idx].alertsConsent.optIn = !!updAlertsOptIn.checked;
+        users[idx].alertsConsent.updatedAt = nowIso;
+        if(!Array.isArray(users[idx].alertsConsent.history)) users[idx].alertsConsent.history = [];
+        users[idx].alertsConsent.history.push({
+          at: nowIso,
+          optIn: !!updAlertsOptIn.checked,
+          source: 'login-profile-update'
+        });
+
+        await anwSave(KEY_USERS, users);
+
         setMsg(profileMsg, 'Profile updated successfully.', 'ok');
-        if(accName) accName.textContent = updated?.name || '—';
-        if(accPhone) accPhone.textContent = updated?.phone || '—';
+        toast('Profile updated.', 'success');
         await showLoggedBannerIfAny();
-      }catch(err){
-        setMsg(profileMsg, (err && err.message) ? err.message : 'Could not update profile.', 'error');
+      }catch(e){
+        setMsg(profileMsg, 'Could not update profile.', 'error');
+        toast('Profile update failed.', 'error');
       }
     });
   }
 
   if(window.netlifyIdentity){
-    window.netlifyIdentity.on('login', () => { try{ sessionStorage.setItem('anwLoginAt', String(Date.now())); }catch(_){} showLoggedBannerIfAny(); });
-    window.netlifyIdentity.on('logout', () => { try{ sessionStorage.removeItem('anwLoginAt'); }catch(_){} showLoggedBannerIfAny(); });
+    window.netlifyIdentity.on('login', () => { showLoggedBannerIfAny(); });
+    window.netlifyIdentity.on('logout', () => { showLoggedBannerIfAny(); });
   }
-
-  setInterval(() => {
-    const current = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-    if(current && accLoggedFor){
-      const loginAt = Number(sessionStorage.getItem('anwLoginAt') || Date.now());
-      accLoggedFor.textContent = formatLoggedInFor(loginAt);
-    }
-  }, 30000);
 
   await showLoggedBannerIfAny();
   applySoftLockUI();
@@ -1231,13 +1285,6 @@ if(btnCancelReset && resetBlock){
 })();
 </script>
 
-
-<!-- Netlify Identity Widget -->
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script src="assets/identity.js"></script>
-<!-- IMPORTANT: app-core must load before acl-guard and before page inline scripts that call anwInitStore -->
-<script src="assets/app-core.js"></script>
-<script src="assets/acl-guard.js"></script>
 
 </body>
 </html>
