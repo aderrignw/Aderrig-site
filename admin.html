@@ -11,6 +11,20 @@
 </script>
 <title>Admin Panel — Aderrig NW</title>
 <script>
+  function updateAdminLoginNavLabel(){
+    try{
+      const u = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
+        ? window.netlifyIdentity.currentUser()
+        : null;
+      document.querySelectorAll('nav.nav a[href="login.html"]').forEach(a => {
+        a.textContent = u ? 'My Account' : 'Login / Register';
+      });
+    }catch(_){}
+  }
+  window.addEventListener('DOMContentLoaded', updateAdminLoginNavLabel);
+  window.addEventListener('load', updateAdminLoginNavLabel);
+</script>
+<script>
   // Temporary public mode: keep Admin usable even if global scripts fail
   window.ANW_PUBLIC_MODE = true;
   window.ANW_MASTER_EMAIL = "claudiosantos1968@gmail.com";
@@ -1413,7 +1427,15 @@ function adminSetGateMessage(htmlText) {
 
   let __adminBootComplete = false;
   function adminMarkReady(){
+    if(__adminBootComplete) return;
     __adminBootComplete = true;
+    try{
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        document.documentElement.classList.remove('admin-booting');
+      }));
+    }catch(_){
+      document.documentElement.classList.remove('admin-booting');
+    }
   }
 
   async function adminEnsureStoreReady(){
@@ -4733,5 +4755,16 @@ setTimeout(runAdminGate, 0);
 </script>
 
   
+
+<script>
+  try{
+    if(window.netlifyIdentity){
+      window.netlifyIdentity.on('init', updateAdminLoginNavLabel);
+      window.netlifyIdentity.on('login', updateAdminLoginNavLabel);
+      window.netlifyIdentity.on('logout', updateAdminLoginNavLabel);
+    }
+  }catch(_){}
+</script>
+
 </body>
 </html>
