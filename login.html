@@ -75,6 +75,22 @@
   .msg.error{ color:#b02a37; }
 
 #resetBlock[hidden]{display:none !important;}
+
+  .account-shell{display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:start;}
+  .account-avatar{width:112px;height:112px;border-radius:16px;border:1px solid rgba(17,24,39,.10);background:rgba(47,125,91,.08);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .account-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+  .account-avatar .avatar-fallback{font-size:2rem;font-weight:800;color:#2f7d5b;letter-spacing:.04em;}
+  .account-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .account-item{padding:10px 12px;border:1px solid rgba(17,24,39,.08);border-radius:12px;background:#fff;}
+  .account-item strong{display:block;font-size:.82rem;margin-bottom:4px;color:#374151;}
+  .account-item span{display:block;word-break:break-word;}
+  .account-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .account-edit-panel[hidden]{display:none !important;}
+  @media (max-width: 720px){
+    .account-shell{grid-template-columns:1fr;}
+    .account-avatar{width:96px;height:96px;}
+    .account-grid{grid-template-columns:1fr;}
+  }
 </style>
 <style id="page-access-style">
   footer.site-footer { position: relative; }
@@ -154,29 +170,41 @@
 <p class="muted" id="loggedBanner" style="margin-bottom:0.75rem; display:none;"></p>
 <div id="loggedAccountCard" class="card" style="display:none; margin-bottom:1rem; padding:16px;">
   <h3 style="margin-top:0; margin-bottom:10px;">My Account</h3>
-  <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;">
-    <div><strong>Name:</strong> <span id="accName">—</span></div>
-    <div><strong>Email:</strong> <span id="accEmail">—</span></div>
-    <div><strong>Status:</strong> <span id="accStatus">—</span></div>
-    <div><strong>Role:</strong> <span id="accRole">—</span></div>
-    <div><strong>Eircode:</strong> <span id="accEircode">—</span></div>
-    <div><strong>Phone:</strong> <span id="accPhone">—</span></div>
-    <div><strong>Volunteer roles:</strong> <span id="accVolunteerRoles">—</span></div>
-    <div><strong>Logged in for:</strong> <span id="accLoggedFor">—</span></div>
-  </div>
-  <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(17,24,39,.10);">
-    <h4 style="margin:0 0 10px 0;">Update your profile</h4>
-    <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;">
-      <div class="field" style="margin:0;"><label>Full name</label><input id="profName" type="text"/></div>
-      <div class="field" style="margin:0;"><label>Phone</label><input id="profPhone" type="text"/></div>
-      <div class="field" style="margin:0;"><label>Eircode</label><input id="profEir" type="text" disabled/></div>
-      <div class="field" style="margin:0;"><label>Status</label><input id="profStatus" type="text" disabled/></div>
+  <div class="account-shell">
+    <div class="account-avatar" aria-label="Profile photo">
+      <img id="accAvatarImg" alt="Profile photo" style="display:none;"/>
+      <div id="accAvatarFallback" class="avatar-fallback">AN</div>
     </div>
-    <div class="actions" style="justify-content:space-between; margin-top:10px;">
-      <button class="btn btn-line" id="btnOpenDashboard" type="button">Open dashboard</button>
-      <button class="btn" id="btnProfileSave" type="button">Update profile</button>
+    <div>
+      <div class="account-grid">
+        <div class="account-item"><strong>Name</strong><span id="accName">—</span></div>
+        <div class="account-item"><strong>Email</strong><span id="accEmail">—</span></div>
+        <div class="account-item"><strong>Phone</strong><span id="accPhone">—</span></div>
+        <div class="account-item"><strong>Eircode</strong><span id="accEircode">—</span></div>
+        <div class="account-item"><strong>Street</strong><span id="accStreet">Eircode not registered</span></div>
+        <div class="account-item"><strong>Status</strong><span id="accStatus">—</span></div>
+        <div class="account-item"><strong>Roles</strong><span id="accRole">—</span></div>
+        <div class="account-item"><strong>Volunteer roles</strong><span id="accVolunteerRoles">—</span></div>
+        <div class="account-item"><strong>Logged in time</strong><span id="accLoggedFor">—</span></div>
+      </div>
+      <div class="account-actions">
+        <button class="btn btn-line" id="btnToggleProfile" type="button" aria-expanded="false" aria-controls="accountEditPanel">Edit Profile</button>
+        <button class="btn btn-line" id="btnOpenDashboard" type="button">Open dashboard</button>
+      </div>
+      <div id="accountEditPanel" class="account-edit-panel" hidden style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(17,24,39,.10);">
+        <h4 style="margin:0 0 10px 0;">Update your profile</h4>
+        <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;">
+          <div class="field" style="margin:0;"><label>Full name</label><input id="profName" type="text"/></div>
+          <div class="field" style="margin:0;"><label>Phone</label><input id="profPhone" type="text"/></div>
+          <div class="field" style="margin:0;"><label>Eircode</label><input id="profEir" type="text" disabled/></div>
+          <div class="field" style="margin:0;"><label>Status</label><input id="profStatus" type="text" disabled/></div>
+        </div>
+        <div class="actions" style="justify-content:flex-end; margin-top:10px;">
+          <button class="btn" id="btnProfileSave" type="button">Update profile</button>
+        </div>
+        <div class="msg" id="profileMsg"></div>
+      </div>
     </div>
-    <div class="msg" id="profileMsg"></div>
   </div>
 </div>
 <div class="field">
@@ -444,9 +472,14 @@
   const profStatus = document.getElementById('profStatus');
   const btnProfileSave = document.getElementById('btnProfileSave');
   const btnOpenDashboard = document.getElementById('btnOpenDashboard');
+  const btnToggleProfile = document.getElementById('btnToggleProfile');
+  const accountEditPanel = document.getElementById('accountEditPanel');
   const accPhone = document.getElementById('accPhone');
+  const accStreet = document.getElementById('accStreet');
   const accVolunteerRoles = document.getElementById('accVolunteerRoles');
   const accLoggedFor = document.getElementById('accLoggedFor');
+  const accAvatarImg = document.getElementById('accAvatarImg');
+  const accAvatarFallback = document.getElementById('accAvatarFallback');
   const loggedBanner    = document.getElementById('loggedBanner');
   const loggedAccountCard = document.getElementById('loggedAccountCard');
   const accName = document.getElementById('accName');
@@ -681,6 +714,49 @@ const volMeetings    = document.getElementById('volMeetings');
     return roles.length ? roles.join(', ') : 'resident';
   }
 
+  function extractStreetText(me){
+    if(!me) return 'Eircode not registered';
+    const rawEir = normalizeEir(me.eircode || '');
+    if(!rawEir) return 'Eircode not registered';
+    const address = String(me.address || me.street || '').trim();
+    if(!address) return 'Eircode not registered';
+    const first = address.split(',')[0].replace(/^\s*\d+[A-Za-z-]*\s+/, '').trim();
+    return first || 'Eircode not registered';
+  }
+
+  function formatLoggedInAt(loginAt){
+    if(!loginAt) return '—';
+    try{
+      const d = new Date(Number(loginAt));
+      if(Number.isNaN(d.getTime())) return '—';
+      return d.toLocaleString('en-IE', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    }catch(_){
+      return '—';
+    }
+  }
+
+  function updateAvatar(me, identityUser){
+    if(!accAvatarImg || !accAvatarFallback) return;
+    const candidate =
+      String(me?.profilePhoto || me?.photo || me?.avatar || identityUser?.user_metadata?.avatar_url || identityUser?.user_metadata?.picture || '').trim();
+    const labelSource = String(me?.name || identityUser?.user_metadata?.full_name || identityUser?.email || 'ANW').trim();
+    const initials = labelSource.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('') || 'AN';
+    accAvatarFallback.textContent = initials;
+    if(candidate){
+      accAvatarImg.src = candidate;
+      accAvatarImg.style.display = 'block';
+      accAvatarFallback.style.display = 'none';
+      accAvatarImg.onerror = function(){
+        accAvatarImg.style.display = 'none';
+        accAvatarFallback.style.display = 'flex';
+      };
+    }else{
+      accAvatarImg.removeAttribute('src');
+      accAvatarImg.style.display = 'none';
+      accAvatarFallback.style.display = 'flex';
+    }
+  }
+
   async function saveOwnProfile(userEmail){
     try{
       await anwInitStore();
@@ -713,6 +789,8 @@ const volMeetings    = document.getElementById('volMeetings');
       if (btnShow) btnShow.style.display = '';
       if (lnkForgot && lnkForgot.closest('p')) lnkForgot.closest('p').style.display = '';
       if (resetBlock) resetBlock.hidden = true;
+      if (accountEditPanel) accountEditPanel.hidden = true;
+      if (btnToggleProfile) { btnToggleProfile.textContent = 'Edit Profile'; btnToggleProfile.setAttribute('aria-expanded', 'false'); }
       setAccountNav(false);
       applySoftLockUI();
       return;
@@ -743,13 +821,11 @@ const volMeetings    = document.getElementById('volMeetings');
     if (accRole) accRole.textContent = getRoleText(me);
     if (accEircode) accEircode.textContent = me?.eircode || '—';
     if (accPhone) accPhone.textContent = me?.phone || '—';
+    if (accStreet) accStreet.textContent = extractStreetText(me);
     if (accVolunteerRoles) accVolunteerRoles.textContent = getVolunteerRolesText(me);
-    try{
-      const token = u && typeof u.jwt === 'function' ? (await u.jwt()) : null;
-      const iat = token && token.exp ? null : null;
-    }catch{}
     const loginAt = Number(sessionStorage.getItem('anwLoginAt') || Date.now());
-    if (accLoggedFor) accLoggedFor.textContent = formatLoggedInFor(loginAt);
+    if (accLoggedFor) accLoggedFor.textContent = formatLoggedInAt(loginAt) + ' · ' + formatLoggedInFor(loginAt);
+    updateAvatar(me, u);
 
     if (profName) profName.value = me?.name || '';
     if (profPhone) profPhone.value = me?.phone || '';
@@ -1055,6 +1131,7 @@ const volMeetings    = document.getElementById('volMeetings');
         tech:        !!(volTech && volTech.checked),
         elderly:     !!(volElderly && volElderly.checked),
         cleanup:     !!(volCleanup && volCleanup.checked),
+        parking:     !!(volParking && volParking.checked),
         meetings:    !!(volMeetings && volMeetings.checked),
         translation: !!(volTranslation && volTranslation.checked)
       };
@@ -1140,6 +1217,7 @@ const volMeetings    = document.getElementById('volMeetings');
         regMgmt.value = '';
         regCoord.checked = false;
         regVolunteer.checked = false;
+        if(volParking) volParking.checked = false;
         regType.value = '';
         regTerms.checked = false;
         regAlertOptIn.checked = false;
@@ -1203,6 +1281,15 @@ if(btnCancelReset && resetBlock){
         setMsg(resetMsg, 'Could not send reset email. Please try again.', 'error');
         toast('Reset failed.', 'error');
       }
+    });
+  }
+
+  if(btnToggleProfile && accountEditPanel){
+    btnToggleProfile.addEventListener('click', ()=>{
+      const nextHidden = !accountEditPanel.hidden;
+      accountEditPanel.hidden = nextHidden;
+      btnToggleProfile.textContent = nextHidden ? 'Edit Profile' : 'Close Edit Profile';
+      btnToggleProfile.setAttribute('aria-expanded', String(!nextHidden));
     });
   }
 
