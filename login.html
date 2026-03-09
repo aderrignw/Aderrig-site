@@ -161,6 +161,7 @@
     <div><strong>Role:</strong> <span id="accRole">—</span></div>
     <div><strong>Eircode:</strong> <span id="accEircode">—</span></div>
     <div><strong>Phone:</strong> <span id="accPhone">—</span></div>
+    <div><strong>Volunteer roles:</strong> <span id="accVolunteerRoles">—</span></div>
     <div><strong>Logged in for:</strong> <span id="accLoggedFor">—</span></div>
   </div>
   <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(17,24,39,.10);">
@@ -439,6 +440,7 @@
   const btnProfileSave = document.getElementById('btnProfileSave');
   const btnOpenDashboard = document.getElementById('btnOpenDashboard');
   const accPhone = document.getElementById('accPhone');
+  const accVolunteerRoles = document.getElementById('accVolunteerRoles');
   const accLoggedFor = document.getElementById('accLoggedFor');
   const loggedBanner    = document.getElementById('loggedBanner');
   const loggedAccountCard = document.getElementById('loggedAccountCard');
@@ -641,6 +643,31 @@ const volMeetings    = document.getElementById('volMeetings');
     navAccountLink.textContent = loggedIn ? 'My Account' : 'Login / Register';
   }
 
+  function getVolunteerRolesText(me){
+    if(!me || !me.vol_roles || typeof me.vol_roles !== 'object') return '—';
+    const map = [
+      ['streetWatch', 'Street watch / patrols'],
+      ['leaflets', 'Distribute leaflets'],
+      ['tech', 'Tech support'],
+      ['elderly', 'Elderly checks'],
+      ['cleanup', 'Community clean-up'],
+      ['meetings', 'Meeting organiser'],
+      ['translation', 'Translation'],
+      ['parking', 'Parking assistance']
+    ];
+    const picked = map.filter(([key]) => !!me.vol_roles[key]).map(([,label]) => label);
+    return picked.length ? picked.join(', ') : '—';
+  }
+
+  function getRoleText(me){
+    if(!me) return 'resident';
+    const roles = [];
+    if(me.isCoordinator || me.coordinator) roles.push('Street Coordinator');
+    if(me.isVolunteer || me.volunteer) roles.push('Volunteer');
+    if(me.role && !roles.length) roles.push(String(me.role));
+    return roles.length ? roles.join(', ') : 'resident';
+  }
+
   async function saveOwnProfile(userEmail){
     try{
       await anwInitStore();
@@ -671,6 +698,8 @@ const volMeetings    = document.getElementById('volMeetings');
       if (loginPass) loginPass.closest('.field').style.display = '';
       if (btnLogin) btnLogin.style.display = '';
       if (btnShow) btnShow.style.display = '';
+      if (lnkForgot && lnkForgot.closest('p')) lnkForgot.closest('p').style.display = '';
+      if (resetBlock) resetBlock.hidden = true;
       setAccountNav(false);
       applySoftLockUI();
       return;
@@ -698,9 +727,10 @@ const volMeetings    = document.getElementById('volMeetings');
     if (accName) accName.textContent = me?.name || '—';
     if (accEmail) accEmail.textContent = u.email || '—';
     if (accStatus) accStatus.textContent = statusLabel;
-    if (accRole) accRole.textContent = me?.role || 'resident';
+    if (accRole) accRole.textContent = getRoleText(me);
     if (accEircode) accEircode.textContent = me?.eircode || '—';
     if (accPhone) accPhone.textContent = me?.phone || '—';
+    if (accVolunteerRoles) accVolunteerRoles.textContent = getVolunteerRolesText(me);
     try{
       const token = u && typeof u.jwt === 'function' ? (await u.jwt()) : null;
       const iat = token && token.exp ? null : null;
@@ -721,6 +751,8 @@ const volMeetings    = document.getElementById('volMeetings');
     if (loginPass) loginPass.closest('.field').style.display = 'none';
     if (btnLogin) btnLogin.style.display = 'none';
     if (btnShow) btnShow.style.display = 'none';
+    if (lnkForgot && lnkForgot.closest('p')) lnkForgot.closest('p').style.display = 'none';
+    if (resetBlock) resetBlock.hidden = true;
     setAccountNav(true);
 
     try{ await updateLoginAddressPreview(); } catch {}
@@ -811,12 +843,13 @@ const volMeetings    = document.getElementById('volMeetings');
         }
 
         try{ sessionStorage.setItem('anwLoginAt', String(Date.now())); }catch(_){}
-        setMsg(loginMsg, 'Login successful. Redirecting...', 'ok');
+        setMsg(loginMsg, 'Login successful.', 'ok');
         toast('Login successful.', 'success');
 
         await auditLog('LOGIN_OK', email, eir);
 
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
+        if(loginPass) loginPass.value = '';
+        await showLoggedBannerIfAny();
 
       }catch(err){
         // Login failed -> increment attempts + lock if reached threshold
@@ -1183,6 +1216,14 @@ if(btnCancelReset && resetBlock){
     window.netlifyIdentity.on('login', () => { try{ sessionStorage.setItem('anwLoginAt', String(Date.now())); }catch(_){} showLoggedBannerIfAny(); });
     window.netlifyIdentity.on('logout', () => { try{ sessionStorage.removeItem('anwLoginAt'); }catch(_){} showLoggedBannerIfAny(); });
   }
+
+  setInterval(() => {
+    const current = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+    if(current && accLoggedFor){
+      const loginAt = Number(sessionStorage.getItem('anwLoginAt') || Date.now());
+      accLoggedFor.textContent = formatLoggedInFor(loginAt);
+    }
+  }, 30000);
 
   await showLoggedBannerIfAny();
   applySoftLockUI();
