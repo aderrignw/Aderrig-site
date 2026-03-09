@@ -171,9 +171,17 @@
 <div id="loggedAccountCard" class="card" style="display:none; margin-bottom:1rem; padding:16px;">
   <h3 style="margin-top:0; margin-bottom:10px;">My Account</h3>
   <div class="account-shell">
-    <div class="account-avatar" aria-label="Profile photo">
-      <img id="accAvatarImg" alt="Profile photo" style="display:none;"/>
-      <div id="accAvatarFallback" class="avatar-fallback">AN</div>
+    <div>
+      <div class="account-avatar" aria-label="Profile photo">
+        <img id="accAvatarImg" alt="Profile photo" style="display:none;"/>
+        <div id="accAvatarFallback" class="avatar-fallback">AN</div>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+        <input id="profilePhotoInput" type="file" accept="image/*" style="display:none;" />
+        <button class="btn btn-line small" id="btnPhotoUpload" type="button">Upload photo</button>
+        <button class="btn btn-line small" id="btnPhotoRemove" type="button" style="display:none;">Remove photo</button>
+      </div>
+      <p class="tiny muted" style="margin:8px 0 0;">Square profile photo.</p>
     </div>
     <div>
       <div class="account-grid">
@@ -394,12 +402,6 @@
     el.textContent = text || '';
     el.className = 'msg' + (kind ? (' ' + kind) : '');
   }
-  function setFieldVisible(inputEl, visible){
-    try{
-      const wrap = inputEl && typeof inputEl.closest === 'function' ? inputEl.closest('.field') : null;
-      if(wrap) wrap.style.display = visible ? '' : 'none';
-    }catch(_){ }
-  }
 
   // ---------- Soft lock config (device-level) ----------
   // 5 failed attempts -> lock for 1 hour
@@ -477,6 +479,9 @@
   const profEir = document.getElementById('profEir');
   const profStatus = document.getElementById('profStatus');
   const btnProfileSave = document.getElementById('btnProfileSave');
+  const profilePhotoInput = document.getElementById('profilePhotoInput');
+  const btnPhotoUpload = document.getElementById('btnPhotoUpload');
+  const btnPhotoRemove = document.getElementById('btnPhotoRemove');
   const btnOpenDashboard = document.getElementById('btnOpenDashboard');
   const btnToggleProfile = document.getElementById('btnToggleProfile');
   const accountEditPanel = document.getElementById('accountEditPanel');
@@ -741,11 +746,6 @@ const volMeetings    = document.getElementById('volMeetings');
     }
   }
 
-  function setLoggedInTimeText(loginAt){
-    if(!accLoggedFor) return;
-    accLoggedFor.textContent = formatLoggedInAt(loginAt) + ' · ' + formatLoggedInFor(loginAt);
-  }
-
   function updateAvatar(me, identityUser){
     if(!accAvatarImg || !accAvatarFallback) return;
     const candidate =
@@ -760,12 +760,35 @@ const volMeetings    = document.getElementById('volMeetings');
       accAvatarImg.onerror = function(){
         accAvatarImg.style.display = 'none';
         accAvatarFallback.style.display = 'flex';
+        if(btnPhotoRemove) btnPhotoRemove.style.display = 'none';
       };
+      if(btnPhotoRemove) btnPhotoRemove.style.display = 'inline-block';
     }else{
       accAvatarImg.removeAttribute('src');
       accAvatarImg.style.display = 'none';
       accAvatarFallback.style.display = 'flex';
+      if(btnPhotoRemove) btnPhotoRemove.style.display = 'none';
     }
+  }
+
+  function readImageAsDataUrl(file){
+    return new Promise((resolve, reject)=>{
+      try{
+        const reader = new FileReader();
+        reader.onload = ()=> resolve(String(reader.result || ''));
+        reader.onerror = ()=> reject(new Error('Could not read image file.'));
+        reader.readAsDataURL(file);
+      }catch(_){ reject(new Error('Could not read image file.')); }
+    });
+  }
+
+  async function handleProfilePhotoSelection(file){
+    if(!file) return;
+    if(!/^image\//i.test(String(file.type || ''))){ throw new Error('Please choose an image file.'); }
+    const dataUrl = await readImageAsDataUrl(file);
+    window.__pendingProfilePhoto = dataUrl;
+    updateAvatar({ name: profName?.value || accName?.textContent || 'ANW', profilePhoto: dataUrl }, null);
+    setMsg(profileMsg, 'Photo selected. Click Update profile to save it.', 'ok');
   }
 
   async function saveOwnProfile(userEmail){
@@ -774,7 +797,8 @@ const volMeetings    = document.getElementById('volMeetings');
       const users = anwLoad(KEY_USERS, []);
       const idx = Array.isArray(users) ? users.findIndex(x => (x.email||'').toLowerCase() === String(userEmail||'').toLowerCase()) : -1;
       if(idx < 0) throw new Error('Profile not found.');
-      users[idx] = { ...users[idx], name: String((profName?.value||'').trim() || users[idx].name || ''), phone: String((profPhone?.value||'').trim() || '') };
+      const nextPhoto = (window.__pendingProfilePhoto === undefined) ? (users[idx].profilePhoto || users[idx].photo || users[idx].avatar || '') : window.__pendingProfilePhoto;
+      users[idx] = { ...users[idx], name: String((profName?.value||'').trim() || users[idx].name || ''), phone: String((profPhone?.value||'').trim() || ''), profilePhoto: String(nextPhoto || '') };
       await anwSave(KEY_USERS, users);
       return users[idx];
     }catch(err){
@@ -793,15 +817,14 @@ const volMeetings    = document.getElementById('volMeetings');
       if (loggedAccountCard) loggedAccountCard.style.display = 'none';
       if (btnLogout) btnLogout.style.display = 'none';
       if (registerSection) registerSection.style.display = 'block';
-      setFieldVisible(loginEmail, true);
-      setFieldVisible(loginEir, true);
-      setFieldVisible(loginPass, true);
+      if (loginEmail) loginEmail.closest('.field').style.display = '';
+      if (loginEir) loginEir.closest('.field').style.display = '';
+      if (loginPass) loginPass.closest('.field').style.display = '';
       if (btnLogin) btnLogin.style.display = '';
       if (btnShow) btnShow.style.display = '';
       if (lnkForgot && lnkForgot.closest('p')) lnkForgot.closest('p').style.display = '';
       if (resetBlock) resetBlock.hidden = true;
       if (accountEditPanel) accountEditPanel.hidden = true;
-      if (profileMsg) setMsg(profileMsg, '', '');
       if (btnToggleProfile) { btnToggleProfile.textContent = 'Edit Profile'; btnToggleProfile.setAttribute('aria-expanded', 'false'); }
       setAccountNav(false);
       applySoftLockUI();
@@ -836,7 +859,7 @@ const volMeetings    = document.getElementById('volMeetings');
     if (accStreet) accStreet.textContent = extractStreetText(me);
     if (accVolunteerRoles) accVolunteerRoles.textContent = getVolunteerRolesText(me);
     const loginAt = Number(sessionStorage.getItem('anwLoginAt') || Date.now());
-    setLoggedInTimeText(loginAt);
+    if (accLoggedFor) accLoggedFor.textContent = formatLoggedInAt(loginAt) + ' · ' + formatLoggedInFor(loginAt);
     updateAvatar(me, u);
 
     if (profName) profName.value = me?.name || '';
@@ -847,14 +870,13 @@ const volMeetings    = document.getElementById('volMeetings');
     if (loggedAccountCard) loggedAccountCard.style.display = 'block';
     if (btnLogout) btnLogout.style.display = 'inline-block';
     if (registerSection) registerSection.style.display = 'none';
-    setFieldVisible(loginEmail, false);
-    setFieldVisible(loginEir, false);
-    setFieldVisible(loginPass, false);
+    if (loginEmail) loginEmail.closest('.field').style.display = 'none';
+    if (loginEir) loginEir.closest('.field').style.display = 'none';
+    if (loginPass) loginPass.closest('.field').style.display = 'none';
     if (btnLogin) btnLogin.style.display = 'none';
     if (btnShow) btnShow.style.display = 'none';
     if (lnkForgot && lnkForgot.closest('p')) lnkForgot.closest('p').style.display = 'none';
     if (resetBlock) resetBlock.hidden = true;
-    if (profileMsg) setMsg(profileMsg, '', '');
     setAccountNav(true);
 
     try{ await updateLoginStreetPreview(); } catch {}
@@ -1301,9 +1323,30 @@ if(btnCancelReset && resetBlock){
     btnToggleProfile.addEventListener('click', ()=>{
       const nextHidden = !accountEditPanel.hidden;
       accountEditPanel.hidden = nextHidden;
-      if(nextHidden && profileMsg) setMsg(profileMsg, '', '');
       btnToggleProfile.textContent = nextHidden ? 'Edit Profile' : 'Close Edit Profile';
       btnToggleProfile.setAttribute('aria-expanded', String(!nextHidden));
+    });
+  }
+
+  if(btnPhotoUpload && profilePhotoInput){
+    btnPhotoUpload.addEventListener('click', ()=> profilePhotoInput.click());
+    profilePhotoInput.addEventListener('change', async ()=>{
+      try{
+        const file = profilePhotoInput.files && profilePhotoInput.files[0] ? profilePhotoInput.files[0] : null;
+        if(!file) return;
+        await handleProfilePhotoSelection(file);
+      }catch(err){
+        setMsg(profileMsg, (err && err.message) ? err.message : 'Could not load photo.', 'error');
+      }
+    });
+  }
+
+  if(btnPhotoRemove){
+    btnPhotoRemove.addEventListener('click', ()=>{
+      window.__pendingProfilePhoto = '';
+      if(profilePhotoInput) profilePhotoInput.value = '';
+      updateAvatar({ name: profName?.value || accName?.textContent || 'ANW', profilePhoto: '' }, null);
+      setMsg(profileMsg, 'Photo will be removed when you click Update profile.', 'ok');
     });
   }
 
@@ -1319,6 +1362,8 @@ if(btnCancelReset && resetBlock){
         setMsg(profileMsg, 'Profile updated successfully.', 'ok');
         if(accName) accName.textContent = updated?.name || '—';
         if(accPhone) accPhone.textContent = updated?.phone || '—';
+        window.__pendingProfilePhoto = undefined;
+        if(profilePhotoInput) profilePhotoInput.value = '';
         await showLoggedBannerIfAny();
       }catch(err){
         setMsg(profileMsg, (err && err.message) ? err.message : 'Could not update profile.', 'error');
@@ -1335,7 +1380,7 @@ if(btnCancelReset && resetBlock){
     const current = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
     if(current && accLoggedFor){
       const loginAt = Number(sessionStorage.getItem('anwLoginAt') || Date.now());
-      setLoggedInTimeText(loginAt);
+      accLoggedFor.textContent = formatLoggedInFor(loginAt);
     }
   }, 30000);
 
