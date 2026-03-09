@@ -8,12 +8,24 @@
   (function(){
     try {
       document.documentElement.classList.remove('anw-preauth-hide');
-      document.documentElement.classList.remove('admin-booting');
-      window.addEventListener('load', function(){ try{ document.documentElement.classList.remove('admin-booting'); }catch(_){} }, { once:true });
+      document.documentElement.classList.add('admin-booting');
+      document.documentElement.classList.remove('admin-ready');
     } catch (_) {}
   })();
 </script>
 <title>Admin Panel — Aderrig NW</title>
+<style>
+  /* Prevent initial Admin flash before JS finishes choosing the final tab/state */
+  html.admin-booting main.wrap{
+    visibility:hidden !important;
+  }
+  html.admin-booting .modal{
+    display:none !important;
+  }
+  html.admin-ready main.wrap{
+    visibility:visible;
+  }
+</style>
 <script>
   function updateAdminLoginNavLabel(){
     try{
@@ -1325,6 +1337,15 @@ Bin schedule | https://..."></textarea>
   const KEY_INCIDENTS = KEYS.INCIDENTS || 'anw_incidents';
   const KEY_TASKS = KEYS.TASKS || 'anw_tasks';
   const KEY_NOTICES = KEYS.NOTICES || KEYS.KEY_NOTICES || 'anw_notices';
+  window.KEY_NOTICES = KEY_NOTICES;
+  function getNoticesKey(){
+    try{
+      const keys = window.ANW_KEYS || {};
+      return keys.NOTICES || keys.KEY_NOTICES || window.KEY_NOTICES || KEY_NOTICES || 'anw_notices';
+    }catch(_){
+      return 'anw_notices';
+    }
+  }
   const KEY_HANDBOOK = KEYS.HANDBOOK || 'anw_handbook';
   const KEY_PROJECTS = KEYS.PROJECTS || 'anw_projects';
   const KEY_PROJ_MON = KEYS.PROJECT_MONITORING || 'anw_project_monitoring';
@@ -1432,9 +1453,11 @@ function adminSetGateMessage(htmlText) {
     try{
       requestAnimationFrame(()=>requestAnimationFrame(()=>{
         document.documentElement.classList.remove('admin-booting');
+        document.documentElement.classList.add('admin-ready');
       }));
     }catch(_){
       document.documentElement.classList.remove('admin-booting');
+      document.documentElement.classList.add('admin-ready');
     }
   }
   try{ window.addEventListener('load', adminMarkReady, { once:true }); }catch(_){ }
@@ -4101,7 +4124,7 @@ setTimeout(runAdminGate, 0);
       // Reload store cache (admin view) to ensure latest notices
       if(typeof anwInitStore === 'function') await anwInitStore();
     }catch{}
-    const v = anwLoad(KEY_NOTICES, []);
+    const v = anwLoad(getNoticesKey(), []);
     return Array.isArray(v) ? v : [];
   }
 
@@ -4149,7 +4172,7 @@ setTimeout(runAdminGate, 0);
         if(!ok) return;
         const current = await loadNoticesFresh();
         const next = current.filter(x => String(x?.id||'') !== String(id));
-        await anwSave(KEY_NOTICES, next);
+        await anwSave(getNoticesKey(), next);
         await renderNoticesAdmin();
         toast('Notice deleted.', 'info');
       });
@@ -4196,10 +4219,15 @@ setTimeout(runAdminGate, 0);
       try{
         if(ntMsg) ntMsg.textContent = '';
         const notice = buildNoticeFromForm();
-        const current = await loadNoticesFresh();
+        let current = [];
+        try{
+          current = await loadNoticesFresh();
+        }catch(_){
+          current = anwLoad(getNoticesKey(), []);
+        }
         const next = Array.isArray(current) ? current.slice() : [];
         next.push(notice);
-        await anwSave(KEY_NOTICES, next);
+        await anwSave(getNoticesKey(), next);
         await renderNoticesAdmin();
         toast('Notice published.', 'success');
         // keep message but clear targeting for speed
@@ -4481,7 +4509,7 @@ setTimeout(runAdminGate, 0);
           added++;
         }
 
-        await anwSave(KEY_NOTICES, next);
+        await anwSave(getNoticesKey(), next);
         await renderNoticesAdmin();
         if(binMsg) binMsg.textContent = `Schedule imported successfully. Added ${added}. Skipped ${skipped}. All imported Panda entries are public and enabled for Home automatically.`;
         toast(`Bin schedule imported. Added ${added}.`, 'success');
