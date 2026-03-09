@@ -394,6 +394,12 @@
     el.textContent = text || '';
     el.className = 'msg' + (kind ? (' ' + kind) : '');
   }
+  function setFieldVisible(inputEl, visible){
+    try{
+      const wrap = inputEl && typeof inputEl.closest === 'function' ? inputEl.closest('.field') : null;
+      if(wrap) wrap.style.display = visible ? '' : 'none';
+    }catch(_){ }
+  }
 
   // ---------- Soft lock config (device-level) ----------
   // 5 failed attempts -> lock for 1 hour
@@ -735,6 +741,11 @@ const volMeetings    = document.getElementById('volMeetings');
     }
   }
 
+  function setLoggedInTimeText(loginAt){
+    if(!accLoggedFor) return;
+    accLoggedFor.textContent = formatLoggedInAt(loginAt) + ' · ' + formatLoggedInFor(loginAt);
+  }
+
   function updateAvatar(me, identityUser){
     if(!accAvatarImg || !accAvatarFallback) return;
     const candidate =
@@ -782,14 +793,15 @@ const volMeetings    = document.getElementById('volMeetings');
       if (loggedAccountCard) loggedAccountCard.style.display = 'none';
       if (btnLogout) btnLogout.style.display = 'none';
       if (registerSection) registerSection.style.display = 'block';
-      if (loginEmail) loginEmail.closest('.field').style.display = '';
-      if (loginEir) loginEir.closest('.field').style.display = '';
-      if (loginPass) loginPass.closest('.field').style.display = '';
+      setFieldVisible(loginEmail, true);
+      setFieldVisible(loginEir, true);
+      setFieldVisible(loginPass, true);
       if (btnLogin) btnLogin.style.display = '';
       if (btnShow) btnShow.style.display = '';
       if (lnkForgot && lnkForgot.closest('p')) lnkForgot.closest('p').style.display = '';
       if (resetBlock) resetBlock.hidden = true;
       if (accountEditPanel) accountEditPanel.hidden = true;
+      if (profileMsg) setMsg(profileMsg, '', '');
       if (btnToggleProfile) { btnToggleProfile.textContent = 'Edit Profile'; btnToggleProfile.setAttribute('aria-expanded', 'false'); }
       setAccountNav(false);
       applySoftLockUI();
@@ -824,7 +836,7 @@ const volMeetings    = document.getElementById('volMeetings');
     if (accStreet) accStreet.textContent = extractStreetText(me);
     if (accVolunteerRoles) accVolunteerRoles.textContent = getVolunteerRolesText(me);
     const loginAt = Number(sessionStorage.getItem('anwLoginAt') || Date.now());
-    if (accLoggedFor) accLoggedFor.textContent = formatLoggedInAt(loginAt) + ' · ' + formatLoggedInFor(loginAt);
+    setLoggedInTimeText(loginAt);
     updateAvatar(me, u);
 
     if (profName) profName.value = me?.name || '';
@@ -835,13 +847,14 @@ const volMeetings    = document.getElementById('volMeetings');
     if (loggedAccountCard) loggedAccountCard.style.display = 'block';
     if (btnLogout) btnLogout.style.display = 'inline-block';
     if (registerSection) registerSection.style.display = 'none';
-    if (loginEmail) loginEmail.closest('.field').style.display = 'none';
-    if (loginEir) loginEir.closest('.field').style.display = 'none';
-    if (loginPass) loginPass.closest('.field').style.display = 'none';
+    setFieldVisible(loginEmail, false);
+    setFieldVisible(loginEir, false);
+    setFieldVisible(loginPass, false);
     if (btnLogin) btnLogin.style.display = 'none';
     if (btnShow) btnShow.style.display = 'none';
     if (lnkForgot && lnkForgot.closest('p')) lnkForgot.closest('p').style.display = 'none';
     if (resetBlock) resetBlock.hidden = true;
+    if (profileMsg) setMsg(profileMsg, '', '');
     setAccountNav(true);
 
     try{ await updateLoginStreetPreview(); } catch {}
@@ -1288,6 +1301,7 @@ if(btnCancelReset && resetBlock){
     btnToggleProfile.addEventListener('click', ()=>{
       const nextHidden = !accountEditPanel.hidden;
       accountEditPanel.hidden = nextHidden;
+      if(nextHidden && profileMsg) setMsg(profileMsg, '', '');
       btnToggleProfile.textContent = nextHidden ? 'Edit Profile' : 'Close Edit Profile';
       btnToggleProfile.setAttribute('aria-expanded', String(!nextHidden));
     });
@@ -1321,7 +1335,7 @@ if(btnCancelReset && resetBlock){
     const current = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
     if(current && accLoggedFor){
       const loginAt = Number(sessionStorage.getItem('anwLoginAt') || Date.now());
-      accLoggedFor.textContent = formatLoggedInFor(loginAt);
+      setLoggedInTimeText(loginAt);
     }
   }, 30000);
 
