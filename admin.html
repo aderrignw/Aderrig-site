@@ -1,150 +1,54 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8" />
-  <meta name="anw-acl-key" content="page:admin" />
+<head>
+<meta charset="utf-8" />
+<meta name="anw-acl-key" content="page:admin" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin Panel — Aderrig NW</title>
 
 <script>
   (function(){
     try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
   })();
 </script>
+
 <link rel="stylesheet" href="assets/style.css" />
 
-<title>Admin Panel — Aderrig NW</title>
 <script>document.documentElement.classList.add('admin-js');</script>
+
 <style id="admin-first-paint-fix">
   .admin-tab-content{display:none;}
   #tabResidents{display:block;}
   .elect-subtab{display:none;}
   #subManage{display:block;}
 </style>
-<script>
-  window.ANW_PUBLIC_MODE = false;
-  
-  window.KEY_NOTICES = window.KEY_NOTICES || ((window.ANW_KEYS && (window.ANW_KEYS.NOTICES || window.ANW_KEYS.KEY_NOTICES)) || 'anw_notices');
-  window.getNoticesKey = window.getNoticesKey || function(){
-    try{
-      var keys = window.ANW_KEYS || {};
-      return keys.NOTICES || keys.KEY_NOTICES || window.KEY_NOTICES || 'anw_notices';
-    }catch(_){ return 'anw_notices'; }
-  };
-
-  window.showToast = window.showToast || function(title, message){
-    try{
-      if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){
-        ANW.ui.toast(String(message || title || ''), 'info');
-        return;
-      }
-    }catch(_){}
-    try{ console.log(String(title||''), String(message||'')); }catch(_){}
-  };
-  window.toast = window.toast || function(message, type){
-    try{
-      if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){
-        ANW.ui.toast(String(message||''), type || 'info');
-        return;
-      }
-    }catch(_){}
-    try{ console.log(String(message||'')); }catch(_){}
-  };
-  function getResidentNumericReg(v){
-    const raw = String(v == null ? '' : v).trim();
-    if(!raw) return 0;
-    const m = raw.match(/(\d+)/);
-    return m ? parseInt(m[1], 10) || 0 : 0;
-  }
-  function anwNextRegId(list){
-    const users = Array.isArray(list) ? list : [];
-    let max = 0;
-    users.forEach(u => {
-      const n = getResidentNumericReg(u && (u.regId || u.regNo));
-      if(n > max) max = n;
-    });
-    return String(max + 1).padStart(2, '0');
-  }
-  function assignMissingResidentNumbers(list){
-    const users = Array.isArray(list) ? list : [];
-    let max = 0;
-    users.forEach(u => {
-      const n = getResidentNumericReg(u && (u.regId || u.regNo));
-      if(n > max) max = n;
-    });
-    let changed = false;
-    users.forEach(u => {
-      const status = String((u && u.status) || '').toLowerCase();
-      const approved = ['active','approved'].includes(status);
-      if(approved && !(u && (u.regId || u.regNo))){
-        max += 1;
-        const id = String(max).padStart(2, '0');
-        u.regId = id;
-        u.regNo = id;
-        changed = true;
-      } else if(u && u.regId && !u.regNo){
-        u.regNo = u.regId;
-      } else if(u && u.regNo && !u.regId){
-        u.regId = u.regNo;
-      }
-    });
-    return changed;
-  };
-
-</script>
-
-<script>
-  function updateAdminLoginNavLabel(){
-    try{
-      const u = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function') ? window.netlifyIdentity.currentUser() : null;
-      document.querySelectorAll('nav.nav a[href="login.html"]').forEach(a => {
-        a.textContent = u ? 'My Account' : 'Login / Register';
-      });
-    }catch(_){ }
-  }
-  window.addEventListener('DOMContentLoaded', updateAdminLoginNavLabel);
-</script>
 
 <style>
-  /* Backups status badge */
   .tag { display:inline-block; padding:4px 10px; border-radius:999px; font-size:.85rem; border:1px solid rgba(0,0,0,.10); background:rgba(0,0,0,.04); }
   .tag.ok { background: rgba(47,125,91,.10); border-color: rgba(47,125,91,.25); color: var(--brand); }
   .tag.gray { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.10); color: inherit; }
-</style>
 
-<style>
-  /* Hide stray backup checkbox UI (keeps JS intact) */
   #backupEnabled{ display:none !important; }
   label[for="backupEnabled"]{ display:none !important; }
-</style>
 
-<style>
-  /* Tools: keep Backups layout tidy */
   .anw-acc .acc-body > .card { margin-top: 12px; }
-  /* Optional: hide the scheduled checkbox UI (keeps JS intact). Remove these 2 rules if you want it visible. */
-  #backupEnabled{ display:none !important; }
-  label[for="backupEnabled"]{ display:none !important; }
-</style>
-
-<style>
-  /* Tools: Backups alignment */
   #tabTools details.anw-acc .acc-body .grid { align-items: start; }
-</style>
 
-<style>
-  /* Access Control (embedded) */
   #tabAccessControl .ac-wrap{ overflow:auto; border:1px solid var(--line); border-radius:14px; background:#fff; }
   #tabAccessControl table.ac-table{ width:100%; min-width:920px; border-collapse:collapse; }
   #tabAccessControl .ac-table th, #tabAccessControl .ac-table td{ padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; }
   #tabAccessControl .ac-table thead th{ position:sticky; top:0; background:#fff; z-index:2; }
   #tabAccessControl .ac-item{ display:flex; align-items:flex-start; gap:10px; }
   #tabAccessControl .ac-badge{ font-size:.70rem; padding:2px 8px; border-radius:999px; border:1px solid rgba(0,0,0,.10); background:rgba(0,0,0,.03); }
-  #tabAccessControl .ac-key{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-size:.72rem; color: rgba(0,0,0,.55); margin-top:2px; }
+  #tabAccessControl .ac-key{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size:.72rem; color: rgba(0,0,0,.55); margin-top:2px;
+  }
   #tabAccessControl .ac-indent-0{ font-weight:700; }
   #tabAccessControl .ac-indent-1{ padding-left:18px; }
   #tabAccessControl .ac-indent-2{ padding-left:36px; }
   #tabAccessControl .ac-indent-3{ padding-left:54px; }
 
-  /* Toggle buttons (green like the site) */
   #tabAccessControl .ac-toggle{
     width:36px; height:30px;
     border-radius:10px;
@@ -168,10 +72,40 @@
     border-color: rgba(0,0,0,.10);
   }
   #tabAccessControl .ac-toggle:focus{ outline:2px solid rgba(47,125,91,.28); outline-offset:2px; }
-</style>
 
-<style>
-  /* Print only Access Control when requested */
+  .resident-action-cell{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+
+  .notice-actions{
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+
+  .notice-card-meta{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:6px;
+  }
+
+  .notice-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 10px;
+    border-radius:999px;
+    background:#f4f7f5;
+    border:1px solid rgba(17,24,39,.08);
+    font-size:.82rem;
+  }
+
   @media print {
     body.print-access-control header,
     body.print-access-control nav,
@@ -192,30 +126,120 @@
   }
 </style>
 
-
 <style id="page-access-style">
   footer.site-footer { position: relative; text-align: center; margin-top: 60px; }
   footer.site-footer .page-access { position: absolute; left: 0; color: green; font-weight: normal; }
 </style>
 
+<script>
+  window.ANW_PUBLIC_MODE = false;
 
-  <script>
-    (function loadAssets(){
-      var prefix = (location.protocol === 'file:') ? '' : '/';
-      function addJs(src, defer){
-        var s=document.createElement('script'); s.src=src; if(defer) s.defer=true; document.head.appendChild(s);
+  window.KEY_NOTICES = window.KEY_NOTICES || ((window.ANW_KEYS && (window.ANW_KEYS.NOTICES || window.ANW_KEYS.KEY_NOTICES)) || 'anw_notices');
+  window.getNoticesKey = window.getNoticesKey || function(){
+    try{
+      var keys = window.ANW_KEYS || {};
+      return keys.NOTICES || keys.KEY_NOTICES || window.KEY_NOTICES || 'anw_notices';
+    }catch(_){
+      return 'anw_notices';
+    }
+  };
+
+  window.showToast = window.showToast || function(title, message){
+    try{
+      if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){
+        ANW.ui.toast(String(message || title || ''), 'info');
+        return;
       }
-      addJs('https://identity.netlify.com/v1/netlify-identity-widget.js', true);
-      addJs(prefix + 'assets/identity.js', true);
-      addJs(prefix + 'assets/app-core.js', true);
-      addJs(prefix + 'assets/acl-guard.js', true);
-    })();
-  </script>
+    }catch(_){}
+    try{ console.log(String(title||''), String(message||'')); }catch(_){}
+  };
 
+  window.toast = window.toast || function(message, type){
+    try{
+      if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){
+        ANW.ui.toast(String(message||''), type || 'info');
+        return;
+      }
+    }catch(_){}
+    try{ console.log(String(message||'')); }catch(_){}
+  };
 
+  function getResidentNumericReg(v){
+    const raw = String(v == null ? '' : v).trim();
+    if(!raw) return 0;
+    const m = raw.match(/(\d+)/);
+    return m ? parseInt(m[1], 10) || 0 : 0;
+  }
 
+  function anwNextRegId(list){
+    const users = Array.isArray(list) ? list : [];
+    let max = 0;
+    users.forEach(u => {
+      const n = getResidentNumericReg(u && (u.regId || u.regNo));
+      if(n > max) max = n;
+    });
+    return String(max + 1).padStart(2, '0');
+  }
+
+  function assignMissingResidentNumbers(list){
+    const users = Array.isArray(list) ? list : [];
+    let max = 0;
+
+    users.forEach(u => {
+      const n = getResidentNumericReg(u && (u.regId || u.regNo));
+      if(n > max) max = n;
+    });
+
+    let changed = false;
+    users.forEach(u => {
+      const status = String((u && u.status) || '').toLowerCase();
+      const approved = ['active','approved'].includes(status);
+
+      if(approved && !(u && (u.regId || u.regNo))){
+        max += 1;
+        const id = String(max).padStart(2, '0');
+        u.regId = id;
+        u.regNo = id;
+        changed = true;
+      } else if(u && u.regId && !u.regNo){
+        u.regNo = u.regId;
+      } else if(u && u.regNo && !u.regId){
+        u.regId = u.regNo;
+      }
+    });
+
+    return changed;
+  }
+
+  function updateAdminLoginNavLabel(){
+    try{
+      const u = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
+        ? window.netlifyIdentity.currentUser()
+        : null;
+      document.querySelectorAll('nav.nav a[href="login.html"]').forEach(a => {
+        a.textContent = u ? 'My Account' : 'Login / Register';
+      });
+    }catch(_){}
+  }
+  window.addEventListener('DOMContentLoaded', updateAdminLoginNavLabel);
+</script>
+
+<script>
+  (function loadAssets(){
+    var prefix = (location.protocol === 'file:') ? '' : '/';
+    function addJs(src, defer){
+      var s = document.createElement('script');
+      s.src = src;
+      if(defer) s.defer = true;
+      document.head.appendChild(s);
+    }
+    addJs('https://identity.netlify.com/v1/netlify-identity-widget.js', true);
+    addJs(prefix + 'assets/identity.js', true);
+    addJs(prefix + 'assets/app-core.js', true);
+    addJs(prefix + 'assets/acl-guard.js', true);
+  })();
+</script>
 </head>
-
 
 <body>
 
@@ -223,26 +247,25 @@
   <div class="brand">
     <a href="index.html" class="site-logo"><img src="/assets/logo/logo.png" alt="Aderrig Neighbourhood Watch" class="logo-img"></a>
     <div class="brand-text">
-        <h1>Aderrig NW</h1>
-        <p class="muted">Adamstown</p>
-      </div>
+      <h1>Aderrig NW</h1>
+      <p class="muted">Adamstown</p>
     </div>
-    <nav class="nav">
+  </div>
+  <nav class="nav">
     <a href="index.html">Home</a>
     <a href="about.html">About</a>
     <a href="report.html">Report</a>
     <a href="alerts.html">Community Alerts</a>
     <a href="projects.html">Community Projects</a>
-<a href="handbook.html">Handbook</a>
+    <a href="handbook.html">Handbook</a>
     <a href="login.html">Login / Register</a>
     <a href="dashboard.html">Dashboard</a>
     <a href="household.html">Household</a>
-    <a href="admin.html" class="active" >Admin</a>
+    <a href="admin.html" class="active">Admin</a>
   </nav>
 </header>
 
 <main class="wrap">
-
   <section class="card">
     <h2>Admin panel</h2>
     <p class="muted">Manage resident registrations, elections and volunteer tasks.</p>
@@ -294,18 +317,16 @@
     <p id="resEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No residents found.</p>
   </section>
 
-  <!-- Modal: view/edit resident -->
   <div id="modalResident" class="modal" style="display:none;">
     <div class="modal-content card">
       <div class="modal-header">
         <div>
           <h3 style="margin:0;">Resident details</h3>
-          <p class="sub" style="margin-top:0.25rem;">
-        Email, Eircode and Registration No are protected and cannot be changed.
-      </p>
+          <p class="sub" style="margin-top:0.25rem;">Email, Eircode and Registration No are protected and cannot be changed.</p>
         </div>
         <button type="button" class="btn-line small" id="btnCloseResident">Close</button>
       </div>
+
       <div class="modal-body">
         <div class="grid-2" style="gap:1rem;">
           <div class="field">
@@ -339,75 +360,62 @@
             <input id="mPhone" type="text">
           </div>
         </div>
-      </div>
 
-      <div class="modal-footer" id="residentFooterActions"></div>
-
-      <div class="field">
-        <label>Address</label>
-        <input id="mAddress" type="text" disabled>
-      </div>
-
-      <div class="grid-2" style="gap:1rem;">
-        <div class="field">
-          <label>Resident type</label>
-          <select id="mType">
-            <option value="">Select…</option>
-            <option value="owner">Owner</option>
-            <option value="tenant">Tenant</option>
-            <option value="other">Other</option>
-          </select>
+        <div class="field" style="margin-top:1rem;">
+          <label>Address</label>
+          <input id="mAddress" type="text" disabled>
         </div>
-        <div class="field">
-          <label>Management company</label>
-          <input id="mMgmt" type="text">
-        </div>
-      </div>
 
-      <div class="field">
-        <label>Roles</label>
-        <label class="chk"><input id="mCoord" type="checkbox"> <span>Street Coordinator</span></label>
-        <label class="chk"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
-        <label class="chk"><input id="mAlertAdmin" type="checkbox" disabled> <span>Community Alerts admin (set after approval)</span></label>
-
-        <div id="mVolunteerRolesWrap" style="margin:0.5rem 0 0 1.25rem;">
-          <p class="tiny muted" style="margin:0 0 0.25rem;">Volunteer roles (8): select one or more extra functions for this resident.</p>
-          <div style="display:grid; grid-template-columns:repeat(2, minmax(180px, 1fr)); column-gap:18px; row-gap:4px;">
-            <label class="chk"><input id="mVStreet" type="checkbox"> <span>Street watch / patrols</span></label>
-            <label class="chk"><input id="mVLeaf" type="checkbox"> <span>Distribute leaflets</span></label>
-            <label class="chk"><input id="mVTech" type="checkbox"> <span>Tech support</span></label>
-            <label class="chk"><input id="mVEld" type="checkbox"> <span>Elderly checks</span></label>
-            <label class="chk"><input id="mVClean" type="checkbox"> <span>Community clean-up</span></label>
-            <label class="chk"><input id="mVPark" type="checkbox"> <span>Parking assistance</span></label>
-            <label class="chk"><input id="mVMeet" type="checkbox"> <span>Meeting organiser</span></label>
-            <label class="chk"><input id="mVTrans" type="checkbox"> <span>Translation</span></label>
+        <div class="grid-2" style="gap:1rem;">
+          <div class="field">
+            <label>Resident type</label>
+            <select id="mType">
+              <option value="">Select…</option>
+              <option value="owner">Owner</option>
+              <option value="tenant">Tenant</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Management company</label>
+            <input id="mMgmt" type="text">
           </div>
         </div>
 
-        <div style="margin:0.9rem 0 0 1.25rem; padding:0.85rem 1rem; border:1px solid var(--line); border-radius:14px; background:#fafcfb;">
-          <p style="margin:0 0 0.35rem; font-weight:700;">About page / public team display</p>
-          <p class="tiny muted" style="margin:0 0 0.5rem;">Only checked roles will appear in the public roster on the About page. Existing residents can be updated here without changing the registration form.</p>
-          <div style="display:grid; grid-template-columns:repeat(2, minmax(220px, 1fr)); column-gap:18px; row-gap:4px;">
-            <label class="chk"><input id="mAboutStreet" type="checkbox"> <span>Show in About → Street Coordinator</span></label>
-            <label class="chk"><input id="mAboutProject" type="checkbox"> <span>Show in About → Project Volunteers</span></label>
-            <label class="chk"><input id="mAboutPlatform" type="checkbox"> <span>Show in About → Platform / Admin Support</span></label>
+        <div class="field">
+          <label>Roles</label>
+          <label class="chk"><input id="mCoord" type="checkbox"> <span>Street Coordinator</span></label>
+          <label class="chk"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
+          <label class="chk"><input id="mAlertAdmin" type="checkbox" disabled> <span>Community Alerts admin (set after approval)</span></label>
+
+          <div id="mVolunteerRolesWrap" style="margin:0.5rem 0 0 1.25rem;">
+            <p class="tiny muted" style="margin:0 0 0.25rem;">Volunteer roles (8): select one or more extra functions for this resident.</p>
+            <div style="display:grid; grid-template-columns:repeat(2, minmax(180px, 1fr)); column-gap:18px; row-gap:4px;">
+              <label class="chk"><input id="mVStreet" type="checkbox"> <span>Street watch / patrols</span></label>
+              <label class="chk"><input id="mVLeaf" type="checkbox"> <span>Distribute leaflets</span></label>
+              <label class="chk"><input id="mVTech" type="checkbox"> <span>Tech support</span></label>
+              <label class="chk"><input id="mVEld" type="checkbox"> <span>Elderly checks</span></label>
+              <label class="chk"><input id="mVClean" type="checkbox"> <span>Community clean-up</span></label>
+              <label class="chk"><input id="mVPark" type="checkbox"> <span>Parking assistance</span></label>
+              <label class="chk"><input id="mVMeet" type="checkbox"> <span>Meeting organiser</span></label>
+              <label class="chk"><input id="mVTrans" type="checkbox"> <span>Translation</span></label>
+            </div>
           </div>
         </div>
-      </div>
 
-      <p class="tiny muted" id="mMsg" style="margin-top:0.5rem;"></p>
+        <p class="tiny muted" id="mMsg" style="margin-top:0.5rem;"></p>
 
-      <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-        <button type="button" class="btn-line small" id="btnReject">Reject</button>
-        <button type="button" class="btn-line small" id="btnSuspendResident">Suspend</button>
-        <button type="button" class="btn-line small" id="btnRemoveResident">Remove</button>
-        <button type="button" class="btn small" id="btnSaveResident">Save</button>
-        <button type="button" class="btn small" id="btnApprove">Approve</button>
+        <div class="actions" id="residentModalActions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn-line small" id="btnReject">Reject</button>
+          <button type="button" class="btn-line small" id="btnSuspendResident">Suspend</button>
+          <button type="button" class="btn-line small" id="btnRemoveResident">Remove</button>
+          <button type="button" class="btn small" id="btnSaveResident">Save</button>
+          <button type="button" class="btn small" id="btnApprove">Approve</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal: view interest (replaces alert) -->
   <div id="modalInterest" class="modal" style="display:none;">
     <div class="modal-content card">
       <div class="actions" style="justify-content:space-between; align-items:center;">
@@ -455,8 +463,6 @@
   </div>
 
   <!-- ================= TASKS ================= -->
-  
-  <!-- ================= TASKS ================= -->
   <section class="card admin-tab-content" id="tabTasks" style="display:none;">
     <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
       <div>
@@ -472,7 +478,6 @@
     </div>
 
     <div class="grid" style="grid-template-columns: 1fr 1fr; gap:14px; margin-top:12px;">
-      <!-- Editor -->
       <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
         <h4 style="margin:0;">Task builder</h4>
         <p class="tiny muted" style="margin:6px 0 10px;">
@@ -544,7 +549,6 @@
         </div>
       </div>
 
-      <!-- List -->
       <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <h4 style="margin:0;">Tasks</h4>
@@ -600,7 +604,6 @@
       <button type="button" class="btn small elect-tab" data-subtab="subResults">Results</button>
     </div>
 
-    <!-- Manage -->
     <div id="subManage" class="elect-subtab" style="margin-top:0.75rem;">
       <div class="grid-2" style="gap:1rem;">
         <div class="field">
@@ -655,7 +658,6 @@
       <p id="elEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No elections configured.</p>
     </div>
 
-    <!-- Candidates -->
     <div id="subCandidates" class="elect-subtab" style="display:none; margin-top:0.75rem;">
       <p class="tiny muted" style="margin-top:0;">
         Candidates come from residents who submitted Interest in their dashboard and were approved here.
@@ -679,13 +681,11 @@
       <p id="candEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No interests submitted.</p>
     </div>
 
-    <!-- Results -->
     <div id="subResults" class="elect-subtab" style="display:none; margin-top:0.75rem;">
       <p class="tiny muted" style="margin-top:0;">
         Results are calculated from votes stored as 1 vote per household (Reg No) per role.
         A winner is declared only if the leading candidate reaches at least <strong>60%</strong> of total approved households.
       </p>
-
       <div id="resultsBox"></div>
     </div>
   </section>
@@ -854,31 +854,32 @@
       </div>
 
       <div class="card" style="padding:1rem; margin-top:1rem;">
-        <h4 style="margin-top:0;">Panda schedule import</h4>
+        <h4 style="margin-top:0;">Bin collection import</h4>
         <p class="tiny muted" style="margin-top:0;">
-          Use only the Panda CSV file. The system reads the file, ignores header rows when present, and imports the collections as public Home notices automatically.
+          Use only the CSV file. Imported bin notices are saved automatically as public Home notices and will be shown for <strong>this week and next week</strong>.
         </p>
+
         <div class="field" style="display:none;">
           <label>Schedule lines</label>
-          <textarea id="binCsv" rows="6" placeholder="2026-02-03, Panda, Green, public&#10;2026-02-10, Panda, Black, public"></textarea>
+          <textarea id="binCsv" rows="6"></textarea>
         </div>
+
         <div class="field">
-          <label>Panda CSV file</label>
+          <label>Collection CSV file</label>
           <input id="binCsvFile" type="file" accept=".csv,text/csv" />
-          <p class="tiny muted" style="margin-top:6px;">Select the Panda CSV and click <strong>Import Panda CSV</strong>.</p>
+          <p class="tiny muted" style="margin-top:6px;">Select the collection CSV and click <strong>Import collection CSV</strong>.</p>
         </div>
+
         <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn" id="btnBinImport">Import Panda CSV</button>
+          <button type="button" class="btn btn-line" id="btnClearBinNotices">Clear imported bin notices</button>
+          <button type="button" class="btn" id="btnBinImport">Import collection CSV</button>
         </div>
+
         <p id="binMsg" class="tiny muted"></p>
       </div>
 
       <div>
         <h4 style="margin-top:0;">Existing notices</h4>
-        <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:0.25rem;">
-          <button type="button" class="btn" id="btnNtRefresh">Refresh</button>
-          <button type="button" class="btn btn-line" id="btnNtExport">Export file</button>
-        </div>
         <p class="tiny muted" id="ntListMsg" style="margin-top:0.5rem;"></p>
         <div id="ntList"></div>
       </div>
@@ -1002,185 +1003,185 @@
       </div>
     </div>
   </section>
-<section class="card admin-tab-content" id="tabProjects" style="display:none;">
-  <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-    <div>
-      <h3 style="margin:0;">Projects Monitoring</h3>
-      <p class="tiny muted" style="margin:6px 0 0;">
-        Review projects and recipient-tracking entries saved in the central store.
-      </p>
-      <div id="pmStoreNote" class="tiny" style="margin-top:8px;"></div>
+  <!-- ================= PROJECTS ================= -->
+  <section class="card admin-tab-content" id="tabProjects" style="display:none;">
+    <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <div>
+        <h3 style="margin:0;">Projects Monitoring</h3>
+        <p class="tiny muted" style="margin:6px 0 0;">
+          Review projects and recipient-tracking entries saved in the central store.
+        </p>
+        <div id="pmStoreNote" class="tiny" style="margin-top:8px;"></div>
+      </div>
+      <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="button" class="btn small btn-line" id="btnPmRefresh">Refresh</button>
+        <button type="button" class="btn small" id="btnPmExport">Export</button>
+      </div>
     </div>
-    <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button type="button" class="btn small btn-line" id="btnPmRefresh">Refresh</button>
-      <button type="button" class="btn small" id="btnPmExport">Export</button>
-    </div>
-  </div>
 
-  <div class="grid-2" style="gap:1rem; margin-top:1rem;">
-    <div class="field">
-      <label>Filter by status</label>
-      <select id="pmStatusFilter">
-        <option value="all">All</option>
-        <option value="planned">Planned</option>
-        <option value="active">Active</option>
-        <option value="on_hold">On hold</option>
-        <option value="completed">Completed</option>
-        <option value="archived">Archived</option>
-      </select>
+    <div class="grid-2" style="gap:1rem; margin-top:1rem;">
+      <div class="field">
+        <label>Filter by status</label>
+        <select id="pmStatusFilter">
+          <option value="all">All</option>
+          <option value="planned">Planned</option>
+          <option value="active">Active</option>
+          <option value="on_hold">On hold</option>
+          <option value="completed">Completed</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Search</label>
+        <input id="pmSearch" type="text" placeholder="Project title, owner, street, recipient...">
+      </div>
     </div>
-    <div class="field">
-      <label>Search</label>
-      <input id="pmSearch" type="text" placeholder="Project title, owner, street, recipient...">
-    </div>
-  </div>
 
-  <div style="overflow-x:auto; margin-top:0.75rem;">
-    <table style="width:100%;">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Project</th>
-          <th>Status</th>
-          <th>Owner</th>
-          <th>Updated</th>
-          <th style="width:220px;">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="pmBody"></tbody>
-    </table>
-  </div>
-  <p id="pmEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No projects found.</p>
-
-  <div class="card" style="padding:1rem; margin-top:1rem;">
-    <h4 style="margin-top:0;">Recipient tracking</h4>
-    <div style="overflow-x:auto;">
+    <div style="overflow-x:auto; margin-top:0.75rem;">
       <table style="width:100%;">
         <thead>
           <tr>
+            <th>ID</th>
             <th>Project</th>
-            <th>Recipient</th>
-            <th>Address / Eircode</th>
             <th>Status</th>
+            <th>Owner</th>
             <th>Updated</th>
+            <th style="width:220px;">Actions</th>
           </tr>
         </thead>
-        <tbody id="pmRecipientsBody"></tbody>
+        <tbody id="pmBody"></tbody>
       </table>
     </div>
-    <p id="pmRecipientsEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No recipient records found.</p>
-  </div>
-</section>
+    <p id="pmEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No projects found.</p>
 
-<!-- ================= ACCESS CONTROL ================= -->
-<section class="card admin-tab-content" id="tabAccessControl" style="display:none;">
-  <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-    <div>
-      <h3 style="margin:0;">Access Control</h3>
-      <p class="tiny muted" style="margin:6px 0 0;">
-        Control which roles can access pages and feature groups.
-      </p>
+    <div class="card" style="padding:1rem; margin-top:1rem;">
+      <h4 style="margin-top:0;">Recipient tracking</h4>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;">
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Recipient</th>
+              <th>Address / Eircode</th>
+              <th>Status</th>
+              <th>Updated</th>
+            </tr>
+          </thead>
+          <tbody id="pmRecipientsBody"></tbody>
+        </table>
+      </div>
+      <p id="pmRecipientsEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No recipient records found.</p>
     </div>
-    <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button type="button" class="btn small btn-line" id="btnAcRefresh">Refresh</button>
-      <button type="button" class="btn small btn-line" id="btnAcPrint">Print</button>
-      <button type="button" class="btn small" id="btnAcSave">Save access rules</button>
+  </section>
+
+  <!-- ================= ACCESS CONTROL ================= -->
+  <section class="card admin-tab-content" id="tabAccessControl" style="display:none;">
+    <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <div>
+        <h3 style="margin:0;">Access Control</h3>
+        <p class="tiny muted" style="margin:6px 0 0;">
+          Control which roles can access pages and feature groups.
+        </p>
+      </div>
+      <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="button" class="btn small btn-line" id="btnAcRefresh">Refresh</button>
+        <button type="button" class="btn small btn-line" id="btnAcPrint">Print</button>
+        <button type="button" class="btn small" id="btnAcSave">Save access rules</button>
+      </div>
     </div>
-  </div>
 
-  <p id="acMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
+    <p id="acMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
 
-  <div class="ac-wrap" style="margin-top:0.75rem;">
-    <table class="ac-table">
-      <thead>
-        <tr>
-          <th style="min-width:320px;">Page / feature</th>
-          <th>Resident</th>
-          <th>Street Coord.</th>
-          <th>Volunteer</th>
-          <th>Area Coord.</th>
-          <th>Assistant</th>
-          <th>Platform</th>
-          <th>Admin</th>
-        </tr>
-      </thead>
-      <tbody id="acBody"></tbody>
-    </table>
-  </div>
-</section>
+    <div class="ac-wrap" style="margin-top:0.75rem;">
+      <table class="ac-table">
+        <thead>
+          <tr>
+            <th style="min-width:320px;">Page / feature</th>
+            <th>Resident</th>
+            <th>Street Coord.</th>
+            <th>Volunteer</th>
+            <th>Area Coord.</th>
+            <th>Assistant</th>
+            <th>Platform</th>
+            <th>Admin</th>
+          </tr>
+        </thead>
+        <tbody id="acBody"></tbody>
+      </table>
+    </div>
+  </section>
 
-<!-- ================= TOOLS ================= -->
-<section class="card admin-tab-content" id="tabTools" style="display:none;">
-  <h3>Tools</h3>
-  <p class="tiny muted" style="margin-top:0;">
-    Maintenance tools for backups, restore, exports and diagnostics.
-  </p>
+  <!-- ================= TOOLS ================= -->
+  <section class="card admin-tab-content" id="tabTools" style="display:none;">
+    <h3>Tools</h3>
+    <p class="tiny muted" style="margin-top:0;">
+      Maintenance tools for backups, restore, exports and diagnostics.
+    </p>
 
-  <details class="anw-acc" open>
-    <summary><strong>Backups</strong></summary>
-    <div class="acc-body">
-      <div class="card" style="padding:1rem;">
-        <div class="grid" style="grid-template-columns: 1fr 1fr; gap:14px;">
-          <div>
-            <h4 style="margin-top:0;">Backup status</h4>
-            <p class="tiny muted" id="backupStatusText">Checking backup status…</p>
-            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
-              <span id="backupStatusBadge" class="tag gray">Unknown</span>
-              <span id="backupLastRun" class="tag gray">Last run: —</span>
+    <details class="anw-acc" open>
+      <summary><strong>Backups</strong></summary>
+      <div class="acc-body">
+        <div class="card" style="padding:1rem;">
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap:14px;">
+            <div>
+              <h4 style="margin-top:0;">Backup status</h4>
+              <p class="tiny muted" id="backupStatusText">Checking backup status…</p>
+              <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+                <span id="backupStatusBadge" class="tag gray">Unknown</span>
+                <span id="backupLastRun" class="tag gray">Last run: —</span>
+              </div>
+            </div>
+
+            <div>
+              <h4 style="margin-top:0;">Actions</h4>
+              <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
+                <button type="button" class="btn small" id="btnBackupNow">Run backup now</button>
+                <button type="button" class="btn small btn-line" id="btnBackupRefresh">Refresh status</button>
+              </div>
+
+              <div class="field" style="margin-top:1rem;">
+                <label for="restoreBackupFile">Restore backup file</label>
+                <input id="restoreBackupFile" type="file" accept=".json,application/json" />
+              </div>
+
+              <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
+                <button type="button" class="btn small btn-line" id="btnRestoreBackup">Restore backup</button>
+              </div>
+
+              <p id="backupMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
             </div>
           </div>
+        </div>
+      </div>
+    </details>
 
-          <div>
-            <h4 style="margin-top:0;">Actions</h4>
-            <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-              <button type="button" class="btn small" id="btnBackupNow">Run backup now</button>
-              <button type="button" class="btn small btn-line" id="btnBackupRefresh">Refresh status</button>
-            </div>
-
-            <div class="field" style="margin-top:1rem;">
-              <label for="restoreBackupFile">Restore backup file</label>
-              <input id="restoreBackupFile" type="file" accept=".json,application/json" />
-            </div>
-
-            <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-              <button type="button" class="btn small btn-line" id="btnRestoreBackup">Restore backup</button>
-            </div>
-
-            <p id="backupMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
+    <details class="anw-acc" style="margin-top:12px;">
+      <summary><strong>Exports</strong></summary>
+      <div class="acc-body">
+        <div class="card" style="padding:1rem;">
+          <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
+            <button type="button" class="btn small btn-line" id="btnExportUsers">Export residents</button>
+            <button type="button" class="btn small btn-line" id="btnExportNotices">Export notices</button>
+            <button type="button" class="btn small btn-line" id="btnExportReports">Export reports</button>
+            <button type="button" class="btn small btn-line" id="btnExportProjects">Export projects</button>
           </div>
+          <p id="exportMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
         </div>
       </div>
-    </div>
-  </details>
+    </details>
 
-  <details class="anw-acc" style="margin-top:12px;">
-    <summary><strong>Exports</strong></summary>
-    <div class="acc-body">
-      <div class="card" style="padding:1rem;">
-        <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn small btn-line" id="btnExportUsers">Export residents</button>
-          <button type="button" class="btn small btn-line" id="btnExportNotices">Export notices</button>
-          <button type="button" class="btn small btn-line" id="btnExportReports">Export reports</button>
-          <button type="button" class="btn small btn-line" id="btnExportProjects">Export projects</button>
+    <details class="anw-acc" style="margin-top:12px;">
+      <summary><strong>Diagnostics</strong></summary>
+      <div class="acc-body">
+        <div class="card" style="padding:1rem;">
+          <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
+            <button type="button" class="btn small btn-line" id="btnDiagRun">Run diagnostics</button>
+          </div>
+          <pre id="diagOut" style="white-space:pre-wrap; overflow:auto; margin-top:10px; background:#f8faf8; border:1px solid var(--line); border-radius:12px; padding:12px; min-height:120px;"></pre>
         </div>
-        <p id="exportMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
       </div>
-    </div>
-  </details>
-
-  <details class="anw-acc" style="margin-top:12px;">
-    <summary><strong>Diagnostics</strong></summary>
-    <div class="acc-body">
-      <div class="card" style="padding:1rem;">
-        <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn small btn-line" id="btnDiagRun">Run diagnostics</button>
-        </div>
-        <pre id="diagOut" style="white-space:pre-wrap; overflow:auto; margin-top:10px; background:#f8faf8; border:1px solid var(--line); border-radius:12px; padding:12px; min-height:120px;"></pre>
-      </div>
-    </div>
-  </details>
-</section>
-
+    </details>
+  </section>
 </main>
 
 <footer class="site-footer">
@@ -1216,6 +1217,7 @@
   const byId = id => document.getElementById(id);
 
   const ADMIN_ALLOWED_ROLES = ['admin','owner','platform_support','area_coordinator','aux_coordinator'];
+
   function hasAllowedAdminRole(roles){
     const list = Array.isArray(roles) ? roles : [roles];
     return list.map(v => String(v||'').toLowerCase()).some(v => ADMIN_ALLOWED_ROLES.includes(v));
@@ -1230,6 +1232,7 @@
       return fallback;
     }
   }
+
   async function anwSaveSafe(key, value){
     try{
       if(typeof window.anwSave === 'function') return await window.anwSave(key, value);
@@ -1261,17 +1264,27 @@
       .replaceAll('"','&quot;')
       .replaceAll("'",'&#39;');
   }
+
   function fmtDate(v){
     if(!v) return '—';
     const d = new Date(v);
     if(Number.isNaN(d.getTime())) return String(v);
     return d.toLocaleString();
   }
+
+  function fmtDateShort(v){
+    if(!v) return '—';
+    const d = new Date(v + 'T12:00:00');
+    if(Number.isNaN(d.getTime())) return String(v);
+    return d.toLocaleDateString();
+  }
+
   function normList(v){
     if(Array.isArray(v)) return v.filter(Boolean);
     if(v == null || v === '') return [];
     return String(v).split(/[;,|]/).map(s => s.trim()).filter(Boolean);
   }
+
   function uniqueBy(arr, getKey){
     const seen = new Set();
     return arr.filter(item => {
@@ -1281,9 +1294,11 @@
       return true;
     });
   }
+
   function slugify(v){
     return String(v||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
   }
+
   function parseCsvLine(line){
     const out = [];
     let cur = '';
@@ -1303,6 +1318,7 @@
     out.push(cur.trim());
     return out;
   }
+
   function parseFlexibleDate(v){
     const s = String(v||'').trim();
     if(!s) return '';
@@ -1317,17 +1333,23 @@
     }
     return s;
   }
-  function weekRange(dateStr){
+
+  function startOfWeekMonday(dateStr){
     const d = new Date(dateStr + 'T12:00:00');
-    if(Number.isNaN(d.getTime())) return { start: dateStr, end: dateStr };
+    if(Number.isNaN(d.getTime())) return dateStr;
     const day = d.getDay();
-    const mondayOffset = day === 0 ? -6 : 1 - day;
-    const start = new Date(d);
-    start.setDate(d.getDate() + mondayOffset);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    const fmt = x => `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;
-    return { start: fmt(start), end: fmt(end) };
+    const offset = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + offset);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function endOfNextWeekSunday(dateStr){
+    const d = new Date(dateStr + 'T12:00:00');
+    if(Number.isNaN(d.getTime())) return dateStr;
+    const day = d.getDay();
+    const offsetToMonday = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + offsetToMonday + 13);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
 
   function getCurrentAdminTabId(){
@@ -1436,6 +1458,7 @@
     const empty = byId('resEmpty');
     const summary = byId('resSummary');
     if(!body) return;
+
     const rows = (RESIDENTS_CACHE || []).filter(u => {
       const status = String((u && u.status) || '').toLowerCase();
       if(mode === 'pending') return !['approved','active'].includes(status);
@@ -1453,7 +1476,11 @@
         <td>${esc(u.status || 'pending')}</td>
         <td>${esc(getResidentRolesLabel(u))}</td>
         <td>
-          <button type="button" class="btn-line small" data-res-index="${idx}" data-act="openResident">Open</button>
+          <div class="resident-action-cell">
+            <button type="button" class="btn-line small" data-res-index="${idx}" data-act="openResident">
+              ${String((u.status||'')).toLowerCase() === 'approved' || String((u.status||'')).toLowerCase() === 'active' ? 'Edit' : 'Open'}
+            </button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -1472,6 +1499,7 @@
   function openResidentModal(user){
     CURRENT_RESIDENT = user || null;
     if(!CURRENT_RESIDENT) return;
+
     byId('modalResident').style.display = 'block';
     byId('mRegId').value = CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo || '—';
     byId('mStatus').value = CURRENT_RESIDENT.status || 'pending';
@@ -1498,6 +1526,15 @@
     byId('mVTrans').checked = vr.includes('Translation');
 
     byId('mMsg').textContent = '';
+
+    const status = String(CURRENT_RESIDENT.status || '').toLowerCase();
+    const alreadyApproved = ['approved','active'].includes(status);
+    if(byId('btnApprove')){
+      byId('btnApprove').style.display = alreadyApproved ? 'none' : 'inline-flex';
+    }
+    if(byId('btnReject')){
+      byId('btnReject').style.display = alreadyApproved ? 'none' : 'inline-flex';
+    }
   }
 
   function closeResidentModal(){
@@ -1587,6 +1624,7 @@
       msg.textContent = 'Title and message are required.';
       return;
     }
+
     const list = await loadNoticesFresh();
     const next = [{
       id: 'nt_' + Date.now(),
@@ -1597,31 +1635,76 @@
       expires: form.expires,
       public: form.home.enabled && form.home.visibility === 'public',
       isPublic: form.home.enabled && form.home.visibility === 'public',
+      showOnHome: !!form.home.enabled,
       published: true,
       status: (form.home.enabled && form.home.visibility === 'public') ? 'public' : 'private',
       targets: form.targets,
       home: form.home
     }].concat(list || []);
+
     await anwSaveSafe(window.getNoticesKey(), next);
     msg.textContent = 'Notice published.';
+    await renderNoticesList();
+  }
+
+  function renderNoticeRowActions(n){
+    const isBinImport = !!(n && n.meta && n.meta.type === 'bin_collection_import');
+    if(!isBinImport) return '';
+    return `
+      <div class="notice-actions">
+        <button type="button" class="btn btn-line small" data-del-notice="${esc(n.id || '')}">Delete</button>
+      </div>
+    `;
+  }
+
+  async function deleteNoticeById(id){
+    const list = await loadNoticesFresh();
+    const next = (list || []).filter(n => String((n && n.id) || '') !== String(id || ''));
+    await anwSaveSafe(window.getNoticesKey(), next);
+    await renderNoticesList();
+  }
+
+  async function clearImportedBinNotices(){
+    const list = await loadNoticesFresh();
+    const next = (list || []).filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
+    await anwSaveSafe(window.getNoticesKey(), next);
+    byId('binMsg').textContent = 'Imported bin notices removed.';
     await renderNoticesList();
   }
 
   async function renderNoticesList(){
     const listEl = byId('ntList');
     const notes = await loadNoticesFresh();
-    listEl.innerHTML = notes.map(n => `
+    const sorted = (notes || []).slice().sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
+
+    if(byId('ntListMsg')){
+      byId('ntListMsg').textContent = sorted.length ? `${sorted.length} notice(s) saved.` : 'No notices found.';
+    }
+
+    listEl.innerHTML = sorted.map(n => `
       <div class="card" style="padding:12px; margin-bottom:10px;">
-        <div style="display:flex; align-items:start; justify-content:space-between; gap:12px;">
-          <div>
-            <strong>${esc(n.title || 'Untitled')}</strong>
-            <div class="tiny muted">${esc(n.category || 'General')} · ${esc(fmtDate(n.createdAt || n.date || ''))}</div>
-            <div style="margin-top:6px;">${esc(n.message || '')}</div>
-            <div class="tiny muted" style="margin-top:6px;">Home: ${n.home && n.home.enabled ? esc(n.home.visibility || 'private') : 'disabled'}</div>
+        <div>
+          <strong>${esc(n.title || 'Untitled')}</strong>
+          <div class="tiny muted">${esc(n.category || 'General')} · ${esc(fmtDate(n.createdAt || n.date || ''))}</div>
+          <div style="margin-top:6px;">${esc(n.message || '')}</div>
+
+          <div class="notice-card-meta">
+            <span class="notice-chip">Home: ${(n.home && n.home.enabled) ? esc(n.home.visibility || 'private') : 'disabled'}</span>
+            ${n.date ? `<span class="notice-chip">Collection date: ${esc(fmtDateShort(n.date))}</span>` : ''}
+            ${n.startsOn ? `<span class="notice-chip">Show from: ${esc(fmtDateShort(n.startsOn))}</span>` : ''}
+            ${n.endsOn ? `<span class="notice-chip">Show until: ${esc(fmtDateShort(n.endsOn))}</span>` : ''}
           </div>
+
+          ${renderNoticeRowActions(n)}
         </div>
       </div>
     `).join('') || '<p class="tiny muted">No notices found.</p>';
+
+    $$('[data-del-notice]', listEl).forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await deleteNoticeById(btn.getAttribute('data-del-notice'));
+      });
+    });
   }
 
   async function importPandaSchedule(){
@@ -1629,50 +1712,68 @@
     const msg = byId('binMsg');
     const file = fileEl && fileEl.files && fileEl.files[0];
     if(!file){
-      msg.textContent = 'Please select the Panda CSV file first.';
+      msg.textContent = 'Please select the CSV file first.';
       return;
     }
+
     const text = await file.text();
     const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+
     const imported = [];
     for(const line of lines){
       const cols = parseCsvLine(line);
       if(!cols.length) continue;
+
       const headerLike = cols.join(' ').toLowerCase();
       if(headerLike.includes('date') && headerLike.includes('provider')) continue;
       if(cols.length < 3) continue;
 
       const date = parseFlexibleDate(cols[0]);
-      const provider = String(cols[1] || 'Panda').trim() || 'Panda';
+      if(!date) continue;
+
+      const provider = String(cols[1] || '').trim();
       const bin = String(cols[2] || '').trim();
       const visibility = String(cols[3] || 'public').trim().toLowerCase();
-      const range = weekRange(date);
+
+      const startsOn = startOfWeekMonday(date);
+      const endsOn = endOfNextWeekSunday(date);
 
       imported.push({
-        id: `panda_${date}_${slugify(provider)}_${slugify(bin)}`,
-        title: `Bin Collection (${provider})`,
-        message: `${bin} bin collection on ${date}.`,
+        id: `bin_${date}_${slugify(bin)}`,
+        title: 'Bin collection update',
+        message: `${bin} bin collection scheduled for ${date}.`,
         category: 'Bins',
         provider,
         bin,
         date,
-        startsOn: range.start,
-        endsOn: range.end,
+        startsOn,
+        endsOn,
+        startDate: startsOn,
+        endDate: endsOn,
         createdAt: new Date().toISOString(),
+        showOnHome: true,
         public: true,
         isPublic: true,
         published: true,
         status: visibility === 'private' ? 'private' : 'public',
         home: { enabled: true, visibility: 'public' },
-        meta: { type: 'panda_schedule' }
+        meta: { type: 'bin_collection_import' }
       });
     }
 
     const current = await loadNoticesFresh();
-    const merged = uniqueBy([...(current||[]), ...imported], x => String(x.id||''));
+
+    const currentKept = (current || []).filter(n => {
+      if(!(n && n.meta && n.meta.type === 'bin_collection_import')) return true;
+      const key = `${String(n.date||'')}|${String(n.bin||'').toLowerCase()}`;
+      const incoming = imported.some(x => `${String(x.date||'')}|${String(x.bin||'').toLowerCase()}` === key);
+      return !incoming;
+    });
+
+    const merged = [...currentKept, ...imported];
     await anwSaveSafe(window.getNoticesKey(), merged);
-    msg.textContent = `${imported.length} Panda notice(s) imported and saved. They are public and enabled for Home automatically.`;
-    toast(`${imported.length} Panda notice(s) saved.`);
+
+    msg.textContent = `${imported.length} collection notice(s) imported and saved. They are public and enabled for Home automatically for this week and next week.`;
     await renderNoticesList();
   }
 
@@ -1731,18 +1832,16 @@
       { key:'page:handbook', label:'Handbook' },
       { key:'page:admin', label:'Admin' }
     ];
+
     const saved = await anwLoadSafe(KEY_ACCESS, []);
     const rules = Array.isArray(saved) && saved.length ? saved : defaults.map(x => ({
       ...x,
       resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true
     }));
+
     const roles = ['resident','street_admin','volunteer','area_coordinator','aux_coordinator','platform_support','admin'];
-    const labels = {
-      resident:'Resident', street_admin:'Street Coord.', volunteer:'Volunteer',
-      area_coordinator:'Area Coord.', aux_coordinator:'Assistant',
-      platform_support:'Platform', admin:'Admin'
-    };
     const body = byId('acBody');
+
     body.innerHTML = rules.map((r, idx) => `
       <tr data-ac-row="${idx}">
         <td>
@@ -1760,6 +1859,7 @@
         `).join('')}
       </tr>
     `).join('');
+
     $$('.ac-toggle', body).forEach(btn => {
       btn.addEventListener('click', () => {
         const row = Number(btn.getAttribute('data-row'));
@@ -1768,21 +1868,25 @@
         loadAccessControlFromData(rules);
       });
     });
+
     byId('btnAcSave').onclick = async () => {
       await anwSaveSafe(KEY_ACCESS, rules);
       byId('acMsg').textContent = 'Access rules saved.';
     };
+
     byId('btnAcPrint').onclick = () => {
       document.body.classList.add('print-access-control');
       window.print();
       setTimeout(() => document.body.classList.remove('print-access-control'), 200);
     };
+
     byId('btnAcRefresh').onclick = loadAccessControl;
   }
 
   function loadAccessControlFromData(rules){
     const roles = ['resident','street_admin','volunteer','area_coordinator','aux_coordinator','platform_support','admin'];
     const body = byId('acBody');
+
     body.innerHTML = rules.map((r, idx) => `
       <tr>
         <td>
@@ -1796,6 +1900,7 @@
         ${roles.map(role => `<td><button type="button" class="ac-toggle ${r[role] ? 'allowed':'denied'}" data-role="${role}" data-row="${idx}">${r[role] ? '✓':'—'}</button></td>`).join('')}
       </tr>
     `).join('');
+
     $$('.ac-toggle', body).forEach(btn => {
       btn.addEventListener('click', () => {
         const row = Number(btn.getAttribute('data-row'));
@@ -1804,6 +1909,7 @@
         loadAccessControlFromData(rules);
       });
     });
+
     byId('btnAcSave').onclick = async () => {
       await anwSaveSafe(KEY_ACCESS, rules);
       byId('acMsg').textContent = 'Access rules saved.';
@@ -1824,8 +1930,10 @@
   document.addEventListener('click', ev => {
     const btn = ev.target.closest('.admin-tab');
     if(btn){ showAdminTab(btn.getAttribute('data-tab')); }
+
     const rtab = ev.target.closest('.resident-tab');
     if(rtab){ showResidentSubtab(rtab.getAttribute('data-subtab')); }
+
     const etab = ev.target.closest('.elect-tab');
     if(etab){ showElectionSubtab(etab.getAttribute('data-subtab')); }
   });
@@ -1846,7 +1954,6 @@
   });
 
   byId('btnNtPublish')?.addEventListener('click', publishNotice);
-  byId('btnNtRefresh')?.addEventListener('click', renderNoticesList);
   byId('btnNtClear')?.addEventListener('click', () => {
     ['ntTitle','ntMessage','ntExpires','ntEirPrefixes','ntStreets','ntEircodes','ntEmails'].forEach(id => { if(byId(id)) byId(id).value = ''; });
     if(byId('ntCategory')) byId('ntCategory').value = 'General';
@@ -1857,11 +1964,9 @@
     $$('.ntRole').forEach(x => x.checked = false);
     byId('ntMsg').textContent = '';
   });
-  byId('btnNtExport')?.addEventListener('click', async () => {
-    const data = await loadNoticesFresh();
-    downloadText('notices.json', JSON.stringify(data, null, 2));
-  });
+
   byId('btnBinImport')?.addEventListener('click', importPandaSchedule);
+  byId('btnClearBinNotices')?.addEventListener('click', clearImportedBinNotices);
 
   byId('btnRepRefresh')?.addEventListener('click', loadReports);
   byId('btnPmRefresh')?.addEventListener('click', loadProjects);
@@ -1879,9 +1984,11 @@
     byId('backupStatusBadge').className = 'tag ok';
     byId('backupLastRun').textContent = 'Last run: check server log';
   });
+
   byId('btnBackupNow')?.addEventListener('click', async () => {
     byId('backupMsg').textContent = 'Trigger backup from the connected function endpoint.';
   });
+
   byId('btnRestoreBackup')?.addEventListener('click', async () => {
     byId('backupMsg').textContent = 'Restore uses the selected backup file with the restore function.';
   });
