@@ -6,8 +6,8 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>Login / Register — Aderrig NW</title>
 <link href="assets/style.css" rel="stylesheet"/>
+
 <style>
-  /* Login/Register alignment fixes (scoped to this page) */
   .chk{
     display:flex;
     align-items:center;
@@ -22,6 +22,7 @@
     line-height:1.25;
     display:inline-block;
   }
+
   #volunteerOptions[hidden]{display:none !important;}
   #volunteerOptions .chk{
     margin:0;
@@ -31,9 +32,9 @@
   #volunteerOptions .chk:hover{
     background: rgba(47,125,91,.05);
   }
-  #regTerms{ transform: translateY(1px); }
+  #resetBlock[hidden]{display:none !important;}
+  #accountEditPanel[hidden]{display:none !important;}
 
-  /* --- Fix global form styles affecting checkboxes/radios --- */
   body.page-login input[type="checkbox"],
   body.page-login input[type="radio"]{
     width:auto !important;
@@ -44,6 +45,7 @@
     box-shadow:none !important;
     outline:none !important;
   }
+
   body.page-login label.chk{
     display:flex !important;
     align-items:center !important;
@@ -52,16 +54,19 @@
     margin:10px 0 !important;
   }
   body.page-login label.chk span{ line-height:1.2; }
+
   body.page-login .role-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:8px 14px;
     margin:8px 0 0 0;
   }
+
   body.page-login .volunteer-block{
     margin:6px 0 0 0;
     padding-left:0;
   }
+
   body.page-login .consent-block{
     margin-top:14px;
     padding-top:10px;
@@ -69,29 +74,97 @@
   }
   body.page-login .consent-block label.chk{ margin:8px 0 !important; }
 
-  /* Small helper for messages */
   .msg{ margin-top:10px; }
   .msg.ok{ color:#0f5132; }
   .msg.error{ color:#b02a37; }
 
-#resetBlock[hidden]{display:none !important;}
+  .account-card{
+    display:none;
+    margin-bottom:1rem;
+    padding:18px;
+  }
 
-  .account-shell{display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:start;}
-  .account-avatar{width:112px;height:112px;border-radius:16px;border:1px solid rgba(17,24,39,.10);background:rgba(47,125,91,.08);display:flex;align-items:center;justify-content:center;overflow:hidden;}
-  .account-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
-  .account-avatar .avatar-fallback{font-size:2rem;font-weight:800;color:#2f7d5b;letter-spacing:.04em;}
-  .account-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
-  .account-item{padding:10px 12px;border:1px solid rgba(17,24,39,.08);border-radius:12px;background:#fff;}
-  .account-item strong{display:block;font-size:.82rem;margin-bottom:4px;color:#374151;}
-  .account-item span{display:block;word-break:break-word;}
-  .account-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:12px;}
-  .account-edit-panel[hidden]{display:none !important;}
-  @media (max-width: 720px){
-    .account-shell{grid-template-columns:1fr;}
-    .account-avatar{width:96px;height:96px;}
-    .account-grid{grid-template-columns:1fr;}
+  .account-grid{
+    display:grid;
+    grid-template-columns: 140px 1fr;
+    gap:18px;
+    align-items:start;
+  }
+
+  .account-avatar{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:stretch;
+  }
+
+  .avatar-box{
+    width:120px;
+    height:120px;
+    border-radius:12px;
+    overflow:hidden;
+    border:1px solid rgba(17,24,39,.12);
+    background:#f6f8f7;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .avatar-box img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+
+  .avatar-placeholder{
+    font-size:2rem;
+    color:rgba(17,24,39,.35);
+    user-select:none;
+  }
+
+  .avatar-actions{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .account-details{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px 16px;
+  }
+
+  .account-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:14px;
+  }
+
+  .muted-block{
+    color:rgba(17,24,39,.70);
+  }
+
+  .mini-note{
+    font-size:.85rem;
+    color:rgba(17,24,39,.60);
+  }
+
+  @media (max-width: 760px){
+    .account-grid{
+      grid-template-columns:1fr;
+    }
+    .account-avatar{
+      align-items:flex-start;
+    }
+    .account-details{
+      grid-template-columns:1fr;
+    }
   }
 </style>
+
 <style id="page-access-style">
   footer.site-footer { position: relative; }
   footer.site-footer .page-access{
@@ -103,11 +176,7 @@
 </style>
 
 <script>
-// --- Netlify Identity: make it work reliably on localhost (netlify dev) ---
 (function () {
-  // Deployed site URL used ONLY for localhost development.
-  // In production we automatically use window.location.origin so the same build
-  // works on your Netlify subdomain and on the custom domain.
   const DEPLOYED_SITE_URL = "https://aderrignw.ie";
   function isLocalhost(hostname){
     return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0" || (hostname && hostname.endsWith(".localhost"));
@@ -116,14 +185,8 @@
     if(!window.netlifyIdentity){ return cb(new Error("Netlify Identity widget not loaded")); }
     const hostname = (window.location && window.location.hostname) ? window.location.hostname : "";
     const siteUrl = isLocalhost(hostname) ? DEPLOYED_SITE_URL : (window.location && window.location.origin ? window.location.origin : DEPLOYED_SITE_URL);
-    try {
-      // Suppress the "Development Settings" prompt on localhost for the widget
-      localStorage.setItem("netlifySiteURL", siteUrl);
-    } catch(e){}
-    try {
-      // Ensure gotrue is created
-      window.netlifyIdentity.init();
-    } catch(e){}
+    try { localStorage.setItem("netlifySiteURL", siteUrl); } catch(e){}
+    try { window.netlifyIdentity.init(); } catch(e){}
     const start = Date.now();
     (function tick(){
       if(window.netlifyIdentity && window.netlifyIdentity.gotrue && typeof window.netlifyIdentity.gotrue.signup === "function"){
@@ -138,238 +201,270 @@
   window.__ensureIdentityReady = ensureIdentityReady;
 })();
 </script>
-
 </head>
+
 <body class="page-login">
 <header class="site-header">
-<div class="brand">
-<a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
-<div class="brand-text">
-<h1>Aderrig NW</h1>
-<p class="muted">Adamstown</p>
-</div>
-</div>
-<nav class="nav">
-<a href="index.html">Home</a>
-<a href="about.html">About</a>
-<a href="report.html">Report</a>
-<a href="alerts.html">Community Alerts</a>
-<a href="projects.html">Community Projects</a>
-<a href="handbook.html">Handbook</a>
-<a class="active" href="login.html" id="navAccountLink">Login / Register</a>
-<a href="dashboard.html">Dashboard</a>
-<a href="household.html">Household</a>
-<a href="admin.html">Admin</a>
-</nav>
+  <div class="brand">
+    <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
+    <div class="brand-text">
+      <h1>Aderrig NW</h1>
+      <p class="muted">Adamstown</p>
+    </div>
+  </div>
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="report.html">Report</a>
+    <a href="alerts.html">Community Alerts</a>
+    <a href="projects.html">Community Projects</a>
+    <a href="handbook.html">Handbook</a>
+    <a class="active" href="login.html" id="navAccountLink">Login / Register</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="household.html">Household</a>
+    <a href="admin.html">Admin</a>
+  </nav>
 </header>
+
 <main class="wrap">
-<div class="grid">
-<!-- LOGIN -->
-<section class="card" id="login">
-<h2>Login</h2>
-<p class="muted" id="loggedBanner" style="margin-bottom:0.75rem; display:none;"></p>
-<div id="loggedAccountCard" class="card" style="display:none; margin-bottom:1rem; padding:16px;">
-  <h3 style="margin-top:0; margin-bottom:10px;">My Account</h3>
-  <div class="account-shell">
-    <div>
-      <div class="account-avatar" aria-label="Profile photo">
-        <img id="accAvatarImg" alt="Profile photo" style="display:none;"/>
-        <div id="accAvatarFallback" class="avatar-fallback">AN</div>
-      </div>
-      <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-        <input id="profilePhotoInput" type="file" accept="image/*" style="display:none;" />
-        <button class="btn btn-line small" id="btnPhotoUpload" type="button">Upload photo</button>
-        <button class="btn btn-line small" id="btnPhotoRemove" type="button" style="display:none;">Remove photo</button>
-      </div>
-      <p class="tiny muted" style="margin:8px 0 0;">Square profile photo.</p>
-    </div>
-    <div>
-      <div class="account-grid">
-        <div class="account-item"><strong>Name</strong><span id="accName">—</span></div>
-        <div class="account-item"><strong>Email</strong><span id="accEmail">—</span></div>
-        <div class="account-item"><strong>Phone</strong><span id="accPhone">—</span></div>
-        <div class="account-item"><strong>Eircode</strong><span id="accEircode">—</span></div>
-        <div class="account-item"><strong>Street</strong><span id="accStreet">Eircode not registered</span></div>
-        <div class="account-item"><strong>Status</strong><span id="accStatus">—</span></div>
-        <div class="account-item"><strong>Roles</strong><span id="accRole">—</span></div>
-        <div class="account-item"><strong>Volunteer roles</strong><span id="accVolunteerRoles">—</span></div>
-        <div class="account-item"><strong>Logged in time</strong><span id="accLoggedFor">—</span></div>
-      </div>
-      <div class="account-actions">
-        <button class="btn btn-line" id="btnToggleProfile" type="button" aria-expanded="false" aria-controls="accountEditPanel">Edit Profile</button>
-        <button class="btn btn-line" id="btnOpenDashboard" type="button">Open dashboard</button>
-      </div>
-      <div id="accountEditPanel" class="account-edit-panel" hidden style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(17,24,39,.10);">
-        <h4 style="margin:0 0 10px 0;">Update your profile</h4>
-        <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;">
-          <div class="field" style="margin:0;"><label>Full name</label><input id="profName" type="text"/></div>
-          <div class="field" style="margin:0;"><label>Phone</label><input id="profPhone" type="text"/></div>
-          <div class="field" style="margin:0;"><label>Eircode</label><input id="profEir" type="text" disabled/></div>
-          <div class="field" style="margin:0;"><label>Status</label><input id="profStatus" type="text" disabled/></div>
+  <div class="grid">
+    <!-- LOGIN -->
+    <section class="card" id="login">
+      <h2>Login</h2>
+
+      <p class="muted" id="loggedBanner" style="margin-bottom:0.75rem; display:none;"></p>
+
+      <div id="loggedAccountCard" class="card account-card">
+        <h3 style="margin-top:0; margin-bottom:10px;">My Account</h3>
+
+        <div class="account-grid">
+          <div class="account-avatar">
+            <div class="avatar-box">
+              <img id="accAvatarImg" alt="Profile photo" style="display:none;">
+              <div id="accAvatarPlaceholder" class="avatar-placeholder">👤</div>
+            </div>
+
+            <input id="profilePhotoInput" type="file" accept="image/*" style="display:none;">
+
+            <div class="avatar-actions">
+              <button class="btn btn-line" id="btnUploadPhoto" type="button">Upload photo</button>
+              <button class="btn btn-line" id="btnSavePhoto" type="button">Save photo</button>
+              <button class="btn btn-line" id="btnRemovePhoto" type="button">Remove photo</button>
+              <div class="mini-note" id="photoHint">Choose a photo and click Save photo.</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="account-details">
+              <div><strong>Name:</strong> <span id="accName">—</span></div>
+              <div><strong>Email:</strong> <span id="accEmail">—</span></div>
+              <div><strong>Phone:</strong> <span id="accPhone">—</span></div>
+              <div><strong>Eircode:</strong> <span id="accEircode">—</span></div>
+              <div><strong>Street:</strong> <span id="accStreet">—</span></div>
+              <div><strong>Status:</strong> <span id="accStatus">—</span></div>
+              <div><strong>Roles:</strong> <span id="accRole">—</span></div>
+              <div><strong>Volunteer roles:</strong> <span id="accVolunteerRoles">—</span></div>
+              <div><strong>Logged in time:</strong> <span id="accLoggedFor">—</span></div>
+            </div>
+
+            <div class="account-actions">
+              <button class="btn btn-line" id="btnToggleProfile" type="button">Edit Profile</button>
+              <button class="btn btn-line" id="btnOpenDashboard" type="button">Open dashboard</button>
+              <button class="btn" id="btnLogoutTop" type="button">Logout</button>
+            </div>
+          </div>
         </div>
-        <div class="actions" style="justify-content:flex-end; margin-top:10px;">
-          <button class="btn" id="btnProfileSave" type="button">Update profile</button>
+
+        <div id="accountEditPanel" hidden style="margin-top:14px; padding-top:14px; border-top:1px solid rgba(17,24,39,.10);">
+          <h4 style="margin:0 0 10px 0;">Edit Profile</h4>
+
+          <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;">
+            <div class="field" style="margin:0;">
+              <label>Full name</label>
+              <input id="profName" type="text"/>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Phone</label>
+              <input id="profPhone" type="text"/>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Eircode</label>
+              <input id="profEir" type="text" disabled/>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Status</label>
+              <input id="profStatus" type="text" disabled/>
+            </div>
+          </div>
+
+          <div class="account-actions">
+            <button class="btn" id="btnProfileSave" type="button">Update profile</button>
+          </div>
+          <div class="msg" id="profileMsg"></div>
         </div>
-        <div class="msg" id="profileMsg"></div>
       </div>
-    </div>
-  </div>
-</div>
-<div class="field">
-<label>Email</label>
-<input autocomplete="email" id="loginEmail" type="email"/>
-</div>
-<div class="field">
-<label>Eircode</label>
-<input autocomplete="postal-code" id="loginEir" placeholder="e.g., K78XXXX" type="text"/>
-</div>
-<div class="field" id="loginStreetWrap" style="display:none;">
-<label>Street</label>
-<input disabled="" id="loginStreet" type="text"/>
-<p class="tiny muted" style="margin-top:0.25rem;">Street associated with this Eircode.</p>
-</div>
-<div class="field">
-<label>Password</label>
-<input autocomplete="current-password" id="loginPass" type="password"/>
-</div>
-<div class="actions" style="justify-content:space-between">
-<span></span>
-<div>
-<button class="btn btn-line" id="btnShow" type="button">Show</button>
-<button class="btn" id="btnLogin" type="button">Enter</button>
-<button class="btn btn-line" id="btnLogout" style="display:none; margin-left:0.5rem;" type="button">Logout</button>
-</div>
-</div>
-<div class="msg" id="loginMsg"></div>
-<p class="muted tiny" style="margin-top:4px;">
-<a class="link" href="#" id="lnkForgot">I forgot my password</a>
-</p>
-<div hidden="" id="resetBlock" style="margin-top:10px; padding-top:10px; border-top:1px dashed rgba(17,24,39,.15);">
-<h3 class="h3" style="margin-bottom:6px;">Reset your password</h3>
-<p class="muted tiny" style="margin-bottom:8px;">
-          Enter your email and we will send you a secure password reset link.
+
+      <div id="loginFieldsBlock">
+        <div class="field">
+          <label>Email</label>
+          <input autocomplete="email" id="loginEmail" type="email"/>
+        </div>
+        <div class="field">
+          <label>Eircode</label>
+          <input autocomplete="postal-code" id="loginEir" placeholder="e.g., K78XXXX" type="text"/>
+        </div>
+        <div class="field" id="loginStreetWrap" style="display:none;">
+          <label>Street</label>
+          <input disabled id="loginStreet" type="text"/>
+          <p class="tiny muted" style="margin-top:0.25rem;">Street associated with this Eircode.</p>
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input autocomplete="current-password" id="loginPass" type="password"/>
+        </div>
+        <div class="actions" style="justify-content:space-between">
+          <span></span>
+          <div>
+            <button class="btn btn-line" id="btnShow" type="button">Show</button>
+            <button class="btn" id="btnLogin" type="button">Enter</button>
+            <button class="btn btn-line" id="btnLogout" style="display:none; margin-left:0.5rem;" type="button">Logout</button>
+          </div>
+        </div>
+        <div class="msg" id="loginMsg"></div>
+
+        <p class="muted tiny" style="margin-top:4px;">
+          <a class="link" href="#" id="lnkForgot">I forgot my password</a>
         </p>
-<div class="field">
-<label>Email</label>
-<input autocomplete="email" id="resetEmail" type="email"/>
-</div>
-<div class="actions" style="justify-content:flex-end; gap:8px;">
-<button class="btn btn-line" id="btnCancelReset" type="button">Cancel</button>
-<button class="btn" id="btnSendReset" type="button">Send reset email</button>
-</div>
-<div class="msg tiny" id="resetMsg"></div>
-</div>
-</section>
 
-<!-- DEV TOOLS (localhost only) -->
-<section class="card" id="devTools" style="display:none; margin-top:14px;">
-  <h3 class="h3" style="margin-bottom:6px;">Dev tools</h3>
-  <p class="muted tiny" style="margin-bottom:10px;">
-    Local testing only. This will remove your existing user record so you can register again.
-  </p>
-  <div class="actions" style="justify-content:flex-end; gap:8px;">
-    <button class="btn btn-line" id="btnDevRemoveEmail" type="button">Remove this email from registrations</button>
-    <button class="btn btn-line" id="btnDevWipeUsers" type="button">Wipe ALL registrations</button>
+        <div hidden id="resetBlock" style="margin-top:10px; padding-top:10px; border-top:1px dashed rgba(17,24,39,.15);">
+          <h3 class="h3" style="margin-bottom:6px;">Reset your password</h3>
+          <p class="muted tiny" style="margin-bottom:8px;">
+            Enter your email and we will send you a secure password reset link.
+          </p>
+          <div class="field">
+            <label>Email</label>
+            <input autocomplete="email" id="resetEmail" type="email"/>
+          </div>
+          <div class="actions" style="justify-content:flex-end; gap:8px;">
+            <button class="btn btn-line" id="btnCancelReset" type="button">Cancel</button>
+            <button class="btn" id="btnSendReset" type="button">Send reset email</button>
+          </div>
+          <div class="msg tiny" id="resetMsg"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DEV TOOLS (localhost only) -->
+    <section class="card" id="devTools" style="display:none; margin-top:14px;">
+      <h3 class="h3" style="margin-bottom:6px;">Dev tools</h3>
+      <p class="muted tiny" style="margin-bottom:10px;">
+        Local testing only. This will remove your existing user record so you can register again.
+      </p>
+      <div class="actions" style="justify-content:flex-end; gap:8px;">
+        <button class="btn btn-line" id="btnDevRemoveEmail" type="button">Remove this email from registrations</button>
+        <button class="btn btn-line" id="btnDevWipeUsers" type="button">Wipe ALL registrations</button>
+      </div>
+      <div class="msg tiny" id="devToolsMsg"></div>
+    </section>
+
+    <!-- REGISTER -->
+    <section class="card" id="register">
+      <h2>Create account</h2>
+      <div class="field">
+        <label>Full name</label>
+        <input autocomplete="name" id="regName" type="text"/>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input autocomplete="email" id="regEmail" type="email"/>
+      </div>
+      <div class="field">
+        <label>Eircode</label>
+        <input autocomplete="postal-code" id="regEir" placeholder="e.g., K78XXXX" type="text"/>
+      </div>
+      <div class="field">
+        <label>Full address</label>
+        <input autocomplete="street-address" id="regAddress" placeholder="House number, street, area, county" type="text"/>
+      </div>
+      <div class="field">
+        <label>Phone number (+country code)</label>
+        <input autocomplete="tel" id="regPhone" placeholder="+353851234567 (international format)" style="width:100%;" type="tel"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input autocomplete="new-password" id="regPass" type="password"/>
+      </div>
+      <div class="field">
+        <label>Confirm password</label>
+        <input autocomplete="new-password" id="regPass2" type="password"/>
+      </div>
+      <div class="field">
+        <label for="regType">Resident type</label>
+        <select id="regType">
+          <option value="">Select…</option>
+          <option value="owner">Owner</option>
+          <option value="tenant">Tenant</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Management company</label>
+        <input id="regMgmt" placeholder="Management company name" type="text"/>
+      </div>
+      <div class="role-grid">
+        <label class="chk">
+          <input id="regCoord" type="checkbox"/>
+          <span>I want to be a Street Coordinator</span>
+        </label>
+        <label class="chk">
+          <input id="regVolunteer" type="checkbox"/>
+          <span>I want to be a Volunteer</span>
+        </label>
+      </div>
+
+      <div class="volunteer-block" hidden id="volunteerOptions">
+        <p class="muted" style="margin-bottom:0.25rem;">Volunteer roles (choose one or more):</p>
+        <div class="role-grid">
+          <label class="chk"><input id="volStreetWatch" type="checkbox"/><span>Street watch</span></label>
+          <label class="chk"><input id="volLeaflets" type="checkbox"/><span>Leaflets</span></label>
+          <label class="chk"><input id="volTech" type="checkbox"/><span>Tech support</span></label>
+          <label class="chk"><input id="volElderly" type="checkbox"/><span>Elderly checks</span></label>
+          <label class="chk"><input id="volCleanup" type="checkbox"/><span>Community Clean-Up</span></label>
+          <label class="chk"><input id="volParking" type="checkbox"/><span>Parking Assistance</span></label>
+          <label class="chk"><input id="volMeetings" type="checkbox"/><span>Meetings</span></label>
+          <label class="chk"><input id="volTranslation" type="checkbox"/><span>Translation</span></label>
+        </div>
+      </div>
+
+      <div class="consent-block">
+        <label class="chk" style="margin-top:0.75rem;">
+          <input id="regTerms" type="checkbox"/>
+          <span>I agree to the Privacy Policy &amp; Terms.</span>
+        </label>
+        <label class="chk" style="margin:0;">
+          <input id="regAlertOptIn" type="checkbox"/>
+          <span>Send me community alerts (Email/SMS/WhatsApp).</span>
+        </label>
+      </div>
+
+      <div class="actions" style="justify-content:flex-end">
+        <button class="btn" id="btnRegister" type="button">Create account</button>
+      </div>
+      <div class="msg" id="regMsg"></div>
+    </section>
   </div>
-  <div class="msg tiny" id="devToolsMsg"></div>
-</section>
-
-<!-- REGISTER -->
-<section class="card" id="register">
-<h2>Create account</h2>
-<div class="field">
-<label>Full name</label>
-<input autocomplete="name" id="regName" type="text"/>
-</div>
-<div class="field">
-<label>Email</label>
-<input autocomplete="email" id="regEmail" type="email"/>
-</div>
-<div class="field">
-<label>Eircode</label>
-<input autocomplete="postal-code" id="regEir" placeholder="e.g., K78XXXX" type="text"/>
-</div>
-<div class="field">
-<label>Full address</label>
-<input autocomplete="street-address" id="regAddress" placeholder="House number, street, area, county" type="text"/>
-</div>
-<div class="field">
-<label>Phone number (+country code)</label>
-<input autocomplete="tel" id="regPhone" placeholder="+353851234567 (international format)" style="width:100%;" type="tel"/>
-</div>
-<div class="field">
-<label>Password</label>
-<input autocomplete="new-password" id="regPass" type="password"/>
-</div>
-<div class="field">
-<label>Confirm password</label>
-<input autocomplete="new-password" id="regPass2" type="password"/>
-</div>
-<div class="field">
-<label for="regType">Resident type</label>
-<select id="regType">
-<option value="">Select…</option>
-<option value="owner">Owner</option>
-<option value="tenant">Tenant</option>
-</select>
-</div>
-<div class="field">
-<label>Management company</label>
-<input id="regMgmt" placeholder="Management company name" type="text"/>
-</div>
-<div class="role-grid">
-<label class="chk">
-<input id="regCoord" type="checkbox"/>
-<span>I want to be a Street Coordinator</span>
-</label>
-<label class="chk">
-<input id="regVolunteer" type="checkbox"/>
-<span>I want to be a Volunteer</span>
-</label>
-</div>
-<div class="volunteer-block" hidden="" id="volunteerOptions">
-<p class="muted" style="margin-bottom:0.25rem;">Volunteer roles (choose one or more):</p>
-<div class="role-grid">
-<label class="chk"><input id="volStreetWatch" type="checkbox"/><span>Street watch</span></label>
-<label class="chk"><input id="volLeaflets" type="checkbox"/><span>Leaflets</span></label>
-<label class="chk"><input id="volTech" type="checkbox"/><span>Tech support</span></label>
-<label class="chk"><input id="volElderly" type="checkbox"/><span>Elderly checks</span></label>
-<label class="chk"><input id="volCleanup" type="checkbox"/><span>Community Clean-Up</span></label>
-<label class="chk"><input id="volParking" type="checkbox"/><span>Parking Assistance</span></label>
-<label class="chk"><input id="volMeetings" type="checkbox"/><span>Meetings</span></label>
-<label class="chk"><input id="volTranslation" type="checkbox"/><span>Translation</span></label>
-</div>
-</div>
-<div class="consent-block">
-<label class="chk" style="margin-top:0.75rem;">
-<input id="regTerms" type="checkbox"/>
-<span>I agree to the Privacy Policy &amp; Terms.</span>
-</label>
-<label class="chk" style="margin:0;">
-<input id="regAlertOptIn" type="checkbox"/>
-<span>Send me community alerts (Email/SMS/WhatsApp).</span>
-</label>
-</div>
-<div class="actions" style="justify-content:flex-end">
-<button class="btn" id="btnRegister" type="button">Create account</button>
-</div>
-<div class="msg" id="regMsg"></div>
-</section>
-</div>
 </main>
+
 <footer class="site-footer">
   <div class="footer-row">
     <div class="footer-left">
       <span class="page-status">Public Page</span>
     </div>
-
     <div class="footer-center">
-      © 2025 Aderrig NW · 
+      © 2025 Aderrig NW ·
       <a href="privacy.html">Privacy Policy</a>
     </div>
   </div>
 </footer>
-
 
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script src="assets/identity.js"></script>
@@ -380,38 +475,35 @@
 (async function () {
   'use strict';
 
-  // ---------- UI helpers (toast/modal) ----------
   function toast(msg, type){
     try{
       if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){
         ANW.ui.toast(String(msg||''), type || 'info');
+        return;
       }
-    }catch{}
+    }catch(_){}
+    console.log(String(msg||''));
   }
+
   function modal(msg, title){
     try{
       if(window.ANW && ANW.ui && typeof ANW.ui.alert === 'function'){
         ANW.ui.alert(String(msg||''), title || 'Message');
         return;
       }
-    }catch{}
+    }catch(_){}
     alert(msg);
   }
+
   function setMsg(el, text, kind){
     if(!el) return;
     el.textContent = text || '';
     el.className = 'msg' + (kind ? (' ' + kind) : '');
   }
 
-  // ---------- Soft lock config (device-level) ----------
-  // 5 failed attempts -> lock for 1 hour
   const SOFTLOCK_MAX_ATTEMPTS = 5;
   const SOFTLOCK_MINUTES = 60;
-
-  // After lock expires: on FIRST failed attempt -> auto-send password reset email
-  // (cooldown so it won't spam on the same device)
   const RESET_AFTER_LOCK_COOLDOWN_MINUTES = 30;
-
   const ADMIN_CONTACT_EMAIL = 'aderrignw@gmail.com';
 
   function normalizeEir(val) {
@@ -426,12 +518,19 @@
   function isValidPhone(p) {
     return /^\+\d+$/.test(p);
   }
+  function stripStreet(address){
+    const a = String(address || '').trim();
+    if(!a) return '';
+    const parts = a.split(',');
+    return parts.length ? parts[0].trim() : a;
+  }
 
   function attemptKey(email, eir){
     const e = (email || '').trim().toLowerCase();
     const r = normalizeEir(eir || '');
     return 'anw_login_attempts_v2:' + e + ':' + r;
   }
+
   function getAttemptState(email, eir){
     try{
       const raw = localStorage.getItem(attemptKey(email,eir));
@@ -442,10 +541,11 @@
         lockUntil: Number(obj.lockUntil || 0),
         lastResetSentAt: Number(obj.lastResetSentAt || 0)
       };
-    }catch{
+    }catch(_){
       return { fails:0, lockUntil:0, lastResetSentAt:0 };
     }
   }
+
   function setAttemptState(email, eir, state){
     try{
       localStorage.setItem(attemptKey(email,eir), JSON.stringify({
@@ -453,108 +553,634 @@
         lockUntil: Number(state.lockUntil || 0),
         lastResetSentAt: Number(state.lastResetSentAt || 0)
       }));
-    }catch{}
+    }catch(_){}
   }
+
   function clearAttemptState(email, eir){
-    try{ localStorage.removeItem(attemptKey(email,eir)); }catch{}
+    try{ localStorage.removeItem(attemptKey(email,eir)); }catch(_){}
   }
+
   function lockRemainingMs(email, eir){
     const st = getAttemptState(email,eir);
     const now = Date.now();
     return st.lockUntil > now ? (st.lockUntil - now) : 0;
   }
+
   function formatMins(ms){
     const mins = Math.ceil(ms / 60000);
     if(mins <= 1) return '1 minute';
     return mins + ' minutes';
   }
+
   function minutesToMs(m){ return m * 60 * 1000; }
 
-  // DOM
-  const registerSection = document.getElementById('register');
   const navAccountLink = document.getElementById('navAccountLink');
+  const loggedBanner = document.getElementById('loggedBanner');
+  const loggedAccountCard = document.getElementById('loggedAccountCard');
+  const loginFieldsBlock = document.getElementById('loginFieldsBlock');
+  const registerSection = document.getElementById('register');
+
+  const accAvatarImg = document.getElementById('accAvatarImg');
+  const accAvatarPlaceholder = document.getElementById('accAvatarPlaceholder');
+  const btnUploadPhoto = document.getElementById('btnUploadPhoto');
+  const btnSavePhoto = document.getElementById('btnSavePhoto');
+  const btnRemovePhoto = document.getElementById('btnRemovePhoto');
+  const profilePhotoInput = document.getElementById('profilePhotoInput');
+  const photoHint = document.getElementById('photoHint');
+
+  const accName = document.getElementById('accName');
+  const accEmail = document.getElementById('accEmail');
+  const accPhone = document.getElementById('accPhone');
+  const accEircode = document.getElementById('accEircode');
+  const accStreet = document.getElementById('accStreet');
+  const accStatus = document.getElementById('accStatus');
+  const accRole = document.getElementById('accRole');
+  const accVolunteerRoles = document.getElementById('accVolunteerRoles');
+  const accLoggedFor = document.getElementById('accLoggedFor');
+
+  const accountEditPanel = document.getElementById('accountEditPanel');
+  const btnToggleProfile = document.getElementById('btnToggleProfile');
   const profileMsg = document.getElementById('profileMsg');
   const profName = document.getElementById('profName');
   const profPhone = document.getElementById('profPhone');
   const profEir = document.getElementById('profEir');
   const profStatus = document.getElementById('profStatus');
   const btnProfileSave = document.getElementById('btnProfileSave');
-  const profilePhotoInput = document.getElementById('profilePhotoInput');
-  const btnPhotoUpload = document.getElementById('btnPhotoUpload');
-  const btnPhotoRemove = document.getElementById('btnPhotoRemove');
   const btnOpenDashboard = document.getElementById('btnOpenDashboard');
-  const btnToggleProfile = document.getElementById('btnToggleProfile');
-  const accountEditPanel = document.getElementById('accountEditPanel');
-  const accPhone = document.getElementById('accPhone');
-  const accStreet = document.getElementById('accStreet');
-  const accVolunteerRoles = document.getElementById('accVolunteerRoles');
-  const accLoggedFor = document.getElementById('accLoggedFor');
-  const accAvatarImg = document.getElementById('accAvatarImg');
-  const accAvatarFallback = document.getElementById('accAvatarFallback');
-  const loggedBanner    = document.getElementById('loggedBanner');
-  const loggedAccountCard = document.getElementById('loggedAccountCard');
-  const accName = document.getElementById('accName');
-  const accEmail = document.getElementById('accEmail');
-  const accStatus = document.getElementById('accStatus');
-  const accRole = document.getElementById('accRole');
-  const accEircode = document.getElementById('accEircode');
-  const btnLogout       = document.getElementById('btnLogout');
+  const btnLogoutTop = document.getElementById('btnLogoutTop');
 
   const loginEmail = document.getElementById('loginEmail');
-  const loginEir   = document.getElementById('loginEir');
-  const loginPass  = document.getElementById('loginPass');
-  const btnShow    = document.getElementById('btnShow');
-  const btnLogin   = document.getElementById('btnLogin');
-  const loginMsg   = document.getElementById('loginMsg');
+  const loginEir = document.getElementById('loginEir');
+  const loginPass = document.getElementById('loginPass');
+  const btnShow = document.getElementById('btnShow');
+  const btnLogin = document.getElementById('btnLogin');
+  const btnLogout = document.getElementById('btnLogout');
+  const loginMsg = document.getElementById('loginMsg');
 
   const loginStreetWrap = document.getElementById('loginStreetWrap');
-  const loginStreet     = document.getElementById('loginStreet');
+  const loginStreet = document.getElementById('loginStreet');
 
-  const regName    = document.getElementById('regName');
-  const regEmail   = document.getElementById('regEmail');
-  const regEir     = document.getElementById('regEir');
+  const regName = document.getElementById('regName');
+  const regEmail = document.getElementById('regEmail');
+  const regEir = document.getElementById('regEir');
   const regAddress = document.getElementById('regAddress');
-  const regPhone   = document.getElementById('regPhone');
-  const regPass    = document.getElementById('regPass');
-  const regPass2   = document.getElementById('regPass2');
-  const regType    = document.getElementById('regType');
-  const regMgmt    = document.getElementById('regMgmt');
-  const regCoord   = document.getElementById('regCoord');
-  const regTerms   = document.getElementById('regTerms');
+  const regPhone = document.getElementById('regPhone');
+  const regPass = document.getElementById('regPass');
+  const regPass2 = document.getElementById('regPass2');
+  const regType = document.getElementById('regType');
+  const regMgmt = document.getElementById('regMgmt');
+  const regCoord = document.getElementById('regCoord');
+  const regVolunteer = document.getElementById('regVolunteer');
+  const regTerms = document.getElementById('regTerms');
   const regAlertOptIn = document.getElementById('regAlertOptIn');
-  const regVolunteer  = document.getElementById('regVolunteer');
 
   const volBox = document.getElementById('volunteerOptions');
   const volStreetWatch = document.getElementById('volStreetWatch');
-  const volLeaflets    = document.getElementById('volLeaflets');
-  const volTech        = document.getElementById('volTech');
-  const volElderly     = document.getElementById('volElderly');
-  const volCleanup     = document.getElementById('volCleanup');
-    const volParking    = document.getElementById('volParking');
-const volMeetings    = document.getElementById('volMeetings');
+  const volLeaflets = document.getElementById('volLeaflets');
+  const volTech = document.getElementById('volTech');
+  const volElderly = document.getElementById('volElderly');
+  const volCleanup = document.getElementById('volCleanup');
+  const volParking = document.getElementById('volParking');
+  const volMeetings = document.getElementById('volMeetings');
   const volTranslation = document.getElementById('volTranslation');
 
   const btnRegister = document.getElementById('btnRegister');
-  const regMsg      = document.getElementById('regMsg');
+  const regMsg = document.getElementById('regMsg');
 
-  // Reset block
-  const lnkForgot      = document.getElementById('lnkForgot');
-  const resetBlock     = document.getElementById('resetBlock');
-  const resetEmail     = document.getElementById('resetEmail');
+  const lnkForgot = document.getElementById('lnkForgot');
+  const resetBlock = document.getElementById('resetBlock');
+  const resetEmail = document.getElementById('resetEmail');
   const btnCancelReset = document.getElementById('btnCancelReset');
-  const btnSendReset   = document.getElementById('btnSendReset');
-  const resetMsg       = document.getElementById('resetMsg');
+  const btnSendReset = document.getElementById('btnSendReset');
+  const resetMsg = document.getElementById('resetMsg');
 
-  // Force reset panel closed on load
-  if(resetBlock) resetBlock.hidden = true;
+  const devTools = document.getElementById('devTools');
+  const btnDevRemoveEmail = document.getElementById('btnDevRemoveEmail');
+  const btnDevWipeUsers = document.getElementById('btnDevWipeUsers');
+  const devToolsMsg = document.getElementById('devToolsMsg');
 
   const KEY_USERS = (window.ANW_KEYS && ANW_KEYS.USERS) ? ANW_KEYS.USERS : 'anw_users';
 
-  // Force volunteer options closed on load
-  if(volBox) volBox.hidden = true;
+  let currentProfileRow = null;
+  let pendingProfilePhoto = null;
+  let loginStartedAt = Number(sessionStorage.getItem('anw_login_started_at') || 0) || 0;
+  let loggedForTimer = null;
+  function normList(v){
+    if(Array.isArray(v)) return v.filter(Boolean);
+    if(v == null || v === '') return [];
+    return String(v).split(/[;,|]/).map(s => s.trim()).filter(Boolean);
+  }
 
-  
-  // Pressing Enter in any login field triggers the Enter button
+  function getRoleLabels(row){
+    const roles = []
+      .concat(normList(row && row.role))
+      .concat(normList(row && row.roles))
+      .map(v => String(v || '').toLowerCase());
+
+    const labels = [];
+    if(roles.includes('resident')) labels.push('Resident');
+    if(roles.includes('street_admin')) labels.push('Street Coordinator');
+    if(roles.includes('volunteer')) labels.push('Volunteer');
+    if(roles.includes('area_coordinator')) labels.push('Area Coordinator');
+    if(roles.includes('aux_coordinator')) labels.push('Assistant Area Coordinator');
+    if(roles.includes('platform_support')) labels.push('Platform / Admin Support');
+    if(roles.includes('admin')) labels.push('Admin');
+
+    return labels.length ? labels.join(', ') : '—';
+  }
+
+  function getVolunteerRoles(row){
+    const roles = normList(row && row.volunteerRoles);
+    return roles.length ? roles.join(', ') : '—';
+  }
+
+  function updateAvatar(src){
+    const hasSrc = !!src;
+    accAvatarImg.style.display = hasSrc ? 'block' : 'none';
+    accAvatarPlaceholder.style.display = hasSrc ? 'none' : 'flex';
+    if(hasSrc){
+      accAvatarImg.src = src;
+    }else{
+      accAvatarImg.removeAttribute('src');
+    }
+  }
+
+  function readImageAsDataUrl(file){
+    return new Promise((resolve, reject) => {
+      try{
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('Unable to read image.'));
+        reader.readAsDataURL(file);
+      }catch(err){
+        reject(err);
+      }
+    });
+  }
+
+  async function anwLoadSafe(key, fallback){
+    try{
+      if(typeof window.anwLoad === 'function'){
+        return await window.anwLoad(key, fallback);
+      }
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(_){
+      return fallback;
+    }
+  }
+
+  async function anwSaveSafe(key, value){
+    try{
+      if(typeof window.anwSave === 'function'){
+        return await window.anwSave(key, value);
+      }
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    }catch(err){
+      console.error(err);
+      throw err;
+    }
+  }
+
+  function getCurrentIdentityUser(){
+    try{
+      return (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
+        ? window.netlifyIdentity.currentUser()
+        : null;
+    }catch(_){
+      return null;
+    }
+  }
+
+  async function findOwnProfileRow(){
+    const currentUser = getCurrentIdentityUser();
+    if(!currentUser || !currentUser.email) return null;
+    const users = await anwLoadSafe(KEY_USERS, []);
+    const email = String(currentUser.email || '').trim().toLowerCase();
+    return users.find(u => String((u && u.email) || '').trim().toLowerCase() === email) || null;
+  }
+
+  async function saveOwnProfile(patch){
+    const currentUser = getCurrentIdentityUser();
+    if(!currentUser || !currentUser.email) throw new Error('No authenticated user.');
+    const users = await anwLoadSafe(KEY_USERS, []);
+    const email = String(currentUser.email || '').trim().toLowerCase();
+    const idx = users.findIndex(u => String((u && u.email) || '').trim().toLowerCase() === email);
+    if(idx < 0) throw new Error('Profile record not found.');
+
+    users[idx] = Object.assign({}, users[idx], patch || {});
+    await anwSaveSafe(KEY_USERS, users);
+    currentProfileRow = users[idx];
+    return users[idx];
+  }
+
+  function setLoginStartedAt(ts){
+    loginStartedAt = Number(ts || Date.now()) || Date.now();
+    try{ sessionStorage.setItem('anw_login_started_at', String(loginStartedAt)); }catch(_){}
+  }
+
+  function renderLoggedFor(){
+    if(!loginStartedAt){
+      accLoggedFor.textContent = '—';
+      return;
+    }
+    const now = Date.now();
+    const diff = Math.max(0, now - loginStartedAt);
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(mins / 60);
+    const remMins = mins % 60;
+
+    let duration = '';
+    if(hours > 0){
+      duration = `${hours}h ${remMins}m`;
+    }else{
+      duration = `${Math.max(1, remMins)}m`;
+    }
+
+    const dt = new Date(loginStartedAt);
+    accLoggedFor.textContent = `${dt.toLocaleString()} · ${duration}`;
+  }
+
+  function startLoggedForTimer(){
+    if(loggedForTimer) clearInterval(loggedForTimer);
+    renderLoggedFor();
+    loggedForTimer = setInterval(renderLoggedFor, 30000);
+  }
+
+  function stopLoggedForTimer(){
+    if(loggedForTimer){
+      clearInterval(loggedForTimer);
+      loggedForTimer = null;
+    }
+  }
+
+  function setStreetForRow(row){
+    const eir = normalizeEir(row && row.eircode);
+    const address = String((row && row.address) || '').trim();
+    const street = eir && address ? stripStreet(address) : '';
+    accStreet.textContent = street || 'Eircode not registered';
+  }
+
+  function showLoggedInUI(show){
+    loggedBanner.style.display = show ? 'block' : 'none';
+    loggedAccountCard.style.display = show ? 'block' : 'none';
+    loginFieldsBlock.style.display = show ? 'none' : 'block';
+    registerSection.style.display = show ? 'none' : 'block';
+    btnLogout.style.display = show ? 'inline-flex' : 'none';
+    navAccountLink.textContent = show ? 'My Account' : 'Login / Register';
+
+    if(!show){
+      accountEditPanel.hidden = true;
+      setMsg(profileMsg, '', '');
+      updateAvatar('');
+      currentProfileRow = null;
+      pendingProfilePhoto = null;
+      photoHint.textContent = 'Choose a photo and click Save photo.';
+      stopLoggedForTimer();
+    }
+  }
+
+  async function renderAccountCard(){
+    const row = await findOwnProfileRow();
+    currentProfileRow = row;
+
+    if(!row){
+      showLoggedInUI(false);
+      return;
+    }
+
+    showLoggedInUI(true);
+
+    const ident = getCurrentIdentityUser();
+    const email = (ident && ident.email) || row.email || '';
+    const status = row.status || 'pending';
+
+    loggedBanner.textContent = `Logged in as ${email}`;
+    accName.textContent = row.name || '—';
+    accEmail.textContent = email || '—';
+    accPhone.textContent = row.phone || '—';
+    accEircode.textContent = normalizeEir(row.eircode) || '—';
+    accStatus.textContent = status;
+    accRole.textContent = getRoleLabels(row);
+    accVolunteerRoles.textContent = getVolunteerRoles(row);
+    setStreetForRow(row);
+
+    profName.value = row.name || '';
+    profPhone.value = row.phone || '';
+    profEir.value = normalizeEir(row.eircode) || '';
+    profStatus.value = status;
+
+    updateAvatar(row.profilePhoto || row.photo || '');
+    startLoggedForTimer();
+  }
+
+  async function handleProfilePhotoSelection(){
+    const file = profilePhotoInput.files && profilePhotoInput.files[0];
+    if(!file) return;
+    try{
+      const dataUrl = await readImageAsDataUrl(file);
+      pendingProfilePhoto = dataUrl;
+      updateAvatar(dataUrl);
+      photoHint.textContent = 'Photo selected. Click Save photo to store it.';
+      toast('Photo selected.', 'info');
+    }catch(err){
+      console.error(err);
+      photoHint.textContent = 'Unable to read the selected photo.';
+    }
+  }
+
+  async function savePendingPhoto(){
+    if(!pendingProfilePhoto){
+      photoHint.textContent = 'Choose a photo first.';
+      return;
+    }
+    try{
+      const row = await saveOwnProfile({ profilePhoto: pendingProfilePhoto, photo: pendingProfilePhoto });
+      pendingProfilePhoto = null;
+      updateAvatar(row.profilePhoto || row.photo || '');
+      photoHint.textContent = 'Photo saved.';
+      toast('Photo saved.', 'success');
+    }catch(err){
+      console.error(err);
+      photoHint.textContent = 'Unable to save the photo right now.';
+    }
+  }
+
+  async function removeSavedPhoto(){
+    try{
+      await saveOwnProfile({ profilePhoto: '', photo: '' });
+      pendingProfilePhoto = null;
+      updateAvatar('');
+      photoHint.textContent = 'Photo removed.';
+      toast('Photo removed.', 'info');
+    }catch(err){
+      console.error(err);
+      photoHint.textContent = 'Unable to remove the photo right now.';
+    }
+  }
+
+  async function saveProfileChanges(){
+    try{
+      const name = String(profName.value || '').trim();
+      const phone = normalizePhone(profPhone.value || '');
+
+      if(!name){
+        setMsg(profileMsg, 'Full name is required.', 'error');
+        return;
+      }
+      if(phone && !isValidPhone(phone)){
+        setMsg(profileMsg, 'Phone must be in international format, e.g. +353851234567.', 'error');
+        return;
+      }
+
+      const row = await saveOwnProfile({ name, phone });
+      setMsg(profileMsg, 'Profile updated.', 'ok');
+      currentProfileRow = row;
+      await renderAccountCard();
+    }catch(err){
+      console.error(err);
+      setMsg(profileMsg, 'Unable to update profile right now.', 'error');
+    }
+  }
+
+  async function lookupStreetByLoginEir(){
+    const eir = normalizeEir(loginEir.value);
+    if(!eir || !isValidEir(eir)){
+      loginStreetWrap.style.display = 'none';
+      loginStreet.value = '';
+      return;
+    }
+    const users = await anwLoadSafe(KEY_USERS, []);
+    const row = users.find(u => normalizeEir(u && u.eircode) === eir);
+    if(row && row.address){
+      loginStreetWrap.style.display = 'block';
+      loginStreet.value = stripStreet(row.address) || 'Eircode not registered';
+    }else{
+      loginStreetWrap.style.display = 'block';
+      loginStreet.value = 'Eircode not registered';
+    }
+  }
+
+  async function handleForgotPassword(){
+    const email = String(resetEmail.value || loginEmail.value || '').trim().toLowerCase();
+    if(!email){
+      setMsg(resetMsg, 'Enter your email first.', 'error');
+      return;
+    }
+    try{
+      await new Promise((resolve, reject) => {
+        window.__ensureIdentityReady(err => {
+          if(err) return reject(err);
+          try{
+            window.netlifyIdentity.gotrue.requestPasswordRecovery(email).then(resolve).catch(reject);
+          }catch(e){
+            reject(e);
+          }
+        });
+      });
+      setMsg(resetMsg, 'Password reset email sent.', 'ok');
+    }catch(err){
+      console.error(err);
+      setMsg(resetMsg, 'Unable to send reset email right now.', 'error');
+    }
+  }
+
+  async function handleLogin(){
+    const email = String(loginEmail.value || '').trim().toLowerCase();
+    const eir = normalizeEir(loginEir.value);
+    const password = String(loginPass.value || '');
+
+    if(!email || !eir || !password){
+      setMsg(loginMsg, 'Email, Eircode and password are required.', 'error');
+      return;
+    }
+
+    const remaining = lockRemainingMs(email, eir);
+    if(remaining > 0){
+      setMsg(loginMsg, `Too many failed attempts. Try again in ${formatMins(remaining)}.`, 'error');
+      return;
+    }
+
+    try{
+      await new Promise((resolve, reject) => {
+        window.__ensureIdentityReady(err => {
+          if(err) return reject(err);
+          try{
+            window.netlifyIdentity.gotrue.login(email, password, true).then(resolve).catch(reject);
+          }catch(e){
+            reject(e);
+          }
+        });
+      });
+
+      const row = await findOwnProfileRow();
+      if(!row){
+        setMsg(loginMsg, 'Profile record not found for this login.', 'error');
+        return;
+      }
+
+      if(normalizeEir(row.eircode) !== eir){
+        try{
+          if(window.netlifyIdentity && typeof window.netlifyIdentity.logout === 'function'){
+            window.netlifyIdentity.logout();
+          }
+        }catch(_){}
+        setMsg(loginMsg, 'Eircode does not match this account.', 'error');
+        return;
+      }
+
+      clearAttemptState(email, eir);
+      setLoginStartedAt(Date.now());
+      setMsg(loginMsg, 'Login successful.', 'ok');
+      await renderAccountCard();
+    }catch(err){
+      console.error(err);
+      const st = getAttemptState(email, eir);
+      st.fails += 1;
+
+      if(st.fails >= SOFTLOCK_MAX_ATTEMPTS){
+        st.lockUntil = Date.now() + minutesToMs(SOFTLOCK_MINUTES);
+      }
+      setAttemptState(email, eir, st);
+
+      if(st.lockUntil && Date.now() > st.lockUntil && (!st.lastResetSentAt || (Date.now() - st.lastResetSentAt) > minutesToMs(RESET_AFTER_LOCK_COOLDOWN_MINUTES))){
+        try{
+          await handleForgotPassword();
+          st.lastResetSentAt = Date.now();
+          setAttemptState(email, eir, st);
+        }catch(_){}
+      }
+
+      setMsg(loginMsg, 'Login failed. Please check your details.', 'error');
+    }
+  }
+
+  async function handleLogout(){
+    try{
+      if(window.netlifyIdentity && typeof window.netlifyIdentity.logout === 'function'){
+        await window.netlifyIdentity.logout();
+      }
+    }catch(_){}
+    try{ sessionStorage.removeItem('anw_login_started_at'); }catch(_){}
+    loginStartedAt = 0;
+    showLoggedInUI(false);
+    setMsg(loginMsg, '', '');
+  }
+
+  async function handleRegister(){
+    const name = String(regName.value || '').trim();
+    const email = String(regEmail.value || '').trim().toLowerCase();
+    const eircode = normalizeEir(regEir.value);
+    const address = String(regAddress.value || '').trim();
+    const phone = normalizePhone(regPhone.value);
+    const password = String(regPass.value || '');
+    const password2 = String(regPass2.value || '');
+
+    if(!name || !email || !eircode || !address || !phone || !password || !password2){
+      setMsg(regMsg, 'Please fill in all required fields.', 'error');
+      return;
+    }
+    if(!isValidEir(eircode)){
+      setMsg(regMsg, 'Enter a valid Eircode.', 'error');
+      return;
+    }
+    if(!isValidPhone(phone)){
+      setMsg(regMsg, 'Phone must be in international format, e.g. +353851234567.', 'error');
+      return;
+    }
+    if(password !== password2){
+      setMsg(regMsg, 'Passwords do not match.', 'error');
+      return;
+    }
+    if(!regTerms.checked){
+      setMsg(regMsg, 'You must accept the Privacy Policy & Terms.', 'error');
+      return;
+    }
+
+    const users = await anwLoadSafe(KEY_USERS, []);
+    if(users.some(u => String((u && u.email) || '').trim().toLowerCase() === email)){
+      setMsg(regMsg, 'This email is already registered.', 'error');
+      return;
+    }
+
+    const volunteerRoles = [
+      volStreetWatch.checked ? 'Street watch / patrols' : '',
+      volLeaflets.checked ? 'Distribute leaflets' : '',
+      volTech.checked ? 'Tech support' : '',
+      volElderly.checked ? 'Elderly checks' : '',
+      volCleanup.checked ? 'Community clean-up' : '',
+      volParking.checked ? 'Parking assistance' : '',
+      volMeetings.checked ? 'Meeting organiser' : '',
+      volTranslation.checked ? 'Translation' : ''
+    ].filter(Boolean);
+
+    const roles = ['resident'];
+    if(regCoord.checked) roles.push('street_admin');
+    if(regVolunteer.checked) roles.push('volunteer');
+
+    try{
+      await new Promise((resolve, reject) => {
+        window.__ensureIdentityReady(err => {
+          if(err) return reject(err);
+          try{
+            window.netlifyIdentity.gotrue.signup(email, password, {}).then(resolve).catch(reject);
+          }catch(e){
+            reject(e);
+          }
+        });
+      });
+
+      users.push({
+        name,
+        email,
+        eircode,
+        address,
+        phone,
+        residentType: regType.value || '',
+        managementCompany: String(regMgmt.value || '').trim(),
+        role: roles[0] || 'resident',
+        roles,
+        volunteerRoles,
+        status: 'pending',
+        alertOptIn: !!regAlertOptIn.checked,
+        createdAt: new Date().toISOString()
+      });
+
+      await anwSaveSafe(KEY_USERS, users);
+      setMsg(regMsg, 'Registration submitted. Your account is pending admin approval.', 'ok');
+    }catch(err){
+      console.error(err);
+      setMsg(regMsg, 'Unable to create account right now.', 'error');
+    }
+  }
+
+  function syncVolunteerBox(){
+    volBox.hidden = !regVolunteer.checked;
+  }
+
+  function isLocalhost(){
+    const h = window.location.hostname || '';
+    return h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h.endsWith('.localhost');
+  }
+
+  async function devRemoveCurrentEmail(){
+    const email = String(regEmail.value || loginEmail.value || '').trim().toLowerCase();
+    if(!email){
+      setMsg(devToolsMsg, 'Enter an email first.', 'error');
+      return;
+    }
+    const users = await anwLoadSafe(KEY_USERS, []);
+    const next = users.filter(u => String((u && u.email) || '').trim().toLowerCase() !== email);
+    await anwSaveSafe(KEY_USERS, next);
+    setMsg(devToolsMsg, 'Registration removed for that email.', 'ok');
+  }
+
+  async function devWipeUsers(){
+    await anwSaveSafe(KEY_USERS, []);
+    setMsg(devToolsMsg, 'All registrations removed from local store.', 'ok');
+  }
+
   [loginEmail, loginEir, loginPass].forEach((el)=>{
     if(!el) return;
     el.addEventListener('keydown', (ev)=>{
@@ -565,832 +1191,77 @@ const volMeetings    = document.getElementById('volMeetings');
     });
   });
 
-// ---------- Volunteer options toggle ----------
-  function setVolunteerVisible(on){
-    if(!volBox) return;
-    volBox.hidden = !on;
-    if(!on){
-      volBox.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    }
-  }
-  if(regVolunteer){
-    regVolunteer.addEventListener('change', () => setVolunteerVisible(!!regVolunteer.checked));
-    setVolunteerVisible(!!regVolunteer.checked);
-  }
-
-  // ---------- Soft lock UI update ----------
-  function applySoftLockUI(){
-    const email = (loginEmail.value || '').trim().toLowerCase();
-    const eir   = normalizeEir(loginEir.value || '');
-    if(!email || !eir){
-      if(btnLogin) btnLogin.disabled = false;
-      return;
-    }
-    const rem = lockRemainingMs(email, eir);
-    if(rem > 0){
-      if(btnLogin) btnLogin.disabled = true;
-      const msg = 'Too many failed attempts. Please wait ' + formatMins(rem) + ' and try again, or use “I forgot my password”.';
-      setMsg(loginMsg, msg, 'error');
-      return;
-    }
-    if(btnLogin) btnLogin.disabled = false;
-  }
-  if(loginEmail) loginEmail.addEventListener('input', applySoftLockUI);
-  if(loginEir) loginEir.addEventListener('input', applySoftLockUI);
-  if(loginEmail) loginEmail.addEventListener('input', updateLoginStreetPreview);
-  if(loginEir) loginEir.addEventListener('input', updateLoginStreetPreview);
-
-  // ---------- Street preview from registration ----------
-  async function updateLoginStreetPreview(){
-    if(!loginStreetWrap || !loginStreet) return;
-    loginStreetWrap.style.display = 'none';
-    loginStreet.value = '';
-
-    const email = (loginEmail.value || '').trim().toLowerCase();
-    const eir   = normalizeEir(loginEir.value || '');
-    if(!email || !eir) return;
-
-    try{
-      await anwInitStore();
-      const users = anwLoad(KEY_USERS, []);
-      const u = Array.isArray(users)
-        ? users.find(x => (x.email||'').toLowerCase() === email && normalizeEir(x.eircode||'') === eir)
-        : null;
-      if(u && u.address){
-        const street = String(u.address).split(',')[0].replace(/^\d+\s*/, '').trim();
-        loginStreet.value = street || 'Eircode not registered';
-      }else{
-        loginStreet.value = 'Eircode not registered';
-      }
-      loginStreetWrap.style.display = 'block';
-    }catch{
-      loginStreet.value = 'Eircode not registered';
-      loginStreetWrap.style.display = 'block';
-    }
-  }
-
-
-  // ---------- Enter key submits login ----------
-  function wireEnterToLogin(){
-    try{
-      const fields = [loginEmail, loginEir, loginPass];
-      fields.forEach(f=>{
-        if(!f) return;
-        f.addEventListener('keydown', (ev)=>{
-          if(ev.key === 'Enter'){
-            ev.preventDefault();
-            if(btnLogin && !btnLogin.disabled) btnLogin.click();
-          }
-        });
-      });
-    }catch(_){}
-  }
-  wireEnterToLogin();
-
-  // ---------- Show/Hide password ----------
-  if(btnShow){
-    btnShow.addEventListener('click', () => {
-      const isPwd = loginPass.type === 'password';
-      loginPass.type = isPwd ? 'text' : 'password';
-      btnShow.textContent = isPwd ? 'Hide' : 'Show';
-    });
-  }
-
-  // ---------- Helper: auto-send reset email ----------
-  async function autoSendPasswordReset(email){
-    if(!window.netlifyIdentity) return false;
-    try{
-      await window.netlifyIdentity.requestPasswordRecovery(email);
-      return true;
-    }catch{
-      return false;
-    }
-  }
-
-  // ---------- Audit log (server-side via store.js) ----------
-  async function auditLog(eventType, emailAddr, eircodeVal){
-    try{
-      if(!eventType || !emailAddr || !eircodeVal) return;
-      await anwInitStore();
-      // store.js enforces: admin can read; active residents can only append (POST)
-      await anwSave('anw_audit_log', {
-        event: String(eventType),
-        eircode: String(eircodeVal),
-        at: new Date().toISOString()
-      });
-    }catch(e){
-      // never block UX if logging fails
-    }
-  }
-
-  function formatLoggedInFor(loginAt){
-    if(!loginAt) return 'just now';
-    const diff = Math.max(0, Date.now() - loginAt);
-    const mins = Math.floor(diff/60000);
-    if(mins < 1) return 'less than a minute';
-    if(mins < 60) return mins + (mins === 1 ? ' minute' : ' minutes');
-    const hours = Math.floor(mins/60);
-    if(hours < 24) return hours + (hours === 1 ? ' hour' : ' hours');
-    const days = Math.floor(hours/24);
-    return days + (days === 1 ? ' day' : ' days');
-  }
-
-  function setAccountNav(loggedIn){
-    if(!navAccountLink) return;
-    navAccountLink.textContent = loggedIn ? 'My Account' : 'Login / Register';
-  }
-
-  function getVolunteerRolesText(me){
-    if(!me || !me.vol_roles || typeof me.vol_roles !== 'object') return '—';
-    const map = [
-      ['streetWatch', 'Street watch / patrols'],
-      ['leaflets', 'Distribute leaflets'],
-      ['tech', 'Tech support'],
-      ['elderly', 'Elderly checks'],
-      ['cleanup', 'Community clean-up'],
-      ['meetings', 'Meeting organiser'],
-      ['translation', 'Translation'],
-      ['parking', 'Parking assistance']
-    ];
-    const picked = map.filter(([key]) => !!me.vol_roles[key]).map(([,label]) => label);
-    return picked.length ? picked.join(', ') : '—';
-  }
-
-  function getRoleText(me){
-    if(!me) return 'resident';
-    const roles = [];
-    if(me.isCoordinator || me.coordinator) roles.push('Street Coordinator');
-    if(me.isVolunteer || me.volunteer) roles.push('Volunteer');
-    if(me.role && !roles.length) roles.push(String(me.role));
-    return roles.length ? roles.join(', ') : 'resident';
-  }
-
-  function extractStreetText(me){
-    if(!me) return 'Eircode not registered';
-    const rawEir = normalizeEir(me.eircode || '');
-    if(!rawEir) return 'Eircode not registered';
-    const address = String(me.address || me.street || '').trim();
-    if(!address) return 'Eircode not registered';
-    const first = address.split(',')[0].replace(/^\s*\d+[A-Za-z-]*\s+/, '').trim();
-    return first || 'Eircode not registered';
-  }
-
-  function formatLoggedInAt(loginAt){
-    if(!loginAt) return '—';
-    try{
-      const d = new Date(Number(loginAt));
-      if(Number.isNaN(d.getTime())) return '—';
-      return d.toLocaleString('en-IE', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-    }catch(_){
-      return '—';
-    }
-  }
-
-  function updateAvatar(me, identityUser){
-    if(!accAvatarImg || !accAvatarFallback) return;
-    const candidate =
-      String(me?.profilePhoto || me?.photo || me?.avatar || identityUser?.user_metadata?.avatar_url || identityUser?.user_metadata?.picture || '').trim();
-    const labelSource = String(me?.name || identityUser?.user_metadata?.full_name || identityUser?.email || 'ANW').trim();
-    const initials = labelSource.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('') || 'AN';
-    accAvatarFallback.textContent = initials;
-    if(candidate){
-      accAvatarImg.src = candidate;
-      accAvatarImg.style.display = 'block';
-      accAvatarFallback.style.display = 'none';
-      accAvatarImg.onerror = function(){
-        accAvatarImg.style.display = 'none';
-        accAvatarFallback.style.display = 'flex';
-        if(btnPhotoRemove) btnPhotoRemove.style.display = 'none';
-      };
-      if(btnPhotoRemove) btnPhotoRemove.style.display = 'inline-block';
-    }else{
-      accAvatarImg.removeAttribute('src');
-      accAvatarImg.style.display = 'none';
-      accAvatarFallback.style.display = 'flex';
-      if(btnPhotoRemove) btnPhotoRemove.style.display = 'none';
-    }
-  }
-
-  function readImageAsDataUrl(file){
-    return new Promise((resolve, reject)=>{
-      try{
-        const reader = new FileReader();
-        reader.onload = ()=> resolve(String(reader.result || ''));
-        reader.onerror = ()=> reject(new Error('Could not read image file.'));
-        reader.readAsDataURL(file);
-      }catch(_){ reject(new Error('Could not read image file.')); }
-    });
-  }
-
-  async function handleProfilePhotoSelection(file){
-    if(!file) return;
-    if(!/^image\//i.test(String(file.type || ''))){ throw new Error('Please choose an image file.'); }
-    const dataUrl = await readImageAsDataUrl(file);
-    window.__pendingProfilePhoto = dataUrl;
-    updateAvatar({ name: profName?.value || accName?.textContent || 'ANW', profilePhoto: dataUrl }, null);
-    setMsg(profileMsg, 'Photo selected. Click Update profile to save it.', 'ok');
-  }
-
-  async function saveOwnProfile(userEmail){
-    try{
-      await anwInitStore();
-      const users = anwLoad(KEY_USERS, []);
-      const idx = Array.isArray(users) ? users.findIndex(x => (x.email||'').toLowerCase() === String(userEmail||'').toLowerCase()) : -1;
-      if(idx < 0) throw new Error('Profile not found.');
-      const nextPhoto = (window.__pendingProfilePhoto === undefined) ? (users[idx].profilePhoto || users[idx].photo || users[idx].avatar || '') : window.__pendingProfilePhoto;
-      users[idx] = { ...users[idx], name: String((profName?.value||'').trim() || users[idx].name || ''), phone: String((profPhone?.value||'').trim() || ''), profilePhoto: String(nextPhoto || '') };
-      await anwSave(KEY_USERS, users);
-      return users[idx];
-    }catch(err){
-      throw err;
-    }
-  }
-
-  // ---------- Banner + registration hide logic (after login only) ----------
-  async function showLoggedBannerIfAny() {
-    const u = window.netlifyIdentity && window.netlifyIdentity.currentUser
-      ? window.netlifyIdentity.currentUser()
-      : null;
-
-    if (!u || !u.email) {
-      if (loggedBanner) loggedBanner.style.display = 'none';
-      if (loggedAccountCard) loggedAccountCard.style.display = 'none';
-      if (btnLogout) btnLogout.style.display = 'none';
-      if (registerSection) registerSection.style.display = 'block';
-      if (loginEmail) loginEmail.closest('.field').style.display = '';
-      if (loginEir) loginEir.closest('.field').style.display = '';
-      if (loginPass) loginPass.closest('.field').style.display = '';
-      if (btnLogin) btnLogin.style.display = '';
-      if (btnShow) btnShow.style.display = '';
-      if (lnkForgot && lnkForgot.closest('p')) lnkForgot.closest('p').style.display = '';
-      if (resetBlock) resetBlock.hidden = true;
-      if (accountEditPanel) accountEditPanel.hidden = true;
-      if (btnToggleProfile) { btnToggleProfile.textContent = 'Edit Profile'; btnToggleProfile.setAttribute('aria-expanded', 'false'); }
-      setAccountNav(false);
-      applySoftLockUI();
-      return;
-    }
-
-    try{ await anwInitStore(); } catch {}
-
-    const users = anwLoad(KEY_USERS, []);
-    const me = Array.isArray(users) ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase()) : null;
-
-    const status = (me && me.status ? me.status : 'pending').toLowerCase();
-    const statusLabel =
-      status === 'active' ? 'active' :
-      (status === 'suspended' || status === 'removed') ? 'blocked' :
-      'pending approval';
-
-    if (loggedBanner) {
-      loggedBanner.innerHTML =
-        'You are logged in as <strong>' + (me?.name || u.email) + '</strong>' +
-        (me?.eircode ? (' (Eircode: ' + (me.eircode) + '). ') : '. ') +
-        'Your registration is <strong>' + statusLabel + '</strong>.';
-      loggedBanner.style.display = 'block';
-    }
-
-    if (accName) accName.textContent = me?.name || '—';
-    if (accEmail) accEmail.textContent = u.email || '—';
-    if (accStatus) accStatus.textContent = statusLabel;
-    if (accRole) accRole.textContent = getRoleText(me);
-    if (accEircode) accEircode.textContent = me?.eircode || '—';
-    if (accPhone) accPhone.textContent = me?.phone || '—';
-    if (accStreet) accStreet.textContent = extractStreetText(me);
-    if (accVolunteerRoles) accVolunteerRoles.textContent = getVolunteerRolesText(me);
-    const loginAt = Number(sessionStorage.getItem('anwLoginAt') || Date.now());
-    if (accLoggedFor) accLoggedFor.textContent = formatLoggedInAt(loginAt) + ' · ' + formatLoggedInFor(loginAt);
-    updateAvatar(me, u);
-
-    if (profName) profName.value = me?.name || '';
-    if (profPhone) profPhone.value = me?.phone || '';
-    if (profEir) profEir.value = me?.eircode || '';
-    if (profStatus) profStatus.value = statusLabel;
-
-    if (loggedAccountCard) loggedAccountCard.style.display = 'block';
-    if (btnLogout) btnLogout.style.display = 'inline-block';
-    if (registerSection) registerSection.style.display = 'none';
-    if (loginEmail) loginEmail.closest('.field').style.display = 'none';
-    if (loginEir) loginEir.closest('.field').style.display = 'none';
-    if (loginPass) loginPass.closest('.field').style.display = 'none';
-    if (btnLogin) btnLogin.style.display = 'none';
-    if (btnShow) btnShow.style.display = 'none';
-    if (lnkForgot && lnkForgot.closest('p')) lnkForgot.closest('p').style.display = 'none';
-    if (resetBlock) resetBlock.hidden = true;
-    setAccountNav(true);
-
-    try{ await updateLoginStreetPreview(); } catch {}
-  }
-
-  // ---------- LOGIN (Netlify Identity) ----------
-  if(btnLogin){
-    btnLogin.addEventListener('click', async () => {
-      setMsg(loginMsg, '', '');
-
-      const email = (loginEmail.value || '').trim().toLowerCase();
-      const eir   = normalizeEir(loginEir.value || '');
-      const pass  = (loginPass.value || '').trim();
-
-      if (!email || !eir || !pass) {
-        setMsg(loginMsg, 'Please fill all fields.', 'error');
-        toast('Please fill all fields.', 'warn');
-        modal('Please fill all fields before logging in.', 'Missing information');
-        return;
-      }
-
-      if (!isValidEir(eir)) {
-        setMsg(loginMsg, 'Please enter a valid Eircode.', 'error');
-        toast('Invalid Eircode.', 'warn');
-        modal('Please enter a valid Eircode (letters/numbers only).', 'Invalid Eircode');
-        return;
-      }
-
-      // Soft lock check (device-level)
-      const rem = lockRemainingMs(email, eir);
-      if(rem > 0){
-        const msg = 'Too many failed attempts. Please wait ' + formatMins(rem) + ' and try again, or use “I forgot my password”.';
-        setMsg(loginMsg, msg, 'error');
-        toast('Login temporarily locked (' + formatMins(rem) + ').', 'warn');
-        modal(msg, 'Login temporarily locked');
-        applySoftLockUI();
-        return;
-      }
-
-      if (!window.netlifyIdentity) {
-        modal('Netlify Identity is not available on this page.', 'Error');
-        return;
-      }
-
-      try{
-        await new Promise((resolve,reject)=>{ if(window.__ensureIdentityReady) return window.__ensureIdentityReady(err=>err?reject(err):resolve()); try{ window.netlifyIdentity.init(); }catch{} return (window.netlifyIdentity?.gotrue?.login)?resolve():reject(new Error('Netlify Identity not ready')); });
-
-        await window.netlifyIdentity.gotrue.login(email, pass, true);
-
-        // login succeeded -> clear soft lock state
-        clearAttemptState(email, eir);
-
-        // now we have a token, load store and validate eircode + approval
-        await anwInitStore();
-        const users = anwLoad(KEY_USERS, []);
-        const me = Array.isArray(users)
-          ? users.find(x => (x.email||'').toLowerCase() === email)
-          : null;
-
-        if(!me){
-          try{ window.netlifyIdentity.logout(); } catch {}
-          setMsg(loginMsg, 'Your profile is not registered. Please create an account first.', 'error');
-          toast('Profile not found. Please register.', 'error');
-          return;
-        }
-
-        if(normalizeEir(me.eircode || '') !== eir){
-          try{ window.netlifyIdentity.logout(); } catch {}
-          setMsg(loginMsg, 'Eircode does not match this account.', 'error');
-          toast('Eircode mismatch.', 'error');
-          modal('The Eircode entered does not match the registered address for this email.', 'Eircode mismatch');
-          return;
-        }
-
-        const status = (me.status || 'pending').toLowerCase();
-        if(status === 'suspended' || status === 'removed'){
-          try{ window.netlifyIdentity.logout(); } catch {}
-          setMsg(loginMsg, 'Your account is blocked.', 'error');
-          toast('Account blocked.', 'error');
-          return;
-        }
-        if(status !== 'active'){
-          try{ window.netlifyIdentity.logout(); } catch {}
-          setMsg(loginMsg, 'Your registration is pending approval by an ANW admin.', 'error');
-          toast('Pending admin approval.', 'warn');
-          modal('Your account is pending approval. Please wait for an admin to approve your registration.', 'Pending approval');
-          return;
-        }
-
-        try{ sessionStorage.setItem('anwLoginAt', String(Date.now())); }catch(_){}
-        setMsg(loginMsg, 'Login successful.', 'ok');
-        toast('Login successful.', 'success');
-
-        await auditLog('LOGIN_OK', email, eir);
-
-        if(loginPass) loginPass.value = '';
-        await showLoggedBannerIfAny();
-
-      }catch(err){
-        // Login failed -> increment attempts + lock if reached threshold
-        const st = getAttemptState(email, eir);
-        const now = Date.now();
-
-        // If the user was locked previously, and lock has already expired,
-        // then ANY new failure triggers an automatic reset email (Option A).
-        const previouslyLocked = Number(st.lockUntil || 0) > 0 && Number(st.fails || 0) >= SOFTLOCK_MAX_ATTEMPTS;
-        const lockExpired = previouslyLocked && now > Number(st.lockUntil || 0);
-        const resetCooldownOk = (now - Number(st.lastResetSentAt || 0)) > minutesToMs(RESET_AFTER_LOCK_COOLDOWN_MINUTES);
-
-        if(lockExpired){
-          // Send reset email (once per cooldown window)
-          let sent = false;
-          if(resetCooldownOk){
-            sent = await autoSendPasswordReset(email);
-            if(sent){ await auditLog('PASSWORD_RESET_SENT', email, eir); }
-            setAttemptState(email, eir, { fails: 0, lockUntil: 0, lastResetSentAt: sent ? now : Number(st.lastResetSentAt || 0) });
-          }else{
-            // keep state but don't spam
-            setAttemptState(email, eir, { fails: 0, lockUntil: 0, lastResetSentAt: Number(st.lastResetSentAt || 0) });
-          }
-
-          const msg =
-            'We have sent a password reset email to your address.' +
-            ' Please check your inbox and follow the link to reset your password.' +
-            ' If this was NOT you, contact an admin immediately: ' + ADMIN_CONTACT_EMAIL + '.';
-
-          setMsg(loginMsg, msg, 'error');
-          toast('Password reset email sent.', 'info');
-          modal(msg, 'Security Notice');
-
-          return;
-        }
-
-        const nextFails = Number(st.fails || 0) + 1;
-
-        if(nextFails >= SOFTLOCK_MAX_ATTEMPTS){
-          const lockUntil = now + (SOFTLOCK_MINUTES * 60 * 1000);
-          setAttemptState(email, eir, { fails: nextFails, lockUntil: lockUntil, lastResetSentAt: Number(st.lastResetSentAt || 0) });
-
-          await auditLog('LOGIN_LOCKED', email, eir);
-
-          const msg =
-            'Too many failed attempts. Login locked for ' + SOFTLOCK_MINUTES + ' minutes.' +
-            ' Use “I forgot my password” or try again later.';
-
-          setMsg(loginMsg, msg, 'error');
-          toast('Login locked for ' + SOFTLOCK_MINUTES + ' minutes.', 'error');
-          modal(msg, 'Login temporarily locked');
-          applySoftLockUI();
-          return;
-        }
-
-        setAttemptState(email, eir, { fails: nextFails, lockUntil: 0, lastResetSentAt: Number(st.lastResetSentAt || 0) });
-
-        const remaining = SOFTLOCK_MAX_ATTEMPTS - nextFails;
-        const msg = 'Login failed. Please check your email/password. Attempts remaining: ' + remaining + '.';
-        setMsg(loginMsg, msg, 'error');
-        toast('Login failed. Attempts remaining: ' + remaining + '.', 'warn');
-      }
-    });
-  }
-
-  // ---------- LOGOUT ----------
-  if (btnLogout) {
-    btnLogout.addEventListener('click', async () => {
-      try{ window.netlifyIdentity.logout(); } catch {}
-      try{
-        const sKey = (window.ANW_KEYS && ANW_KEYS.SESSION) ? ANW_KEYS.SESSION : 'anw_session';
-        localStorage.removeItem(sKey);
-      }catch{}
-      if (loginPass)  loginPass.value  = '';
-      setMsg(loginMsg, 'You have been logged out.', '');
-      toast('Logged out.', 'info');
-      await showLoggedBannerIfAny();
-      applySoftLockUI();
-    });
-  }
-
-  // ---------- Dev tools (localhost only) ----------
-  (function initDevTools(){
-    try{
-      const host = String(location.hostname || "").toLowerCase();
-      const isLocal = (host === "localhost" || host === "127.0.0.1" || host === "::1");
-      const box = document.getElementById("devTools");
-      if(!isLocal || !box) return;
-
-      box.style.display = "";
-      const msg = document.getElementById("devToolsMsg");
-      const btnRemove = document.getElementById("btnDevRemoveEmail");
-      const btnWipe = document.getElementById("btnDevWipeUsers");
-
-      function setDevMsg(t, ok){
-        if(!msg) return;
-        msg.textContent = t || "";
-        msg.style.color = ok ? "var(--ok,#0a7)" : "var(--danger,#b00)";
-      }
-
-      async function devDelete(url){
-        const res = await fetch(url, { method: "DELETE" });
-        const data = await res.json().catch(()=> ({}));
-        if(!res.ok || data.ok === false) throw new Error(data.error || data.message || "Dev reset failed");
-        return data;
-      }
-
-      if(btnRemove){
-        btnRemove.addEventListener("click", async () => {
-          const email = (document.getElementById("loginEmail")?.value || document.getElementById("regEmail")?.value || "").trim();
-          if(!email){ setDevMsg("Enter your email first (Login or Register box).", false); return; }
-          if(!confirm(`DEV: Remove ${email} from registrations?`)) return;
-          try{
-            setDevMsg("Removing…", true);
-            const data = await devDelete(`/.netlify/functions/store?key=anw_users&dev_reset=1&email=${encodeURIComponent(email)}`);
-            setDevMsg(`Done. Removed ${data.removed || 0} record(s). You can register again.`, true);
-          }catch(e){
-            setDevMsg(e.message || String(e), false);
-          }
-        });
-      }
-
-      if(btnWipe){
-        btnWipe.addEventListener("click", async () => {
-          if(!confirm("DEV: This will wipe ALL registrations (anw_users). Continue?")) return;
-          try{
-            setDevMsg("Wiping…", true);
-            await devDelete(`/.netlify/functions/store?key=anw_users&dev_reset=1`);
-            setDevMsg("Done. All registrations wiped.", true);
-          }catch(e){
-            setDevMsg(e.message || String(e), false);
-          }
-        });
-      }
-    }catch(_){}
-  })();
-
-  // ---------- REGISTER (Netlify Identity + KV profile) ----------
-  if(btnRegister){
-    btnRegister.addEventListener('click', async () => {
-      setMsg(regMsg, '', '');
-
-      const name  = (regName.value || '').trim();
-      const email = (regEmail.value || '').trim().toLowerCase();
-      const eir   = normalizeEir(regEir.value || '');
-      const phone = normalizePhone(regPhone.value || '');
-      const address = (regAddress.value || '').trim();
-      const pass  = (regPass.value || '').trim();
-      const pass2 = (regPass2.value || '').trim();
-      const type  = (regType.value || '').trim();
-      const mgmt  = (regMgmt.value || '').trim();
-      const coord = !!(regCoord && regCoord.checked);
-      const terms = !!(regTerms && regTerms.checked);
-      const optInAlerts = !!(regAlertOptIn && regAlertOptIn.checked);
-      const volunteerMaster = !!(regVolunteer && regVolunteer.checked);
-
-      if (!name || !email || !eir || !phone || !pass || !pass2 || !type) {
-        toast('Please fill all required fields.', 'warn');
-        modal('Please fill in all required fields.', 'Missing information');
-        return;
-      }
-      if (!isValidEir(eir)) {
-        toast('Invalid Eircode.', 'warn');
-        modal('Please enter a valid Eircode (letters and numbers only).', 'Invalid Eircode');
-        return;
-      }
-      if (!isValidPhone(phone)) {
-        toast('Invalid phone format.', 'warn');
-        modal('Please enter phone in international format, e.g. +353851234567.', 'Invalid phone');
-        return;
-      }
-      if (pass !== pass2) {
-        toast('Passwords do not match.', 'warn');
-        modal('Passwords do not match.', 'Password');
-        return;
-      }
-      if (!terms) {
-        toast('You must accept the Privacy Policy & Terms.', 'warn');
-        modal('You must agree to the Privacy Policy & Terms to create an account.', 'Consent required');
-        return;
-      }
-      if (!window.netlifyIdentity) {
-        modal('Netlify Identity is not available on this page.', 'Error');
-        return;
-      }
-
-      const vr = {
-        streetWatch: !!(volStreetWatch && volStreetWatch.checked),
-        leaflets:    !!(volLeaflets && volLeaflets.checked),
-        tech:        !!(volTech && volTech.checked),
-        elderly:     !!(volElderly && volElderly.checked),
-        cleanup:     !!(volCleanup && volCleanup.checked),
-        parking:     !!(volParking && volParking.checked),
-        meetings:    !!(volMeetings && volMeetings.checked),
-        translation: !!(volTranslation && volTranslation.checked)
-      };
-
-      const nowIso = new Date().toISOString();
-
-      try{
-        const gt = window.netlifyIdentity && window.netlifyIdentity.gotrue;
-        if(!gt || typeof gt.signup !== 'function'){
-          throw new Error('Netlify Identity not ready (gotrue.signup missing)');
-        }
-        await gt.signup(email, pass, { full_name: name });
-        await new Promise((resolve,reject)=>{ if(window.__ensureIdentityReady) return window.__ensureIdentityReady(err=>err?reject(err):resolve()); try{ window.netlifyIdentity.init(); }catch{} return (window.netlifyIdentity?.gotrue?.login)?resolve():reject(new Error('Netlify Identity not ready')); });
-
-        await window.netlifyIdentity.gotrue.login(email, pass, true);
-
-        await anwInitStore();
-        let users = anwLoad(KEY_USERS, []);
-        if(!Array.isArray(users)) users = [];
-
-        if (users.some(x => (x.email||'').toLowerCase() === email)) {
-          toast('Email already registered.', 'error');
-          modal('This email is already registered.', 'Duplicate');
-          try{ window.netlifyIdentity.logout(); } catch {}
-          return;
-        }
-        if (users.some(x => normalizeEir(x.eircode||'') === eir)) {
-          toast('Eircode already registered.', 'error');
-          modal('This Eircode is already registered. Only one account per residence is allowed.', 'Duplicate');
-          try{ window.netlifyIdentity.logout(); } catch {}
-          return;
-        }
-
-        const newUser = {
-          name: name,
-          email: email,
-          eircode: eir,
-          address: address,
-          phone: phone,
-
-          termsAcceptedAt: nowIso,
-          termsAccepted: true,
-
-          alertsConsent: {
-            optIn: optInAlerts,
-            updatedAt: nowIso,
-            history: [ { at: nowIso, optIn: optInAlerts, source: 'register' } ]
-          },
-
-          type: type,
-          residentType: type,
-
-          managementCompany: mgmt,
-
-          coordinator: coord,
-          isCoordinator: coord,
-
-          volunteer: volunteerMaster,
-          isVolunteer: volunteerMaster,
-
-          vol_roles: vr,
-
-          status: 'pending',
-          createdAt: nowIso,
-          regDate: nowIso
-        };
-
-        users.push(newUser);
-        await anwSave(KEY_USERS, users);
-
-        try{ window.netlifyIdentity.logout(); } catch {}
-
-        setMsg(regMsg, 'Account created! Your registration is pending admin approval.', 'ok');
-        toast('Account created. Pending approval.', 'success');
-
-        regName.value = '';
-        regEmail.value = '';
-        regEir.value = '';
-        regAddress.value = '';
-        regPhone.value = '';
-        regPass.value = '';
-        regPass2.value = '';
-        regMgmt.value = '';
-        regCoord.checked = false;
-        regVolunteer.checked = false;
-        if(volParking) volParking.checked = false;
-        regType.value = '';
-        regTerms.checked = false;
-        regAlertOptIn.checked = false;
-        setVolunteerVisible(false);
-
-        setTimeout(() => { window.location.href = 'index.html'; }, 1500);
-
-      }catch(e){
-        toast('Registration failed.', 'error');
-        const em = (e && (e.message || e.error || (e.json && (e.json.error_description || e.json.error))))
-          ? (e.message || e.error || (e.json && (e.json.error_description || e.json.error)))
-          : String(e);
-        modal('Registration failed: ' + em, 'Error');
-      }
-    });
-  }
-
-  // ---------- Password reset (email) ----------
-  if (lnkForgot && resetBlock) {
-    lnkForgot.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      resetBlock.hidden = !resetBlock.hidden;
-      if(!resetBlock.hidden){
-if(resetEmail && loginEmail) resetEmail.value = (loginEmail.value || '').trim();
-      setMsg(resetMsg, '', '');
-      resetBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    });
-  }
-if(btnCancelReset && resetBlock){
-    btnCancelReset.addEventListener('click', () => {
-      resetBlock.hidden = true;
-      setMsg(resetMsg, '', '');
-    });
-  }
-  if(btnSendReset){
-    btnSendReset.addEventListener('click', async ()=>{
-      setMsg(resetMsg, '', '');
-      const email = (resetEmail.value || '').trim().toLowerCase();
-      if(!email){
-        setMsg(resetMsg, 'Please enter your email.', 'error');
-        toast('Please enter your email.', 'warn');
-        return;
-      }
-      if(!window.netlifyIdentity){
-        modal('Netlify Identity is not available on this page.', 'Error');
-        return;
-      }
-      try{
-        await window.netlifyIdentity.requestPasswordRecovery(email);
-        setMsg(resetMsg, 'Reset email sent. Please check your inbox.', 'ok');
-        toast('Reset email sent.', 'success');
-
-        // also update cooldown stamp for this browser (if eircode exists)
-        const eir = normalizeEir(loginEir ? loginEir.value : '');
-        if(eir){
-          const st = getAttemptState(email, eir);
-          setAttemptState(email, eir, { fails: Number(st.fails||0), lockUntil: Number(st.lockUntil||0), lastResetSentAt: Date.now() });
-        }
-      }catch(e){
-        setMsg(resetMsg, 'Could not send reset email. Please try again.', 'error');
-        toast('Reset failed.', 'error');
-      }
-    });
-  }
-
-  if(btnToggleProfile && accountEditPanel){
-    btnToggleProfile.addEventListener('click', ()=>{
-      const nextHidden = !accountEditPanel.hidden;
-      accountEditPanel.hidden = nextHidden;
-      btnToggleProfile.textContent = nextHidden ? 'Edit Profile' : 'Close Edit Profile';
-      btnToggleProfile.setAttribute('aria-expanded', String(!nextHidden));
-    });
-  }
-
-  if(btnPhotoUpload && profilePhotoInput){
-    btnPhotoUpload.addEventListener('click', ()=> profilePhotoInput.click());
-    profilePhotoInput.addEventListener('change', async ()=>{
-      try{
-        const file = profilePhotoInput.files && profilePhotoInput.files[0] ? profilePhotoInput.files[0] : null;
-        if(!file) return;
-        await handleProfilePhotoSelection(file);
-      }catch(err){
-        setMsg(profileMsg, (err && err.message) ? err.message : 'Could not load photo.', 'error');
-      }
-    });
-  }
-
-  if(btnPhotoRemove){
-    btnPhotoRemove.addEventListener('click', ()=>{
-      window.__pendingProfilePhoto = '';
-      if(profilePhotoInput) profilePhotoInput.value = '';
-      updateAvatar({ name: profName?.value || accName?.textContent || 'ANW', profilePhoto: '' }, null);
-      setMsg(profileMsg, 'Photo will be removed when you click Update profile.', 'ok');
-    });
-  }
-
-  if(btnOpenDashboard){
-    btnOpenDashboard.addEventListener('click', ()=>{ window.location.href = 'dashboard.html'; });
-  }
-  if(btnProfileSave){
-    btnProfileSave.addEventListener('click', async ()=>{
-      try{
-        const u = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-        if(!u || !u.email) throw new Error('You are not logged in.');
-        const updated = await saveOwnProfile(u.email);
-        setMsg(profileMsg, 'Profile updated successfully.', 'ok');
-        if(accName) accName.textContent = updated?.name || '—';
-        if(accPhone) accPhone.textContent = updated?.phone || '—';
-        window.__pendingProfilePhoto = undefined;
-        if(profilePhotoInput) profilePhotoInput.value = '';
-        await showLoggedBannerIfAny();
-      }catch(err){
-        setMsg(profileMsg, (err && err.message) ? err.message : 'Could not update profile.', 'error');
-      }
-    });
+  btnShow.addEventListener('click', () => {
+    loginPass.type = loginPass.type === 'password' ? 'text' : 'password';
+    btnShow.textContent = loginPass.type === 'password' ? 'Show' : 'Hide';
+  });
+
+  loginEir.addEventListener('input', lookupStreetByLoginEir);
+  regVolunteer.addEventListener('change', syncVolunteerBox);
+
+  lnkForgot.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    resetBlock.hidden = false;
+    resetEmail.value = String(loginEmail.value || '').trim();
+    setMsg(resetMsg, '', '');
+  });
+  btnCancelReset.addEventListener('click', () => {
+    resetBlock.hidden = true;
+    setMsg(resetMsg, '', '');
+  });
+  btnSendReset.addEventListener('click', handleForgotPassword);
+
+  btnLogin.addEventListener('click', handleLogin);
+  btnLogout.addEventListener('click', handleLogout);
+  btnLogoutTop.addEventListener('click', handleLogout);
+
+  btnToggleProfile.addEventListener('click', () => {
+    accountEditPanel.hidden = !accountEditPanel.hidden;
+    btnToggleProfile.textContent = accountEditPanel.hidden ? 'Edit Profile' : 'Close Edit Profile';
+  });
+
+  btnProfileSave.addEventListener('click', saveProfileChanges);
+  btnOpenDashboard.addEventListener('click', () => {
+    window.location.href = 'dashboard.html';
+  });
+
+  btnUploadPhoto.addEventListener('click', () => profilePhotoInput.click());
+  profilePhotoInput.addEventListener('change', handleProfilePhotoSelection);
+  btnSavePhoto.addEventListener('click', savePendingPhoto);
+  btnRemovePhoto.addEventListener('click', removeSavedPhoto);
+
+  btnRegister.addEventListener('click', handleRegister);
+
+  if(isLocalhost()){
+    devTools.style.display = 'block';
+    btnDevRemoveEmail.addEventListener('click', devRemoveCurrentEmail);
+    btnDevWipeUsers.addEventListener('click', devWipeUsers);
   }
 
   if(window.netlifyIdentity){
-    window.netlifyIdentity.on('login', () => { try{ sessionStorage.setItem('anwLoginAt', String(Date.now())); }catch(_){} showLoggedBannerIfAny(); });
-    window.netlifyIdentity.on('logout', () => { try{ sessionStorage.removeItem('anwLoginAt'); }catch(_){} showLoggedBannerIfAny(); });
+    try{
+      window.netlifyIdentity.on('login', async () => {
+        setLoginStartedAt(Date.now());
+        await renderAccountCard();
+      });
+      window.netlifyIdentity.on('logout', () => {
+        showLoggedInUI(false);
+      });
+    }catch(_){}
   }
 
-  setInterval(() => {
-    const current = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-    if(current && accLoggedFor){
-      const loginAt = Number(sessionStorage.getItem('anwLoginAt') || Date.now());
-      accLoggedFor.textContent = formatLoggedInFor(loginAt);
-    }
-  }, 30000);
+  syncVolunteerBox();
+  resetBlock.hidden = true;
+  accountEditPanel.hidden = true;
 
-  await showLoggedBannerIfAny();
-  applySoftLockUI();
-
+  const currentUser = getCurrentIdentityUser();
+  if(currentUser){
+    if(!loginStartedAt) setLoginStartedAt(Date.now());
+    await renderAccountCard();
+  }else{
+    showLoggedInUI(false);
+  }
 })();
 </script>
-
-
-
 </body>
 </html>
