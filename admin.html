@@ -77,21 +77,12 @@
     display:flex;
     gap:8px;
     align-items:center;
-    justify-content:center;
     flex-wrap:wrap;
-  }
-
-  #resBody td:last-child,
-  #resBody th:last-child{
-    text-align:center;
   }
 
   .notice-actions{
     display:flex;
     gap:8px;
-    align-items:center;
-    justify-content:flex-end;
-    flex-wrap:wrap;
     justify-content:flex-end;
     flex-wrap:wrap;
     margin-top:10px;
@@ -173,18 +164,11 @@
     try{ console.log(String(message||'')); }catch(_){}
   };
 
-  const REG_PREFIX = 'ANW';
-
   function getResidentNumericReg(v){
     const raw = String(v == null ? '' : v).trim();
     if(!raw) return 0;
     const m = raw.match(/(\d+)/);
     return m ? parseInt(m[1], 10) || 0 : 0;
-  }
-
-  function formatResidentReg(v){
-    const n = getResidentNumericReg(v);
-    return n ? `${REG_PREFIX}${String(n).padStart(3, '0')}` : '';
   }
 
   function anwNextRegId(list){
@@ -194,7 +178,7 @@
       const n = getResidentNumericReg(u && (u.regId || u.regNo));
       if(n > max) max = n;
     });
-    return formatResidentReg(max + 1);
+    return String(max + 1).padStart(2, '0');
   }
 
   function assignMissingResidentNumbers(list){
@@ -210,18 +194,17 @@
     users.forEach(u => {
       const status = String((u && u.status) || '').toLowerCase();
       const approved = ['active','approved'].includes(status);
-      const currentReg = formatResidentReg(u && (u.regId || u.regNo));
 
-      if(approved && !currentReg){
+      if(approved && !(u && (u.regId || u.regNo))){
         max += 1;
-        const id = formatResidentReg(max);
+        const id = String(max).padStart(2, '0');
         u.regId = id;
         u.regNo = id;
         changed = true;
-      } else if(u && currentReg && (u.regId !== currentReg || u.regNo !== currentReg)){
-        u.regId = currentReg;
-        u.regNo = currentReg;
-        changed = true;
+      } else if(u && u.regId && !u.regNo){
+        u.regNo = u.regId;
+      } else if(u && u.regNo && !u.regId){
+        u.regId = u.regNo;
       }
     });
 
@@ -1485,7 +1468,7 @@
 
     body.innerHTML = rows.map((u, idx) => `
       <tr>
-        <td>${esc(formatResidentReg(u.regId || u.regNo) || '—')}</td>
+        <td>${esc(u.regId || u.regNo || '—')}</td>
         <td>${esc(u.name || '—')}</td>
         <td>${esc(u.email || '—')}</td>
         <td>${esc(u.eircode || '—')}</td>
@@ -1518,7 +1501,7 @@
     if(!CURRENT_RESIDENT) return;
 
     byId('modalResident').style.display = 'block';
-    byId('mRegId').value = formatResidentReg(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
+    byId('mRegId').value = CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo || '—';
     byId('mStatus').value = CURRENT_RESIDENT.status || 'pending';
     byId('mEmail').value = CURRENT_RESIDENT.email || '';
     byId('mEir').value = CURRENT_RESIDENT.eircode || '';
@@ -1608,86 +1591,72 @@
   }
 
   // ---------- Notices ----------
-  let CURRENT_NOTICE_ID = '';
+  async function getStoreAuthHeaders(){
+    const headers = { 'content-type': 'application/json' };
+    try{
+      const user = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+      if(user && typeof user.jwt === 'function'){
+        const token = await user.jwt();
+        if(token) headers.authorization = `Bearer ${token}`;
+      }
+    }catch(_){}
+    return headers;
+  }
 
   async function loadNoticesFresh(){
-    return await anwLoadSafe(window.getNoticesKey(), []);
+    const key = window.getNoticesKey();
+    try{
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+        method: 'GET',
+        headers: await getStoreAuthHeaders(),
+        cache: 'no-store'
+      });
+      if(res.ok){
+        const data = await res.json().catch(() => []);
+        const list = Array.isArray(data) ? data : [];
+        try{ localStorage.setItem(key, JSON.stringify(list)); }catch(_){}
+        return list;
+      }
+    }catch(_){}
+    return await anwLoadSafe(key, []);
+  }
+
+  async function saveNoticesFresh(list){
+    const key = window.getNoticesKey();
+    try{
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+        method: 'POST',
+        headers: await getStoreAuthHeaders(),
+        body: JSON.stringify(Array.isArray(list) ? list : [])
+      });
+      if(!res.ok) throw new Error('store save failed');
+    }catch(err){
+      console.warn('Notice server sync failed, keeping local copy.', err);
+    }
+    try{ localStorage.setItem(key, JSON.stringify(Array.isArray(list) ? list : [])); }catch(_){}
+    return true;
   }
 
   function collectNoticeForm(){
-    const expires = byId('ntExpires').value || '';
-    const startsOn = '';
-    const targets = {
-      allLogged: !!byId('ntAllLogged').checked,
-      nonAdminOnly: !!byId('ntNonAdminOnly').checked,
-      roles: $$('.ntRole').filter(x => x.checked).map(x => x.value),
-      eirPrefixes: normList(byId('ntEirPrefixes').value),
-      streets: normList(byId('ntStreets').value),
-      eircodes: byId('ntEircodes').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean),
-      emails: byId('ntEmails').value.split(/\r?\n/).map(s => s.trim().toLowerCase()).filter(Boolean)
-    };
-
     return {
       title: byId('ntTitle').value.trim(),
       message: byId('ntMessage').value.trim(),
       category: byId('ntCategory').value || 'General',
-      expires,
-      expiresAt: expires ? new Date(`${expires}T23:59:59`).toISOString() : '',
-      startsOn,
-      startsAt: startsOn ? new Date(`${startsOn}T00:00:00`).toISOString() : '',
-      targets,
-      target: {
-        include: {
-          allLoggedIn: !!targets.allLogged,
-          nonAdminOnly: !!targets.nonAdminOnly,
-          roles: targets.roles.slice(),
-          eircodePrefixes: targets.eirPrefixes.slice(),
-          streets: targets.streets.slice(),
-          eircodes: targets.eircodes.slice(),
-          emails: targets.emails.slice()
-        },
-        exclude: {}
+      expires: byId('ntExpires').value || '',
+      targets: {
+        allLogged: !!byId('ntAllLogged').checked,
+        nonAdminOnly: !!byId('ntNonAdminOnly').checked,
+        roles: $$('.ntRole').filter(x => x.checked).map(x => x.value),
+        eirPrefixes: normList(byId('ntEirPrefixes').value),
+        streets: normList(byId('ntStreets').value),
+        eircodes: byId('ntEircodes').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean),
+        emails: byId('ntEmails').value.split(/\r?\n/).map(s => s.trim().toLowerCase()).filter(Boolean)
       },
       home: {
         enabled: !!byId('ntHomeEnabled').checked,
         visibility: byId('ntHomeVisibility').value || 'private'
       }
     };
-  }
-
-  function resetNoticeForm(){
-    CURRENT_NOTICE_ID = '';
-    ['ntTitle','ntMessage','ntExpires','ntEirPrefixes','ntStreets','ntEircodes','ntEmails'].forEach(id => { if(byId(id)) byId(id).value = ''; });
-    if(byId('ntCategory')) byId('ntCategory').value = 'General';
-    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = false;
-    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = 'private';
-    if(byId('ntAllLogged')) byId('ntAllLogged').checked = true;
-    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = false;
-    $$('.ntRole').forEach(x => x.checked = false);
-    if(byId('btnNtPublish')) byId('btnNtPublish').textContent = 'Publish notice';
-    if(byId('ntMsg')) byId('ntMsg').textContent = '';
-  }
-
-  function populateNoticeForm(n){
-    CURRENT_NOTICE_ID = String((n && n.id) || '');
-    const targets = n?.targets || {};
-    byId('ntTitle').value = n?.title || '';
-    byId('ntMessage').value = n?.message || '';
-    byId('ntCategory').value = n?.category || 'General';
-    byId('ntExpires').value = n?.expires || (n?.expiresAt ? String(n.expiresAt).slice(0,10) : '');
-    byId('ntHomeEnabled').checked = !!(n?.home && n.home.enabled);
-    byId('ntHomeVisibility').value = (n?.home && n.home.visibility) || (n?.isPublic || n?.public ? 'public' : 'private');
-    byId('ntAllLogged').checked = !!targets.allLogged;
-    byId('ntNonAdminOnly').checked = !!targets.nonAdminOnly;
-    $$('.ntRole').forEach(x => x.checked = Array.isArray(targets.roles) && targets.roles.includes(x.value));
-    byId('ntEirPrefixes').value = Array.isArray(targets.eirPrefixes) ? targets.eirPrefixes.join(', ') : '';
-    byId('ntStreets').value = Array.isArray(targets.streets) ? targets.streets.join(', ') : '';
-    byId('ntEircodes').value = Array.isArray(targets.eircodes) ? targets.eircodes.join('\n') : '';
-    byId('ntEmails').value = Array.isArray(targets.emails) ? targets.emails.join('\n') : '';
-    if(byId('btnNtPublish')) byId('btnNtPublish').textContent = 'Save changes';
-    byId('ntMsg').textContent = `Editing: ${n?.title || 'Notice'}`;
-    try{ byId('ntTitle').scrollIntoView({ behavior:'smooth', block:'center' }); }catch(_){ }
-    try{ byId('ntTitle').focus(); }catch(_){ }
   }
 
   async function publishNotice(){
@@ -1699,42 +1668,32 @@
     }
 
     const list = await loadNoticesFresh();
-    const now = new Date().toISOString();
-    const notice = {
-      id: CURRENT_NOTICE_ID || ('nt_' + Date.now()),
+    const next = [{
+      id: 'nt_' + Date.now(),
       title: form.title,
       message: form.message,
       category: form.category,
-      createdAt: CURRENT_NOTICE_ID ? ((list.find(n => String(n?.id||'') === CURRENT_NOTICE_ID) || {}).createdAt || now) : now,
-      updatedAt: now,
+      createdAt: new Date().toISOString(),
       expires: form.expires,
-      expiresAt: form.expiresAt,
-      startsOn: form.startsOn,
-      startsAt: form.startsAt,
       public: form.home.enabled && form.home.visibility === 'public',
       isPublic: form.home.enabled && form.home.visibility === 'public',
       showOnHome: !!form.home.enabled,
       published: true,
       status: (form.home.enabled && form.home.visibility === 'public') ? 'public' : 'private',
       targets: form.targets,
-      target: form.target,
       home: form.home
-    };
+    }].concat(list || []);
 
-    const filtered = (list || []).filter(n => String((n && n.id) || '') !== String(notice.id || ''));
-    const next = [notice].concat(filtered);
-
-    await anwSaveSafe(window.getNoticesKey(), next);
-    const feedback = CURRENT_NOTICE_ID ? 'Notice updated.' : 'Notice published.';
+    await saveNoticesFresh(next);
+    msg.textContent = 'Notice published.';
     await renderNoticesList();
-    resetNoticeForm();
-    msg.textContent = feedback;
   }
 
   function renderNoticeRowActions(n){
+    const isBinImport = !!(n && n.meta && n.meta.type === 'bin_collection_import');
+    if(!isBinImport) return '';
     return `
       <div class="notice-actions">
-        <button type="button" class="btn btn-line small" data-edit-notice="${esc(n.id || '')}">Edit</button>
         <button type="button" class="btn btn-line small" data-del-notice="${esc(n.id || '')}">Delete</button>
       </div>
     `;
@@ -1742,17 +1701,15 @@
 
   async function deleteNoticeById(id){
     const list = await loadNoticesFresh();
-    const targetId = String(id || '');
-    const next = (list || []).filter(n => String((n && n.id) || '') !== targetId);
-    await anwSaveSafe(window.getNoticesKey(), next);
-    if(CURRENT_NOTICE_ID === targetId) resetNoticeForm();
+    const next = (list || []).filter(n => String((n && n.id) || '') !== String(id || ''));
+    await saveNoticesFresh(next);
     await renderNoticesList();
   }
 
   async function clearImportedBinNotices(){
     const list = await loadNoticesFresh();
     const next = (list || []).filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
-    await anwSaveSafe(window.getNoticesKey(), next);
+    await saveNoticesFresh(next);
     byId('binMsg').textContent = 'Imported bin notices removed.';
     await renderNoticesList();
   }
@@ -1776,22 +1733,14 @@
           <div class="notice-card-meta">
             <span class="notice-chip">Home: ${(n.home && n.home.enabled) ? esc(n.home.visibility || 'private') : 'disabled'}</span>
             ${n.date ? `<span class="notice-chip">Collection date: ${esc(fmtDateShort(n.date))}</span>` : ''}
-            ${(n.startsOn || n.startsAt || n.startDate) ? `<span class="notice-chip">Show from: ${esc(fmtDateShort(n.startsOn || n.startsAt || n.startDate))}</span>` : ''}
-            ${(n.endsOn || n.endDate || n.expires || n.expiresAt) ? `<span class="notice-chip">Show until: ${esc(fmtDateShort(n.endsOn || n.endDate || n.expires || n.expiresAt))}</span>` : ''}
+            ${n.startsOn ? `<span class="notice-chip">Show from: ${esc(fmtDateShort(n.startsOn))}</span>` : ''}
+            ${n.endsOn ? `<span class="notice-chip">Show until: ${esc(fmtDateShort(n.endsOn))}</span>` : ''}
           </div>
 
           ${renderNoticeRowActions(n)}
         </div>
       </div>
     `).join('') || '<p class="tiny muted">No notices found.</p>';
-
-    $$('[data-edit-notice]', listEl).forEach(btn => {
-      btn.addEventListener('click', () => {
-        const targetId = btn.getAttribute('data-edit-notice');
-        const item = sorted.find(n => String((n && n.id) || '') === String(targetId || ''));
-        if(item) populateNoticeForm(item);
-      });
-    });
 
     $$('[data-del-notice]', listEl).forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -1864,7 +1813,7 @@
     });
 
     const merged = [...currentKept, ...imported];
-    await anwSaveSafe(window.getNoticesKey(), merged);
+    await saveNoticesFresh(merged);
 
     msg.textContent = `${imported.length} collection notice(s) imported and saved. They are public and enabled for Home automatically for this week and next week.`;
     await renderNoticesList();
@@ -2047,7 +1996,16 @@
   });
 
   byId('btnNtPublish')?.addEventListener('click', publishNotice);
-  byId('btnNtClear')?.addEventListener('click', resetNoticeForm);
+  byId('btnNtClear')?.addEventListener('click', () => {
+    ['ntTitle','ntMessage','ntExpires','ntEirPrefixes','ntStreets','ntEircodes','ntEmails'].forEach(id => { if(byId(id)) byId(id).value = ''; });
+    if(byId('ntCategory')) byId('ntCategory').value = 'General';
+    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = false;
+    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = 'private';
+    if(byId('ntAllLogged')) byId('ntAllLogged').checked = true;
+    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = false;
+    $$('.ntRole').forEach(x => x.checked = false);
+    byId('ntMsg').textContent = '';
+  });
 
   byId('btnBinImport')?.addEventListener('click', importPandaSchedule);
   byId('btnClearBinNotices')?.addEventListener('click', clearImportedBinNotices);
