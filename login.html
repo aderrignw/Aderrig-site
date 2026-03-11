@@ -1,591 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="page:login" name="anw-acl-key"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Login / Register — Aderrig NW</title>
+<link href="assets/style.css" rel="stylesheet"/>
+<style>
+  /* Login/Register alignment fixes (scoped to this page) */
+  .chk{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:10px 0;
+  }
+  .chk input{
+    margin:0;
+    flex:0 0 auto;
+  }
+  .chk span{
+    line-height:1.25;
+    display:inline-block;
+  }
+  #volunteerOptions[hidden]{display:none !important;}
+  #volunteerOptions .chk{
+    margin:0;
+    padding:6px 8px;
+    border-radius:10px;
+  }
+  #volunteerOptions .chk:hover{
+    background: rgba(47,125,91,.05);
+  }
+  #regTerms{ transform: translateY(1px); }
+
+  /* --- Fix global form styles affecting checkboxes/radios --- */
+  body.page-login input[type="checkbox"],
+  body.page-login input[type="radio"]{
+    width:auto !important;
+    padding:0 !important;
+    border-radius:4px !important;
+    border:1px solid rgba(17,24,39,.25) !important;
+    background:#fff !important;
+    box-shadow:none !important;
+    outline:none !important;
+  }
+  body.page-login label.chk{
+    display:flex !important;
+    align-items:center !important;
+    gap:10px !important;
+    font-weight:600;
+    margin:10px 0 !important;
+  }
+  body.page-login label.chk span{ line-height:1.2; }
+  body.page-login .role-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px 14px;
+    margin:8px 0 0 0;
+  }
+  body.page-login .volunteer-block{
+    margin:6px 0 0 0;
+    padding-left:0;
+  }
+  body.page-login .consent-block{
+    margin-top:14px;
+    padding-top:10px;
+    border-top:1px solid rgba(17,24,39,.10);
+  }
+  body.page-login .consent-block label.chk{ margin:8px 0 !important; }
+
+  /* Small helper for messages */
+  .msg{ margin-top:10px; }
+  .msg.ok{ color:#0f5132; }
+  .msg.error{ color:#b02a37; }
+
+#resetBlock[hidden]{display:none !important;}
+
+  .account-shell{display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:start;}
+  .account-avatar{width:112px;height:112px;border-radius:16px;border:1px solid rgba(17,24,39,.10);background:rgba(47,125,91,.08);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .account-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+  .account-avatar .avatar-fallback{font-size:2rem;font-weight:800;color:#2f7d5b;letter-spacing:.04em;}
+  .account-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start;}
+  .account-item{padding:10px 12px;border:1px solid rgba(17,24,39,.08);border-radius:12px;background:#fff;min-width:0;}
+  .account-item.full{grid-column:1 / -1;}
+  .account-item strong{display:block;font-size:.82rem;margin-bottom:4px;color:#374151;}
+  .account-item span{display:block;word-break:break-word;overflow-wrap:anywhere;line-height:1.4;min-width:0;}
+  .account-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .account-edit-panel[hidden]{display:none !important;}
+  @media (max-width: 720px){
+    .account-shell{grid-template-columns:1fr;}
+    .account-avatar{width:96px;height:96px;}
+    .account-grid{grid-template-columns:1fr;}
+  }
+</style>
+<style id="page-access-style">
+  footer.site-footer { position: relative; }
+  footer.site-footer .page-access{
+    position:absolute;
+    left:0;
+    color: green;
+    font-weight: normal;
+  }
+</style>
+
 <script>
-(function(){
-  // ---------- Residents ----------
-  let RESIDENTS_CACHE = [];
-  let CURRENT_RESIDENT = null;
-
-  async function loadResidents(){
-    RESIDENTS_CACHE = await anwLoadSafe(KEY_USERS, []);
-    if(assignMissingResidentNumbers(RESIDENTS_CACHE)){
-      await anwSaveSafe(KEY_USERS, RESIDENTS_CACHE);
-    }
-    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
-      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
-      : 'pending');
+// --- Netlify Identity: make it work reliably on localhost (netlify dev) ---
+(function () {
+  // Deployed site URL used ONLY for localhost development.
+  // In production we automatically use window.location.origin so the same build
+  // works on your Netlify subdomain and on the custom domain.
+  const DEPLOYED_SITE_URL = "https://aderrignw.ie";
+  function isLocalhost(hostname){
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0" || (hostname && hostname.endsWith(".localhost"));
   }
-
-  function getResidentRolesLabel(u){
-    const roles = [];
-    if(u.streetCoordinator || u.isStreetCoordinator || normList(u.roles).includes('street_admin') || normList(u.role).includes('street_admin')) roles.push('Street Coordinator');
-    if(u.volunteer || normList(u.roles).includes('volunteer') || normList(u.role).includes('volunteer')) roles.push('Volunteer');
-    if(normList(u.roles).includes('admin') || normList(u.role).includes('admin')) roles.push('Admin');
-    return roles.length ? roles.join(', ') : '—';
-  }
-
-  function renderResidents(mode){
-    const body = byId('resBody');
-    const empty = byId('resEmpty');
-    const summary = byId('resSummary');
-    if(!body) return;
-
-    const rows = (RESIDENTS_CACHE || []).filter(u => {
-      const status = String((u && u.status) || '').toLowerCase();
-      if(mode === 'pending') return !['approved','active'].includes(status);
-      if(mode === 'approved') return ['approved','active'].includes(status);
-      return true;
-    });
-
-    body.innerHTML = rows.map((u, idx) => `
-      <tr>
-        <td>${esc(u.regId || u.regNo || '—')}</td>
-        <td>${esc(u.name || '—')}</td>
-        <td>${esc(u.email || '—')}</td>
-        <td>${esc(u.eircode || '—')}</td>
-        <td>${esc(u.address || '—')}</td>
-        <td>${esc(u.status || 'pending')}</td>
-        <td>${esc(getResidentRolesLabel(u))}</td>
-        <td>
-          <div class="resident-action-cell">
-            <button type="button" class="btn-line small" data-res-index="${idx}" data-act="openResident">
-              ${String((u.status||'')).toLowerCase() === 'approved' || String((u.status||'')).toLowerCase() === 'active' ? 'Edit' : 'Open'}
-            </button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-
-    summary.textContent = `${rows.length} resident(s) shown`;
-    empty.style.display = rows.length ? 'none' : 'block';
-
-    $$('[data-act="openResident"]', body).forEach(btn => {
-      btn.addEventListener('click', () => {
-        const u = rows[Number(btn.getAttribute('data-res-index'))];
-        openResidentModal(u);
-      });
-    });
-  }
-
-  function openResidentModal(user){
-    CURRENT_RESIDENT = user || null;
-    if(!CURRENT_RESIDENT) return;
-
-    byId('modalResident').style.display = 'block';
-    byId('mRegId').value = CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo || '—';
-    byId('mStatus').value = CURRENT_RESIDENT.status || 'pending';
-    byId('mEmail').value = CURRENT_RESIDENT.email || '';
-    byId('mEir').value = CURRENT_RESIDENT.eircode || '';
-    byId('mName').value = CURRENT_RESIDENT.name || '';
-    byId('mPhone').value = CURRENT_RESIDENT.phone || '';
-    byId('mAddress').value = CURRENT_RESIDENT.address || '';
-    byId('mType').value = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '';
-    byId('mMgmt').value = CURRENT_RESIDENT.managementCompany || CURRENT_RESIDENT.mgmt || '';
-
-    const roles = normList(CURRENT_RESIDENT.roles).concat(normList(CURRENT_RESIDENT.role));
-    byId('mCoord').checked = roles.includes('street_admin') || !!CURRENT_RESIDENT.streetCoordinator;
-    byId('mVol').checked = roles.includes('volunteer') || !!CURRENT_RESIDENT.volunteer;
-
-    const vr = normList(CURRENT_RESIDENT.volunteerRoles);
-    byId('mVStreet').checked = vr.includes('Street watch / patrols');
-    byId('mVLeaf').checked = vr.includes('Distribute leaflets');
-    byId('mVTech').checked = vr.includes('Tech support');
-    byId('mVEld').checked = vr.includes('Elderly checks');
-    byId('mVClean').checked = vr.includes('Community clean-up');
-    byId('mVPark').checked = vr.includes('Parking assistance');
-    byId('mVMeet').checked = vr.includes('Meeting organiser');
-    byId('mVTrans').checked = vr.includes('Translation');
-
-    byId('mMsg').textContent = '';
-
-    const status = String(CURRENT_RESIDENT.status || '').toLowerCase();
-    const alreadyApproved = ['approved','active'].includes(status);
-    if(byId('btnApprove')){
-      byId('btnApprove').style.display = alreadyApproved ? 'none' : 'inline-flex';
-    }
-    if(byId('btnReject')){
-      byId('btnReject').style.display = alreadyApproved ? 'none' : 'inline-flex';
-    }
-  }
-
-  function closeResidentModal(){
-    byId('modalResident').style.display = 'none';
-    CURRENT_RESIDENT = null;
-  }
-
-  async function saveCurrentResident(nextStatus){
-    if(!CURRENT_RESIDENT) return;
-    const users = await anwLoadSafe(KEY_USERS, []);
-    const idx = users.findIndex(u => String(u.email||'').toLowerCase() === String(CURRENT_RESIDENT.email||'').toLowerCase());
-    if(idx < 0) return;
-
-    const roles = [];
-    if(byId('mCoord').checked) roles.push('street_admin');
-    if(byId('mVol').checked) roles.push('volunteer');
-    if(normList(users[idx].roles).includes('admin')) roles.push('admin');
-
-    const volunteerRoles = [
-      byId('mVStreet').checked ? 'Street watch / patrols' : '',
-      byId('mVLeaf').checked ? 'Distribute leaflets' : '',
-      byId('mVTech').checked ? 'Tech support' : '',
-      byId('mVEld').checked ? 'Elderly checks' : '',
-      byId('mVClean').checked ? 'Community clean-up' : '',
-      byId('mVPark').checked ? 'Parking assistance' : '',
-      byId('mVMeet').checked ? 'Meeting organiser' : '',
-      byId('mVTrans').checked ? 'Translation' : ''
-    ].filter(Boolean);
-
-    users[idx].name = byId('mName').value.trim();
-    users[idx].phone = byId('mPhone').value.trim();
-    users[idx].residentType = byId('mType').value;
-    users[idx].managementCompany = byId('mMgmt').value.trim();
-    users[idx].roles = uniqueBy(roles, x => x);
-    users[idx].role = users[idx].roles[0] || '';
-    users[idx].volunteerRoles = volunteerRoles;
-
-    if(nextStatus){
-      users[idx].status = nextStatus;
-      if(['approved','active'].includes(nextStatus) && !(users[idx].regId || users[idx].regNo)){
-        const nextId = anwNextRegId(users);
-        users[idx].regId = nextId;
-        users[idx].regNo = nextId;
+  function ensureIdentityReady(cb){
+    if(!window.netlifyIdentity){ return cb(new Error("Netlify Identity widget not loaded")); }
+    const hostname = (window.location && window.location.hostname) ? window.location.hostname : "";
+    const siteUrl = isLocalhost(hostname) ? DEPLOYED_SITE_URL : (window.location && window.location.origin ? window.location.origin : DEPLOYED_SITE_URL);
+    try {
+      // Suppress the "Development Settings" prompt on localhost for the widget
+      localStorage.setItem("netlifySiteURL", siteUrl);
+    } catch(e){}
+    try {
+      // Ensure gotrue is created
+      window.netlifyIdentity.init();
+    } catch(e){}
+    const start = Date.now();
+    (function tick(){
+      if(window.netlifyIdentity && window.netlifyIdentity.gotrue && typeof window.netlifyIdentity.gotrue.signup === "function"){
+        return cb(null);
       }
-    }
-
-    assignMissingResidentNumbers(users);
-    await anwSaveSafe(KEY_USERS, users);
-    RESIDENTS_CACHE = users;
-    byId('mMsg').textContent = 'Resident saved.';
-    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
-      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
-      : 'pending');
-  }
-
-  // ---------- Notices ----------
-  async function loadNoticesFresh(){
-    return await anwLoadSafe(window.getNoticesKey(), []);
-  }
-
-  function collectNoticeForm(){
-    return {
-      title: byId('ntTitle').value.trim(),
-      message: byId('ntMessage').value.trim(),
-      category: byId('ntCategory').value || 'General',
-      expires: byId('ntExpires').value || '',
-      targets: {
-        allLogged: !!byId('ntAllLogged').checked,
-        nonAdminOnly: !!byId('ntNonAdminOnly').checked,
-        roles: $$('.ntRole').filter(x => x.checked).map(x => x.value),
-        eirPrefixes: normList(byId('ntEirPrefixes').value),
-        streets: normList(byId('ntStreets').value),
-        eircodes: byId('ntEircodes').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean),
-        emails: byId('ntEmails').value.split(/\r?\n/).map(s => s.trim().toLowerCase()).filter(Boolean)
-      },
-      home: {
-        enabled: !!byId('ntHomeEnabled').checked,
-        visibility: byId('ntHomeVisibility').value || 'private'
+      if(Date.now() - start > 5000){
+        return cb(new Error("Netlify Identity not ready (gotrue.signup missing)."));
       }
-    };
+      setTimeout(tick, 50);
+    })();
   }
-
-  async function publishNotice(){
-    const msg = byId('ntMsg');
-    const form = collectNoticeForm();
-    if(!form.title || !form.message){
-      msg.textContent = 'Title and message are required.';
-      return;
-    }
-
-    const list = await loadNoticesFresh();
-    const next = [{
-      id: 'nt_' + Date.now(),
-      title: form.title,
-      message: form.message,
-      category: form.category,
-      createdAt: new Date().toISOString(),
-      expires: form.expires,
-      public: form.home.enabled && form.home.visibility === 'public',
-      isPublic: form.home.enabled && form.home.visibility === 'public',
-      showOnHome: !!form.home.enabled,
-      published: true,
-      status: (form.home.enabled && form.home.visibility === 'public') ? 'public' : 'private',
-      targets: form.targets,
-      home: form.home
-    }].concat(list || []);
-
-    await anwSaveSafe(window.getNoticesKey(), next);
-    msg.textContent = 'Notice published.';
-    await renderNoticesList();
-  }
-
-  function renderNoticeRowActions(n){
-    const isBinImport = !!(n && n.meta && n.meta.type === 'bin_collection_import');
-    if(!isBinImport) return '';
-    return `
-      <div class="notice-actions">
-        <button type="button" class="btn btn-line small" data-del-notice="${esc(n.id || '')}">Delete</button>
-      </div>
-    `;
-  }
-
-  async function deleteNoticeById(id){
-    const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => String((n && n.id) || '') !== String(id || ''));
-    await anwSaveSafe(window.getNoticesKey(), next);
-    await renderNoticesList();
-  }
-
-  async function clearImportedBinNotices(){
-    const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
-    await anwSaveSafe(window.getNoticesKey(), next);
-    byId('binMsg').textContent = 'Imported bin notices removed.';
-    await renderNoticesList();
-  }
-
-  async function renderNoticesList(){
-    const listEl = byId('ntList');
-    const notes = await loadNoticesFresh();
-    const sorted = (notes || []).slice().sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
-
-    if(byId('ntListMsg')){
-      byId('ntListMsg').textContent = sorted.length ? `${sorted.length} notice(s) saved.` : 'No notices found.';
-    }
-
-    listEl.innerHTML = sorted.map(n => `
-      <div class="card" style="padding:12px; margin-bottom:10px;">
-        <div>
-          <strong>${esc(n.title || 'Untitled')}</strong>
-          <div class="tiny muted">${esc(n.category || 'General')} · ${esc(fmtDate(n.createdAt || n.date || ''))}</div>
-          <div style="margin-top:6px;">${esc(n.message || '')}</div>
-
-          <div class="notice-card-meta">
-            <span class="notice-chip">Home: ${(n.home && n.home.enabled) ? esc(n.home.visibility || 'private') : 'disabled'}</span>
-            ${n.date ? `<span class="notice-chip">Collection date: ${esc(fmtDateShort(n.date))}</span>` : ''}
-            ${n.startsOn ? `<span class="notice-chip">Show from: ${esc(fmtDateShort(n.startsOn))}</span>` : ''}
-            ${n.endsOn ? `<span class="notice-chip">Show until: ${esc(fmtDateShort(n.endsOn))}</span>` : ''}
-          </div>
-
-          ${renderNoticeRowActions(n)}
-        </div>
-      </div>
-    `).join('') || '<p class="tiny muted">No notices found.</p>';
-
-    $$('[data-del-notice]', listEl).forEach(btn => {
-      btn.addEventListener('click', async () => {
-        await deleteNoticeById(btn.getAttribute('data-del-notice'));
-      });
-    });
-  }
-
-  async function importPandaSchedule(){
-    const fileEl = byId('binCsvFile');
-    const msg = byId('binMsg');
-    const file = fileEl && fileEl.files && fileEl.files[0];
-    if(!file){
-      msg.textContent = 'Please select the CSV file first.';
-      return;
-    }
-
-    const text = await file.text();
-    const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-
-    const imported = [];
-    for(const line of lines){
-      const cols = parseCsvLine(line);
-      if(!cols.length) continue;
-
-      const headerLike = cols.join(' ').toLowerCase();
-      if(headerLike.includes('date') && headerLike.includes('provider')) continue;
-      if(cols.length < 3) continue;
-
-      const date = parseFlexibleDate(cols[0]);
-      if(!date) continue;
-
-      const provider = String(cols[1] || '').trim();
-      const bin = String(cols[2] || '').trim();
-      const visibility = String(cols[3] || 'public').trim().toLowerCase();
-
-      const startsOn = startOfWeekMonday(date);
-      const endsOn = endOfNextWeekSunday(date);
-
-      imported.push({
-        id: `bin_${date}_${slugify(bin)}`,
-        title: 'Bin collection update',
-        message: `${bin} bin collection scheduled for ${date}.`,
-        category: 'Bins',
-        provider,
-        bin,
-        date,
-        startsOn,
-        endsOn,
-        startDate: startsOn,
-        endDate: endsOn,
-        createdAt: new Date().toISOString(),
-        showOnHome: true,
-        public: true,
-        isPublic: true,
-        published: true,
-        status: visibility === 'private' ? 'private' : 'public',
-        home: { enabled: true, visibility: 'public' },
-        meta: { type: 'bin_collection_import' }
-      });
-    }
-
-    const current = await loadNoticesFresh();
-
-    const currentKept = (current || []).filter(n => {
-      if(!(n && n.meta && n.meta.type === 'bin_collection_import')) return true;
-      const key = `${String(n.date||'')}|${String(n.bin||'').toLowerCase()}`;
-      const incoming = imported.some(x => `${String(x.date||'')}|${String(x.bin||'').toLowerCase()}` === key);
-      return !incoming;
-    });
-
-    const merged = [...currentKept, ...imported];
-    await anwSaveSafe(window.getNoticesKey(), merged);
-
-    msg.textContent = `${imported.length} collection notice(s) imported and saved. They are public and enabled for Home automatically for this week and next week.`;
-    await renderNoticesList();
-  }
-
-  // ---------- Light stubs for remaining tabs ----------
-  async function renderSimpleTable(key, tbodyId, emptyId, mapRow){
-    const rows = await anwLoadSafe(key, []);
-    const body = byId(tbodyId);
-    const empty = byId(emptyId);
-    if(!body) return;
-    body.innerHTML = rows.map(mapRow).join('');
-    if(empty) empty.style.display = rows.length ? 'none' : 'block';
-  }
-
-  async function loadReports(){
-    await renderSimpleTable(KEY_REPORTS, 'repBody', 'repEmpty', r => `
-      <tr>
-        <td>${esc(r.id || '—')}</td>
-        <td>${esc(fmtDate(r.createdAt || r.created || ''))}</td>
-        <td>${esc(r.category || '—')}</td>
-        <td>${esc(r.location || r.address || '—')}</td>
-        <td>${esc(r.email || r.reporterEmail || '—')}</td>
-        <td>${esc(r.status || 'submitted')}</td>
-        <td><button type="button" class="btn-line small" disabled>View</button></td>
-      </tr>
-    `);
-  }
-
-  async function loadProjects(){
-    await renderSimpleTable(KEY_PROJECTS, 'pmBody', 'pmEmpty', p => `
-      <tr>
-        <td>${esc(p.id || '—')}</td>
-        <td>${esc(p.title || p.project || '—')}</td>
-        <td>${esc(p.status || '—')}</td>
-        <td>${esc(p.owner || '—')}</td>
-        <td>${esc(fmtDate(p.updatedAt || p.updated || ''))}</td>
-        <td><button type="button" class="btn-line small" disabled>View</button></td>
-      </tr>
-    `);
-    await renderSimpleTable(KEY_PROJECT_RECIPIENTS, 'pmRecipientsBody', 'pmRecipientsEmpty', p => `
-      <tr>
-        <td>${esc(p.project || p.projectTitle || '—')}</td>
-        <td>${esc(p.recipient || p.name || '—')}</td>
-        <td>${esc([p.address, p.eircode].filter(Boolean).join(' · ') || '—')}</td>
-        <td>${esc(p.status || '—')}</td>
-        <td>${esc(fmtDate(p.updatedAt || p.updated || ''))}</td>
-      </tr>
-    `);
-  }
-
-  async function loadAccessControl(){
-    const defaults = [
-      { key:'page:dashboard', label:'Dashboard' },
-      { key:'page:household', label:'Household' },
-      { key:'page:report', label:'Report Incident' },
-      { key:'page:alerts', label:'Community Alerts' },
-      { key:'page:handbook', label:'Handbook' },
-      { key:'page:admin', label:'Admin' }
-    ];
-
-    const saved = await anwLoadSafe(KEY_ACCESS, []);
-    const rules = Array.isArray(saved) && saved.length ? saved : defaults.map(x => ({
-      ...x,
-      resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true
-    }));
-
-    const roles = ['resident','street_admin','volunteer','area_coordinator','aux_coordinator','platform_support','admin'];
-    const body = byId('acBody');
-
-    body.innerHTML = rules.map((r, idx) => `
-      <tr data-ac-row="${idx}">
-        <td>
-          <div class="ac-item">
-            <div>
-              <div class="ac-indent-0">${esc(r.label)}</div>
-              <div class="ac-key">${esc(r.key)}</div>
-            </div>
-          </div>
-        </td>
-        ${roles.map(role => `
-          <td>
-            <button type="button" class="ac-toggle ${r[role] ? 'allowed' : 'denied'}" data-role="${role}" data-row="${idx}">${r[role] ? '✓' : '—'}</button>
-          </td>
-        `).join('')}
-      </tr>
-    `).join('');
-
-    $$('.ac-toggle', body).forEach(btn => {
-      btn.addEventListener('click', () => {
-        const row = Number(btn.getAttribute('data-row'));
-        const role = btn.getAttribute('data-role');
-        rules[row][role] = !rules[row][role];
-        loadAccessControlFromData(rules);
-      });
-    });
-
-    byId('btnAcSave').onclick = async () => {
-      await anwSaveSafe(KEY_ACCESS, rules);
-      byId('acMsg').textContent = 'Access rules saved.';
-    };
-
-    byId('btnAcPrint').onclick = () => {
-      document.body.classList.add('print-access-control');
-      window.print();
-      setTimeout(() => document.body.classList.remove('print-access-control'), 200);
-    };
-
-    byId('btnAcRefresh').onclick = loadAccessControl;
-  }
-
-  function loadAccessControlFromData(rules){
-    const roles = ['resident','street_admin','volunteer','area_coordinator','aux_coordinator','platform_support','admin'];
-    const body = byId('acBody');
-
-    body.innerHTML = rules.map((r, idx) => `
-      <tr>
-        <td>
-          <div class="ac-item">
-            <div>
-              <div class="ac-indent-0">${esc(r.label)}</div>
-              <div class="ac-key">${esc(r.key)}</div>
-            </div>
-          </div>
-        </td>
-        ${roles.map(role => `<td><button type="button" class="ac-toggle ${r[role] ? 'allowed':'denied'}" data-role="${role}" data-row="${idx}">${r[role] ? '✓':'—'}</button></td>`).join('')}
-      </tr>
-    `).join('');
-
-    $$('.ac-toggle', body).forEach(btn => {
-      btn.addEventListener('click', () => {
-        const row = Number(btn.getAttribute('data-row'));
-        const role = btn.getAttribute('data-role');
-        rules[row][role] = !rules[row][role];
-        loadAccessControlFromData(rules);
-      });
-    });
-
-    byId('btnAcSave').onclick = async () => {
-      await anwSaveSafe(KEY_ACCESS, rules);
-      byId('acMsg').textContent = 'Access rules saved.';
-    };
-  }
-
-  async function loadDiagnostics(){
-    const data = {
-      users: (await anwLoadSafe(KEY_USERS, [])).length,
-      notices: (await anwLoadSafe(window.getNoticesKey(), [])).length,
-      reports: (await anwLoadSafe(KEY_REPORTS, [])).length,
-      projects: (await anwLoadSafe(KEY_PROJECTS, [])).length
-    };
-    byId('diagOut').textContent = JSON.stringify(data, null, 2);
-  }
-
-  // ---------- Events ----------
-  document.addEventListener('click', ev => {
-    const btn = ev.target.closest('.admin-tab');
-    if(btn){ showAdminTab(btn.getAttribute('data-tab')); }
-
-    const rtab = ev.target.closest('.resident-tab');
-    if(rtab){ showResidentSubtab(rtab.getAttribute('data-subtab')); }
-
-    const etab = ev.target.closest('.elect-tab');
-    if(etab){ showElectionSubtab(etab.getAttribute('data-subtab')); }
-  });
-
-  byId('btnCloseResident')?.addEventListener('click', closeResidentModal);
-  byId('btnSaveResident')?.addEventListener('click', () => saveCurrentResident());
-  byId('btnApprove')?.addEventListener('click', async () => { await saveCurrentResident('approved'); closeResidentModal(); });
-  byId('btnReject')?.addEventListener('click', async () => { await saveCurrentResident('rejected'); closeResidentModal(); });
-  byId('btnSuspendResident')?.addEventListener('click', async () => { await saveCurrentResident('suspended'); closeResidentModal(); });
-  byId('btnRemoveResident')?.addEventListener('click', async () => {
-    if(!CURRENT_RESIDENT) return;
-    const users = await anwLoadSafe(KEY_USERS, []);
-    const next = users.filter(u => String(u.email||'').toLowerCase() !== String(CURRENT_RESIDENT.email||'').toLowerCase());
-    await anwSaveSafe(KEY_USERS, next);
-    RESIDENTS_CACHE = next;
-    closeResidentModal();
-    renderResidents('all');
-  });
-
-  byId('btnNtPublish')?.addEventListener('click', publishNotice);
-  byId('btnNtClear')?.addEventListener('click', () => {
-    ['ntTitle','ntMessage','ntExpires','ntEirPrefixes','ntStreets','ntEircodes','ntEmails'].forEach(id => { if(byId(id)) byId(id).value = ''; });
-    if(byId('ntCategory')) byId('ntCategory').value = 'General';
-    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = false;
-    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = 'private';
-    if(byId('ntAllLogged')) byId('ntAllLogged').checked = true;
-    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = false;
-    $$('.ntRole').forEach(x => x.checked = false);
-    byId('ntMsg').textContent = '';
-  });
-
-  byId('btnBinImport')?.addEventListener('click', importPandaSchedule);
-  byId('btnClearBinNotices')?.addEventListener('click', clearImportedBinNotices);
-
-  byId('btnRepRefresh')?.addEventListener('click', loadReports);
-  byId('btnPmRefresh')?.addEventListener('click', loadProjects);
-  byId('btnAcRefresh')?.addEventListener('click', loadAccessControl);
-  byId('btnDiagRun')?.addEventListener('click', loadDiagnostics);
-
-  byId('btnExportUsers')?.addEventListener('click', async () => downloadText('residents.json', JSON.stringify(await anwLoadSafe(KEY_USERS, []), null, 2)));
-  byId('btnExportNotices')?.addEventListener('click', async () => downloadText('notices.json', JSON.stringify(await loadNoticesFresh(), null, 2)));
-  byId('btnExportReports')?.addEventListener('click', async () => downloadText('reports.json', JSON.stringify(await anwLoadSafe(KEY_REPORTS, []), null, 2)));
-  byId('btnExportProjects')?.addEventListener('click', async () => downloadText('projects.json', JSON.stringify(await anwLoadSafe(KEY_PROJECTS, []), null, 2)));
-
-  byId('btnBackupRefresh')?.addEventListener('click', async () => {
-    byId('backupStatusText').textContent = 'Backups are available through Netlify Functions.';
-    byId('backupStatusBadge').textContent = 'Ready';
-    byId('backupStatusBadge').className = 'tag ok';
-    byId('backupLastRun').textContent = 'Last run: check server log';
-  });
-
-  byId('btnBackupNow')?.addEventListener('click', async () => {
-    byId('backupMsg').textContent = 'Trigger backup from the connected function endpoint.';
-  });
-
-  byId('btnRestoreBackup')?.addEventListener('click', async () => {
-    byId('backupMsg').textContent = 'Restore uses the selected backup file with the restore function.';
-  });
-
-  // ---------- Init ----------
-  document.addEventListener('DOMContentLoaded', async () => {
-    try{
-      showAdminTab('tabResidents');
-      showElectionSubtab('subManage');
-      await Promise.all([
-        loadResidents(),
-        renderNoticesList(),
-        loadReports(),
-        loadProjects(),
-        loadAccessControl(),
-        loadDiagnostics()
-      ]);
-    }catch(err){
-      console.error(err);
-    }finally{
-      runAdminGate();
-    }
-  });
-
-  window.addEventListener('load', () => {
-    adminMarkReady();
-  });
+  window.__ensureIdentityReady = ensureIdentityReady;
 })();
 </script>
+
+</head>
+<body class="page-login">
+<header class="site-header">
+<div class="brand">
+<a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
+<div class="brand-text">
+<h1>Aderrig NW</h1>
+<p class="muted">Adamstown</p>
+</div>
+</div>
+<nav class="nav">
+<a href="index.html">Home</a>
+<a href="about.html">About</a>
+<a href="report.html">Report</a>
+<a href="alerts.html">Community Alerts</a>
+<a href="projects.html">Community Projects</a>
+<a href="handbook.html">Handbook</a>
+<a class="active" href="login.html" id="navAccountLink">Login / Register</a>
+<a href="dashboard.html">Dashboard</a>
+<a href="household.html">Household</a>
+<a href="admin.html">Admin</a>
+</nav>
+</header>
+<main class="wrap">
+<div class="grid">
+<!-- LOGIN -->
+<section class="card" id="login">
+<h2>Login</h2>
+<p class="muted" id="loggedBanner" style="margin-bottom:0.75rem; display:none;"></p>
+<div id="loggedAccountCard" class="card" style="display:none; margin-bottom:1rem; padding:16px;">
+  <h3 style="margin-top:0; margin-bottom:10px;">My Account</h3>
+  <div class="account-shell">
+    <div>
+      <div class="account-avatar" aria-label="Profile photo">
+        <img id="accAvatarImg" alt="Profile photo" style="display:none;"/>
+        <div id="accAvatarFallback" class="avatar-fallback">AN</div>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+        <input id="profilePhotoInput" type="file" accept="image/*" style="display:none;" />
+        <button class="btn btn-line small" id="btnPhotoUpload" type="button">Upload photo</button>
+        <button class="btn btn-line small" id="btnPhotoRemove" type="button" style="display:none;">Remove photo</button>
+      </div>
+      <p class="tiny muted" style="margin:8px 0 0;">Square profile photo.</p>
+    </div>
+    <div>
+      <div class="account-grid">
+        <div class="account-item"><strong>Name</strong><span id="accName">—</span></div>
+        <div class="account-item full"><strong>Email</strong><span id="accEmail">—</span></div>
+        <div class="account-item"><strong>Phone</strong><span id="accPhone">—</span></div>
+        <div class="account-item"><strong>Eircode</strong><span id="accEircode">—</span></div>
+        <div class="account-item full"><strong>Street</strong><span id="accStreet">Eircode not registered</span></div>
+        <div class="account-item"><strong>Status</strong><span id="accStatus">—</span></div>
+        <div class="account-item full"><strong>Roles</strong><span id="accRole">—</span></div>
+        <div class="account-item full"><strong>Volunteer roles</strong><span id="accVolunteerRoles">—</span></div>
+        <div class="account-item full"><strong>Logged in time</strong><span id="accLoggedFor">—</span></div>
+      </div>
+      <div class="account-actions">
+        <button class="btn btn-line" id="btnToggleProfile" type="button" aria-expanded="false" aria-controls="accountEditPanel">Edit Profile</button>
+        <button class="btn btn-line" id="btnOpenDashboard" type="button">Open dashboard</button>
+      </div>
+      <div id="accountEditPanel" class="account-edit-panel" hidden style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(17,24,39,.10);">
+        <h4 style="margin:0 0 10px 0;">Update your profile</h4>
+        <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;">
+          <div class="field" style="margin:0;"><label>Full name</label><input id="profName" type="text"/></div>
+          <div class="field" style="margin:0;"><label>Phone</label><input id="profPhone" type="text"/></div>
+          <div class="field" style="margin:0;"><label>Eircode</label><input id="profEir" type="text" disabled/></div>
+          <div class="field" style="margin:0;"><label>Status</label><input id="profStatus" type="text" disabled/></div>
+        </div>
+        <div class="actions" style="justify-content:flex-end; margin-top:10px;">
+          <button class="btn" id="btnProfileSave" type="button">Update profile</button>
+        </div>
+        <div class="msg" id="profileMsg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="field">
+<label>Email</label>
+<input autocomplete="email" id="loginEmail" type="email"/>
+</div>
+<div class="field">
+<label>Eircode</label>
+<input autocomplete="postal-code" id="loginEir" placeholder="e.g., K78XXXX" type="text"/>
+</div>
+<div class="field" id="loginStreetWrap" style="display:none;">
+<label>Street</label>
+<input disabled="" id="loginStreet" type="text"/>
+<p class="tiny muted" style="margin-top:0.25rem;">Street associated with this Eircode.</p>
+</div>
+<div class="field">
+<label>Password</label>
+<input autocomplete="current-password" id="loginPass" type="password"/>
+</div>
+<div class="actions" style="justify-content:space-between">
+<span></span>
+<div>
+<button class="btn btn-line" id="btnShow" type="button">Show</button>
+<button class="btn" id="btnLogin" type="button">Enter</button>
+<button class="btn btn-line" id="btnLogout" style="display:none; margin-left:0.5rem;" type="button">Logout</button>
+</div>
+</div>
+<div class="msg" id="loginMsg"></div>
+<p class="muted tiny" style="margin-top:4px;">
+<a class="link" href="#" id="lnkForgot">I forgot my password</a>
+</p>
+<div hidden="" id="resetBlock" style="margin-top:10px; padding-top:10px; border-top:1px dashed rgba(17,24,39,.15);">
+<h3 class="h3" style="margin-bottom:6px;">Reset your password</h3>
+<p class="muted tiny" style="margin-bottom:8px;">
+          Enter your email and we will send you a secure password reset link.
+        </p>
+<div class="field">
+<label>Email</label>
+<input autocomplete="email" id="resetEmail" type="email"/>
+</div>
+<div class="actions" style="justify-content:flex-end; gap:8px;">
+<button class="btn btn-line" id="btnCancelReset" type="button">Cancel</button>
+<button class="btn" id="btnSendReset" type="button">Send reset email</button>
+</div>
+<div class="msg tiny" id="resetMsg"></div>
+</div>
+</section>
+
+<!-- DEV TOOLS (localhost only) -->
+<section class="card" id="devTools" style="display:none; margin-top:14px;">
+  <h3 class="h3" style="margin-bottom:6px;">Dev tools</h3>
+  <p class="muted tiny" style="margin-bottom:10px;">
+    Local testing only. This will remove your existing user record so you can register again.
+  </p>
+  <div class="actions" style="justify-content:flex-end; gap:8px;">
+    <button class="btn btn-line" id="btnDevRemoveEmail" type="button">Remove this email from registrations</button>
+    <button class="btn btn-line" id="btnDevWipeUsers" type="button">Wipe ALL registrations</button>
+  </div>
+  <div class="msg tiny" id="devToolsMsg"></div>
+</section>
+
+<!-- REGISTER -->
+<section class="card" id="register">
+<h2>Create account</h2>
+<div class="field">
+<label>Full name</label>
+<input autocomplete="name" id="regName" type="text"/>
+</div>
+<div class="field">
+<label>Email</label>
+<input autocomplete="email" id="regEmail" type="email"/>
+</div>
+<div class="field">
+<label>Eircode</label>
+<input autocomplete="postal-code" id="regEir" placeholder="e.g., K78XXXX" type="text"/>
+</div>
+<div class="field">
+<label>Full address</label>
+<input autocomplete="street-address" id="regAddress" placeholder="House number, street, area, county" type="text"/>
+</div>
+<div class="field">
+<label>Phone number (+country code)</label>
+<input autocomplete="tel" id="regPhone" placeholder="+353851234567 (international format)" style="width:100%;" type="tel"/>
+</div>
+<div class="field">
+<label>Password</label>
+<input autocomplete="new-password" id="regPass" type="password"/>
+</div>
+<div class="field">
+<label>Confirm password</label>
+<input autocomplete="new-password" id="regPass2" type="password"/>
+</div>
+<div class="field">
+<label for="regType">Resident type</label>
+<select id="regType">
+<option value="">Select…</option>
+<option value="owner">Owner</option>
+<option value="tenant">Tenant</option>
+</select>
+</div>
+<div class="field">
+<label>Management company</label>
+<input id="regMgmt" placeholder="Management company name" type="text"/>
+</div>
+<div class="role-grid">
+<label class="chk">
+<input id="regCoord" type="checkbox"/>
+<span>I want to be a Street Coordinator</span>
+</label>
+<label class="chk">
+<input id="regVolunteer" type="checkbox"/>
+<span>I want to be a Volunteer</span>
+</label>
+</div>
+<div class="volunteer-block" hidden="" id="volunteerOptions">
+<p class="muted" style="margin-bottom:0.25rem;">Volunteer roles (choose one or more):</p>
+<div class="role-grid">
+<label class="chk"><input id="volStreetWatch" type="checkbox"/><span>Street watch</span></label>
+<label class="chk"><input id="volLeaflets" type="checkbox"/><span>Leaflets</span></label>
+<label class="chk"><input id="volTech" type="checkbox"/><span>Tech support</span></label>
+<label class="chk"><input id="volElderly" type="checkbox"/><span>Elderly checks</span></label>
+<label class="chk"><input id="volCleanup" type="checkbox"/><span>Community Clean-Up</span></label>
+<label class="chk"><input id="volParking" type="checkbox"/><span>Parking Assistance</span></label>
+<label class="chk"><input id="volMeetings" type="checkbox"/><span>Meetings</span></label>
+<label class="chk"><input id="volTranslation" type="checkbox"/><span>Translation</span></label>
+</div>
+</div>
+<div class="consent-block">
+<label class="chk" style="margin-top:0.75rem;">
+<input id="regTerms" type="checkbox"/>
+<span>I agree to the Privacy Policy &amp; Terms.</span>
+</label>
+<label class="chk" style="margin:0;">
+<input id="regAlertOptIn" type="checkbox"/>
+<span>Send me community alerts (Email/SMS/WhatsApp).</span>
+</label>
+</div>
+<div class="actions" style="justify-content:flex-end">
+<button class="btn" id="btnRegister" type="button">Create account</button>
+</div>
+<div class="msg" id="regMsg"></div>
+</section>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="footer-row">
+    <div class="footer-left">
+      <span class="page-status">Public Page</span>
+    </div>
+
+    <div class="footer-center">
+      © 2025 Aderrig NW · 
+      <a href="privacy.html">Privacy Policy</a>
+    </div>
+  </div>
+</footer>
+
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+<script src="assets/app-core.js"></script>
+<script src="assets/acl-guard.js"></script>
+
+<script>
+(async function () {
+  'use strict';
+
+  // ---------- UI helpers (toast/modal) ----------
+  function toast(msg, type){
+    try{
+      if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){
+        ANW.ui.toast(String(msg||''), type || 'info');
+      }
+    }catch{}
+  }
+  function modal(msg, title){
+    try{
+      if(window.ANW && ANW.ui && typeof ANW.ui.alert === 'function'){
+        ANW.ui.alert(String(msg||''), title || 'Message');
+        return;
+      }
+    }catch{}
+    alert(msg);
+  }
+  function setMsg(el, text, kind){
+    if(!el) return;
+    el.textContent = text || '';
+    el.className = 'msg' + (kind ? (' ' + kind) : '');
+  }
+
+  // ---------- Soft lock config (device-level) ----------
+  // 5 failed attempts -> lock for 1 hour
+  const SOFTLOCK_MAX_ATTEMPTS = 5;
+  const SOFTLOCK_MINUTES = 60;
+
+  // After lock expires: on FIRST failed attempt -> auto-send password reset email
+  // (cooldown so it won't spam on the same device)
+  const RESET_AFTER_LOCK_COOLDOWN_MINUTES = 30;
+
+  const ADMIN_CONTACT_EMAIL = 'aderrignw@gmail.com';
+
+  function normalizeEir(val) {
+    return (val || '').toUpperCase().replace(/\s+/g, '').trim();
+  }
+  function isValidEir(e) {
+    return /^[A-Z0-9]{7,8}$/.test(e);
+  }
+  function normalizePhone(val) {
+    return (val || '').replace(/\s+/g, '').trim();
+  }
+  function isValidPhone(p) {
+    return /^\+\d+$/.test(p);
+  }
+
+  function attemptKey(email, eir){
+    const e = (email || '').trim().toLowerCase();
+    const r = normalizeEir(eir || '');
+    return 'anw_login_attempts_v2:' + e + ':' + r;
+  }
+  function getAttemptState(email, eir){
+    try{
+      const raw = localStorage.getItem(attemptKey(email,eir));
+      if(!raw) return { fails:0, lockUntil:0, lastResetSentAt:0 };
+      const obj = JSON.parse(raw);
+      return {
+        fails: Number(obj.fails || 0),
+        lockUntil: Number(obj.lockUntil || 0),
+        lastResetSentAt: Number(obj.lastResetSentAt || 0)
+      };
+    }catch{
+      return { fails:0, lockUntil:0, lastResetSentAt:0 };
+    }
+  }
+  function setAttemptState(email, eir, state){
+    try{
+      localStorage.setItem(attemptKey(email,eir), JSON.stringify({
+        fails: Number(state.fails || 0),
+        lockUntil: Number(state.lockUntil || 0),
+        lastResetSentAt: Number(state.lastResetSentAt || 0)
+      }));
+    }catch{}
+  }
+  function clearAttemptState(email, eir){
+    try{ localStorage.removeItem(attemptKey(email,eir)); }catch{}
+  }
+  function lockRemainingMs(email, eir){
+    const st = getAttemptState(email,eir);
+    const now = Date.now();
+    return st.lockUntil > now ? (st.lockUntil - now) : 0;
+  }
+  function formatMins(ms){
+    const mins = Math.ceil(ms / 60000);
+    if(mins <= 1) return '1 minute';
+    return mins + ' minutes';
+  }
+  function minutesToMs(m){ return m * 60 * 1000; }
+
+  // DOM
+  const registerSection = document.getElementById('register');
+  const navAccountLink = document.getElementById('navAccountLink');
+  const profileMsg = document.getElementById('profileMsg');
+  const profName = document.getElementById('profName');
+  const profPhone = document.getElementById('profPhone');
+  const profEir = document.getElementById('profEir');
+  const profStatus = document.getElementById('profStatus');
+  const btnProfileSave = document.getElementById('btnProfileSave');
+  const profilePhotoInput = document.getElementById('profilePhotoInput');
+  const btnPhotoUpload = document.getElementById('btnPhotoUpload');
+  const btnPhotoRemove = document.getElementById('btnPhotoRemove');
+  const btnOpenDashboard = document.getElementById('btnOpenDashboard');
+  const btnToggleProfile = document.getElementById('btnToggleProfile');
+  const accountEditPanel = document.getElementById('accountEditPanel');
+  const accPhone = document.getElementById('accPhone');
+  const accStreet = document.getElementById('accStreet');
+  const accVolunteerRoles = document.getElementById('accVolunteerRoles');
+  const accLoggedFor = document.getElementById('accLoggedFor');
+  const accAvatarImg = document.getElementById('accAvatarImg');
+  const accAvatarFallback = document.getElementById('accAvatarFallback');
+  const loggedBanner    = document.getElementById('loggedBanner');
+  const loggedAccountCard = document.getElementById('loggedAccountCard');
+  const accName = document.getElementById('accName');
+  const accEmail = document.getElementById('accEmail');
+  const accStatus = document.getElementById('accStatus');
+  const accRole = document.getElementById('accRole');
+  const accEircode = document.getElementById('accEircode');
+  const btnLogout       = document.getElementById('btnLogout');
+
+  const loginEmail = document.getElementById('loginEmail');
+  const loginEir   = document.getElementById('loginEir');
+  const loginPass  = document.getElementById('loginPass');
+  const btnShow    = document.getElementById('btnShow');
+  const btnLogin   = document.getElementById('btnLogin');
+  const loginMsg   = document.getElementById('loginMsg');
+
+  const loginStreetWrap = document.getElementById('loginStreetWrap');
+  const loginStreet     = document.getElementById('loginStreet');
+
+  const regName    = document.getElementById('regName');
+  const regEmail   = document.getElementById('regEmail');
+  const regEir     = document.getElementById('regEir');
+  const regAddress = document.getElementById('regAddress');
+  const regPhone   = document.getElementById('regPhone');
+  const regPass    = document.getElementById('regPass');
+  const regPass2   = document.getElementById('regPass2');
+  const regType    = document.getElementById('regType');
+  const regMgmt    = document.getElementById('regMgmt');
+  const regCoord   = document.getElementById('regCoord');
+  const regTerms   = document.getElementById('regTerms');
+  const regAlertOptIn = document.getElementById('regAlertOptIn');
+  const regVolunteer  = document.getElementById('regVolunteer');
+
+  const volBox = document.getElementById('volunteerOptions');
+  const volStreetWatch = document.getElementById('volStreetWatch');
+  const volLeaflets    = document.getElementById('volLeaflets');
+  const volTech        = document.getElementById('volTech');
+  const volElderly     = document.getElementById('volElderly');
+  const volCleanup     = document.getElementById('volCleanup');
+  const volParking     = document.getElementById('volParking');
+  const volMeetings    = document.getElementById('volMeetings');
+  const volTranslation = document.getElementById('volTranslation');
+
+  const btnRegister = document.getElementById('btnRegister');
+  const regMsg      = document.getElementById('regMsg');
+
+  // Reset block
+  const lnkForgot      = document.getElementById('lnkForgot');
+  const resetBlock     = document.getElementById('resetBlock');
+  const resetEmail     = document.getElementById('resetEmail');
+  const btnCancelReset = document.getElementById('btnCancelReset');
+  const btnSendReset   = document.getElementById('btnSendReset');
+  const resetMsg       = document.getElementById('resetMsg');
+
+  // Force reset panel closed on load
+  if(resetBlock) resetBlock.hidden = true;
+
+  const KEY_USERS = (window.ANW_KEYS && ANW_KEYS.USERS) ? ANW_KEYS.USERS : 'anw_users';
+
+  // Force volunteer options closed on load
+  if(volBox) volBox.hidden = true;
+
+  // Pressing Enter in any login field triggers the Enter button
+  [loginEmail, loginEir, loginPass].forEach((el)=>{
+    if(!el) return;
+    el.addEventListener('keydown', (ev)=>{
+      if(ev.key === 'Enter'){
+        ev.preventDefault();
+        if(btnLogin && !btnLogin.disabled) btnLogin.click();
+      }
+    });
+  });
+
+  // ---------- Volunteer options toggle ----------
+  function setVolunteerVisible(on){
+    if(!volBox) return;
+    volBox.hidden = !on;
+    if(!on){
+      volBox.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+  }
+  if(regVolunteer){
+    regVolunteer.addEventListener('change', () => setVolunteerVisible(!!regVolunteer.checked));
+    setVolunteerVisible(!!regVolunteer.checked);
+  }
+
+  // ---------- Soft lock UI update ----------
+  function applySoftLockUI(){
+    const email = (loginEmail.value || '').trim().toLowerCase();
+    const eir   = normalizeEir(loginEir.value || '');
+    if(!email || !eir){
+      if(btnLogin) btnLogin.disabled = false;
+      return;
+    }
+    const rem = lockRemainingMs(email, eir);
+    if(rem > 0){
+      if(btnLogin) btnLogin.disabled = true;
+      const msg = 'Too many failed attempts. Please wait ' + formatMins(rem) + ' and try again, or use “I forgot my password”.';
+      setMsg(loginMsg, msg, 'error');
+      return;
+    }
+    if(btnLogin) btnLogin.disabled = false;
+  }
+  if(loginEmail) loginEmail.addEventListener('input', applySoftLockUI);
+  if(loginEir) loginEir.addEventListener('input', applySoftLockUI);
+  if(loginEmail) loginEmail.addEventListener('input', updateLoginStreetPreview);
+  if(loginEir) loginEir.addEventListener('input', updateLoginStreetPreview);
+
+  // ---------- Street preview from registration ----------
+  async function updateLoginStreetPreview(){
+    if(!loginStreetWrap || !loginStreet) return;
+    loginStreetWrap.style.display = 'none';
+    loginStreet.value = '';
+
+    const email = (loginEmail.value || '').trim().toLowerCase();
+    const eir   = normalizeEir(loginEir.value || '');
+    if(!email || !eir) return;
+
+    try{
+      await anwInitStore();
+      const users = anwLoad(KEY_USERS, []);
+      const u = Array.isArray(users)
+        ? users.find(x => (x.email||'').toLowerCase() === email && normalizeEir(x.eircode||'') === eir)
+        : null;
+      if(u && u.address){
+        const street = String(u.address).split(',')[0].replace(/^\d+\s*/, '').trim();
+        loginStreet.value = street || 'Eircode not registered';
+      }else{
+        loginStreet.value = 'Eircode not registered';
+      }
+      loginStreetWrap.style.display = 'block';
+    }catch{
+      loginStreet.value = 'Eircode not registered';
+      loginStreetWrap.style.display = 'block';
+    }
+  }
+
+  // ---------- Enter key submits login ----------
+  function wireEnterToLogin(){
+    try{
+      const fields = [loginEmail, loginEir, loginPass];
+      fields.forEach(f=>{
+        if(!f) return;
+        f.addEventListener('keydown', (ev)=>{
+          if(ev.key === 'Enter'){
+            ev.preventDefault();
+            if(btnLogin && !btnLogin.disabled) btnLogin.click();
+          }
+        });
+      });
+    }catch(_){}
+  }
+  wireEnterToLogin();
+
+  // ---------- Show/Hide password ----------
+  if(btnShow){
+    btnShow.addEventListener('click', () => {
+      const isPwd = loginPass.type === 'password';
+      loginPass.type = isPwd ? 'text' : 'password';
+      btnShow.textContent = isPwd ? 'Hide' : 'Show';
+    });
+  }
+
+  // ---------- Helper: auto-send reset email ----------
+  async function autoSendPasswordReset(email){
+    if(!window.netlifyIdentity) return false;
+    try{
+      await window.netlifyIdentity.requestPasswordRecovery(email);
+      return true;
+    }catch{
+      return false;
+    }
+  }
+
+  // ---------- Audit log (server-side via store.js) ----------
+  async function auditLog(eventType, emailAddr, eircodeVal){
+    try{
+      if(!eventType || !emailAddr || !eircodeVal) return;
+      await anwInitStore();
+      // store.js enforces: admin can read; active residents can only append (POST)
+      await anwSave('anw_audit_log', {
+        event: String(eventType),
+        eircode: String(eircodeVal),
+        at: new Date().toISOString()
+      });
+    }catch(e){
+      // never block UX if logging fails
+    }
+  }
+
+  function formatLoggedInFor(loginAt){
+    if(!loginAt) return 'just now';
+    const diff = Math.max(0, Date.now() - loginAt);
+    const mins = Math.floor(diff/60000);
+    if(mins < 1) return 'less than a minute';
+    if(mins < 60) return mins + (mins === 1 ? ' minute' : ' minutes');
+    const hours = Math.floor(mins/60);
+    if(hours < 24) return hours + (hours === 1 ? ' hour' : ' hours');
+    const days = Math.floor(hours/24);
+    return days + (days === 1 ? ' day' : ' days');
+  }
+
+  function setAccountNav(loggedIn){
+    if(!navAccountLink) return;
+    navAccountLink.textContent = loggedIn ? 'My Account' : 'Login / Register';
+  }
+
+  function getVolunteerRolesText(me){
+    if(!me || !me.vol_roles || typeof me.vol_roles !== 'object') return '—';
+    const map = [
+      ['streetWatch', 'Street watch / patrols'],
+      ['leaflets', 'Distribute leaflets'],
+      ['tech', 'Tech support'],
+      ['elderly', 'Elderly checks'],
+      ['cleanup', 'Community clean-up'],
+      ['meetings', 'Meeting organiser'],
+      ['translation', 'Translation'],
+      ['parking', 'Parking assistance']
+    ];
+    const picked = map.filter(([key]) => !!me.vol_roles[key]).map(([,label]) => label);
+    return picked.length ? picked.join(', ') : '—';
+  }
+
+  function getRoleText(me){
+    if(!me) return 'resident';
+    const roles = [];
+    if(me.isCoordinator || me.coordinator) roles.push('Street Coordinator');
+    if(me.isVolunteer || me.volunteer) roles.push('Volunteer');
+    if(me.role && !roles.length) roles.push(String(me.role));
+    return roles.length ? roles.join(', ') : 'resident';
+  }
+
+  function extractStreetText(me){
+    if(!me) return 'Eircode not registered';
+    const rawEir = normalizeEir(me.eircode || '');
+    if(!rawEir) return 'Eircode not registered';
+    const address = String(me.address || me.street || '').trim();
+    if(!address) return 'Eircode not registered';
+    const first = address.split(',')[0].replace(/^\s*\d+[A-Za-z-]*\s+/, '').trim();
+    return first || 'Eircode not registered';
+  }
+
+  function formatLoggedInAt(loginAt){
+    if(!loginAt) return '—';
+    try{
+      const d = new Date(Number(loginAt));
+      if(Number.isNaN(d.getTime())) return '—';
+      return d.toLocaleString('en-IE', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    }catch(_){
+      return '—';
+    }
+  }
+  function updateAvatar(me, identityUser){
+    if(!accAvatarImg || !accAvatarFallback) return;
+    const candidate =
+      String(me?.profilePhoto || me?.photo || me?.avatar || identityUser?.user_metadata?.avatar_url || identityUser?.user_metadata?.picture || '').trim();
+    const labelSource = String(me?.name || identityUser?.user_metadata?.full_name || identityUser?.email || 'ANW').trim();
+    const initials = labelSource.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('') || 'AN';
+    accAvatarFallback.textContent = initials;
+    if(candidate){
+      accAvatarImg.src = candidate;
+      accAvatarImg.style.display = 'block';
+      accAvatarFallback.style.display = 'none';
+      accAvatarImg.onerror = function(){
+        accAvatarImg.style.display = 'none';
+        accAvatarFallback.style.display = 'flex';
+        if(btnPhotoRemove) btnPhotoRemove.style.display = 'none';
+      };
+      if(btnPhotoRemove) btnPhotoRemove.style.display = 'inline-block';
+    }else{
+      accAvatarImg.removeAttribute('src');
+      accAvatarImg.style.display = 'none';
+      accAvatarFallback.style.display = 'flex';
+      if(btnPhotoRemove) btnPhotoRemove.style.display = 'none';
+    }
+  }
+
+  function readImageAsDataUrl(file){
+    return new Promise((resolve, reject)=>{
+      try{
+        const reader = new FileReader();
+        reader.onload = ()=> resolve(String(reader.result || ''));
+        reader.onerror = ()=> reject(new Error('Could not read image file.'));
+        reader.readAsDataURL(file);
+      }catch(_){ reject(new Error('Could not read image file.')); }
+    });
+  }
+
+  async function handleProfilePhotoSelection(file){
+    if(!file) return;
+    if(!/^image\//i.test(String(file.type || ''))){ throw new Error('Please choose an image file.'); }
+    const dataUrl = await readImageAsDataUrl(file);
+    window.__pendingProfilePhoto = dataUrl;
+    updateAvatar({ name: profName?.value || accName?.textContent || 'ANW', profilePhoto: dataUrl }, null);
+    setMsg(profileMsg, 'Photo selected. Click Update profile to save it.', 'ok');
+  }
+
+  async function saveOwnProfile(userEmail){
+    try{
+      await anwInitStore();
+      const users = anwLoad(KEY_USERS, []);
+      const idx = Array.isArray(users) ? users.findIndex(x => (x.email||'').toLowerCase() === String(userEmail||'').toLowerCase()) : -1;
+      if(idx < 0) throw new Error('Profile not found.');
+      const nextPhoto = (window.__pendingProfilePhoto === undefined) ? (users[idx].profilePhoto || users[idx].photo || users[idx].avatar || '') : window.__pendingProfilePhoto;
+      users[idx] = { ...users[idx], name: String((profName?.value||'').trim() || users[idx].name || ''), phone: String((profPhone?.value||'').trim() || ''), profilePhoto: String(nextPhoto || '') };
+      await anwSave(KEY_USERS, users);
+      return users[idx];
+    }catch(err){
+      throw err;
+    }
+  }
+
+  // ---------- Banner + registration hide logic (after login only) ----------
+  async function showLoggedBannerIfAny() {
+    const u = window.netlifyIdentity && window.netlifyIdentity.currentUser
+      ? window.netlifyIdentity.currentUser()
+      : null;
+
+    if (!u || !u.email) {
+      if (loggedBanner) loggedBanner.style.display = 'none';
+      if (loggedAccountCard) loggedAccountCard.style.display = 'none';
+      if (btnLogout) btnLogout.style.display = 'none';
+      if (registerSection) registerSection.style.display = 'block';
+      if (loginEmail) loginEmail.closest('.field').style.display = '';
+      if (loginEir) loginEir.closest('.field').style.display = '';
+      if (loginPass) loginPass.closest('.field').style.display = '';
+      if (btnLogin) btnLogin.style.display = '';
+      if (btnShow) btnShow.style.display = '';
+      if (lnkForgot && lnkForgot.closest('p')) lnkForgot.closest('p').style.display = '';
+      if (resetBlock) resetBlock.hidden = true;
+      if (accountEditPanel) accountEditPanel.hidden = true;
+      if (btnToggleProfile) { btnToggleProfile.textContent = 'Edit Profile'; btnToggleProfile.setAttribute('aria-expanded', 'false'); }
+      setAccountNav(false);
+      applySoftLockUI();
+      return;
+    }
+
+    try{ await anwInitStore(); } catch {}
+
+    const users = anwLoad(KEY_USERS, []);
+    const me = Array.isArray(users) ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase()) : null;
+
+    const status = (me && me.status ? me.status : 'pending').toLowerCase();
+    const statusLabel =
+      status === 'active' ? 'active' :
+      (status === 'suspended' || status === 'removed') ? 'blocked' :
+      'pending approval';
+
+    if (loggedBanner) {
+      loggedBanner.innerHTML =
+        'You are logged in as <strong>' + (me?.name || u.email) + '</strong>' +
+        (me?.eircode ? (' (Eircode: ' + (me.eircode) + '). ') : '. ') +
+        'Your registration is <strong>' + statusLabel + '</strong>.';
+      loggedBanner.style.display = 'block';
+    }
+
+    if (accName) accName.textContent = me?.name || '—';
+    if (accEmail) accEmail.textContent = u.email || '—';
+    if (accStatus) accStatus.textContent = statusLabel;
+    if (accRole) accRole.textContent = getRoleText(me);
+    if (accEircode) accEircode.textContent = me?.eircode || '—';
+    if (accPhone) accPhone.textContent = me?.phone || '—';
+    if (accStreet) accStreet.textContent = extractStreetText(me);
+    if (accVolunteerRoles) accVolunteerRoles.textContent = getVolunteerRolesText(me);
+    const loginAt = Number(sessionStorage.getItem('anwLoginAt') || Date.now());
+    if (accLoggedFor) accLoggedFor.textContent = formatLoggedInAt(loginAt) + ' · ' + formatLoggedInFor(loginAt);
+    updateAvatar(me, u);
+
+    if (profName) profName.value = me?.name || '';
+    if (profPhone) profPhone.value = me?.phone || '';
+    if (profEir) profEir.value = me?.eircode || '';
+    if (profStatus) profStatus.value = statusLabel;
+
+    if (loggedAccountCard) loggedAccountCard.style.display = 'block';
+    if (btnLogout) btnLogout.style.display = 'inline-block';
+    if (registerSection) registerSection.style.display = 'none';
+    if (loginEmail) loginEmail.closest('.field').style.display = 'none';
+    if (loginEir) loginEir.closest('.field').style.display = 'none';
+    if (loginPass) loginPass.closest('.field').style.display = 'none';
+    if (btnLogin) btnLogin.style.display = 'none';
+    if (btnShow) btnShow.style.display = 'none';
+    if (lnkForgot && lnkForgot.closest('p')) lnkForgot.closest('p').style.display = 'none';
+    if (resetBlock) resetBlock.hidden = true;
+    setAccountNav(true);
+
+    try{ await updateLoginStreetPreview(); } catch {}
+  }
+
+  // ---------- LOGIN (Netlify Identity) ----------
+  if(btnLogin){
+    btnLogin.addEventListener('click', async () => {
+      setMsg(loginMsg, '', '');
+
+      const email = (loginEmail.value || '').trim().toLowerCase();
+      const eir   = normalizeEir(loginEir.value || '');
+      const pass  = (loginPass.value || '').trim();
+
+      if (!email || !eir || !pass) {
+        setMsg(loginMsg, 'Please fill all fields.', 'error');
+        toast('Please fill all fields.', 'warn');
+        modal('Please fill all fields before logging in.', 'Missing information');
+        return;
+      }
+
+      if (!isValidEir(eir)) {
+        setMsg(loginMsg, 'Please enter a valid Eircode.', 'error');
+        toast('Invalid Eircode.', 'warn');
+        modal('Please enter a valid Eircode (letters/numbers only).', 'Invalid Eircode');
+        return;
+      }
+
+      // Soft lock check (device-level)
+      const rem = lockRemainingMs(email, eir);
+      if(rem > 0){
+        const msg = 'Too many failed attempts. Please wait ' + formatMins(rem) + ' and try again, or use “I forgot my password”.';
+        setMsg(loginMsg, msg, 'error');
+        toast('Login temporarily locked (' + formatMins(rem) + ').', 'warn');
+        modal(msg, 'Login temporarily locked');
+        applySoftLockUI();
+        return;
+      }
+
+      if (!window.netlifyIdentity) {
+        modal('Netlify Identity is not available on this page.', 'Error');
+        return;
+      }
+
+      try{
+        await new Promise((resolve, reject) => {
+          if(window.__ensureIdentityReady){
+            return window.__ensureIdentityReady(err => err ? reject(err) : resolve());
+          }
+          try{ window.netlifyIdentity.init(); }catch{}
+          return (window.netlifyIdentity?.gotrue?.login) ? resolve() : reject(new Error('Netlify Identity not ready'));
+        });
+
+        const gt = window.netlifyIdentity.gotrue;
+        if(!gt || typeof gt.login !== 'function'){
+          throw new Error('Netlify Identity not ready (gotrue.login missing)');
+        }
+
+        // Check registration locally first
+        await anwInitStore();
+        const users = anwLoad(KEY_USERS, []);
+        const me = Array.isArray(users)
+          ? users.find(x => (x.email||'').toLowerCase() === email && normalizeEir(x.eircode||'') === eir)
+          : null;
+
+        if(!me){
+          await auditLog('login_failed_not_found', email, eir);
+          const st = getAttemptState(email, eir);
+          const now = Date.now();
+          const fails = Number(st.fails || 0) + 1;
+          const lockUntil = fails >= SOFTLOCK_MAX_ATTEMPTS ? (now + minutesToMs(SOFTLOCK_MINUTES)) : 0;
+          setAttemptState(email, eir, { fails, lockUntil, lastResetSentAt: Number(st.lastResetSentAt||0) });
+          applySoftLockUI();
+
+          if(fails >= SOFTLOCK_MAX_ATTEMPTS){
+            modal('Too many failed attempts. Your login on this browser has been temporarily locked for 1 hour. Please use “I forgot my password” or contact ' + ADMIN_CONTACT_EMAIL + '.', 'Login temporarily locked');
+          }else{
+            modal('We could not find a registration for this email + Eircode combination.', 'Login failed');
+          }
+          return;
+        }
+        if ((me.status || '').toLowerCase() !== 'active') {
+          await auditLog('login_failed_not_active', email, eir);
+          modal('Your registration exists, but it is not active yet. Current status: ' + String(me.status || 'pending') + '.', 'Registration not active');
+          return;
+        }
+
+        // Netlify Identity login
+        await gt.login(email, pass, true);
+
+        clearAttemptState(email, eir);
+        try{ sessionStorage.setItem('anwLoginAt', String(Date.now())); }catch(_){}
+        await auditLog('login_success', email, eir);
+
+        setMsg(loginMsg, 'Login successful.', 'ok');
+        toast('Welcome back!', 'success');
+        await showLoggedBannerIfAny();
+
+      }catch(e){
+        const st = getAttemptState(email, eir);
+        const now = Date.now();
+        const fails = Number(st.fails || 0) + 1;
+        let lockUntil = Number(st.lockUntil || 0);
+        if(fails >= SOFTLOCK_MAX_ATTEMPTS){
+          lockUntil = now + minutesToMs(SOFTLOCK_MINUTES);
+        }
+
+        // After lock has expired, on FIRST failed attempt -> auto-send reset (cooldown)
+        let extra = '';
+        const prevWasLockedAndExpired = st.lockUntil && st.lockUntil <= now;
+        const withinCooldown = st.lastResetSentAt && (now - Number(st.lastResetSentAt)) < minutesToMs(RESET_AFTER_LOCK_COOLDOWN_MINUTES);
+        let lastResetSentAt = Number(st.lastResetSentAt || 0);
+
+        if(prevWasLockedAndExpired && !withinCooldown && window.netlifyIdentity){
+          const sent = await autoSendPasswordReset(email);
+          if(sent){
+            lastResetSentAt = now;
+            extra = ' A password reset email has been sent to ' + email + '.';
+          }
+        }
+
+        setAttemptState(email, eir, { fails, lockUntil, lastResetSentAt });
+        applySoftLockUI();
+
+        await auditLog('login_failed_bad_password', email, eir);
+
+        if(lockUntil > now){
+          const msg = 'Too many failed attempts. Your login on this browser is locked for ' + formatMins(lockUntil - now) + '. Please use “I forgot my password” or contact ' + ADMIN_CONTACT_EMAIL + '.' + extra;
+          setMsg(loginMsg, msg, 'error');
+          toast('Login temporarily locked.', 'error');
+          modal(msg, 'Login temporarily locked');
+        }else{
+          const em = (e && (e.message || e.error || (e.json && (e.json.error_description || e.json.error))))
+            ? (e.message || e.error || (e.json && (e.json.error_description || e.json.error)))
+            : 'Wrong password or identity service not ready.';
+          const msg = 'Login failed: ' + em + extra;
+          setMsg(loginMsg, msg, 'error');
+          toast('Login failed.', 'error');
+          modal(msg, 'Login failed');
+        }
+      }
+    });
+  }
+
+  // ---------- Logout ----------
+  if(btnLogout){
+    btnLogout.addEventListener('click', async () => {
+      try{
+        if(window.netlifyIdentity){
+          await window.netlifyIdentity.logout();
+        }
+      }catch{}
+      try{ sessionStorage.removeItem('anwLoginAt'); }catch(_){}
+      await showLoggedBannerIfAny();
+      setMsg(loginMsg, 'You have been logged out.', 'ok');
+    });
+  }
+
+  // ---------- Register ----------
+  if(btnRegister){
+    btnRegister.addEventListener('click', async () => {
+      setMsg(regMsg, '', '');
+
+      const name    = (regName.value || '').trim();
+      const email   = (regEmail.value || '').trim().toLowerCase();
+      const eir     = normalizeEir(regEir.value || '');
+      const address = (regAddress.value || '').trim();
+      const phone   = normalizePhone(regPhone.value || '');
+      const pass    = (regPass.value || '').trim();
+      const pass2   = (regPass2.value || '').trim();
+      const type    = (regType.value || '').trim();
+      const mgmt    = (regMgmt.value || '').trim();
+      const coord   = !!regCoord.checked;
+      const volunteerMaster = !!regVolunteer.checked;
+      const optInAlerts = !!regAlertOptIn.checked;
+
+      const vr = {
+        streetWatch : !!volStreetWatch?.checked,
+        leaflets    : !!volLeaflets?.checked,
+        tech        : !!volTech?.checked,
+        elderly     : !!volElderly?.checked,
+        cleanup     : !!volCleanup?.checked,
+        meetings    : !!volMeetings?.checked,
+        translation : !!volTranslation?.checked,
+        parking     : !!volParking?.checked
+      };
+
+      if (!name || !email || !eir || !address || !phone || !pass || !pass2) {
+        toast('Please fill all fields.', 'warn');
+        modal('Please fill all required fields.', 'Missing information');
+        return;
+      }
+      if (!isValidEir(eir)) {
+        toast('Invalid Eircode.', 'warn');
+        modal('Please enter a valid Eircode (letters/numbers only).', 'Invalid Eircode');
+        return;
+      }
+      if (!isValidPhone(phone)) {
+        toast('Invalid phone number.', 'warn');
+        modal('Please enter the phone in international format, for example +353851234567', 'Invalid phone');
+        return;
+      }
+      if (pass.length < 8) {
+        toast('Password must have at least 8 characters.', 'warn');
+        modal('Password must have at least 8 characters.', 'Weak password');
+        return;
+      }
+      if (pass !== pass2) {
+        toast('Passwords do not match.', 'warn');
+        modal('Passwords do not match.', 'Password mismatch');
+        return;
+      }
+      if (!type) {
+        toast('Please choose Owner or Tenant.', 'warn');
+        modal('Please choose whether you are Owner or Tenant.', 'Resident type required');
+        return;
+      }
+      if (!regTerms.checked) {
+        toast('You must accept the Privacy Policy.', 'warn');
+        modal('You must accept the Privacy Policy & Terms to continue.', 'Consent required');
+        return;
+      }
+
+      // If volunteer is selected, encourage at least one volunteer role
+      if (volunteerMaster) {
+        const anyVr = Object.values(vr).some(Boolean);
+        if (!anyVr) {
+          toast('Please choose at least one volunteer role.', 'warn');
+          modal('You selected Volunteer. Please choose at least one volunteer role.', 'Volunteer role required');
+          return;
+        }
+      }
+
+      try{
+        await new Promise((resolve,reject)=>{
+          if(window.__ensureIdentityReady) return window.__ensureIdentityReady(err=>err?reject(err):resolve());
+          try{ window.netlifyIdentity.init(); }catch{}
+          return (window.netlifyIdentity?.gotrue?.signup)?resolve():reject(new Error('Netlify Identity not ready'));
+        });
+
+        const nowIso = new Date().toISOString();
+
+        const gt = window.netlifyIdentity && window.netlifyIdentity.gotrue;
+        if(!gt || typeof gt.signup !== 'function'){
+          throw new Error('Netlify Identity not ready (gotrue.signup missing)');
+        }
+        await gt.signup(email, pass, { full_name: name });
+        await new Promise((resolve,reject)=>{ if(window.__ensureIdentityReady) return window.__ensureIdentityReady(err=>err?reject(err):resolve()); try{ window.netlifyIdentity.init(); }catch{} return (window.netlifyIdentity?.gotrue?.login)?resolve():reject(new Error('Netlify Identity not ready')); });
+
+        await window.netlifyIdentity.gotrue.login(email, pass, true);
+
+        await anwInitStore();
+        let users = anwLoad(KEY_USERS, []);
+        if(!Array.isArray(users)) users = [];
+        if (users.some(x => (x.email||'').toLowerCase() === email)) {
+          toast('Email already registered.', 'error');
+          modal('This email is already registered.', 'Duplicate');
+          try{ window.netlifyIdentity.logout(); } catch {}
+          return;
+        }
+        if (users.some(x => normalizeEir(x.eircode||'') === eir)) {
+          toast('Eircode already registered.', 'error');
+          modal('This Eircode is already registered. Only one account per residence is allowed.', 'Duplicate');
+          try{ window.netlifyIdentity.logout(); } catch {}
+          return;
+        }
+
+        const newUser = {
+          name: name,
+          email: email,
+          eircode: eir,
+          address: address,
+          phone: phone,
+
+          termsAcceptedAt: nowIso,
+          termsAccepted: true,
+
+          alertsConsent: {
+            optIn: optInAlerts,
+            updatedAt: nowIso,
+            history: [ { at: nowIso, optIn: optInAlerts, source: 'register' } ]
+          },
+
+          type: type,
+          residentType: type,
+
+          managementCompany: mgmt,
+
+          coordinator: coord,
+          isCoordinator: coord,
+
+          volunteer: volunteerMaster,
+          isVolunteer: volunteerMaster,
+
+          vol_roles: vr,
+
+          status: 'pending',
+          createdAt: nowIso,
+          regDate: nowIso
+        };
+
+        users.push(newUser);
+        await anwSave(KEY_USERS, users);
+
+        try{ window.netlifyIdentity.logout(); } catch {}
+
+        setMsg(regMsg, 'Account created! Your registration is pending admin approval.', 'ok');
+        toast('Account created. Pending approval.', 'success');
+
+        regName.value = '';
+        regEmail.value = '';
+        regEir.value = '';
+        regAddress.value = '';
+        regPhone.value = '';
+        regPass.value = '';
+        regPass2.value = '';
+        regMgmt.value = '';
+        regCoord.checked = false;
+        regVolunteer.checked = false;
+        if(volParking) volParking.checked = false;
+        regType.value = '';
+        regTerms.checked = false;
+        regAlertOptIn.checked = false;
+        setVolunteerVisible(false);
+
+        setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+
+      }catch(e){
+        toast('Registration failed.', 'error');
+        const em = (e && (e.message || e.error || (e.json && (e.json.error_description || e.json.error))))
+          ? (e.message || e.error || (e.json && (e.json.error_description || e.json.error)))
+          : String(e);
+        modal('Registration failed: ' + em, 'Error');
+      }
+    });
+  }
+
+  // ---------- Password reset (email) ----------
+  if (lnkForgot && resetBlock) {
+    lnkForgot.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      resetBlock.hidden = !resetBlock.hidden;
+      if(!resetBlock.hidden){
+        if(resetEmail && loginEmail) resetEmail.value = (loginEmail.value || '').trim();
+        setMsg(resetMsg, '', '');
+        resetBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
+
+  if(btnCancelReset && resetBlock){
+    btnCancelReset.addEventListener('click', () => {
+      resetBlock.hidden = true;
+      setMsg(resetMsg, '', '');
+    });
+  }
+
+  if(btnSendReset){
+    btnSendReset.addEventListener('click', async ()=>{
+      setMsg(resetMsg, '', '');
+      const email = (resetEmail.value || '').trim().toLowerCase();
+      if(!email){
+        setMsg(resetMsg, 'Please enter your email.', 'error');
+        toast('Please enter your email.', 'warn');
+        return;
+      }
+      if(!window.netlifyIdentity){
+        modal('Netlify Identity is not available on this page.', 'Error');
+        return;
+      }
+      try{
+        await window.netlifyIdentity.requestPasswordRecovery(email);
+        setMsg(resetMsg, 'Reset email sent. Please check your inbox.', 'ok');
+        toast('Reset email sent.', 'success');
+
+        // also update cooldown stamp for this browser (if eircode exists)
+        const eir = normalizeEir(loginEir ? loginEir.value : '');
+        if(eir){
+          const st = getAttemptState(email, eir);
+          setAttemptState(email, eir, { fails: Number(st.fails||0), lockUntil: Number(st.lockUntil||0), lastResetSentAt: Date.now() });
+        }
+      }catch(e){
+        setMsg(resetMsg, 'Could not send reset email. Please try again.', 'error');
+        toast('Reset failed.', 'error');
+      }
+    });
+  }
+
+  if(btnToggleProfile && accountEditPanel){
+    btnToggleProfile.addEventListener('click', ()=>{
+      const nextHidden = !accountEditPanel.hidden;
+      accountEditPanel.hidden = nextHidden;
+      btnToggleProfile.textContent = nextHidden ? 'Edit Profile' : 'Close Edit Profile';
+      btnToggleProfile.setAttribute('aria-expanded', String(!nextHidden));
+    });
+  }
+
+  if(btnPhotoUpload && profilePhotoInput){
+    btnPhotoUpload.addEventListener('click', ()=> profilePhotoInput.click());
+    profilePhotoInput.addEventListener('change', async ()=>{
+      try{
+        const file = profilePhotoInput.files && profilePhotoInput.files[0] ? profilePhotoInput.files[0] : null;
+        if(!file) return;
+        await handleProfilePhotoSelection(file);
+      }catch(err){
+        setMsg(profileMsg, (err && err.message) ? err.message : 'Could not load photo.', 'error');
+      }
+    });
+  }
+
+  if(btnPhotoRemove){
+    btnPhotoRemove.addEventListener('click', ()=>{
+      window.__pendingProfilePhoto = '';
+      if(profilePhotoInput) profilePhotoInput.value = '';
+      updateAvatar({ name: profName?.value || accName?.textContent || 'ANW', profilePhoto: '' }, null);
+      setMsg(profileMsg, 'Photo will be removed when you click Update profile.', 'ok');
+    });
+  }
+
+  if(btnOpenDashboard){
+    btnOpenDashboard.addEventListener('click', ()=>{ window.location.href = 'dashboard.html'; });
+  }
+  if(btnProfileSave){
+    btnProfileSave.addEventListener('click', async ()=>{
+      try{
+        const u = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+        if(!u || !u.email) throw new Error('You are not logged in.');
+        const updated = await saveOwnProfile(u.email);
+        setMsg(profileMsg, 'Profile updated successfully.', 'ok');
+        if(accName) accName.textContent = updated?.name || '—';
+        if(accPhone) accPhone.textContent = updated?.phone || '—';
+        window.__pendingProfilePhoto = undefined;
+        if(profilePhotoInput) profilePhotoInput.value = '';
+        await showLoggedBannerIfAny();
+      }catch(err){
+        setMsg(profileMsg, (err && err.message) ? err.message : 'Could not update profile.', 'error');
+      }
+    });
+  }
+
+  if(window.netlifyIdentity){
+    window.netlifyIdentity.on('login', () => { try{ sessionStorage.setItem('anwLoginAt', String(Date.now())); }catch(_){} showLoggedBannerIfAny(); });
+    window.netlifyIdentity.on('logout', () => { try{ sessionStorage.removeItem('anwLoginAt'); }catch(_){} showLoggedBannerIfAny(); });
+  }
+
+  setInterval(() => {
+    const current = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+    if(current && accLoggedFor){
+      const loginAt = Number(sessionStorage.getItem('anwLoginAt') || Date.now());
+      accLoggedFor.textContent = formatLoggedInFor(loginAt);
+    }
+  }, 30000);
+
+  await showLoggedBannerIfAny();
+  applySoftLockUI();
+
+})();
+</script>
+
+
+
 </body>
 </html>
