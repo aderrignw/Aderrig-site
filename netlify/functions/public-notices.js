@@ -27,8 +27,16 @@ function safeJsonParse(s, fallback) {
 }
 
 
+function getStartValue(n) {
+  return n?.startsAt || n?.startsOn || n?.startDate || '';
+}
+
+function getExpiryValue(n) {
+  return n?.expiresAt || n?.endsOn || n?.endDate || n?.expires || '';
+}
+
 function isNotStarted(n) {
-  const st = n?.startsAt ? Date.parse(n.startsAt) : NaN;
+  const st = getStartValue(n) ? Date.parse(getStartValue(n)) : NaN;
   return !Number.isNaN(st) && st > Date.now();
 }
 
@@ -36,7 +44,7 @@ function isStarted(n) {
   return !isNotStarted(n);
 }
 function isExpired(n) {
-  const exp = n?.expiresAt ? Date.parse(n.expiresAt) : NaN;
+  const exp = getExpiryValue(n) ? Date.parse(getExpiryValue(n)) : NaN;
   return !Number.isNaN(exp) && exp < Date.now();
 }
 
@@ -88,6 +96,10 @@ export default async (req, context) => {
         message: n.message,
         createdAt: n.createdAt,
         category: n.category,
+        expiresAt: n.expiresAt || n.endsOn || n.endDate || n.expires || '',
+        startsAt: n.startsAt || n.startsOn || n.startDate || '',
+        date: n.date || '',
+        bin: n.bin || '',
         home: n.home
       }));
 
