@@ -77,12 +77,21 @@
     display:flex;
     gap:8px;
     align-items:center;
+    justify-content:center;
     flex-wrap:wrap;
+  }
+
+  #resBody td:last-child,
+  #resBody th:last-child{
+    text-align:center;
   }
 
   .notice-actions{
     display:flex;
     gap:8px;
+    align-items:center;
+    justify-content:flex-end;
+    flex-wrap:wrap;
     justify-content:flex-end;
     flex-wrap:wrap;
     margin-top:10px;
@@ -164,11 +173,18 @@
     try{ console.log(String(message||'')); }catch(_){}
   };
 
+  const REG_PREFIX = 'ANW';
+
   function getResidentNumericReg(v){
     const raw = String(v == null ? '' : v).trim();
     if(!raw) return 0;
     const m = raw.match(/(\d+)/);
     return m ? parseInt(m[1], 10) || 0 : 0;
+  }
+
+  function formatResidentReg(v){
+    const n = getResidentNumericReg(v);
+    return n ? `${REG_PREFIX}${String(n).padStart(3, '0')}` : '';
   }
 
   function anwNextRegId(list){
@@ -178,7 +194,7 @@
       const n = getResidentNumericReg(u && (u.regId || u.regNo));
       if(n > max) max = n;
     });
-    return String(max + 1).padStart(2, '0');
+    return formatResidentReg(max + 1);
   }
 
   function assignMissingResidentNumbers(list){
@@ -194,17 +210,18 @@
     users.forEach(u => {
       const status = String((u && u.status) || '').toLowerCase();
       const approved = ['active','approved'].includes(status);
+      const currentReg = formatResidentReg(u && (u.regId || u.regNo));
 
-      if(approved && !(u && (u.regId || u.regNo))){
+      if(approved && !currentReg){
         max += 1;
-        const id = String(max).padStart(2, '0');
+        const id = formatResidentReg(max);
         u.regId = id;
         u.regNo = id;
         changed = true;
-      } else if(u && u.regId && !u.regNo){
-        u.regNo = u.regId;
-      } else if(u && u.regNo && !u.regId){
-        u.regId = u.regNo;
+      } else if(u && currentReg && (u.regId !== currentReg || u.regNo !== currentReg)){
+        u.regId = currentReg;
+        u.regNo = currentReg;
+        changed = true;
       }
     });
 
@@ -1468,7 +1485,7 @@
 
     body.innerHTML = rows.map((u, idx) => `
       <tr>
-        <td>${esc(u.regId || u.regNo || '—')}</td>
+        <td>${esc(formatResidentReg(u.regId || u.regNo) || '—')}</td>
         <td>${esc(u.name || '—')}</td>
         <td>${esc(u.email || '—')}</td>
         <td>${esc(u.eircode || '—')}</td>
@@ -1501,7 +1518,7 @@
     if(!CURRENT_RESIDENT) return;
 
     byId('modalResident').style.display = 'block';
-    byId('mRegId').value = CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo || '—';
+    byId('mRegId').value = formatResidentReg(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
     byId('mStatus').value = CURRENT_RESIDENT.status || 'pending';
     byId('mEmail').value = CURRENT_RESIDENT.email || '';
     byId('mEir').value = CURRENT_RESIDENT.eircode || '';
@@ -1591,30 +1608,86 @@
   }
 
   // ---------- Notices ----------
+  let CURRENT_NOTICE_ID = '';
+
   async function loadNoticesFresh(){
     return await anwLoadSafe(window.getNoticesKey(), []);
   }
 
   function collectNoticeForm(){
+    const expires = byId('ntExpires').value || '';
+    const startsOn = '';
+    const targets = {
+      allLogged: !!byId('ntAllLogged').checked,
+      nonAdminOnly: !!byId('ntNonAdminOnly').checked,
+      roles: $$('.ntRole').filter(x => x.checked).map(x => x.value),
+      eirPrefixes: normList(byId('ntEirPrefixes').value),
+      streets: normList(byId('ntStreets').value),
+      eircodes: byId('ntEircodes').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean),
+      emails: byId('ntEmails').value.split(/\r?\n/).map(s => s.trim().toLowerCase()).filter(Boolean)
+    };
+
     return {
       title: byId('ntTitle').value.trim(),
       message: byId('ntMessage').value.trim(),
       category: byId('ntCategory').value || 'General',
-      expires: byId('ntExpires').value || '',
-      targets: {
-        allLogged: !!byId('ntAllLogged').checked,
-        nonAdminOnly: !!byId('ntNonAdminOnly').checked,
-        roles: $$('.ntRole').filter(x => x.checked).map(x => x.value),
-        eirPrefixes: normList(byId('ntEirPrefixes').value),
-        streets: normList(byId('ntStreets').value),
-        eircodes: byId('ntEircodes').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean),
-        emails: byId('ntEmails').value.split(/\r?\n/).map(s => s.trim().toLowerCase()).filter(Boolean)
+      expires,
+      expiresAt: expires ? new Date(`${expires}T23:59:59`).toISOString() : '',
+      startsOn,
+      startsAt: startsOn ? new Date(`${startsOn}T00:00:00`).toISOString() : '',
+      targets,
+      target: {
+        include: {
+          allLoggedIn: !!targets.allLogged,
+          nonAdminOnly: !!targets.nonAdminOnly,
+          roles: targets.roles.slice(),
+          eircodePrefixes: targets.eirPrefixes.slice(),
+          streets: targets.streets.slice(),
+          eircodes: targets.eircodes.slice(),
+          emails: targets.emails.slice()
+        },
+        exclude: {}
       },
       home: {
         enabled: !!byId('ntHomeEnabled').checked,
         visibility: byId('ntHomeVisibility').value || 'private'
       }
     };
+  }
+
+  function resetNoticeForm(){
+    CURRENT_NOTICE_ID = '';
+    ['ntTitle','ntMessage','ntExpires','ntEirPrefixes','ntStreets','ntEircodes','ntEmails'].forEach(id => { if(byId(id)) byId(id).value = ''; });
+    if(byId('ntCategory')) byId('ntCategory').value = 'General';
+    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = false;
+    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = 'private';
+    if(byId('ntAllLogged')) byId('ntAllLogged').checked = true;
+    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = false;
+    $$('.ntRole').forEach(x => x.checked = false);
+    if(byId('btnNtPublish')) byId('btnNtPublish').textContent = 'Publish notice';
+    if(byId('ntMsg')) byId('ntMsg').textContent = '';
+  }
+
+  function populateNoticeForm(n){
+    CURRENT_NOTICE_ID = String((n && n.id) || '');
+    const targets = n?.targets || {};
+    byId('ntTitle').value = n?.title || '';
+    byId('ntMessage').value = n?.message || '';
+    byId('ntCategory').value = n?.category || 'General';
+    byId('ntExpires').value = n?.expires || (n?.expiresAt ? String(n.expiresAt).slice(0,10) : '');
+    byId('ntHomeEnabled').checked = !!(n?.home && n.home.enabled);
+    byId('ntHomeVisibility').value = (n?.home && n.home.visibility) || (n?.isPublic || n?.public ? 'public' : 'private');
+    byId('ntAllLogged').checked = !!targets.allLogged;
+    byId('ntNonAdminOnly').checked = !!targets.nonAdminOnly;
+    $$('.ntRole').forEach(x => x.checked = Array.isArray(targets.roles) && targets.roles.includes(x.value));
+    byId('ntEirPrefixes').value = Array.isArray(targets.eirPrefixes) ? targets.eirPrefixes.join(', ') : '';
+    byId('ntStreets').value = Array.isArray(targets.streets) ? targets.streets.join(', ') : '';
+    byId('ntEircodes').value = Array.isArray(targets.eircodes) ? targets.eircodes.join('\n') : '';
+    byId('ntEmails').value = Array.isArray(targets.emails) ? targets.emails.join('\n') : '';
+    if(byId('btnNtPublish')) byId('btnNtPublish').textContent = 'Save changes';
+    byId('ntMsg').textContent = `Editing: ${n?.title || 'Notice'}`;
+    try{ byId('ntTitle').scrollIntoView({ behavior:'smooth', block:'center' }); }catch(_){ }
+    try{ byId('ntTitle').focus(); }catch(_){ }
   }
 
   async function publishNotice(){
@@ -1626,32 +1699,42 @@
     }
 
     const list = await loadNoticesFresh();
-    const next = [{
-      id: 'nt_' + Date.now(),
+    const now = new Date().toISOString();
+    const notice = {
+      id: CURRENT_NOTICE_ID || ('nt_' + Date.now()),
       title: form.title,
       message: form.message,
       category: form.category,
-      createdAt: new Date().toISOString(),
+      createdAt: CURRENT_NOTICE_ID ? ((list.find(n => String(n?.id||'') === CURRENT_NOTICE_ID) || {}).createdAt || now) : now,
+      updatedAt: now,
       expires: form.expires,
+      expiresAt: form.expiresAt,
+      startsOn: form.startsOn,
+      startsAt: form.startsAt,
       public: form.home.enabled && form.home.visibility === 'public',
       isPublic: form.home.enabled && form.home.visibility === 'public',
       showOnHome: !!form.home.enabled,
       published: true,
       status: (form.home.enabled && form.home.visibility === 'public') ? 'public' : 'private',
       targets: form.targets,
+      target: form.target,
       home: form.home
-    }].concat(list || []);
+    };
+
+    const filtered = (list || []).filter(n => String((n && n.id) || '') !== String(notice.id || ''));
+    const next = [notice].concat(filtered);
 
     await anwSaveSafe(window.getNoticesKey(), next);
-    msg.textContent = 'Notice published.';
+    const feedback = CURRENT_NOTICE_ID ? 'Notice updated.' : 'Notice published.';
     await renderNoticesList();
+    resetNoticeForm();
+    msg.textContent = feedback;
   }
 
   function renderNoticeRowActions(n){
-    const isBinImport = !!(n && n.meta && n.meta.type === 'bin_collection_import');
-    if(!isBinImport) return '';
     return `
       <div class="notice-actions">
+        <button type="button" class="btn btn-line small" data-edit-notice="${esc(n.id || '')}">Edit</button>
         <button type="button" class="btn btn-line small" data-del-notice="${esc(n.id || '')}">Delete</button>
       </div>
     `;
@@ -1659,8 +1742,10 @@
 
   async function deleteNoticeById(id){
     const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => String((n && n.id) || '') !== String(id || ''));
+    const targetId = String(id || '');
+    const next = (list || []).filter(n => String((n && n.id) || '') !== targetId);
     await anwSaveSafe(window.getNoticesKey(), next);
+    if(CURRENT_NOTICE_ID === targetId) resetNoticeForm();
     await renderNoticesList();
   }
 
@@ -1691,14 +1776,22 @@
           <div class="notice-card-meta">
             <span class="notice-chip">Home: ${(n.home && n.home.enabled) ? esc(n.home.visibility || 'private') : 'disabled'}</span>
             ${n.date ? `<span class="notice-chip">Collection date: ${esc(fmtDateShort(n.date))}</span>` : ''}
-            ${n.startsOn ? `<span class="notice-chip">Show from: ${esc(fmtDateShort(n.startsOn))}</span>` : ''}
-            ${n.endsOn ? `<span class="notice-chip">Show until: ${esc(fmtDateShort(n.endsOn))}</span>` : ''}
+            ${(n.startsOn || n.startsAt || n.startDate) ? `<span class="notice-chip">Show from: ${esc(fmtDateShort(n.startsOn || n.startsAt || n.startDate))}</span>` : ''}
+            ${(n.endsOn || n.endDate || n.expires || n.expiresAt) ? `<span class="notice-chip">Show until: ${esc(fmtDateShort(n.endsOn || n.endDate || n.expires || n.expiresAt))}</span>` : ''}
           </div>
 
           ${renderNoticeRowActions(n)}
         </div>
       </div>
     `).join('') || '<p class="tiny muted">No notices found.</p>';
+
+    $$('[data-edit-notice]', listEl).forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-edit-notice');
+        const item = sorted.find(n => String((n && n.id) || '') === String(targetId || ''));
+        if(item) populateNoticeForm(item);
+      });
+    });
 
     $$('[data-del-notice]', listEl).forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -1954,16 +2047,7 @@
   });
 
   byId('btnNtPublish')?.addEventListener('click', publishNotice);
-  byId('btnNtClear')?.addEventListener('click', () => {
-    ['ntTitle','ntMessage','ntExpires','ntEirPrefixes','ntStreets','ntEircodes','ntEmails'].forEach(id => { if(byId(id)) byId(id).value = ''; });
-    if(byId('ntCategory')) byId('ntCategory').value = 'General';
-    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = false;
-    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = 'private';
-    if(byId('ntAllLogged')) byId('ntAllLogged').checked = true;
-    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = false;
-    $$('.ntRole').forEach(x => x.checked = false);
-    byId('ntMsg').textContent = '';
-  });
+  byId('btnNtClear')?.addEventListener('click', resetNoticeForm);
 
   byId('btnBinImport')?.addEventListener('click', importPandaSchedule);
   byId('btnClearBinNotices')?.addEventListener('click', clearImportedBinNotices);
