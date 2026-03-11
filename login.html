@@ -9,9 +9,7 @@
 
 <style>
   :root{
-    --lp-bg:#f4f8fb;
     --lp-card:#ffffff;
-    --lp-card-soft:#fbfefd;
     --lp-line:rgba(15,23,42,.10);
     --lp-line-strong:rgba(15,23,42,.16);
     --lp-text:#0f172a;
@@ -22,7 +20,7 @@
     --lp-blue-soft:#eef5ff;
     --lp-danger:#b02a37;
     --lp-ok:#0f5132;
-    --lp-shadow:0 20px 48px rgba(15,23,42,.08);
+    --lp-shadow:0 18px 44px rgba(15,23,42,.08);
     --lp-radius-xl:28px;
     --lp-radius-lg:22px;
     --lp-radius-md:16px;
@@ -31,13 +29,13 @@
   body.page-login{
     background:
       radial-gradient(circle at top left, rgba(47,125,91,.08), transparent 22%),
-      radial-gradient(circle at top right, rgba(59,130,246,.07), transparent 24%),
-      linear-gradient(180deg,#f9fbfd 0%,#f3f7fb 100%);
+      radial-gradient(circle at top right, rgba(59,130,246,.06), transparent 24%),
+      linear-gradient(180deg,#f8fbfd 0%,#f3f7fb 100%);
     color:var(--lp-text);
   }
 
   body.page-login main.wrap{
-    max-width:1220px;
+    max-width:1180px;
     padding-top:24px;
     padding-bottom:44px;
   }
@@ -58,10 +56,9 @@
   }
 
   body.page-login .hero-panel{
-    padding:30px 30px 28px;
+    padding:28px 28px 26px;
     background:
       radial-gradient(circle at top right, rgba(47,125,91,.10), transparent 30%),
-      radial-gradient(circle at bottom left, rgba(59,130,246,.05), transparent 26%),
       linear-gradient(180deg,#ffffff 0%,#fbfefd 100%);
   }
 
@@ -88,39 +85,11 @@
   }
 
   body.page-login .hero-panel p{
-    margin:0 0 16px;
+    margin:0;
     color:var(--lp-muted);
     font-size:15px;
     line-height:1.7;
     max-width:760px;
-  }
-
-  body.page-login .hero-points{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-top:12px;
-  }
-
-  body.page-login .hero-point{
-    border:1px solid var(--lp-line);
-    border-radius:18px;
-    padding:14px 14px 12px;
-    background:#fff;
-  }
-
-  body.page-login .hero-point strong{
-    display:block;
-    margin-bottom:4px;
-    font-size:14px;
-    color:var(--lp-text);
-  }
-
-  body.page-login .hero-point span{
-    display:block;
-    color:var(--lp-muted);
-    font-size:13px;
-    line-height:1.55;
   }
 
   body.page-login .hero-side{
@@ -128,13 +97,12 @@
     display:grid;
     gap:12px;
     align-content:start;
-    background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%);
   }
 
   body.page-login .hero-mini{
     border:1px solid var(--lp-line);
     border-radius:18px;
-    padding:15px 16px;
+    padding:14px 16px;
     background:#fcfefd;
   }
 
@@ -174,6 +142,8 @@
 
   body.page-login .card h3{
     color:var(--lp-text);
+    margin:0 0 4px;
+    font-size:18px;
   }
 
   body.page-login .section-note{
@@ -212,6 +182,12 @@
     outline:none;
     border-color:rgba(47,125,91,.42);
     box-shadow:0 0 0 4px rgba(47,125,91,.10);
+  }
+
+  body.page-login .two-col{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
   }
 
   body.page-login .actions{
@@ -254,14 +230,6 @@
     background:var(--lp-primary-dark);
   }
 
-  body.page-login .muted{
-    color:var(--lp-muted);
-  }
-
-  body.page-login .tiny{
-    font-size:12px;
-  }
-
   body.page-login .msg{
     margin-top:10px;
     font-size:14px;
@@ -271,6 +239,46 @@
 
   body.page-login .msg.ok{ color:var(--lp-ok); }
   body.page-login .msg.error{ color:var(--lp-danger); }
+
+  body.page-login .muted{ color:var(--lp-muted); }
+  body.page-login .tiny{ font-size:12px; }
+
+  body.page-login .info-box{
+    border:1px solid var(--lp-line);
+    border-radius:18px;
+    background:#fcfefd;
+    padding:14px;
+    margin-top:4px;
+  }
+
+  body.page-login .info-box strong{
+    display:block;
+    font-size:14px;
+    margin-bottom:4px;
+    color:var(--lp-text);
+  }
+
+  body.page-login .info-box span{
+    display:block;
+    color:var(--lp-muted);
+    font-size:13px;
+    line-height:1.55;
+  }
+
+  body.page-login .form-panel{
+    border:1px solid var(--lp-line);
+    border-radius:22px;
+    background:#fbfefd;
+    padding:18px;
+    margin-top:14px;
+  }
+
+  body.page-login .form-panel p{
+    margin:0 0 14px;
+    color:var(--lp-muted);
+    font-size:13px;
+    line-height:1.55;
+  }
 
   body.page-login .chk{
     display:flex;
@@ -332,343 +340,12 @@
     display:none !important;
   }
 
-  body.page-login .login-title-row{
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap:14px;
-    margin-bottom:12px;
-  }
-
-  body.page-login .status-chip-row{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    margin-top:10px;
-  }
-
-  body.page-login .status-chip{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    padding:8px 12px;
-    border-radius:999px;
-    font-size:12px;
-    font-weight:800;
-    letter-spacing:.01em;
-    border:1px solid var(--lp-line);
-    background:#fff;
-    color:var(--lp-text);
-  }
-
-  body.page-login .status-chip.ok{
-    background:var(--lp-primary-soft);
-    color:var(--lp-primary-dark);
-    border-color:rgba(47,125,91,.18);
-  }
-
-  body.page-login .status-chip.soft{
-    background:#f8fafc;
-    color:#334155;
-  }
-
-  body.page-login .account-shell{
-    display:grid;
-    grid-template-columns:290px 1fr;
-    gap:18px;
-    align-items:start;
-  }
-
-  body.page-login .account-side,
-  body.page-login .account-main{
-    border:1px solid var(--lp-line);
-    border-radius:24px;
-    padding:18px;
-    background:#fff;
-  }
-
-  body.page-login .account-side{
-    background:
-      radial-gradient(circle at top center, rgba(47,125,91,.10), transparent 34%),
-      linear-gradient(180deg,#fcfffd 0%,#fff 100%);
-  }
-
-  body.page-login .photo-card{
-    display:grid;
-    gap:12px;
-    justify-items:center;
-  }
-
-  body.page-login .photo-frame{
-    width:196px;
-    height:196px;
-    border-radius:28px;
-    border:1px dashed rgba(47,125,91,.38);
-    background:linear-gradient(180deg,rgba(47,125,91,.05) 0%, rgba(59,130,246,.04) 100%);
-    display:grid;
-    place-items:center;
-    overflow:hidden;
-    position:relative;
-  }
-
-  body.page-login .photo-frame img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-  }
-
-  body.page-login .photo-placeholder{
-    text-align:center;
-    padding:16px;
-    color:var(--lp-muted);
-  }
-
-  body.page-login .photo-placeholder strong{
-    display:block;
-    margin-bottom:6px;
-    color:var(--lp-text);
-    font-size:16px;
-  }
-
-  body.page-login .photo-actions{
-    width:100%;
-    display:grid;
-    gap:8px;
-  }
-
-  body.page-login .photo-actions .btn{
-    width:100%;
-  }
-
-  body.page-login .account-identity{
-    text-align:center;
-    margin-top:6px;
-  }
-
-  body.page-login .account-identity h3{
-    margin:0 0 6px;
-    font-size:22px;
-  }
-
-  body.page-login .account-identity p{
-    margin:0;
-    color:var(--lp-muted);
-    font-size:13px;
-    line-height:1.45;
-    word-break:break-word;
-  }
-
-  body.page-login .account-main-top{
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap:14px;
-    margin-bottom:14px;
-  }
-
-  body.page-login .account-main-top h3{
-    margin:0 0 6px;
-    font-size:24px;
-  }
-
-  body.page-login .account-main-top p{
-    margin:0;
-    color:var(--lp-muted);
-    font-size:14px;
-    line-height:1.5;
-  }
-
-  body.page-login .account-summary{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:12px;
-    margin-bottom:18px;
-  }
-
-  body.page-login .summary-item{
-    border:1px solid var(--lp-line);
-    border-radius:18px;
-    background:#fbfdfc;
-    padding:14px 14px 12px;
-  }
-
-  body.page-login .summary-item .k{
-    display:block;
-    font-size:12px;
-    color:var(--lp-muted);
-    margin-bottom:5px;
-    text-transform:uppercase;
-    letter-spacing:.03em;
-    font-weight:800;
-  }
-
-  body.page-login .summary-item .v{
-    color:var(--lp-text);
-    font-size:15px;
-    line-height:1.45;
-    word-break:break-word;
-  }
-
-  body.page-login .section-divider{
-    height:1px;
-    background:var(--lp-line);
-    margin:18px 0;
-  }
-
-  body.page-login .update-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-  }
-
-  body.page-login .account-actions{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-top:14px;
-  }
-
-  body.page-login .account-actions .btn{
-    min-width:150px;
-  }
-
-  body.page-login .login-note-card{
-    margin-top:14px;
-    border:1px solid var(--lp-line);
-    border-radius:18px;
-    background:#fbfdfc;
-    padding:12px 14px;
-    color:var(--lp-muted);
-    font-size:13px;
-    line-height:1.6;
-  }
-
-  body.page-login .register-shell{
-    display:grid;
-    gap:16px;
-  }
-
-  body.page-login .register-top{
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap:16px;
-    margin-bottom:2px;
-  }
-
-  body.page-login .register-top-badge{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    border-radius:999px;
-    padding:8px 12px;
-    background:var(--lp-blue-soft);
-    color:#2754a6;
-    font-size:12px;
-    font-weight:800;
-    text-transform:uppercase;
-    letter-spacing:.02em;
-    white-space:nowrap;
-  }
-
-  body.page-login .register-info-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-  }
-
-  body.page-login .info-box{
-    border:1px solid var(--lp-line);
-    border-radius:18px;
-    background:#fcfefd;
-    padding:14px;
-  }
-
-  body.page-login .info-box strong{
-    display:block;
-    font-size:14px;
-    margin-bottom:4px;
-    color:var(--lp-text);
-  }
-
-  body.page-login .info-box span{
-    display:block;
-    color:var(--lp-muted);
-    font-size:13px;
-    line-height:1.55;
-  }
-
-  body.page-login .register-sections{
-    display:grid;
-    gap:16px;
-  }
-
-  body.page-login .form-panel{
-    border:1px solid var(--lp-line);
-    border-radius:22px;
-    background:var(--lp-card-soft);
-    padding:18px;
-  }
-
-  body.page-login .form-panel h3{
-    margin:0 0 4px;
-    font-size:18px;
-  }
-
-  body.page-login .form-panel p{
-    margin:0 0 14px;
-    color:var(--lp-muted);
-    font-size:13px;
-    line-height:1.55;
-  }
-
-  body.page-login .two-col{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-  }
-
-  body.page-login .register-cta{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:14px;
-    padding:16px 18px;
-    border:1px solid var(--lp-line);
-    border-radius:22px;
-    background:#fff;
-  }
-
-  body.page-login .register-cta-copy strong{
-    display:block;
-    margin-bottom:4px;
-    font-size:15px;
-    color:var(--lp-text);
-  }
-
-  body.page-login .register-cta-copy span{
-    color:var(--lp-muted);
-    font-size:13px;
-    line-height:1.55;
-  }
-
   @media (max-width: 1080px){
     body.page-login .hero-login{
       grid-template-columns:1fr;
     }
     body.page-login .grid{
       grid-template-columns:1fr;
-    }
-  }
-
-  @media (max-width: 840px){
-    body.page-login .account-shell{
-      grid-template-columns:1fr;
-    }
-    body.page-login .photo-frame{
-      width:176px;
-      height:176px;
     }
   }
 
@@ -683,21 +360,9 @@
     body.page-login .hero-panel h2{
       font-size:30px;
     }
-    body.page-login .hero-points,
-    body.page-login .role-grid,
-    body.page-login .account-summary,
-    body.page-login .update-grid,
-    body.page-login .register-info-grid,
-    body.page-login .two-col{
+    body.page-login .two-col,
+    body.page-login .role-grid{
       grid-template-columns:1fr;
-    }
-    body.page-login .register-top,
-    body.page-login .register-cta{
-      flex-direction:column;
-      align-items:flex-start;
-    }
-    body.page-login .account-actions .btn{
-      width:100%;
     }
   }
 </style>
@@ -846,341 +511,202 @@
       <div class="hero-badge">Residents portal</div>
       <h2>Secure access for residents, volunteers and coordinators</h2>
       <p>
-        Use this page to sign in, register your residence, manage your profile, and keep your details updated for community communication.
-        The profile photo area below is linked to your resident record and saved together with your account details.
+        Sign in with your registered email, eircode and password, or create a new resident account for admin approval.
       </p>
-
-      <div class="hero-points">
-        <div class="hero-point">
-          <strong>Connected to your site</strong>
-          <span>Uses Netlify Identity, <code>anw_users</code>, session handling, dashboard routing and admin routing.</span>
-        </div>
-        <div class="hero-point">
-          <strong>Photo stored with user</strong>
-          <span>Your face photo is saved inside the user profile record under <code>photoDataUrl</code>.</span>
-        </div>
-      </div>
     </div>
 
     <div class="hero-side">
       <div class="hero-mini">
-        <strong>Automatic routing</strong>
-        <span>Approved admin-type users are sent to <code>admin.html</code>. Other approved residents go to <code>dashboard.html</code>.</span>
+        <strong>Login check</strong>
+        <span>The login checks your email, password and registered eircode before access is granted.</span>
       </div>
       <div class="hero-mini">
-        <strong>Cleaner account view</strong>
-        <span>Repeated information was removed so the page looks more presentable and easier to use.</span>
+        <strong>Street preview</strong>
+        <span>When the email and eircode match a resident record, the Street field shows the address saved in registration.</span>
       </div>
       <div class="hero-mini">
-        <strong>Profile management</strong>
-        <span>Residents can update their name, phone, alert consent and profile photo directly from this page.</span>
+        <strong>Admin approval</strong>
+        <span>New registrations stay pending until an ANW admin reviews and approves the account.</span>
       </div>
     </div>
   </section>
 
   <div class="grid">
     <section class="card" id="login">
-      <div class="login-title-row">
-        <div>
-          <h2>Login</h2>
-          <p class="section-note">Enter your registered email, Eircode and password to access your account securely.</p>
-        </div>
+      <h2>Login</h2>
+      <p class="section-note">Enter your registered email, eircode and password to access your account.</p>
+
+      <div class="field">
+        <label>Email</label>
+        <input autocomplete="email" id="loginEmail" type="email"/>
       </div>
 
-      <div id="loggedAccountWrap" style="display:none;">
-        <div class="account-shell">
-          <div class="account-side">
-            <div class="photo-card">
-              <div class="photo-frame" id="photoFrame">
-                <img alt="Profile photo" id="profilePhotoPreview" style="display:none;"/>
-                <div class="photo-placeholder" id="profilePhotoPlaceholder">
-                  <strong>Profile photo</strong>
-                  <span>Add a clear face photo for your resident account.</span>
-                </div>
-              </div>
-
-              <input accept="image/*" hidden id="profilePhotoInput" type="file"/>
-
-              <div class="photo-actions">
-                <button class="btn" id="btnAddPhoto" type="button">Add photo</button>
-                <button class="btn btn-line" id="btnRemovePhoto" type="button">Remove photo</button>
-              </div>
-            </div>
-
-            <div class="account-identity">
-              <h3 id="accName">—</h3>
-              <p id="accEmail">—</p>
-            </div>
-          </div>
-
-          <div class="account-main">
-            <div class="account-main-top">
-              <div>
-                <h3>My Account</h3>
-                <p>Review your details below and keep your profile information current.</p>
-              </div>
-              <div class="status-chip-row">
-                <span class="status-chip ok" id="accStatusChip">Status: —</span>
-                <span class="status-chip soft" id="accRoleChip">Role: —</span>
-              </div>
-            </div>
-
-            <div class="account-summary">
-              <div class="summary-item">
-                <span class="k">Eircode</span>
-                <span class="v" id="accEircode">—</span>
-              </div>
-              <div class="summary-item">
-                <span class="k">Phone</span>
-                <span class="v" id="accPhone">—</span>
-              </div>
-              <div class="summary-item">
-                <span class="k">Resident type</span>
-                <span class="v" id="accResidentType">—</span>
-              </div>
-              <div class="summary-item">
-                <span class="k">Management company</span>
-                <span class="v" id="accManagement">—</span>
-              </div>
-              <div class="summary-item">
-                <span class="k">Volunteer roles</span>
-                <span class="v" id="accVolunteerRoles">—</span>
-              </div>
-              <div class="summary-item">
-                <span class="k">Session time</span>
-                <span class="v" id="accSessionTime">—</span>
-              </div>
-            </div>
-
-            <div class="section-divider"></div>
-
-            <h3 style="margin:0 0 12px;">Update profile</h3>
-
-            <div class="update-grid">
-              <div class="field">
-                <label>Full name</label>
-                <input id="updName" type="text"/>
-              </div>
-
-              <div class="field">
-                <label>Phone number</label>
-                <input id="updPhone" type="tel"/>
-              </div>
-            </div>
-
-            <label class="chk" style="margin-top:4px;">
-              <input id="updAlertsOptIn" type="checkbox"/>
-              <span>Send me community alerts by Email, SMS or WhatsApp</span>
-            </label>
-
-            <div class="account-actions">
-              <button class="btn" id="btnUpdateProfile" type="button">Save profile</button>
-              <button class="btn btn-line" id="btnOpenDashboard" type="button">Open dashboard</button>
-              <button class="btn btn-line" id="btnAccountLogout" type="button">Logout</button>
-            </div>
-
-            <div class="msg" id="profileMsg"></div>
-          </div>
-        </div>
-
-        <div class="login-note-card">
-          Your profile photo is saved together with your user profile inside the resident storage record.
-        </div>
-      </div>
-
-      <div id="loggedOutArea">
-        <div class="field">
-          <label>Email</label>
-          <input autocomplete="email" id="loginEmail" type="email"/>
-        </div>
-
+      <div class="two-col">
         <div class="field">
           <label>Eircode</label>
-          <input autocomplete="postal-code" id="loginEir" placeholder="e.g., K78XXXX" type="text"/>
-        </div>
-
-        <div class="field" id="loginAddrWrap" style="display:none;">
-          <label>Registered address</label>
-          <input disabled="" id="loginAddr" type="text"/>
-          <p class="tiny muted" style="margin-top:0.25rem;">Check this address matches your home before entering your password.</p>
+          <input autocomplete="postal-code" id="loginEir" placeholder="e.g. K78XXXX" type="text"/>
         </div>
 
         <div class="field">
-          <label>Password</label>
-          <input autocomplete="current-password" id="loginPass" type="password"/>
+          <label>Street</label>
+          <input disabled id="loginStreet" type="text" value=""/>
         </div>
+      </div>
 
-        <div class="actions" style="justify-content:space-between">
-          <span></span>
-          <div class="actions">
-            <button class="btn btn-line" id="btnShow" type="button">Show</button>
-            <button class="btn" id="btnLogin" type="button">Enter</button>
-          </div>
+      <div class="field">
+        <label>Password</label>
+        <input autocomplete="current-password" id="loginPass" type="password"/>
+      </div>
+
+      <div class="actions" style="justify-content:space-between">
+        <span></span>
+        <div class="actions">
+          <button class="btn btn-line" id="btnShow" type="button">Show</button>
+          <button class="btn" id="btnLogin" type="button">Enter</button>
         </div>
+      </div>
 
-        <div class="msg" id="loginMsg"></div>
+      <div class="msg" id="loginMsg"></div>
 
-        <p class="muted tiny" style="margin-top:4px;">
-          <a class="link" href="#" id="lnkForgot">I forgot my password</a>
-        </p>
+      <p class="muted tiny" style="margin-top:4px;">
+        <a class="link" href="#" id="lnkForgot">I forgot my password</a>
+      </p>
 
-        <div hidden="" id="resetBlock" style="margin-top:10px; padding-top:10px; border-top:1px dashed rgba(17,24,39,.15);">
-          <div class="field">
-            <label>Email</label>
-            <input autocomplete="email" id="resetEmail" type="email"/>
-          </div>
-          <div class="actions">
-            <button class="btn" id="btnSendReset" type="button">Send reset email</button>
-            <button class="btn btn-line" id="btnCancelReset" type="button">Cancel</button>
-          </div>
-          <div class="msg" id="resetMsg"></div>
+      <div hidden id="resetBlock" style="margin-top:10px; padding-top:10px; border-top:1px dashed rgba(17,24,39,.15);">
+        <div class="field">
+          <label>Email</label>
+          <input autocomplete="email" id="resetEmail" type="email"/>
         </div>
+        <div class="actions">
+          <button class="btn" id="btnSendReset" type="button">Send reset email</button>
+          <button class="btn btn-line" id="btnCancelReset" type="button">Cancel</button>
+        </div>
+        <div class="msg" id="resetMsg"></div>
+      </div>
+
+      <div class="info-box">
+        <strong>Important</strong>
+        <span>If the eircode is not found in the registered resident list, the Street field shows “Eircode not registered”.</span>
       </div>
     </section>
 
     <section class="card" id="register">
-      <div class="register-shell">
-        <div class="register-top">
-          <div>
-            <h2>Create your resident account</h2>
-            <p class="section-note">New registrations remain pending until approved by an ANW admin.</p>
-          </div>
-          <div class="register-top-badge">Registration</div>
-        </div>
+      <h2>Create your resident account</h2>
+      <p class="section-note">New registrations remain pending until approved by an ANW admin.</p>
 
-        <div class="register-info-grid">
-          <div class="info-box">
-            <strong>What happens after registration?</strong>
-            <span>Your details are saved, and your account remains pending until an admin approves it.</span>
-          </div>
-          <div class="info-box">
-            <strong>One account per residence</strong>
-            <span>The system checks for duplicate Eircodes to keep the resident list clean and accurate.</span>
-          </div>
-        </div>
+      <div class="form-panel">
+        <h3>Resident details</h3>
+        <p>Enter the main details associated with your residence.</p>
 
-        <div class="register-sections">
-          <div class="form-panel">
-            <h3>Resident details</h3>
-            <p>Enter the main details associated with your residence.</p>
-
-            <div class="two-col">
-              <div class="field">
-                <label>Full name</label>
-                <input id="regName" type="text"/>
-              </div>
-
-              <div class="field">
-                <label>Email</label>
-                <input autocomplete="email" id="regEmail" type="email"/>
-              </div>
-            </div>
-
-            <div class="two-col">
-              <div class="field">
-                <label>Eircode</label>
-                <input autocomplete="postal-code" id="regEir" placeholder="e.g., K78XXXX" type="text"/>
-              </div>
-
-              <div class="field">
-                <label>Phone</label>
-                <input autocomplete="tel" id="regPhone" placeholder="+353851234567" type="tel"/>
-              </div>
-            </div>
-
-            <div class="field">
-              <label>Address</label>
-              <input id="regAddress" type="text"/>
-            </div>
-
-            <div class="two-col">
-              <div class="field">
-                <label>Resident type</label>
-                <select id="regType">
-                  <option value="">Select…</option>
-                  <option value="owner">Owner</option>
-                  <option value="tenant">Tenant</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label>Management company</label>
-                <input id="regMgmt" type="text"/>
-              </div>
-            </div>
+        <div class="two-col">
+          <div class="field">
+            <label>Full name</label>
+            <input id="regName" type="text"/>
           </div>
 
-          <div class="form-panel">
-            <h3>Security and participation</h3>
-            <p>Choose your password and let the community know how you may wish to help.</p>
-
-            <div class="two-col">
-              <div class="field">
-                <label>Password</label>
-                <input autocomplete="new-password" id="regPass" type="password"/>
-              </div>
-
-              <div class="field">
-                <label>Confirm password</label>
-                <input autocomplete="new-password" id="regPass2" type="password"/>
-              </div>
-            </div>
-
-            <label class="chk">
-              <input id="regCoord" type="checkbox"/>
-              <span>I would like to be considered for a coordinator role</span>
-            </label>
-
-            <label class="chk">
-              <input id="regVolunteer" type="checkbox"/>
-              <span>I would like to volunteer</span>
-            </label>
-
-            <div class="volunteer-block" hidden="" id="volunteerOptions">
-              <div class="role-grid">
-                <label class="chk"><input id="volStreetWatch" type="checkbox"/><span>Street watch / patrols</span></label>
-                <label class="chk"><input id="volLeaflets" type="checkbox"/><span>Distribute leaflets</span></label>
-                <label class="chk"><input id="volTech" type="checkbox"/><span>Tech support</span></label>
-                <label class="chk"><input id="volElderly" type="checkbox"/><span>Elderly checks</span></label>
-                <label class="chk"><input id="volCleanup" type="checkbox"/><span>Community clean-up</span></label>
-                <label class="chk"><input id="volParking" type="checkbox"/><span>Parking assistance</span></label>
-                <label class="chk"><input id="volMeetings" type="checkbox"/><span>Meeting organiser</span></label>
-                <label class="chk"><input id="volTranslation" type="checkbox"/><span>Translation</span></label>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-panel">
-            <h3>Consent</h3>
-            <p>These confirmations are required to manage your participation correctly.</p>
-
-            <div class="consent-block" style="margin-top:0; padding-top:0; border-top:0;">
-              <label class="chk">
-                <input id="regAlertOptIn" type="checkbox"/>
-                <span>I consent to receive community alerts (Email / SMS / WhatsApp)</span>
-              </label>
-
-              <label class="chk">
-                <input id="regTerms" type="checkbox"/>
-                <span>I accept the Privacy Policy & Terms</span>
-              </label>
-            </div>
+          <div class="field">
+            <label>Email</label>
+            <input autocomplete="email" id="regEmail" type="email"/>
           </div>
         </div>
 
-        <div class="register-cta">
-          <div class="register-cta-copy">
-            <strong>Ready to create your account?</strong>
-            <span>Submit your details and wait for admin approval before first access.</span>
+        <div class="two-col">
+          <div class="field">
+            <label>Eircode</label>
+            <input autocomplete="postal-code" id="regEir" placeholder="e.g. K78XXXX" type="text"/>
           </div>
-          <div class="actions">
-            <button class="btn" id="btnRegister" type="button">Create account</button>
+
+          <div class="field">
+            <label>Phone</label>
+            <input autocomplete="tel" id="regPhone" placeholder="+353851234567" type="tel"/>
           </div>
         </div>
 
-        <div class="msg" id="regMsg"></div>
+        <div class="field">
+          <label>Address</label>
+          <input id="regAddress" type="text"/>
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label>Resident type</label>
+            <select id="regType">
+              <option value="">Select…</option>
+              <option value="owner">Owner</option>
+              <option value="tenant">Tenant</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Management company</label>
+            <input id="regMgmt" type="text"/>
+          </div>
+        </div>
       </div>
+
+      <div class="form-panel">
+        <h3>Security and participation</h3>
+        <p>Choose your password and let the community know how you may wish to help.</p>
+
+        <div class="two-col">
+          <div class="field">
+            <label>Password</label>
+            <input autocomplete="new-password" id="regPass" type="password"/>
+          </div>
+
+          <div class="field">
+            <label>Confirm password</label>
+            <input autocomplete="new-password" id="regPass2" type="password"/>
+          </div>
+        </div>
+
+        <label class="chk">
+          <input id="regCoord" type="checkbox"/>
+          <span>I would like to be considered for a coordinator role</span>
+        </label>
+
+        <label class="chk">
+          <input id="regVolunteer" type="checkbox"/>
+          <span>I would like to volunteer</span>
+        </label>
+
+        <div class="volunteer-block" hidden id="volunteerOptions">
+          <div class="role-grid">
+            <label class="chk"><input id="volStreetWatch" type="checkbox"/><span>Street watch / patrols</span></label>
+            <label class="chk"><input id="volLeaflets" type="checkbox"/><span>Distribute leaflets</span></label>
+            <label class="chk"><input id="volTech" type="checkbox"/><span>Tech support</span></label>
+            <label class="chk"><input id="volElderly" type="checkbox"/><span>Elderly checks</span></label>
+            <label class="chk"><input id="volCleanup" type="checkbox"/><span>Community clean-up</span></label>
+            <label class="chk"><input id="volParking" type="checkbox"/><span>Parking assistance</span></label>
+            <label class="chk"><input id="volMeetings" type="checkbox"/><span>Meeting organiser</span></label>
+            <label class="chk"><input id="volTranslation" type="checkbox"/><span>Translation</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-panel">
+        <h3>Consent</h3>
+        <p>These confirmations are required to manage your participation correctly.</p>
+
+        <div class="consent-block" style="margin-top:0; padding-top:0; border-top:0;">
+          <label class="chk">
+            <input id="regAlertOptIn" type="checkbox"/>
+            <span>I consent to receive community alerts (Email / SMS / WhatsApp)</span>
+          </label>
+
+          <label class="chk">
+            <input id="regTerms" type="checkbox"/>
+            <span>I accept the Privacy Policy & Terms</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="btnRegister" type="button">Create account</button>
+      </div>
+
+      <div class="msg" id="regMsg"></div>
     </section>
   </div>
 
@@ -1249,9 +775,9 @@
   function modal(msg, title){
     try{
       if(window.anwModal) return window.anwModal(msg, title);
-      alert((title ? title + '\n\n' : '') + msg);
+      alert((title ? title + '\\n\\n' : '') + msg);
     }catch(_){
-      alert((title ? title + '\n\n' : '') + msg);
+      alert((title ? title + '\\n\\n' : '') + msg);
     }
   }
 
@@ -1304,44 +830,19 @@
     return m * 60 * 1000;
   }
 
-  const registerSection = document.getElementById('register');
-  const loggedOutArea = document.getElementById('loggedOutArea');
-  const loggedAccountWrap = document.getElementById('loggedAccountWrap');
-
-  const accName = document.getElementById('accName');
-  const accEmail = document.getElementById('accEmail');
-  const accStatusChip = document.getElementById('accStatusChip');
-  const accRoleChip = document.getElementById('accRoleChip');
-  const accEircode = document.getElementById('accEircode');
-  const accPhone = document.getElementById('accPhone');
-  const accResidentType = document.getElementById('accResidentType');
-  const accManagement = document.getElementById('accManagement');
-  const accVolunteerRoles = document.getElementById('accVolunteerRoles');
-  const accSessionTime = document.getElementById('accSessionTime');
-
-  const updName = document.getElementById('updName');
-  const updPhone = document.getElementById('updPhone');
-  const updAlertsOptIn = document.getElementById('updAlertsOptIn');
-  const btnUpdateProfile = document.getElementById('btnUpdateProfile');
-  const btnOpenDashboard = document.getElementById('btnOpenDashboard');
-  const btnAccountLogout = document.getElementById('btnAccountLogout');
-  const profileMsg = document.getElementById('profileMsg');
-
-  const profilePhotoInput = document.getElementById('profilePhotoInput');
-  const profilePhotoPreview = document.getElementById('profilePhotoPreview');
-  const profilePhotoPlaceholder = document.getElementById('profilePhotoPlaceholder');
-  const btnAddPhoto = document.getElementById('btnAddPhoto');
-  const btnRemovePhoto = document.getElementById('btnRemovePhoto');
+  function streetFromAddress(address){
+    const s = String(address || '').trim();
+    if(!s) return '';
+    return s.split(',')[0].trim() || s;
+  }
 
   const loginEmail = document.getElementById('loginEmail');
   const loginEir   = document.getElementById('loginEir');
   const loginPass  = document.getElementById('loginPass');
+  const loginStreet = document.getElementById('loginStreet');
   const btnShow    = document.getElementById('btnShow');
   const btnLogin   = document.getElementById('btnLogin');
   const loginMsg   = document.getElementById('loginMsg');
-
-  const loginAddrWrap = document.getElementById('loginAddrWrap');
-  const loginAddr     = document.getElementById('loginAddr');
 
   const regName    = document.getElementById('regName');
   const regEmail   = document.getElementById('regEmail');
@@ -1395,36 +896,6 @@
     setVolunteerVisible(!!regVolunteer.checked);
   }
 
-  function renderPhoto(dataUrl){
-    const hasPhoto = !!(dataUrl && String(dataUrl).trim());
-    if(profilePhotoPreview){
-      profilePhotoPreview.style.display = hasPhoto ? 'block' : 'none';
-      profilePhotoPreview.src = hasPhoto ? dataUrl : '';
-    }
-    if(profilePhotoPlaceholder){
-      profilePhotoPlaceholder.style.display = hasPhoto ? 'none' : 'block';
-    }
-  }
-
-  async function findCurrentUserRecord(){
-    const u = window.netlifyIdentity && window.netlifyIdentity.currentUser
-      ? window.netlifyIdentity.currentUser()
-      : null;
-    if(!u || !u.email) return null;
-
-    await anwInitStore();
-    let users = anwLoad(KEY_USERS, []);
-    if(!Array.isArray(users)) users = [];
-    const idx = users.findIndex(x => (x.email || '').toLowerCase() === (u.email || '').toLowerCase());
-    if(idx < 0) return null;
-    return { user: users[idx], idx, users };
-  }
-
-  async function saveCurrentUserRecord(updatedUser, users, idx){
-    users[idx] = updatedUser;
-    await anwSave(KEY_USERS, users);
-  }
-
   [loginEmail, loginEir, loginPass].forEach((el)=>{
     if(!el) return;
     el.addEventListener('keydown', (ev)=>{
@@ -1455,31 +926,42 @@
   if(loginEmail) loginEmail.addEventListener('input', applySoftLockUI);
   if(loginEir) loginEir.addEventListener('input', applySoftLockUI);
 
-  async function updateLoginAddressPreview(){
-    if(!loginAddrWrap || !loginAddr) return;
-    loginAddrWrap.style.display = 'none';
-    loginAddr.value = '';
+  async function updateLoginStreetPreview(){
+    if(!loginStreet) return;
+    loginStreet.value = '';
 
     const email = (loginEmail.value || '').trim().toLowerCase();
     const eir   = normalizeEir(loginEir.value || '');
-    if(!email || !eir) return;
+
+    if(!email || !eir){
+      return;
+    }
 
     try{
       await anwInitStore();
       const users = anwLoad(KEY_USERS, []);
       const u = Array.isArray(users)
-        ? users.find(x => (x.email||'').toLowerCase() === email && normalizeEir(x.eircode||'') === eir)
+        ? users.find(x => (x.email||'').toLowerCase() === email)
         : null;
 
-      if(u && u.address){
-        loginAddr.value = u.address;
-        loginAddrWrap.style.display = 'block';
+      if(!u){
+        loginStreet.value = '';
+        return;
       }
-    }catch{}
+
+      if(normalizeEir(u.eircode || '') !== eir){
+        loginStreet.value = 'Eircode not registered';
+        return;
+      }
+
+      loginStreet.value = streetFromAddress(u.address || '') || 'Street not available';
+    }catch{
+      loginStreet.value = '';
+    }
   }
 
-  if(loginEmail) loginEmail.addEventListener('input', updateLoginAddressPreview);
-  if(loginEir) loginEir.addEventListener('input', updateLoginAddressPreview);
+  if(loginEmail) loginEmail.addEventListener('input', updateLoginStreetPreview);
+  if(loginEir) loginEir.addEventListener('input', updateLoginStreetPreview);
 
   if(btnShow){
     btnShow.addEventListener('click', () => {
@@ -1509,76 +991,6 @@
         at: new Date().toISOString()
       });
     }catch(e){}
-  }
-
-  let accountTimer = null;
-
-  function getVolunteerRolesText(me){
-    if(!me || !me.vol_roles || typeof me.vol_roles !== 'object') return '—';
-    const map = [
-      ['streetWatch', 'Street watch / patrols'],
-      ['leaflets', 'Distribute leaflets'],
-      ['tech', 'Tech support'],
-      ['elderly', 'Elderly checks'],
-      ['cleanup', 'Community clean-up'],
-      ['parking', 'Parking assistance'],
-      ['meetings', 'Meeting organiser'],
-      ['translation', 'Translation']
-    ];
-    const picked = map.filter(([key]) => !!me.vol_roles[key]).map(([,label]) => label);
-    return picked.length ? picked.join(', ') : '—';
-  }
-
-  function getMainRoleText(me){
-    const roles = [];
-    if(me && (me.isCoordinator || me.coordinator)) roles.push('Street Coordinator');
-    if(me && (me.isVolunteer || me.volunteer)) roles.push('Volunteer');
-    if(me && me.role && roles.length === 0) roles.push(String(me.role));
-    return roles.length ? roles.join(', ') : 'resident';
-  }
-
-  function getStatusText(me){
-    const status = String((me && me.status) || 'pending').toLowerCase();
-    if(status === 'active') return 'Active';
-    if(status === 'suspended' || status === 'removed') return 'Blocked';
-    return 'Pending approval';
-  }
-
-  function formatElapsed(ms){
-    const totalSec = Math.max(0, Math.floor(ms / 1000));
-    const hours = Math.floor(totalSec / 3600);
-    const mins = Math.floor((totalSec % 3600) / 60);
-    if(hours > 0) return hours + 'h ' + mins + 'm';
-    return mins + 'm';
-  }
-
-  function stopAccountTimer(){
-    if(accountTimer){
-      clearInterval(accountTimer);
-      accountTimer = null;
-    }
-  }
-
-  function startAccountTimer(){
-    stopAccountTimer();
-    let startedAt = 0;
-    try{ startedAt = Number(localStorage.getItem('anw_login_started_at') || '0'); }catch(_){}
-    if(!startedAt){
-      startedAt = Date.now();
-      try{ localStorage.setItem('anw_login_started_at', String(startedAt)); }catch(_){}
-    }
-    function tick(){
-      if(accSessionTime) accSessionTime.textContent = formatElapsed(Date.now() - startedAt);
-    }
-    tick();
-    accountTimer = setInterval(tick, 30000);
-  }
-
-  function setLoggedInUi(isLoggedIn){
-    if(loggedOutArea) loggedOutArea.style.display = isLoggedIn ? 'none' : 'block';
-    if(registerSection) registerSection.style.display = isLoggedIn ? 'none' : 'block';
-    if(loggedAccountWrap) loggedAccountWrap.style.display = isLoggedIn ? 'block' : 'none';
-    if(!isLoggedIn) stopAccountTimer();
   }
 
   function saveLegacySession(userRecord){
@@ -1621,135 +1033,6 @@
     return isAdminLikeUser(me) ? 'admin.html' : 'dashboard.html';
   }
 
-  async function performLogout(){
-    try{ window.netlifyIdentity.logout(); } catch {}
-    try{
-      const sKey = (window.ANW_KEYS && ANW_KEYS.SESSION) ? ANW_KEYS.SESSION : 'anw_session';
-      localStorage.removeItem(sKey);
-      localStorage.removeItem('anw_login_started_at');
-    }catch{}
-    if(loginPass) loginPass.value = '';
-    setMsg(loginMsg, 'You have been logged out.', '');
-    renderPhoto('');
-    await showLoggedAccountIfAny();
-    applySoftLockUI();
-  }
-
-  async function showLoggedAccountIfAny() {
-    const u = window.netlifyIdentity && window.netlifyIdentity.currentUser
-      ? window.netlifyIdentity.currentUser()
-      : null;
-
-    if (!u || !u.email) {
-      setLoggedInUi(false);
-      renderPhoto('');
-      applySoftLockUI();
-      return;
-    }
-
-    try{ await anwInitStore(); } catch {}
-
-    const users = anwLoad(KEY_USERS, []);
-    const me = Array.isArray(users)
-      ? users.find(x => (x.email||'').toLowerCase() === (u.email||'').toLowerCase())
-      : null;
-
-    if(!me){
-      setLoggedInUi(false);
-      renderPhoto('');
-      return;
-    }
-
-    const status = String((me.status || 'pending')).toLowerCase();
-    if(status === 'active') saveLegacySession(me);
-
-    if (accName) accName.textContent = me.name || '—';
-    if (accEmail) accEmail.textContent = me.email || '—';
-    if (accStatusChip) accStatusChip.textContent = 'Status: ' + getStatusText(me);
-    if (accRoleChip) accRoleChip.textContent = 'Role: ' + getMainRoleText(me);
-    if (accEircode) accEircode.textContent = me.eircode || '—';
-    if (accPhone) accPhone.textContent = me.phone || '—';
-    if (accResidentType) accResidentType.textContent = me.residentType || '—';
-    if (accManagement) accManagement.textContent = me.managementCompany || '—';
-    if (accVolunteerRoles) accVolunteerRoles.textContent = getVolunteerRolesText(me);
-
-    if (updName) updName.value = me.name || '';
-    if (updPhone) updPhone.value = me.phone || '';
-    if (updAlertsOptIn) updAlertsOptIn.checked = !!(me && me.alertsConsent && me.alertsConsent.optIn);
-
-    renderPhoto(me.photoDataUrl || '');
-
-    setLoggedInUi(true);
-    startAccountTimer();
-
-    try{ await updateLoginAddressPreview(); } catch {}
-  }
-
-  if(btnAddPhoto && profilePhotoInput){
-    btnAddPhoto.addEventListener('click', () => {
-      profilePhotoInput.click();
-    });
-  }
-
-  if(profilePhotoInput){
-    profilePhotoInput.addEventListener('change', async (ev) => {
-      setMsg(profileMsg, '', '');
-      const file = ev.target.files && ev.target.files[0];
-      if(!file) return;
-
-      if(!/^image\//i.test(file.type || '')){
-        setMsg(profileMsg, 'Please select a valid image file.', 'error');
-        profilePhotoInput.value = '';
-        return;
-      }
-
-      try{
-        const current = await findCurrentUserRecord();
-        if(!current){
-          setMsg(profileMsg, 'You must be logged in to update your photo.', 'error');
-          profilePhotoInput.value = '';
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = async function(){
-          current.user.photoDataUrl = String(reader.result || '');
-          current.user.updatedAt = new Date().toISOString();
-          await saveCurrentUserRecord(current.user, current.users, current.idx);
-          renderPhoto(current.user.photoDataUrl || '');
-          setMsg(profileMsg, 'Profile photo updated successfully.', 'ok');
-          await showLoggedAccountIfAny();
-        };
-        reader.readAsDataURL(file);
-      }catch(e){
-        setMsg(profileMsg, 'Could not save photo.', 'error');
-      }finally{
-        profilePhotoInput.value = '';
-      }
-    });
-  }
-
-  if(btnRemovePhoto){
-    btnRemovePhoto.addEventListener('click', async () => {
-      setMsg(profileMsg, '', '');
-      try{
-        const current = await findCurrentUserRecord();
-        if(!current){
-          setMsg(profileMsg, 'You must be logged in to remove your photo.', 'error');
-          return;
-        }
-        current.user.photoDataUrl = '';
-        current.user.updatedAt = new Date().toISOString();
-        await saveCurrentUserRecord(current.user, current.users, current.idx);
-        renderPhoto('');
-        setMsg(profileMsg, 'Profile photo removed.', 'ok');
-        await showLoggedAccountIfAny();
-      }catch(e){
-        setMsg(profileMsg, 'Could not remove photo.', 'error');
-      }
-    });
-  }
-
   if(btnLogin){
     btnLogin.addEventListener('click', async () => {
       setMsg(loginMsg, '', '');
@@ -1765,8 +1048,8 @@
       }
 
       if (!isValidEir(eir)) {
-        setMsg(loginMsg, 'Please enter a valid Eircode.', 'error');
-        modal('Please enter a valid Eircode (letters/numbers only).', 'Invalid Eircode');
+        setMsg(loginMsg, 'Please enter a valid eircode.', 'error');
+        modal('Please enter a valid eircode (letters/numbers only).', 'Invalid eircode');
         return;
       }
 
@@ -1813,7 +1096,7 @@
         if(normalizeEir(me.eircode || '') !== eir){
           try{ window.netlifyIdentity.logout(); } catch {}
           setMsg(loginMsg, 'Eircode does not match this account.', 'error');
-          modal('The Eircode entered does not match the registered address for this email.', 'Eircode mismatch');
+          modal('The eircode entered does not match the registered address for this email.', 'Eircode mismatch');
           return;
         }
 
@@ -1835,11 +1118,7 @@
         saveLegacySession(me);
         setMsg(loginMsg, 'Login successful. Redirecting…', 'ok');
 
-        try{ localStorage.setItem('anw_login_started_at', String(Date.now())); }catch(_){}
         await auditLog('LOGIN_OK', email, eir);
-        if (loginPass) loginPass.value = '';
-        await showLoggedAccountIfAny();
-
         const nextUrl = getPostLoginDestination(me);
         setTimeout(() => {
           window.location.href = nextUrl;
@@ -1874,10 +1153,10 @@
           const msg =
             'We have sent a password reset email to your address.' +
             ' Please check your inbox and follow the link to reset your password.' +
-            ' If this was NOT you, contact an admin immediately: ' + ADMIN_CONTACT_EMAIL + '.';
+            ' If this was not you, contact an admin immediately: ' + ADMIN_CONTACT_EMAIL + '.';
 
           setMsg(loginMsg, msg, 'error');
-          modal(msg, 'Security Notice');
+          modal(msg, 'Security notice');
           return;
         }
 
@@ -1916,18 +1195,6 @@
     });
   }
 
-  if(btnAccountLogout){
-    btnAccountLogout.addEventListener('click', async () => {
-      await performLogout();
-    });
-  }
-
-  if(btnOpenDashboard){
-    btnOpenDashboard.addEventListener('click', () => {
-      window.location.href = 'dashboard.html';
-    });
-  }
-
   if(btnRegister){
     btnRegister.addEventListener('click', async () => {
       setMsg(regMsg, '', '');
@@ -1952,7 +1219,7 @@
       }
 
       if (!isValidEir(eir)) {
-        modal('Please enter a valid Eircode (letters and numbers only).', 'Invalid Eircode');
+        modal('Please enter a valid eircode (letters and numbers only).', 'Invalid eircode');
         return;
       }
 
@@ -2019,7 +1286,7 @@
         }
 
         if (users.some(x => normalizeEir(x.eircode||'') === eir)) {
-          modal('This Eircode is already registered. Only one account per residence is allowed.', 'Duplicate');
+          modal('This eircode is already registered. Only one account per residence is allowed.', 'Duplicate');
           try{ window.netlifyIdentity.logout(); } catch {}
           return;
         }
@@ -2100,58 +1367,6 @@
     });
   }
 
-  if(btnUpdateProfile){
-    btnUpdateProfile.addEventListener('click', async () => {
-      setMsg(profileMsg, '', '');
-
-      const u = window.netlifyIdentity && window.netlifyIdentity.currentUser
-        ? window.netlifyIdentity.currentUser()
-        : null;
-
-      if (!u || !u.email) {
-        setMsg(profileMsg, 'You must be logged in.', 'error');
-        return;
-      }
-
-      try{
-        await anwInitStore();
-        let users = anwLoad(KEY_USERS, []);
-        if(!Array.isArray(users)) users = [];
-
-        const idx = users.findIndex(x => (x.email || '').toLowerCase() === (u.email || '').toLowerCase());
-        if(idx < 0){
-          setMsg(profileMsg, 'Your profile could not be found.', 'error');
-          return;
-        }
-
-        users[idx].name = (updName.value || '').trim();
-        users[idx].phone = (updPhone.value || '').trim();
-
-        const nowIso = new Date().toISOString();
-        if(!users[idx].alertsConsent || typeof users[idx].alertsConsent !== 'object'){
-          users[idx].alertsConsent = { optIn:false, updatedAt:nowIso, history:[] };
-        }
-
-        users[idx].alertsConsent.optIn = !!updAlertsOptIn.checked;
-        users[idx].alertsConsent.updatedAt = nowIso;
-        if(!Array.isArray(users[idx].alertsConsent.history)) users[idx].alertsConsent.history = [];
-        users[idx].alertsConsent.history.push({
-          at: nowIso,
-          optIn: !!updAlertsOptIn.checked,
-          source: 'login-profile-update'
-        });
-
-        users[idx].updatedAt = nowIso;
-        await anwSave(KEY_USERS, users);
-
-        setMsg(profileMsg, 'Profile updated successfully.', 'ok');
-        await showLoggedAccountIfAny();
-      }catch(e){
-        setMsg(profileMsg, 'Could not update profile.', 'error');
-      }
-    });
-  }
-
   (function initDevTools(){
     try{
       const host = String(location.hostname || "").toLowerCase();
@@ -2207,14 +1422,8 @@
     }catch(_){}
   })();
 
-  if(window.netlifyIdentity){
-    window.netlifyIdentity.on('login', () => { showLoggedAccountIfAny(); });
-    window.netlifyIdentity.on('logout', () => { showLoggedAccountIfAny(); });
-  }
-
-  await showLoggedAccountIfAny();
   applySoftLockUI();
-  await updateLoginAddressPreview();
+  await updateLoginStreetPreview();
 
 })();
 </script>
