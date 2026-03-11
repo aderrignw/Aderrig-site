@@ -40,85 +40,6 @@
     padding-bottom:44px;
   }
 
-  body.page-login .hero-login{
-    display:grid;
-    grid-template-columns:1.08fr .92fr;
-    gap:20px;
-    margin-bottom:22px;
-  }
-
-  body.page-login .hero-panel,
-  body.page-login .hero-side{
-    background:var(--lp-card);
-    border:1px solid var(--lp-line);
-    border-radius:var(--lp-radius-xl);
-    box-shadow:var(--lp-shadow);
-  }
-
-  body.page-login .hero-panel{
-    padding:28px 28px 26px;
-    background:
-      radial-gradient(circle at top right, rgba(47,125,91,.10), transparent 30%),
-      linear-gradient(180deg,#ffffff 0%,#fbfefd 100%);
-  }
-
-  body.page-login .hero-badge{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:8px 12px;
-    border-radius:999px;
-    background:var(--lp-primary-soft);
-    color:var(--lp-primary);
-    font-size:12px;
-    font-weight:800;
-    letter-spacing:.02em;
-    text-transform:uppercase;
-    margin-bottom:14px;
-  }
-
-  body.page-login .hero-panel h2{
-    margin:0 0 10px;
-    font-size:36px;
-    line-height:1.08;
-    color:var(--lp-text);
-  }
-
-  body.page-login .hero-panel p{
-    margin:0;
-    color:var(--lp-muted);
-    font-size:15px;
-    line-height:1.7;
-    max-width:760px;
-  }
-
-  body.page-login .hero-side{
-    padding:20px;
-    display:grid;
-    gap:12px;
-    align-content:start;
-  }
-
-  body.page-login .hero-mini{
-    border:1px solid var(--lp-line);
-    border-radius:18px;
-    padding:14px 16px;
-    background:#fcfefd;
-  }
-
-  body.page-login .hero-mini strong{
-    display:block;
-    margin-bottom:4px;
-    color:var(--lp-text);
-    font-size:14px;
-  }
-
-  body.page-login .hero-mini span{
-    color:var(--lp-muted);
-    font-size:13px;
-    line-height:1.55;
-  }
-
   body.page-login .grid{
     display:grid;
     grid-template-columns:minmax(0,1fr) minmax(0,1fr);
@@ -340,10 +261,7 @@
     display:none !important;
   }
 
-  @media (max-width: 1080px){
-    body.page-login .hero-login{
-      grid-template-columns:1fr;
-    }
+  @media (max-width: 980px){
     body.page-login .grid{
       grid-template-columns:1fr;
     }
@@ -353,12 +271,6 @@
     body.page-login .card{
       padding:18px;
       border-radius:24px;
-    }
-    body.page-login .hero-panel{
-      padding:22px 18px;
-    }
-    body.page-login .hero-panel h2{
-      font-size:30px;
     }
     body.page-login .two-col,
     body.page-login .role-grid{
@@ -396,7 +308,6 @@
 
   footer.site-footer .footer-zone-right{
     justify-content:flex-end;
-    text-align:right;
   }
 
   footer.site-footer .page-access{
@@ -405,12 +316,13 @@
     white-space:nowrap;
   }
 
-  footer.site-footer .footer-zone-center a{
+  footer.site-footer .footer-zone-center p{
+    margin:0;
     white-space:nowrap;
   }
 
-  footer.site-footer .footer-zone-right p{
-    margin:0;
+  footer.site-footer .footer-zone-center a{
+    white-space:nowrap;
   }
 
   @media (max-width: 768px){
@@ -429,8 +341,7 @@
     }
 
     footer.site-footer .page-access,
-    footer.site-footer .footer-zone-center a,
-    footer.site-footer .footer-zone-right p{
+    footer.site-footer .footer-zone-center p{
       white-space:normal;
     }
   }
@@ -506,31 +417,6 @@
 </header>
 
 <main class="wrap">
-  <section class="hero-login">
-    <div class="hero-panel">
-      <div class="hero-badge">Residents portal</div>
-      <h2>Secure access for residents, volunteers and coordinators</h2>
-      <p>
-        Sign in with your registered email, eircode and password, or create a new resident account for admin approval.
-      </p>
-    </div>
-
-    <div class="hero-side">
-      <div class="hero-mini">
-        <strong>Login check</strong>
-        <span>The login checks your email, password and registered eircode before access is granted.</span>
-      </div>
-      <div class="hero-mini">
-        <strong>Street preview</strong>
-        <span>When the email and eircode match a resident record, the Street field shows the address saved in registration.</span>
-      </div>
-      <div class="hero-mini">
-        <strong>Admin approval</strong>
-        <span>New registrations stay pending until an ANW admin reviews and approves the account.</span>
-      </div>
-    </div>
-  </section>
-
   <div class="grid">
     <section class="card" id="login">
       <h2>Login</h2>
@@ -582,11 +468,6 @@
           <button class="btn btn-line" id="btnCancelReset" type="button">Cancel</button>
         </div>
         <div class="msg" id="resetMsg"></div>
-      </div>
-
-      <div class="info-box">
-        <strong>Important</strong>
-        <span>If the eircode is not found in the registered resident list, the Street field shows “Eircode not registered”.</span>
       </div>
     </section>
 
@@ -724,16 +605,14 @@
 <footer class="site-footer">
   <div class="wrap footer-login-wrap">
     <div class="footer-zone footer-zone-left">
-      <span class="page-access">Public page</span>
+      <span class="page-access">Public Page</span>
     </div>
 
     <div class="footer-zone footer-zone-center">
-      <a href="privacy.html">Privacy Policy</a>
+      <p>© 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a></p>
     </div>
 
-    <div class="footer-zone footer-zone-right">
-      <p>© Aderrig Neighbourhood Watch</p>
-    </div>
+    <div class="footer-zone footer-zone-right"></div>
   </div>
 </footer>
 
@@ -775,9 +654,9 @@
   function modal(msg, title){
     try{
       if(window.anwModal) return window.anwModal(msg, title);
-      alert((title ? title + '\\n\\n' : '') + msg);
+      alert((title ? title + '\n\n' : '') + msg);
     }catch(_){
-      alert((title ? title + '\\n\\n' : '') + msg);
+      alert((title ? title + '\n\n' : '') + msg);
     }
   }
 
