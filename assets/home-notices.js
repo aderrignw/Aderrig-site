@@ -62,19 +62,15 @@
     return v && !Number.isNaN(v.getTime()) ? v.toLocaleDateString() : '';
   }
 
-  function getStartValue(n) {
-    return n?.startsAt || n?.startsOn || n?.startDate || '';
-  }
-  function getExpiryValue(n) {
-    return n?.expiresAt || n?.endsOn || n?.endDate || n?.expires || '';
-  }
   function isNotStarted(n) {
-    const st = getStartValue(n) ? Date.parse(getStartValue(n)) : NaN;
+    const startValue = n?.startsAt || n?.startsOn || n?.startDate || n?.showFrom || '';
+    const st = startValue ? Date.parse(startValue) : NaN;
     return !isNaN(st) && st > Date.now();
   }
   function isStarted(n) { return !isNotStarted(n); }
   function isExpired(n) {
-    const exp = getExpiryValue(n) ? Date.parse(getExpiryValue(n)) : NaN;
+    const endValue = n?.expiresAt || n?.endsOn || n?.endDate || n?.expires || n?.showUntil || '';
+    const exp = endValue ? Date.parse(endValue) : NaN;
     return !isNaN(exp) && exp < Date.now();
   }
   function isHomeEnabled(n) {
@@ -108,7 +104,7 @@
     }
     listEl.innerHTML = items.map((it) => {
       const variant = pickVariant(it);
-      const expires = asDate(getExpiryValue(it));
+      const expires = asDate(it?.expiresAt);
       const category = esc(it?.category || 'General');
       const title = esc(it?.title || 'Notice');
       const msg = esc(it?.message || it?.text || '');
@@ -152,43 +148,37 @@
     return r === 'admin' || r === 'owner';
   }
   function noticeMatchesUser(n, user){
-    const target = n?.target || {};
-    const include = target.include || {};
-    const exclude = target.exclude || {};
-    const legacy = n?.targets || {};
-    const userRoles = []
-      .concat(Array.isArray(user?.roles) ? user.roles : [])
-      .concat(user?.role ? [user.role] : [])
-      .map(v => String(v || '').toLowerCase())
-      .filter(Boolean);
-    if(!userRoles.length) userRoles.push('resident');
-    const isAdmin = userRoles.some(isAdminRole);
+    const t = n?.target || {};
+    const inc = t.include || {};
+    const exc = t.exclude || {};
+    const role = String(user?.role || 'resident').toLowerCase();
+    const isAdmin = isAdminRole(role);
     const eir = normEir(user?.eircode || '');
     const street = getStreetName(user?.address || user?.fullAddress || '');
 
-    const inc = {
-      allLoggedIn: !!(include.allLoggedIn || legacy.allLogged),
-      nonAdminOnly: !!(include.nonAdminOnly || legacy.nonAdminOnly),
-      roles: (Array.isArray(include.roles) && include.roles.length ? include.roles : legacy.roles || []).map(String).map(x=>x.toLowerCase()),
-      eircodes: (Array.isArray(include.eircodes) && include.eircodes.length ? include.eircodes : legacy.eircodes || []).map(String).map(normEir),
-      eircodePrefixes: (Array.isArray(include.eircodePrefixes) && include.eircodePrefixes.length ? include.eircodePrefixes : legacy.eirPrefixes || []).map(String).map(x=>x.toUpperCase()),
-      streets: (Array.isArray(include.streets) && include.streets.length ? include.streets : legacy.streets || []).map(String).map(x=>x.trim().toLowerCase()).filter(Boolean),
-      emails: (Array.isArray(include.emails) && include.emails.length ? include.emails : legacy.emails || []).map(normEmail)
-    };
-
-    if(Array.isArray(exclude.roles) && exclude.roles.map(String).map(x=>x.toLowerCase()).some(r => userRoles.includes(r))) return false;
-    if(Array.isArray(exclude.eircodes) && exclude.eircodes.map(String).map(normEir).includes(eir)) return false;
-    if(Array.isArray(exclude.emails) && exclude.emails.map(normEmail).includes(normEmail(user?.email))) return false;
+    if(Array.isArray(exc.roles) && exc.roles.map(String).map(x=>x.toLowerCase()).includes(role)) return false;
+    if(Array.isArray(exc.eircodes) && exc.eircodes.map(String).map(normEir).includes(eir)) return false;
+    if(Array.isArray(exc.emails) && exc.emails.map(normEmail).includes(normEmail(user?.email))) return false;
     if(inc.nonAdminOnly && isAdmin) return false;
 
-    const hasAnyInclude = !!(inc.allLoggedIn || inc.roles.length || inc.eircodes.length || inc.eircodePrefixes.length || inc.streets.length || inc.emails.length);
+    const hasAnyInclude = !!(
+      inc.allLoggedIn ||
+      (Array.isArray(inc.roles) && inc.roles.length) ||
+      (Array.isArray(inc.eircodes) && inc.eircodes.length) ||
+      (Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.length) ||
+      (Array.isArray(inc.streets) && inc.streets.length) ||
+      (Array.isArray(inc.emails) && inc.emails.length)
+    );
     if(!hasAnyInclude) return true;
     if(inc.allLoggedIn) return true;
-    if(inc.roles.some(r => userRoles.includes(r))) return true;
-    if(inc.emails.includes(normEmail(user?.email))) return true;
-    if(inc.eircodes.includes(eir)) return true;
-    if(inc.eircodePrefixes.some(p => eir.startsWith(p))) return true;
-    if(street && inc.streets.includes(street.toLowerCase())) return true;
+    if(Array.isArray(inc.roles) && inc.roles.map(String).map(x=>x.toLowerCase()).includes(role)) return true;
+    if(Array.isArray(inc.emails) && inc.emails.map(normEmail).includes(normEmail(user?.email))) return true;
+    if(Array.isArray(inc.eircodes) && inc.eircodes.map(String).map(normEir).includes(eir)) return true;
+    if(Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.map(String).map(x=>x.toUpperCase()).some(p=>eir.startsWith(p))) return true;
+    if(Array.isArray(inc.streets) && street){
+      const stList = inc.streets.map(String).map(x=>x.trim().toLowerCase()).filter(Boolean);
+      if(stList.includes(street.toLowerCase())) return true;
+    }
     return false;
   }
 
