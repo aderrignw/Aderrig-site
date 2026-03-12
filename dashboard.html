@@ -1,7 +1,218 @@
 <!DOCTYPE html>
 
 <html lang="en">
-<head>
+<head><style>/* Garda & Safety (Dashboard) */
+.garda-panel{
+  margin-top:.75rem;
+  border:1px solid #e4e7eb;
+  border-radius:14px;
+  background:#fff;
+  padding:.9rem;
+}
+.chip-row{
+  margin-top:.6rem;
+  overflow-x:auto;
+  white-space:nowrap;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:4px;
+}
+.chip{
+  display:inline-flex;
+  align-items:center;
+  padding:7px 12px;
+  border:1px solid #e4e7eb;
+  border-radius:999px;
+  background:#fff;
+  font-size:12px;
+  margin-right:8px;
+  cursor:pointer;
+  color:var(--ink);
+  font-weight:800;
+  line-height:1;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.chip::-moz-focus-inner{ border:0; padding:0; }
+.chip.active{
+  border-color:var(--brand, #1f7a3f);
+  background:var(--brandSoft, #eaf6ee);
+  color:var(--brand, #1f7a3f);
+}
+.garda-list{ margin-top:.85rem; }
+.garda-item{
+  border:1px solid #e4e7eb;
+  border-radius:12px;
+  background:#fff;
+  padding:.9rem;
+  margin:.65rem 0;
+}
+.garda-item .row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.garda-item .title{ font-weight:800; margin:0; }
+.garda-item .date{
+  font-size:12px;
+  color:#6b7280;
+  white-space:nowrap;
+}
+.garda-item .snippet{
+  margin-top:8px;
+  font-size:13px;
+  color:#374151;
+}
+.garda-item .link{
+  margin-top:8px;
+  font-size:13px;
+  font-weight:700;
+  color:var(--brand, #1f7a3f);
+  display:inline-block;
+  text-decoration:none;
+}
+.garda-item .meta{
+  margin-top:6px;
+  font-size:12px;
+  color:#6b7280;
+  font-weight:700;
+}
+
+/* Profile photo card */
+.profile-photo-card{
+  display:flex;
+  gap:1rem;
+  align-items:flex-start;
+  margin:1rem 0;
+  padding:1rem;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:#f9fafb;
+}
+.profile-photo-preview{
+  width:108px;
+  height:108px;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:#eef3f0 center/cover no-repeat;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:2rem;
+  color:var(--muted);
+  overflow:hidden;
+  flex:0 0 auto;
+}
+.profile-photo-preview.has-photo{ color:transparent; }
+.profile-photo-preview img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.profile-photo-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:.75rem;
+}
+.profile-photo-note{ margin:.4rem 0 0; }
+
+/* In-page back-to-top button */
+.garda-top-wrap{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid #eef0f2;
+}
+.garda-top-btn.tab-like{
+  border-radius:999px;
+  padding:8px 16px;
+  background:#fff;
+  color:var(--brand, #1f7a3f);
+  border:2px solid var(--brand, #1f7a3f);
+  font-weight:700;
+}
+.garda-top-btn.tab-like.is-active{
+  background:var(--brand, #1f7a3f);
+  color:#fff;
+}
+
+/* Garda category cards */
+#tabGarda .chip-row{
+  margin-top:12px;
+  overflow:visible !important;
+  white-space:normal !important;
+  padding-bottom:0 !important;
+}
+#tabGarda .garda-cat-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+  gap:14px;
+}
+#tabGarda .garda-cat{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 14px;
+  border-radius:14px;
+  border:1.5px solid #d9e7dd;
+  background:#fff;
+  cursor:pointer;
+  text-align:left;
+  transition:.15s ease;
+  -webkit-appearance:none;
+  appearance:none;
+}
+#tabGarda .garda-cat:hover{ background:var(--brandSoft, #eaf6ee); }
+#tabGarda .garda-cat .icon{
+  width:36px;
+  height:36px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--brandSoft, #eaf6ee);
+  flex:0 0 36px;
+}
+#tabGarda .garda-cat .icon svg{
+  width:20px;
+  height:20px;
+  stroke:var(--brand, #1f7a3f);
+  stroke-width:2;
+  fill:none;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+#tabGarda .garda-cat .label{
+  font-weight:700;
+  color:var(--ink, #1f2937);
+  line-height:1.2;
+  font-size:14px;
+}
+#tabGarda .garda-cat.is-active{
+  background:var(--brand, #1f7a3f);
+  border-color:var(--brand, #1f7a3f);
+}
+#tabGarda .garda-cat.is-active .label{ color:#fff; }
+#tabGarda .garda-cat.is-active .icon{ background:rgba(255,255,255,.18); }
+#tabGarda .garda-cat.is-active .icon svg{ stroke:#fff; }
+
+/* Footer helper */
+footer.site-footer{ position:relative; }
+footer.site-footer .page-access{
+  position:absolute;
+  left:0;
+  color:green;
+  font-weight:normal;
+}
+
+@media (max-width:720px){
+  .profile-photo-card{ flex-direction:column; }
+}
+</style>
 <meta charset="utf-8"/>
 <meta content="page:dashboard" name="anw-acl-key"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
@@ -13,367 +224,11 @@
 </script>
 <title>Dashboard — Aderrig NW</title>
 <link href="assets/style.css" rel="stylesheet"/>
-<style>
-    /* Garda & Safety (Dashboard) */
-    .garda-panel{
-      margin-top:0.75rem;
-      border:1px solid #e4e7eb;
-      border-radius:14px;
-      background:#fff;
-      padding:0.9rem;
-    }
-    .chip-row{
-      margin-top:0.6rem;
-      overflow-x:auto;
-      white-space:nowrap;
-      -webkit-overflow-scrolling:touch;
-      padding-bottom:4px;
-    }
-    .chip{
-      display:inline-flex; align-items:center;
-      padding:7px 12px;
-      border:1px solid #e4e7eb;
-      border-radius:999px;
-      background:#fff;
-      font-size:12px;
-      margin-right:8px;
-      cursor:pointer;
-      color: var(--ink);
-      font-weight:800;
-      line-height:1;
-      -webkit-appearance:none; appearance:none;
-    }
-    .chip::-moz-focus-inner{ border:0; padding:0; }
-    .chip.active{
-      border-color: var(--brand, #1f7a3f);
-      background: var(--brandSoft, #eaf6ee);
-      color: var(--brand, #1f7a3f);
-    }
-    .garda-list{ margin-top:0.85rem; }
-    .garda-item{
-      border:1px solid #e4e7eb;
-      border-radius:12px;
-      background:#fff;
-      padding:0.9rem;
-      margin:0.65rem 0;
-    }
-    .garda-item .row{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .garda-item .title{
-      font-weight:800;
-      margin:0;
-    }
-    .garda-item .date{
-      font-size:12px;
-      color: #6b7280;
-      white-space:nowrap;
-    }
-    .garda-item .snippet{
-      margin-top:8px;
-      font-size:13px;
-      color:#374151;
-    }
-    .garda-item .link{
-      margin-top:8px;
-      font-size:13px;
-      font-weight:700;
-      color: var(--brand, #1f7a3f);
-      display:inline-block;
-      text-decoration:none;
-    }
-    .garda-item .meta{
-      margin-top:6px;
-      font-size:12px;
-      color:#6b7280;
-      font-weight:700;
-    }
 
-  .profile-photo-card{
-    display:flex;
-    gap:1rem;
-    align-items:flex-start;
-    margin:1rem 0;
-    padding:1rem;
-    border:1px solid var(--line);
-    border-radius:18px;
-    background:#f9fafb;
-  }
-  .profile-photo-preview{
-    width:108px;
-    height:108px;
-    border-radius:18px;
-    border:1px solid var(--line);
-    background:#eef3f0 center/cover no-repeat;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:2rem;
-    color:var(--muted);
-    overflow:hidden;
-    flex:0 0 auto;
-  }
-  .profile-photo-preview.has-photo{ color:transparent; }
-  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
-  .profile-photo-note{ margin:0.4rem 0 0; }
-  @media (max-width: 720px){
-    .profile-photo-card{ flex-direction:column; }
-  }
 
-</style>
-<style>
-    /* Garda tab: in-page TOP button (does not float) */
-    .garda-top-wrap{
-      display:flex;
-      justify-content:flex-end;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #eef0f2;
-    }
-    .garda-top-btn{
-      min-width: 88px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-weight: 800;
-    }
-  
-  .profile-photo-card{
-    display:flex;
-    gap:1rem;
-    align-items:flex-start;
-    margin:1rem 0;
-    padding:1rem;
-    border:1px solid var(--line);
-    border-radius:18px;
-    background:#f9fafb;
-  }
-  .profile-photo-preview{
-    width:108px;
-    height:108px;
-    border-radius:18px;
-    border:1px solid var(--line);
-    background:#eef3f0 center/cover no-repeat;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:2rem;
-    color:var(--muted);
-    overflow:hidden;
-    flex:0 0 auto;
-  }
-  .profile-photo-preview.has-photo{ color:transparent; }
-  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
-  .profile-photo-note{ margin:0.4rem 0 0; }
-  @media (max-width: 720px){
-    .profile-photo-card{ flex-direction:column; }
-  }
 
-</style>
-<style>
-    /* In-page back-to-top tab-style button */
-    .garda-top-wrap{
-      display:flex;
-      justify-content:flex-end;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #eef0f2;
-    }
-    .garda-top-btn.tab-like{
-      border-radius: 999px;
-      padding: 8px 16px;
-      background: #fff;
-      color: var(--brand, #1f7a3f);
-      border: 2px solid var(--brand, #1f7a3f);
-      font-weight: 700;
-    }
-    .garda-top-btn.tab-like.is-active{
-      background: var(--brand, #1f7a3f);
-      color: #fff;
-    }
-  
-  .profile-photo-card{
-    display:flex;
-    gap:1rem;
-    align-items:flex-start;
-    margin:1rem 0;
-    padding:1rem;
-    border:1px solid var(--line);
-    border-radius:18px;
-    background:#f9fafb;
-  }
-  .profile-photo-preview{
-    width:108px;
-    height:108px;
-    border-radius:18px;
-    border:1px solid var(--line);
-    background:#eef3f0 center/cover no-repeat;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:2rem;
-    color:var(--muted);
-    overflow:hidden;
-    flex:0 0 auto;
-  }
-  .profile-photo-preview.has-photo{ color:transparent; }
-  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
-  .profile-photo-note{ margin:0.4rem 0 0; }
-  @media (max-width: 720px){
-    .profile-photo-card{ flex-direction:column; }
-  }
 
-</style>
-<style>
-    /* Garda categories: responsive grid with SVG icons (Option A) */
-    #tabGarda .chip-row{
-      margin-top: 12px;
-      overflow: visible !important;
-      white-space: normal !important;
-      padding-bottom: 0 !important;
-    }
-    #tabGarda .garda-cat-grid{
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
-    }
-    #tabGarda .garda-cat{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      padding:12px 14px;
-      border-radius:14px;
-      border:1.5px solid #d9e7dd;
-      background:#fff;
-      cursor:pointer;
-      text-align:left;
-      transition:.15s ease;
-      -webkit-appearance:none;
-      appearance:none;
-    }
-    #tabGarda .garda-cat:hover{
-      background: var(--brandSoft, #eaf6ee);
-    }
-    #tabGarda .garda-cat .icon{
-      width: 36px;
-      height: 36px;
-      border-radius: 12px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background: var(--brandSoft, #eaf6ee);
-      flex: 0 0 36px;
-    }
-    #tabGarda .garda-cat .icon svg{
-      width: 20px;
-      height: 20px;
-      stroke: var(--brand, #1f7a3f);
-      stroke-width: 2;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-    #tabGarda .garda-cat .label{
-      font-weight: 700;
-      color: var(--ink, #1f2937);
-      line-height: 1.2;
-      font-size: 14px;
-    }
-    #tabGarda .garda-cat.is-active{
-      background: var(--brand, #1f7a3f);
-      border-color: var(--brand, #1f7a3f);
-    }
-    #tabGarda .garda-cat.is-active .label{
-      color:#fff;
-    }
-    #tabGarda .garda-cat.is-active .icon{
-      background: rgba(255,255,255,0.18);
-    }
-    #tabGarda .garda-cat.is-active .icon svg{
-      stroke:#fff;
-    }
-  
-  .profile-photo-card{
-    display:flex;
-    gap:1rem;
-    align-items:flex-start;
-    margin:1rem 0;
-    padding:1rem;
-    border:1px solid var(--line);
-    border-radius:18px;
-    background:#f9fafb;
-  }
-  .profile-photo-preview{
-    width:108px;
-    height:108px;
-    border-radius:18px;
-    border:1px solid var(--line);
-    background:#eef3f0 center/cover no-repeat;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:2rem;
-    color:var(--muted);
-    overflow:hidden;
-    flex:0 0 auto;
-  }
-  .profile-photo-preview.has-photo{ color:transparent; }
-  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
-  .profile-photo-note{ margin:0.4rem 0 0; }
-  @media (max-width: 720px){
-    .profile-photo-card{ flex-direction:column; }
-  }
 
-</style>
-<style id="page-access-style">
-  footer.site-footer { position: relative; }
-  footer.site-footer .page-access {
-    position: absolute;
-    left: 0;
-    color: green;
-    font-weight: normal;
-  }
-
-  .profile-photo-card{
-    display:flex;
-    gap:1rem;
-    align-items:flex-start;
-    margin:1rem 0;
-    padding:1rem;
-    border:1px solid var(--line);
-    border-radius:18px;
-    background:#f9fafb;
-  }
-  .profile-photo-preview{
-    width:108px;
-    height:108px;
-    border-radius:18px;
-    border:1px solid var(--line);
-    background:#eef3f0 center/cover no-repeat;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:2rem;
-    color:var(--muted);
-    overflow:hidden;
-    flex:0 0 auto;
-  }
-  .profile-photo-preview.has-photo{ color:transparent; }
-  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
-  .profile-photo-note{ margin:0.4rem 0 0; }
-  @media (max-width: 720px){
-    .profile-photo-card{ flex-direction:column; }
-  }
-
-</style>
 </head>
 <body>
 <header class="site-header">
@@ -437,19 +292,18 @@
 <input disabled="" id="pfStatus" type="text"/>
 </div>
 </div>
-
 <div class="profile-photo-card">
-  <div class="profile-photo-preview" id="pfPhotoPreview" aria-label="Profile photo preview">👤</div>
-  <div style="flex:1; min-width:240px;">
-    <label style="display:block; margin-bottom:0.25rem;">Profile photo</label>
-    <p class="tiny muted" style="margin-top:0;">Add a clear face photo for resident identification.</p>
-    <input accept="image/*" id="pfPhotoFile" style="display:none;" type="file"/>
-    <div class="profile-photo-actions">
-      <button class="btn-line small" id="btnUploadPhoto" type="button">Insert photo</button>
-      <button class="btn-line small" id="btnRemovePhoto" type="button">Remove photo</button>
-    </div>
-    <p class="tiny muted profile-photo-note" id="pfPhotoMsg">JPG or PNG recommended.</p>
-  </div>
+<div aria-label="Profile photo preview" class="profile-photo-preview" id="pfPhotoPreview">👤</div>
+<div style="flex:1; min-width:240px;">
+<label style="display:block; margin-bottom:0.25rem;">Profile photo</label>
+<p class="tiny muted" style="margin-top:0;">Add a clear face photo for resident identification.</p>
+<input accept="image/*" id="pfPhotoFile" style="display:none;" type="file"/>
+<div class="profile-photo-actions">
+<button class="btn-line small" id="btnUploadPhoto" type="button">Insert photo</button>
+<button class="btn-line small" id="btnRemovePhoto" type="button">Remove photo</button>
+</div>
+<p class="tiny muted profile-photo-note" id="pfPhotoMsg">JPG or PNG recommended.</p>
+</div>
 </div>
 <div class="grid-2" style="gap:1rem;">
 <div class="field">
@@ -594,16 +448,15 @@
 </section>
 </main>
 <footer class="site-footer">
-  <div class="footer-row">
-    <div class="footer-left">
-      <span class="page-status">Private Page</span>
-    </div>
-
-    <div class="footer-center">
+<div class="footer-row">
+<div class="footer-left">
+<span class="page-status">Private Page</span>
+</div>
+<div class="footer-center">
       © 2025 Aderrig NW · 
       <a href="privacy.html">Privacy Policy</a>
-    </div>
-  </div>
+</div>
+</div>
 </footer>
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script><script src="assets/identity.js"></script><script src="assets/app-core.js"></script>
 <script>
@@ -696,39 +549,38 @@
   const KEY_USERS     = ANW_KEYS.USERS;
   const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
 
-  async function loadUsersRemote(){
+  async function dashboardLoadUsers(){
     try{
-      const token = (typeof window.anwGetIdentityToken === 'function') ? await window.anwGetIdentityToken() : null;
-      const headers = token ? { Authorization: 'Bearer ' + token } : {};
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, { headers, cache:'no-store' });
-      if(!res.ok) throw new Error('Failed to load users');
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
       const data = await res.json();
-      const list = Array.isArray(data) ? data : [];
-      localStorage.setItem(KEY_USERS, JSON.stringify(list));
-      return list;
-    }catch(err){
-      const raw = localStorage.getItem(KEY_USERS);
-      return raw ? JSON.parse(raw) : [];
+      if(Array.isArray(data)){
+        try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, data); }catch(_){ }
+        return data;
+      }
+    }catch(_){ }
+    try{
+      const local = (typeof window.anwLoad === 'function') ? window.anwLoad(KEY_USERS, []) : [];
+      return Array.isArray(local) ? local : [];
+    }catch(_){
+      return [];
     }
   }
 
-  async function saveUsersRemote(users){
-    const list = Array.isArray(users) ? users : [];
-    const token = (typeof window.anwGetIdentityToken === 'function') ? await window.anwGetIdentityToken() : null;
-    const headers = { 'Content-Type':'application/json' };
-    if(token) headers.Authorization = 'Bearer ' + token;
-    const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
-      method:'POST',
-      headers,
-      body: JSON.stringify(list)
-    });
-    if(!res.ok){
-      let msg = '';
-      try{ msg = await res.text(); }catch{}
-      throw new Error(msg || 'Failed to save users');
+  async function dashboardSaveUsers(nextUsers){
+    const payload = Array.isArray(nextUsers) ? nextUsers : [];
+    try{
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if(!res.ok) throw new Error('store save failed');
+    }catch(err){
+      console.error(err);
     }
-    localStorage.setItem(KEY_USERS, JSON.stringify(list));
-    return true;
+    try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, payload); }catch(_){ }
+    return payload;
   }
 
   async function ensureIdentityUser(){
@@ -751,9 +603,9 @@
 
   const identityUser = await ensureIdentityUser();
   const loggedEmail = String((identityUser && identityUser.email) || (typeof anwGetLoggedEmail === 'function' ? anwGetLoggedEmail() : '') || '').trim();
-  let users = await loadUsersRemote();
+  let users = await dashboardLoadUsers();
   if(!Array.isArray(users)) users = [];
-  let me = loggedEmail ? users.find(u => anwNormEmail(u.email) === anwNormEmail(loggedEmail)) : null;
+  const me = loggedEmail ? users.find(u => anwNormEmail(u.email) === anwNormEmail(loggedEmail)) : null;
 
   const notLoggedBox = document.getElementById('dbNotLogged');
   const profileArea = document.getElementById('dbProfileArea');
@@ -810,20 +662,36 @@
 
     const ul = document.getElementById('pfVolRoles');
     ul.innerHTML = '';
-    const vr = me.vol_roles || {};
+    const vr = me.vol_roles || me.volunteer_roles || {};
     const labels = {
       streetWatch:'Street watch / patrols',
       leaflets:'Distribute leaflets',
       tech:'Tech support',
+      techSupport:'Tech support',
       elderly:'Elderly checks',
+      cleanUp:'Community clean-up',
+      cleanup:'Community clean-up',
+      parkingAssistance:'Parking assistance',
+      parking:'Parking assistance',
       meetings:'Meeting organiser',
       translation:'Translation'
     };
+    const added = new Set();
     Object.keys(labels).forEach(k=>{
-      if(vr[k]){
+      if(vr[k] && !added.has(labels[k])){
         const li = document.createElement('li');
         li.textContent = labels[k];
         ul.appendChild(li);
+        added.add(labels[k]);
+      }
+    });
+    const vrList = Array.isArray(me.volunteerRoles) ? me.volunteerRoles : [];
+    vrList.forEach(label => {
+      if(label && !added.has(label)) {
+        const li = document.createElement('li');
+        li.textContent = label;
+        ul.appendChild(li);
+        added.add(label);
       }
     });
     if(!ul.children.length){
@@ -891,7 +759,7 @@
         };
       }
 
-      await saveUsersRemote(users);
+      await dashboardSaveUsers(users);
 
       setText('pfMsg', 'Profile updated.');
       setText('pfPhotoMsg', me.profilePhoto ? 'Profile photo saved.' : 'No profile photo saved.');
@@ -973,7 +841,7 @@
         status: existingStatus
       };
 
-      await saveUsersRemote(users);
+      await dashboardSaveUsers(users);
       renderInterest();
 
       intMeta.textContent = 'Interest saved. Awaiting admin approval if pending.';
@@ -993,7 +861,7 @@
 
     try{
       delete me.interest;
-      await saveUsersRemote(users);
+      await dashboardSaveUsers(users);
       renderInterest();
       intMeta.textContent = 'Interest withdrawn.';
       toast('Interest withdrawn.', 'info');
