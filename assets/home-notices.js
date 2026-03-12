@@ -4,6 +4,7 @@
    - Shows Home + Private notices to logged-in members when targeting matches
    - Keeps a visible placeholder on the Home page when there are no active notices
    - Bin collection notices are condensed into a single resident-friendly card
+   - Bin card shows: completed this week + next week
    ========================= */
 
 (function () {
@@ -16,7 +17,6 @@
   const STORE_URL = '/.netlify/functions/store';
   const PUBLIC_URL = '/.netlify/functions/public-notices';
   const KEY_NOTICES = (window.ANW_KEYS && window.ANW_KEYS.NOTICES) || 'anw_notices';
-  const DAY_MS = 24 * 60 * 60 * 1000;
 
   function esc(s) {
     return String(s || '')
@@ -141,8 +141,13 @@
       return new Date(y, m - 1, d);
     }
 
-    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)) {
-      const [m, d, y] = raw.split('/').map(Number);
+    if (/^\d{2}-\d{2}-\d{4}$/.test(raw)) {
+      const [d, m, y] = raw.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+      const [d, m, y] = raw.split('/').map(Number);
       return new Date(y, m - 1, d);
     }
 
@@ -156,19 +161,13 @@
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   }
 
-  function isSameDay(a, b) {
-    const da = startOfDay(a);
-    const db = startOfDay(b);
-    return !!(da && db && da.getTime() === db.getTime());
-  }
-
   function formatLongDate(value) {
     const d = parseDateValue(value);
     if (!d) return '';
-    return d.toLocaleDateString(undefined, {
+    return d.toLocaleDateString('en-IE', {
       weekday: 'long',
-      month: 'long',
       day: 'numeric',
+      month: 'long',
       year: 'numeric'
     });
   }
@@ -176,13 +175,13 @@
   function formatMonthShort(value) {
     const d = parseDateValue(value);
     if (!d) return '';
-    return d.toLocaleDateString(undefined, { month: 'short' });
+    return d.toLocaleDateString('en-IE', { month: 'short' });
   }
 
   function formatWeekdayShort(value) {
     const d = parseDateValue(value);
     if (!d) return '';
-    return d.toLocaleDateString(undefined, { weekday: 'short' });
+    return d.toLocaleDateString('en-IE', { weekday: 'short' });
   }
 
   function getDayNumber(value) {
@@ -216,7 +215,7 @@
     const d = startOfDay(value);
     if (!d) return null;
     const day = d.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
+    const diff = day === 0 ? -6 : 1 - day; // Monday start
     d.setDate(d.getDate() + diff);
     return d;
   }
@@ -281,13 +280,18 @@
     const nextWeekStart = addDays(weekEnd, 1);
     const nextWeekEnd = addDays(nextWeekStart, 6);
 
-    const completedThisWeek = dated.filter((it) => isWithinRange(it.__binDate, weekStart, today));
+    const thisWeekItems = dated.filter((it) => isWithinRange(it.__binDate, weekStart, weekEnd));
+    const completedThisWeek = thisWeekItems.filter((it) => it.__binDate.getTime() <= today.getTime());
+    const remainingThisWeek = thisWeekItems.filter((it) => it.__binDate.getTime() > today.getTime());
     const nextWeekItems = dated.filter((it) => isWithinRange(it.__binDate, nextWeekStart, nextWeekEnd));
-    const firstUpcoming = dated.find((it) => it.__binDate.getTime() > today.getTime()) || null;
+    const futureItems = dated.filter((it) => it.__binDate.getTime() > today.getTime());
 
     const completed = completedThisWeek.length ? completedThisWeek[completedThisWeek.length - 1] : null;
-    const upcoming = nextWeekItems[0] || firstUpcoming;
-    const primary = upcoming || completed;
+    const nextWeekUpcoming = nextWeekItems.length ? nextWeekItems[0] : null;
+    const fallbackUpcoming = remainingThisWeek[0] || futureItems[0] || null;
+    const upcoming = nextWeekUpcoming || fallbackUpcoming || null;
+    const primary = upcoming || completed || dated[dated.length - 1];
+
     if (!primary) return [];
 
     const primaryName = getBinName(primary);
@@ -297,10 +301,12 @@
     if (completed) {
       lines.push(`Completed this week: ${getBinName(completed)} bin on ${formatLongDate(completed.__binDate)}.`);
     }
-    if (upcoming) {
-      lines.push(`Next week: ${getBinName(upcoming)} bin on ${formatLongDate(upcoming.__binDate)}.`);
+    if (nextWeekUpcoming) {
+      lines.push(`Next week: ${getBinName(nextWeekUpcoming)} bin on ${formatLongDate(nextWeekUpcoming.__binDate)}.`);
+    } else if (fallbackUpcoming && (!completed || fallbackUpcoming.__binDate.getTime() > today.getTime())) {
+      lines.push(`Next collection: ${getBinName(fallbackUpcoming)} bin on ${formatLongDate(fallbackUpcoming.__binDate)}.`);
     } else if (!completed) {
-      lines.push(`Next collection: ${formatLongDate(primary.__binDate)}.`);
+      lines.push(`Next collection: ${getBinName(primary)} bin on ${formatLongDate(primary.__binDate)}.`);
     }
 
     const lead = lines.join(' ');
@@ -314,6 +320,7 @@
       category: '',
       home: primary.home,
       createdAt: primary.createdAt || primary.date,
+      _sortTs: primary.__binDate.getTime(),
       _displayVariant: 'info',
       _displayMeta: '',
       _displayBadge: '',
@@ -486,6 +493,12 @@
       .filter(n => noticeMatchesUser(n, me));
   }
 
+  function getNoticeSortValue(it){
+    if (typeof it?._sortTs === 'number') return it._sortTs;
+    const fromDate = Date.parse(it?.date || it?.startDate || it?.startsOn || it?.createdAt || 0);
+    return Number.isNaN(fromDate) ? 0 : fromDate;
+  }
+
   async function main() {
     try {
       const publicItems = (await loadPublicNotices())
@@ -508,7 +521,7 @@
           seen.add(id);
           return true;
         })
-        .sort((a, b) => Date.parse(b?.createdAt || 0) - Date.parse(a?.createdAt || 0))
+        .sort((a, b) => getNoticeSortValue(b) - getNoticeSortValue(a))
         .slice(0, 8);
 
       render(merged);
