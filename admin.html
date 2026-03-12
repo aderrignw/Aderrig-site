@@ -77,92 +77,40 @@
     display:flex;
     gap:8px;
     align-items:center;
+    justify-content:center;
     flex-wrap:wrap;
-  }
-
-  .resident-table-wrap{ margin-top:0.75rem; }
-  .resident-table{
     width:100%;
-    table-layout:fixed;
-    border-collapse:collapse;
+    min-height:44px;
   }
-  .resident-table th,
-  .resident-table td{
-    padding:12px 14px;
-    vertical-align:middle;
-    border-bottom:1px solid var(--line);
+  .resident-actions-col{
+    width:220px;
+    min-width:220px;
+    text-align:center;
   }
-  .resident-table th:nth-child(1), .resident-table td:nth-child(1){ width:110px; }
-  .resident-table th:nth-child(2), .resident-table td:nth-child(2){ width:190px; }
-  .resident-table th:nth-child(3), .resident-table td:nth-child(3){ width:120px; }
-  .resident-table th:nth-child(4), .resident-table td:nth-child(4){ width:120px; }
-  .resident-table th:nth-child(5), .resident-table td:nth-child(5){ width:auto; }
-  .resident-table th:nth-child(6), .resident-table td:nth-child(6){ width:120px; text-align:center; }
-  .resident-table td:nth-child(2),
-  .resident-table td:nth-child(5){
-    word-break:break-word;
-  }
-  .resident-action-cell{
-    justify-content:center;
-  }
-  .resident-modal-top{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 230px;
-    gap:18px;
-    align-items:start;
-  }
-  .resident-modal-compact{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,220px));
-    gap:1rem;
-    align-items:start;
-  }
-  .resident-photo-panel{
-    border:1px solid var(--line);
-    border-radius:18px;
-    background:#f8faf8;
-    padding:14px;
-    min-height:100%;
-  }
-  .resident-photo-head{
-    font-weight:700;
-    margin:0 0 8px;
-  }
-  .resident-photo-box{
-    width:100px;
-    height:100px;
-    border-radius:18px;
-    overflow:hidden;
-    background:#eef2ef;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#6b7280;
-    font-size:2rem;
-    margin-bottom:10px;
-  }
-  .resident-photo-box img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-  }
-  .resident-photo-note{
-    margin:0;
-    font-size:.9rem;
-    color:rgba(17,24,39,.68);
-    line-height:1.4;
-  }
+  #tabResidents .resident-table-wrap{ overflow-x:hidden; margin-top:0.75rem; }
+  #tabResidents table{ width:100%; table-layout:fixed; }
+  #tabResidents th,
+  #tabResidents td{ padding:12px 10px; vertical-align:middle; }
+  #tabResidents th:nth-child(1), #tabResidents td:nth-child(1){ width:11%; }
+  #tabResidents th:nth-child(2), #tabResidents td:nth-child(2){ width:16%; }
+  #tabResidents th:nth-child(3), #tabResidents td:nth-child(3){ width:23%; }
+  #tabResidents th:nth-child(4), #tabResidents td:nth-child(4){ width:10%; }
+  #tabResidents th:nth-child(5), #tabResidents td:nth-child(5){ width:11%; }
+  #tabResidents th:nth-child(6), #tabResidents td:nth-child(6){ width:20%; }
+  #tabResidents th:nth-child(7), #tabResidents td:nth-child(7){ width:9%; }
+  #tabResidents td{ word-break:break-word; overflow-wrap:anywhere; }
+  #tabResidents td.resident-actions-col,
+  #tabResidents th.resident-actions-col{ text-align:center; vertical-align:middle; white-space:nowrap; }
+  #tabResidents td.resident-actions-col .btn-line{ margin:0 auto; }
+  .resident-modal-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; }
+  .resident-photo-card{ display:flex; align-items:center; gap:0.9rem; min-width:260px; margin-top:0.25rem; }
+  .resident-photo-preview{ width:84px; height:84px; border-radius:14px; border:1px solid var(--line); background:#f5f7f6; display:flex; align-items:center; justify-content:center; overflow:hidden; color:#6f7b76; font-size:1.6rem; flex:0 0 auto; }
+  .resident-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .resident-photo-copy{ min-width:0; }
+  .resident-photo-copy p{ margin:0.2rem 0 0; }
   @media (max-width: 980px){
-    .resident-table{
-      table-layout:auto;
-    }
-    .resident-modal-top{
-      grid-template-columns:1fr;
-    }
-    .resident-modal-compact{
-      grid-template-columns:1fr;
-    }
+    #tabResidents th,#tabResidents td{ padding:10px 8px; font-size:0.95rem; }
+    .resident-photo-card{ width:100%; }
   }
 
   .notice-actions{
@@ -256,10 +204,9 @@
     return m ? parseInt(m[1], 10) || 0 : 0;
   }
 
-  function formatResidentRegId(value){
-    const n = getResidentNumericReg(value);
-    if(!n) return '—';
-    return 'ANW' + String(n).padStart(4, '0');
+  function formatResidentRegId(v){
+    const n = getResidentNumericReg(v);
+    return n ? `ANW${String(n).padStart(4, '0')}` : '';
   }
 
   function anwNextRegId(list){
@@ -285,20 +232,19 @@
     users.forEach(u => {
       const status = String((u && u.status) || '').toLowerCase();
       const approved = ['active','approved'].includes(status);
-      const current = formatResidentRegId(u && (u.regId || u.regNo));
+      const currentRaw = u && (u.regId || u.regNo);
+      const normalized = formatResidentRegId(currentRaw);
 
-      if(approved && !(u && (u.regId || u.regNo))){
+      if(approved && !currentRaw){
         max += 1;
         const id = formatResidentRegId(max);
         u.regId = id;
         u.regNo = id;
         changed = true;
-      } else if(u && (u.regId || u.regNo)){
-        if(u.regId !== current || u.regNo !== current){
-          u.regId = current;
-          u.regNo = current;
-          changed = true;
-        }
+      } else if(normalized && ((u.regId !== normalized) || (u.regNo !== normalized))){
+        u.regId = normalized;
+        u.regNo = normalized;
+        changed = true;
       }
     });
 
@@ -391,15 +337,16 @@
     <div id="resSummary" class="tiny muted" style="margin-top:0.5rem;"></div>
 
     <div class="resident-table-wrap">
-      <table class="resident-table">
+      <table>
         <thead>
           <tr>
             <th>Reg No</th>
             <th>Name</th>
+            <th>Email</th>
             <th>Eircode</th>
             <th>Status</th>
             <th>Roles</th>
-            <th>Actions</th>
+            <th class="resident-actions-col">Actions</th>
           </tr>
         </thead>
         <tbody id="resBody"></tbody>
@@ -421,8 +368,8 @@
 
       <div class="modal-body">
         <div class="resident-modal-top">
-          <div>
-            <div class="resident-modal-compact">
+          <div style="flex:1 1 420px; min-width:280px;">
+            <div class="grid-2" style="gap:1rem;">
               <div class="field">
                 <label>Registration No</label>
                 <input id="mRegId" type="text" disabled>
@@ -432,27 +379,28 @@
                 <input id="mStatus" type="text" disabled>
               </div>
             </div>
-
-            <div class="resident-modal-compact" style="margin-top:1rem;">
-              <div class="field">
-                <label>Email</label>
-                <input id="mEmail" type="email" disabled>
-              </div>
-              <div class="field">
-                <label>Eircode</label>
-                <input id="mEir" type="text" disabled>
-              </div>
+          </div>
+          <div class="resident-photo-card">
+            <div class="resident-photo-preview" id="mPhotoPreview" aria-label="Resident photo preview">👤</div>
+            <div class="resident-photo-copy">
+              <label style="display:block; margin-bottom:0.25rem;">Profile photo</label>
+              <p class="tiny muted">Resident profile photo synced from the dashboard profile.</p>
             </div>
           </div>
-
-          <aside class="resident-photo-panel">
-            <p class="resident-photo-head">Resident photo</p>
-            <div class="resident-photo-box" id="mPhotoBox">👤</div>
-            <p class="resident-photo-note" id="mPhotoNote">No profile photo saved by this resident yet.</p>
-          </aside>
         </div>
 
-        <div class="resident-modal-compact" style="margin-top:1rem; grid-template-columns:minmax(0,1fr) minmax(0,220px);">
+        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
+          <div class="field">
+            <label>Email</label>
+            <input id="mEmail" type="email" disabled>
+          </div>
+          <div class="field">
+            <label>Eircode</label>
+            <input id="mEir" type="text" disabled>
+          </div>
+        </div>
+
+        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
           <div class="field">
             <label>Full name</label>
             <input id="mName" type="text">
@@ -467,7 +415,6 @@
           <label>Address</label>
           <input id="mAddress" type="text" disabled>
         </div>
-
 
         <div class="grid-2" style="gap:1rem;">
           <div class="field">
@@ -775,7 +722,7 @@
               <th>Name</th>
               <th>Email</th>
               <th>Interest status</th>
-              <th style="width:220px;">Actions</th>
+              <th style="width:160px;">Actions</th>
             </tr>
           </thead>
           <tbody id="candBody"></tbody>
@@ -1030,7 +977,7 @@
                 <th>Title</th>
                 <th style="width:90px;">Order</th>
                 <th style="width:90px;">Status</th>
-                <th style="width:220px;">Actions</th>
+                <th style="width:160px;">Actions</th>
               </tr>
             </thead>
             <tbody id="hbCatBody"></tbody>
@@ -1149,7 +1096,7 @@
             <th>Status</th>
             <th>Owner</th>
             <th>Updated</th>
-            <th style="width:220px;">Actions</th>
+            <th style="width:160px;">Actions</th>
           </tr>
         </thead>
         <tbody id="pmBody"></tbody>
@@ -1338,6 +1285,9 @@
 
   async function anwSaveSafe(key, value){
     try{
+      if(key === KEY_USERS && typeof window.anwUsersSaveRemote === 'function'){
+        return await window.anwUsersSaveRemote(value);
+      }
       if(typeof window.anwSave === 'function') return await window.anwSave(key, value);
       localStorage.setItem(key, JSON.stringify(value));
       return true;
@@ -1346,6 +1296,44 @@
       throw err;
     }
   }
+
+  async function loadUsersRemote(){
+    try{
+      const token = (typeof window.anwGetIdentityToken === 'function') ? await window.anwGetIdentityToken() : null;
+      const headers = token ? { Authorization: 'Bearer ' + token } : {};
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, { headers, cache:'no-store' });
+      if(!res.ok) throw new Error('Failed to load residents');
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : [];
+      localStorage.setItem(KEY_USERS, JSON.stringify(list));
+      return list;
+    }catch(err){
+      const raw = localStorage.getItem(KEY_USERS);
+      return raw ? JSON.parse(raw) : [];
+    }
+  }
+
+  async function saveUsersRemote(users){
+    const list = Array.isArray(users) ? users : [];
+    const token = (typeof window.anwGetIdentityToken === 'function') ? await window.anwGetIdentityToken() : null;
+    const headers = { 'Content-Type':'application/json' };
+    if(token) headers.Authorization = 'Bearer ' + token;
+    const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
+      method:'POST',
+      headers,
+      body: JSON.stringify(list)
+    });
+    if(!res.ok){
+      let msg = '';
+      try{ msg = await res.text(); }catch{}
+      throw new Error(msg || 'Failed to save residents');
+    }
+    localStorage.setItem(KEY_USERS, JSON.stringify(list));
+    return true;
+  }
+
+  window.anwUsersLoadRemote = loadUsersRemote;
+  window.anwUsersSaveRemote = saveUsersRemote
 
   function downloadText(filename, text, type='application/json'){
     const blob = new Blob([text], { type });
@@ -1497,7 +1485,7 @@
         : null;
 
       if(currentUser && currentUser.email){
-        const users = await anwLoadSafe(KEY_USERS, []);
+        const users = await loadUsersRemote();
         const email = String(currentUser.email || '').trim().toLowerCase();
         const row = users.find(u => String((u && u.email) || '').trim().toLowerCase() === email);
         if(row){
@@ -1539,7 +1527,7 @@
   let CURRENT_RESIDENT = null;
 
   async function loadResidents(){
-    RESIDENTS_CACHE = await anwLoadSafe(KEY_USERS, []);
+    RESIDENTS_CACHE = await loadUsersRemote();
     if(assignMissingResidentNumbers(RESIDENTS_CACHE)){
       await anwSaveSafe(KEY_USERS, RESIDENTS_CACHE);
     }
@@ -1571,12 +1559,13 @@
 
     body.innerHTML = rows.map((u, idx) => `
       <tr>
-        <td>${esc(formatResidentRegId(u.regId || u.regNo || '—'))}</td>
+        <td>${esc(formatResidentRegId(u.regId || u.regNo) || '—')}</td>
         <td>${esc(u.name || '—')}</td>
+        <td>${esc(u.email || '—')}</td>
         <td>${esc(u.eircode || '—')}</td>
         <td>${esc(u.status || 'pending')}</td>
         <td>${esc(getResidentRolesLabel(u))}</td>
-        <td>
+        <td class="resident-actions-col">
           <div class="resident-action-cell">
             <button type="button" class="btn-line small" data-res-index="${idx}" data-act="openResident">
               ${String((u.status||'')).toLowerCase() === 'approved' || String((u.status||'')).toLowerCase() === 'active' ? 'Edit' : 'Open'}
@@ -1597,12 +1586,23 @@
     });
   }
 
+  function renderResidentPhoto(src){
+    const box = byId('mPhotoPreview');
+    if(!box) return;
+    const safe = String(src || '').trim();
+    if(safe){
+      box.innerHTML = `<img alt="Resident profile photo" src="${safe.replace(/"/g, '&quot;')}">`;
+    } else {
+      box.textContent = '👤';
+    }
+  }
+
   function openResidentModal(user){
     CURRENT_RESIDENT = user || null;
     if(!CURRENT_RESIDENT) return;
 
     byId('modalResident').style.display = 'block';
-    byId('mRegId').value = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo || '—');
+    byId('mRegId').value = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
     byId('mStatus').value = CURRENT_RESIDENT.status || 'pending';
     byId('mEmail').value = CURRENT_RESIDENT.email || '';
     byId('mEir').value = CURRENT_RESIDENT.eircode || '';
@@ -1625,16 +1625,6 @@
     byId('mVPark').checked = vr.includes('Parking assistance');
     byId('mVMeet').checked = vr.includes('Meeting organiser');
     byId('mVTrans').checked = vr.includes('Translation');
-
-    const photoBox = byId('mPhotoBox');
-    const photoNote = byId('mPhotoNote');
-    const safePhoto = String(CURRENT_RESIDENT.profilePhoto || CURRENT_RESIDENT.photo || '').trim();
-    if(photoBox){
-      photoBox.innerHTML = safePhoto ? `<img alt="Resident photo" src="${esc(safePhoto)}">` : '👤';
-    }
-    if(photoNote){
-      photoNote.textContent = safePhoto ? 'Photo copied from the resident dashboard profile.' : 'No profile photo saved by this resident yet.';
-    }
 
     byId('mMsg').textContent = '';
 
