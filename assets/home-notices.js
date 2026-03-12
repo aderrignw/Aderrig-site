@@ -70,31 +70,8 @@
         text-transform:uppercase;
         margin-bottom:6px;
       }
-      .home-bin-card__status{
-        display:inline-flex;
-        align-items:center;
-        gap:8px;
-        padding:6px 12px;
-        border-radius:999px;
-        font-size:.82rem;
-        font-weight:800;
-        background:rgba(31,111,74,.10);
-        color:#1f6f4a;
-        margin-bottom:10px;
-      }
-      .home-bin-card__status--done{ background:rgba(23,50,77,.10); color:#17324d; }
       .home-bin-card__title{ margin:0 0 8px; font-size:1.35rem; line-height:1.2; font-weight:900; color:#1f2937; }
       .home-bin-card__lead{ margin:0; font-size:1rem; line-height:1.55; color:#334155; }
-      .home-bin-card__next{
-        margin-top:14px;
-        padding:14px 16px;
-        border-radius:14px;
-        background:#fff;
-        border:1px solid rgba(17,24,39,.08);
-      }
-      .home-bin-card__next-label{ font-size:.78rem; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
-      .home-bin-card__next-title{ font-size:1rem; font-weight:800; color:#111827; }
-      .home-bin-card__next-date{ margin-top:2px; color:#475569; }
       .bin-chip{
         display:inline-flex;
         align-items:center;
@@ -258,52 +235,18 @@
     if (!dated.length) return [];
 
     const today = startOfDay(new Date());
-    const yesterday = new Date(today.getTime() - DAY_MS);
-
-    const todayItem = dated.find((it) => isSameDay(it.__binDate, today));
-    const yesterdayItem = dated.find((it) => isSameDay(it.__binDate, yesterday));
-    const firstFutureItem = dated.find((it) => it.__binDate.getTime() > today.getTime());
-
-    let primary = todayItem || yesterdayItem || firstFutureItem || dated[dated.length - 1];
+    const primary = dated.find((it) => it.__binDate.getTime() >= today.getTime()) || dated[dated.length - 1];
     if (!primary) return [];
 
     const primaryName = getBinName(primary);
     const primaryChip = buildBinChip(primaryName);
-    let statusLabel = 'Next collection';
-    let statusClass = '';
-    let title = `${primaryName} bin collection`;
-    let lead = `${formatLongDate(primary.__binDate)} collection scheduled.`;
-
-    if (todayItem) {
-      primary = todayItem;
-      statusLabel = 'Today';
-      statusClass = '';
-      title = `${getBinName(todayItem)} bin collection today`;
-      lead = `${formatLongDate(todayItem.__binDate)} collection is today.`;
-    } else if (yesterdayItem) {
-      primary = yesterdayItem;
-      statusLabel = 'Completed';
-      statusClass = ' home-bin-card__status--done';
-      title = `${getBinName(yesterdayItem)} bin collection completed`;
-      lead = `${formatLongDate(yesterdayItem.__binDate)} collection completed.`;
-    }
-
-    const nextUpcomingItem = dated.find((it) => it.__binDate.getTime() > primary.__binDate.getTime());
-
-    const nextHtml = nextUpcomingItem
-      ? `
-        <div class="home-bin-card__next">
-          <div class="home-bin-card__next-label">Next collection</div>
-          <div class="home-bin-card__next-title">${buildBinChip(getBinName(nextUpcomingItem))}</div>
-          <div class="home-bin-card__next-date">${esc(formatLongDate(nextUpcomingItem.__binDate))}</div>
-        </div>`
-      : '';
+    const lead = `Next collection: ${formatLongDate(primary.__binDate)}.`;
 
     injectBinCardStyles();
 
     return [{
       id: `bin_summary_${primary.id || primary.__binDate.getTime()}`,
-      title,
+      title: `${primaryName} bin`,
       message: lead,
       category: '',
       home: primary.home,
@@ -320,10 +263,8 @@
           </div>
           <div class="home-bin-card__body">
             <div class="home-bin-card__eyebrow">♻️ Panda Waste</div>
-            <div class="home-bin-card__status${statusClass}">${esc(statusLabel)}</div>
             <h4 class="home-bin-card__title">${primaryChip}</h4>
             <p class="home-bin-card__lead">${esc(lead)}</p>
-            ${nextHtml}
           </div>
         </article>`
     }];
