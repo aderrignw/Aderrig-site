@@ -1,2094 +1,1514 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="anw-acl-key" content="page:admin" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Admin Panel — Aderrig NW</title>
-
+<meta charset="utf-8"/>
+<meta content="page:dashboard" name="anw-acl-key"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<!-- Auth pre-check disabled (temporary public mode) -->
 <script>
   (function(){
     try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
   })();
 </script>
-
-<link rel="stylesheet" href="assets/style.css" />
-
-<script>document.documentElement.classList.add('admin-js');</script>
-
-<style id="admin-first-paint-fix">
-  .admin-tab-content{display:none;}
-  #tabResidents{display:block;}
-  .elect-subtab{display:none;}
-  #subManage{display:block;}
-</style>
-
+<title>Dashboard — Aderrig NW</title>
+<link href="assets/style.css" rel="stylesheet"/>
 <style>
-  .tag { display:inline-block; padding:4px 10px; border-radius:999px; font-size:.85rem; border:1px solid rgba(0,0,0,.10); background:rgba(0,0,0,.04); }
-  .tag.ok { background: rgba(47,125,91,.10); border-color: rgba(47,125,91,.25); color: var(--brand); }
-  .tag.gray { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.10); color: inherit; }
+    /* Garda & Safety (Dashboard) */
+    .garda-panel{
+      margin-top:0.75rem;
+      border:1px solid #e4e7eb;
+      border-radius:14px;
+      background:#fff;
+      padding:0.9rem;
+    }
+    .chip-row{
+      margin-top:0.6rem;
+      overflow-x:auto;
+      white-space:nowrap;
+      -webkit-overflow-scrolling:touch;
+      padding-bottom:4px;
+    }
+    .chip{
+      display:inline-flex; align-items:center;
+      padding:7px 12px;
+      border:1px solid #e4e7eb;
+      border-radius:999px;
+      background:#fff;
+      font-size:12px;
+      margin-right:8px;
+      cursor:pointer;
+      color: var(--ink);
+      font-weight:800;
+      line-height:1;
+      -webkit-appearance:none; appearance:none;
+    }
+    .chip::-moz-focus-inner{ border:0; padding:0; }
+    .chip.active{
+      border-color: var(--brand, #1f7a3f);
+      background: var(--brandSoft, #eaf6ee);
+      color: var(--brand, #1f7a3f);
+    }
+    .garda-list{ margin-top:0.85rem; }
+    .garda-item{
+      border:1px solid #e4e7eb;
+      border-radius:12px;
+      background:#fff;
+      padding:0.9rem;
+      margin:0.65rem 0;
+    }
+    .garda-item .row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .garda-item .title{
+      font-weight:800;
+      margin:0;
+    }
+    .garda-item .date{
+      font-size:12px;
+      color: #6b7280;
+      white-space:nowrap;
+    }
+    .garda-item .snippet{
+      margin-top:8px;
+      font-size:13px;
+      color:#374151;
+    }
+    .garda-item .link{
+      margin-top:8px;
+      font-size:13px;
+      font-weight:700;
+      color: var(--brand, #1f7a3f);
+      display:inline-block;
+      text-decoration:none;
+    }
+    .garda-item .meta{
+      margin-top:6px;
+      font-size:12px;
+      color:#6b7280;
+      font-weight:700;
+    }
 
-  #backupEnabled{ display:none !important; }
-  label[for="backupEnabled"]{ display:none !important; }
-
-  .anw-acc .acc-body > .card { margin-top: 12px; }
-  #tabTools details.anw-acc .acc-body .grid { align-items: start; }
-
-  #tabAccessControl .ac-wrap{ overflow:auto; border:1px solid var(--line); border-radius:14px; background:#fff; }
-  #tabAccessControl table.ac-table{ width:100%; min-width:920px; border-collapse:collapse; }
-  #tabAccessControl .ac-table th, #tabAccessControl .ac-table td{ padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; }
-  #tabAccessControl .ac-table thead th{ position:sticky; top:0; background:#fff; z-index:2; }
-  #tabAccessControl .ac-item{ display:flex; align-items:flex-start; gap:10px; }
-  #tabAccessControl .ac-badge{ font-size:.70rem; padding:2px 8px; border-radius:999px; border:1px solid rgba(0,0,0,.10); background:rgba(0,0,0,.03); }
-  #tabAccessControl .ac-key{
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-size:.72rem; color: rgba(0,0,0,.55); margin-top:2px;
-  }
-  #tabAccessControl .ac-indent-0{ font-weight:700; }
-  #tabAccessControl .ac-indent-1{ padding-left:18px; }
-  #tabAccessControl .ac-indent-2{ padding-left:36px; }
-  #tabAccessControl .ac-indent-3{ padding-left:54px; }
-
-  #tabAccessControl .ac-toggle{
-    width:36px; height:30px;
-    border-radius:10px;
-    border:1px solid var(--line);
-    background:#fff;
-    cursor:pointer;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:900;
-    user-select:none;
-  }
-  #tabAccessControl .ac-toggle.allowed{
-    color: var(--brand);
-    background: rgba(47,125,91,.12);
-    border-color: rgba(47,125,91,.28);
-  }
-  #tabAccessControl .ac-toggle.denied{
-    color: rgba(0,0,0,.35);
-    background: rgba(0,0,0,.03);
-    border-color: rgba(0,0,0,.10);
-  }
-  #tabAccessControl .ac-toggle:focus{ outline:2px solid rgba(47,125,91,.28); outline-offset:2px; }
-
-  .resident-action-cell{
+  .profile-photo-card{
     display:flex;
-    gap:8px;
-    align-items:center;
-    justify-content:center;
-    flex-wrap:wrap;
-    width:100%;
-    min-height:44px;
-  }
-  .resident-actions-col{
-    width:140px;
-    min-width:140px;
-    text-align:center;
-  }
-  #tabResidents .resident-table-wrap{
-    overflow-x:auto;
-    margin-top:0.75rem;
+    gap:1rem;
+    align-items:flex-start;
+    margin:1rem 0;
+    padding:1rem;
     border:1px solid var(--line);
     border-radius:18px;
-    background:#fff;
+    background:#f9fafb;
   }
-  #tabResidents table.resident-table{
-    width:100%;
-    min-width:1120px;
-    table-layout:fixed;
-    border-collapse:separate;
-    border-spacing:0;
-  }
-  #tabResidents table.resident-table th,
-  #tabResidents table.resident-table td{
-    padding:14px 16px;
-    vertical-align:middle;
-    border-bottom:1px solid rgba(17,24,39,.08);
-  }
-  #tabResidents table.resident-table thead th{
-    font-weight:800;
-    white-space:nowrap;
-    background:#fff;
-  }
-  #tabResidents table.resident-table tbody tr:last-child td{ border-bottom:none; }
-  #tabResidents table.resident-table td{
-    overflow-wrap:anywhere;
-    word-break:break-word;
-    line-height:1.45;
-  }
-  #tabResidents .resident-reg-col{ width:110px; }
-  #tabResidents .resident-name-col{ width:180px; }
-  #tabResidents .resident-email-col{ width:250px; }
-  #tabResidents .resident-eir-col{ width:120px; }
-  #tabResidents .resident-address-col{ width:260px; }
-  #tabResidents .resident-status-col{ width:120px; }
-  #tabResidents .resident-roles-col{ width:170px; }
-  #tabResidents .resident-actions-col{ width:140px; min-width:140px; text-align:center; }
-  #tabResidents th.resident-actions-col,
-  #tabResidents td.resident-actions-col{ text-align:center; vertical-align:middle; }
-  #tabResidents td.resident-actions-col .btn-line{ margin:0 auto; }
-  #tabResidents .resident-nowrap{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #tabResidents .resident-break{ white-space:normal; }
-  @media (max-width: 960px){
-    #tabResidents table.resident-table{ min-width:980px; }
-  }
-
-  .notice-actions{
+  .profile-photo-preview{
+    width:108px;
+    height:108px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:#eef3f0 center/cover no-repeat;
     display:flex;
-    gap:8px;
-    justify-content:flex-end;
-    flex-wrap:wrap;
-    margin-top:10px;
-  }
-
-  .notice-card-meta{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    margin-top:6px;
-  }
-
-  .notice-chip{
-    display:inline-flex;
     align-items:center;
-    gap:6px;
-    padding:4px 10px;
-    border-radius:999px;
-    background:#f4f7f5;
-    border:1px solid rgba(17,24,39,.08);
-    font-size:.82rem;
+    justify-content:center;
+    font-size:2rem;
+    color:var(--muted);
+    overflow:hidden;
+    flex:0 0 auto;
+  }
+  .profile-photo-preview.has-photo{ color:transparent; }
+  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
+  .profile-photo-note{ margin:0.4rem 0 0; }
+  @media (max-width: 720px){
+    .profile-photo-card{ flex-direction:column; }
   }
 
-  @media print {
-    body.print-access-control header,
-    body.print-access-control nav,
-    body.print-access-control .admin-tabs,
-    body.print-access-control #tabResidents,
-    body.print-access-control #tabTasks,
-    body.print-access-control #tabElections,
-    body.print-access-control #tabReports,
-    body.print-access-control #tabProjects,
-    body.print-access-control #tabTools,
-    body.print-access-control footer {
-      display: none !important;
-    }
-    body.print-access-control #tabAccessControl {
-      display: block !important;
-    }
-    body.print-access-control main.wrap { max-width: 100% !important; padding: 0 !important; }
-  }
 </style>
+<style>
+    /* Garda tab: in-page TOP button (does not float) */
+    .garda-top-wrap{
+      display:flex;
+      justify-content:flex-end;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #eef0f2;
+    }
+    .garda-top-btn{
+      min-width: 88px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+    }
+  
+  .profile-photo-card{
+    display:flex;
+    gap:1rem;
+    align-items:flex-start;
+    margin:1rem 0;
+    padding:1rem;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#f9fafb;
+  }
+  .profile-photo-preview{
+    width:108px;
+    height:108px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:#eef3f0 center/cover no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:2rem;
+    color:var(--muted);
+    overflow:hidden;
+    flex:0 0 auto;
+  }
+  .profile-photo-preview.has-photo{ color:transparent; }
+  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
+  .profile-photo-note{ margin:0.4rem 0 0; }
+  @media (max-width: 720px){
+    .profile-photo-card{ flex-direction:column; }
+  }
 
+</style>
+<style>
+    /* In-page back-to-top tab-style button */
+    .garda-top-wrap{
+      display:flex;
+      justify-content:flex-end;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #eef0f2;
+    }
+    .garda-top-btn.tab-like{
+      border-radius: 999px;
+      padding: 8px 16px;
+      background: #fff;
+      color: var(--brand, #1f7a3f);
+      border: 2px solid var(--brand, #1f7a3f);
+      font-weight: 700;
+    }
+    .garda-top-btn.tab-like.is-active{
+      background: var(--brand, #1f7a3f);
+      color: #fff;
+    }
+  
+  .profile-photo-card{
+    display:flex;
+    gap:1rem;
+    align-items:flex-start;
+    margin:1rem 0;
+    padding:1rem;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#f9fafb;
+  }
+  .profile-photo-preview{
+    width:108px;
+    height:108px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:#eef3f0 center/cover no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:2rem;
+    color:var(--muted);
+    overflow:hidden;
+    flex:0 0 auto;
+  }
+  .profile-photo-preview.has-photo{ color:transparent; }
+  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
+  .profile-photo-note{ margin:0.4rem 0 0; }
+  @media (max-width: 720px){
+    .profile-photo-card{ flex-direction:column; }
+  }
+
+</style>
+<style>
+    /* Garda categories: responsive grid with SVG icons (Option A) */
+    #tabGarda .chip-row{
+      margin-top: 12px;
+      overflow: visible !important;
+      white-space: normal !important;
+      padding-bottom: 0 !important;
+    }
+    #tabGarda .garda-cat-grid{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    #tabGarda .garda-cat{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1.5px solid #d9e7dd;
+      background:#fff;
+      cursor:pointer;
+      text-align:left;
+      transition:.15s ease;
+      -webkit-appearance:none;
+      appearance:none;
+    }
+    #tabGarda .garda-cat:hover{
+      background: var(--brandSoft, #eaf6ee);
+    }
+    #tabGarda .garda-cat .icon{
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: var(--brandSoft, #eaf6ee);
+      flex: 0 0 36px;
+    }
+    #tabGarda .garda-cat .icon svg{
+      width: 20px;
+      height: 20px;
+      stroke: var(--brand, #1f7a3f);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    #tabGarda .garda-cat .label{
+      font-weight: 700;
+      color: var(--ink, #1f2937);
+      line-height: 1.2;
+      font-size: 14px;
+    }
+    #tabGarda .garda-cat.is-active{
+      background: var(--brand, #1f7a3f);
+      border-color: var(--brand, #1f7a3f);
+    }
+    #tabGarda .garda-cat.is-active .label{
+      color:#fff;
+    }
+    #tabGarda .garda-cat.is-active .icon{
+      background: rgba(255,255,255,0.18);
+    }
+    #tabGarda .garda-cat.is-active .icon svg{
+      stroke:#fff;
+    }
+  
+  .profile-photo-card{
+    display:flex;
+    gap:1rem;
+    align-items:flex-start;
+    margin:1rem 0;
+    padding:1rem;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#f9fafb;
+  }
+  .profile-photo-preview{
+    width:108px;
+    height:108px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:#eef3f0 center/cover no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:2rem;
+    color:var(--muted);
+    overflow:hidden;
+    flex:0 0 auto;
+  }
+  .profile-photo-preview.has-photo{ color:transparent; }
+  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
+  .profile-photo-note{ margin:0.4rem 0 0; }
+  @media (max-width: 720px){
+    .profile-photo-card{ flex-direction:column; }
+  }
+
+</style>
 <style id="page-access-style">
-  footer.site-footer { position: relative; text-align: center; margin-top: 60px; }
-  footer.site-footer .page-access { position: absolute; left: 0; color: green; font-weight: normal; }
+  footer.site-footer { position: relative; }
+  footer.site-footer .page-access {
+    position: absolute;
+    left: 0;
+    color: green;
+    font-weight: normal;
+  }
+
+  .profile-photo-card{
+    display:flex;
+    gap:1rem;
+    align-items:flex-start;
+    margin:1rem 0;
+    padding:1rem;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#f9fafb;
+  }
+  .profile-photo-preview{
+    width:108px;
+    height:108px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:#eef3f0 center/cover no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:2rem;
+    color:var(--muted);
+    overflow:hidden;
+    flex:0 0 auto;
+  }
+  .profile-photo-preview.has-photo{ color:transparent; }
+  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
+  .profile-photo-note{ margin:0.4rem 0 0; }
+  @media (max-width: 720px){
+    .profile-photo-card{ flex-direction:column; }
+  }
+
 </style>
 
+<style id="dashboard-layout-refresh">
+  .profile-topbar{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) 340px;
+    gap:24px;
+    align-items:start;
+    margin:0.75rem 0 1.25rem;
+  }
+  .profile-summary{min-width:0;}
+  .profile-meta-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(180px, 240px));
+    gap:16px;
+    align-items:end;
+    max-width:520px;
+  }
+  .profile-meta-grid .field{margin:0;}
+  .profile-meta-grid input{
+    max-width:240px;
+  }
+  .profile-photo-card{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    justify-content:flex-start;
+    margin:0;
+    padding:16px;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#f9fafb;
+    min-height:auto;
+  }
+  .profile-photo-preview{
+    width:86px;
+    height:86px;
+    border-radius:16px;
+    border:1px solid var(--line);
+    background:#eef3f0 center/cover no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.65rem;
+    color:var(--muted);
+    overflow:hidden;
+    flex:0 0 86px;
+  }
+  .profile-photo-preview.has-photo{ color:transparent; }
+  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-photo-copy{min-width:0;}
+  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
+  .profile-photo-note{ margin:0.45rem 0 0; }
+  .profile-details-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:1rem;
+  }
+  .profile-details-grid .field.full-span{grid-column:1 / -1;}
+  @media (max-width: 980px){
+    .profile-topbar{grid-template-columns:1fr;}
+    .profile-meta-grid{max-width:none; grid-template-columns:repeat(2, minmax(160px, 1fr));}
+  }
+  @media (max-width: 720px){
+    .profile-meta-grid,
+    .profile-details-grid{grid-template-columns:1fr;}
+    .profile-photo-card{flex-direction:column;}
+    .profile-meta-grid input{max-width:none;}
+  }
+</style>
+
+</head>
+<body>
+<header class="site-header">
+<div class="brand">
+<a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
+<div class="brand-text">
+<h1>Aderrig NW</h1>
+<p class="muted">Adamstown</p>
+</div>
+</div>
+<nav class="nav">
+<a href="index.html">Home</a>
+<a href="about.html">About</a>
+<a href="report.html">Report</a>
+<a href="alerts.html">Community Alerts</a>
+<a href="projects.html">Community Projects</a>
+<a href="handbook.html">Handbook</a>
+<a href="login.html">Login / Register</a>
+<a class="active" href="dashboard.html">Dashboard</a>
+<a href="household.html">Household</a>
+<a href="admin.html">Admin</a>
+</nav>
+</header>
+<main class="wrap">
+<section class="card">
+<h2>Resident dashboard</h2>
+<p class="muted">Manage your profile, elections and interests.</p>
+<div class="tiny muted" id="anwAccessNotice" style="margin-top:12px; display:none;">
+<span id="anwAccessText">
+        You are not logged in. Please <a href="login.html">log in</a> or
+        <a href="login.html#signup">register</a> to access your dashboard.
+      </span>
+</div>
+<div class="actions dash-tabs" style="margin-top:0.5rem;">
+<button class="btn small dash-tab active" data-acl-feature="dashboard:tab_profile" data-tab="tabProfile" type="button">Profile</button>
+<button class="btn small dash-tab" data-acl-feature="dashboard:tab_interest" data-tab="tabInterest" type="button">Interest</button>
+<button class="btn small dash-tab" data-acl-feature="dashboard:tab_elections" data-tab="tabElections" type="button">Elections</button>
+<button class="btn small dash-tab" data-acl-feature="dashboard:tab_notices" data-tab="tabNotices" type="button">Notices <span class="badge" id="noticesBadge" style="display:none; margin-left:6px;">0</span></button>
+<button class="btn small dash-tab" data-acl-feature="dashboard:tab_garda" data-tab="tabGarda" type="button">Garda &amp; Safety</button>
+</div>
+</section>
+<!-- ================= PROFILE TAB ================= -->
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_profile" id="tabProfile">
+<h3>Profile</h3>
+<div class="card" id="dbNotLogged" style="background:#f9fafb; display:none;">
+<p class="tiny muted" style="margin:0;">
+        Please log in first to access your dashboard.
+      </p>
+</div>
+<div id="dbProfileArea" style="display:none;">
+<div class="profile-topbar">
+  <div class="profile-summary">
+    <p class="tiny muted" style="margin-top:0;">
+      Email and Eircode are protected and cannot be changed.
+    </p>
+    <div class="profile-meta-grid">
+      <div class="field">
+        <label>Registration No</label>
+        <input disabled="" id="pfRegId" type="text"/>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <input disabled="" id="pfStatus" type="text"/>
+      </div>
+    </div>
+  </div>
+
+  <aside class="profile-photo-card">
+    <div class="profile-photo-preview" id="pfPhotoPreview" aria-label="Profile photo preview">👤</div>
+    <div class="profile-photo-copy">
+      <label style="display:block; margin-bottom:0.25rem;">Profile photo</label>
+      <p class="tiny muted" style="margin-top:0;">Add a clear face photo for resident identification.</p>
+      <input accept="image/*" id="pfPhotoFile" style="display:none;" type="file"/>
+      <div class="profile-photo-actions">
+        <button class="btn-line small" id="btnUploadPhoto" type="button">Insert photo</button>
+        <button class="btn-line small" id="btnRemovePhoto" type="button">Remove photo</button>
+      </div>
+      <p class="tiny muted profile-photo-note" id="pfPhotoMsg">JPG or PNG recommended.</p>
+    </div>
+  </aside>
+</div>
+<div class="profile-details-grid">
+<div class="field">
+<label>Full name</label>
+<input id="pfName" type="text"/>
+</div>
+<div class="field">
+<label>Phone</label>
+<input id="pfPhone" type="text"/>
+</div>
+<div class="field">
+<label>Email</label>
+<input disabled="" id="pfEmail" type="email"/>
+</div>
+<div class="field">
+<label>Eircode</label>
+<input disabled="" id="pfEir" type="text"/>
+</div>
+<div class="field full-span">
+<label>Full address</label>
+<input disabled="" id="pfAddress" type="text"/>
+</div>
+<div class="field">
+<label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
+<input id="pfAlertOptIn" type="checkbox"/>
+<span>I agree to receive Aderrig NW alerts via Email, SMS or WhatsApp (optional).</span>
+</label>
+<p class="tiny muted" id="pfAlertMeta" style="margin:6px 0 0;">No alert preference recorded yet (Email/SMS/WhatsApp).</p>
+</div>
+<div class="grid-2" style="gap:1rem;">
+<div class="field">
+<label>Resident type</label>
+<input disabled="" id="pfType" type="text"/>
+</div>
+<div class="field">
+<label>Management company</label>
+<input disabled="" id="pfMgmt" type="text"/>
+</div>
+</div>
+<div class="field">
+<label>Elected position</label>
+<input disabled="" id="pfElected" type="text"/>
+</div>
+<div class="field">
+<label>Volunteer roles</label>
+<ul class="tiny" id="pfVolRoles" style="margin:0; padding-left:18px;"></ul>
+</div>
+<p class="tiny muted" id="pfMsg" style="margin-top:0.5rem;"></p>
+<div class="actions" style="justify-content:flex-end;">
+<button class="btn" id="btnSaveProfile" type="button">Save</button>
+</div>
+</div>
+</section>
+<!-- ================= INTEREST TAB ================= -->
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_interest" id="tabInterest" style="display:none;">
+<h3>Expression of Interest (Elections)</h3>
+<p class="tiny muted" style="margin-top:0;">
+      Submit your interest for an elected role. Admin approval is required before your name appears for resident voting.
+    </p>
+<div class="card" id="interestBlocked" style="background:#f9fafb; display:none;">
+<p class="tiny muted" style="margin:0;">
+        Your registration must be approved before submitting interest.
+      </p>
+</div>
+<div id="interestArea" style="display:none;">
+<div class="field">
+<label>Role</label>
+<select id="intRole">
+<option value="">Select…</option>
+<option value="area">Area Coordinator</option>
+<option value="assistant">Assistant Area Coordinator</option>
+</select>
+</div>
+<div class="field">
+<label>Motivation / experience (visible to residents)</label>
+<textarea id="intText" rows="6"></textarea>
+</div>
+<p class="tiny muted" id="intMeta"></p>
+<div class="actions" style="justify-content:flex-end; gap:0.5rem;">
+<button class="btn-line" id="btnWithdrawInterest" style="display:none;" type="button">Withdraw</button>
+<button class="btn" id="btnSubmitInterest" type="button">Submit</button>
+</div>
+</div>
+</section>
+<!-- ================= ELECTIONS TAB ================= -->
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_elections" id="tabElections" style="display:none;">
+<h3>Elections</h3>
+<p class="tiny muted" style="margin-top:0;">
+      View current election periods and your eligibility.
+    </p>
+<div class="card" id="electionsArea" style="background:#f9fafb;">
+<p class="tiny muted" style="margin:0;">
+        Election information will appear here when elections are created by an admin.
+      </p>
+</div>
+<div style="overflow-x:auto; margin-top:0.75rem;">
+<table style="width:100%;">
+<thead>
+<tr>
+<th>Role</th>
+<th>Period</th>
+<th>Status</th>
+<th>Winner</th>
+</tr>
+</thead>
+<tbody id="electionsBody"></tbody>
+</table>
+</div>
+<p class="tiny muted" id="electionsEmpty" style="display:none; margin-top:0.5rem;">
+      No elections configured.
+    </p>
+</section>
+<!-- ================= NOTICES TAB ================= -->
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_notices" id="tabNotices" style="display:none;">
+<h3 style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+<span>Notices</span>
+<span class="badge" id="noticesBadgeTop" style="display:none;">0</span>
+</h3>
+<p class="tiny muted" style="margin-top:0;">Official community notices published by Aderrig NW administrators.</p>
+<div class="card" id="noticesEmpty" style="background:#f9fafb; display:none;">
+<p class="tiny muted" style="margin:0;">No notices available.</p>
+</div>
+<div id="noticesList" style="display:none;"></div>
+</section>
+<!-- ================= GARDA & SAFETY TAB ================= -->
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_garda" id="tabGarda" style="display:none;">
+<h3>Garda &amp; Safety</h3>
+<p class="tiny muted" style="margin-top:0;">
+      Official safety information and Garda updates for residents.
+    </p>
+<div class="garda-panel">
+<div class="tiny muted" id="gardaStatus">Loading Garda updates…</div>
+<div class="chip-row" id="gardaChips"></div>
+<div class="garda-list" id="gardaList"></div>
+<div class="garda-top-wrap">
+<button class="btn garda-top-btn tab-like" id="scrollTopBtn" type="button">Back to top</button>
+</div>
+</div>
+</section>
+</main>
+<footer class="site-footer">
+  <div class="footer-row">
+    <div class="footer-left">
+      <span class="page-status">Private Page</span>
+    </div>
+
+    <div class="footer-center">
+      © 2025 Aderrig NW · 
+      <a href="privacy.html">Privacy Policy</a>
+    </div>
+  </div>
+</footer>
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script><script src="assets/identity.js"></script><script src="assets/app-core.js"></script>
 <script>
-  window.ANW_PUBLIC_MODE = false;
+(async function(){
+  'use strict';
+  try { if (typeof window.anwInitStore === 'function') await window.anwInitStore(); } catch(e) { console.warn(e); }
 
-  window.KEY_NOTICES = window.KEY_NOTICES || ((window.ANW_KEYS && (window.ANW_KEYS.NOTICES || window.ANW_KEYS.KEY_NOTICES)) || 'anw_notices');
-  window.getNoticesKey = window.getNoticesKey || function(){
-    try{
-      var keys = window.ANW_KEYS || {};
-      return keys.NOTICES || keys.KEY_NOTICES || window.KEY_NOTICES || 'anw_notices';
-    }catch(_){
-      return 'anw_notices';
-    }
-  };
-
-  window.showToast = window.showToast || function(title, message){
+  function toast(msg, type){
     try{
       if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){
-        ANW.ui.toast(String(message || title || ''), 'info');
-        return;
+        ANW.ui.toast(String(msg || ''), type || 'info');
       }
-    }catch(_){}
-    try{ console.log(String(title||''), String(message||'')); }catch(_){}
-  };
-
-  window.toast = window.toast || function(message, type){
+    }catch{}
+  }
+  function modal(msg, title){
     try{
-      if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){
-        ANW.ui.toast(String(message||''), type || 'info');
+      if(window.ANW && ANW.ui && typeof ANW.ui.alert === 'function'){
+        ANW.ui.alert(String(msg || ''), { title: title || 'Message' });
         return;
       }
-    }catch(_){}
-    try{ console.log(String(message||'')); }catch(_){}
-  };
-
+    }catch{}
+    alert(msg);
+  }
+  async function confirmModal(msg, title){
+    try{
+      if(typeof window.anwConfirm === 'function'){
+        return await window.anwConfirm(String(msg || ''), { title: title || 'Confirm' });
+      }
+    }catch{}
+    return confirm(msg);
+  }
+  function setText(id, value){
+    const el = document.getElementById(id);
+    if(el) el.textContent = (value ?? '').toString();
+  }
   function getResidentNumericReg(v){
     const raw = String(v == null ? '' : v).trim();
     if(!raw) return 0;
     const m = raw.match(/(\d+)/);
     return m ? parseInt(m[1], 10) || 0 : 0;
   }
-
   function formatResidentRegId(v){
     const n = getResidentNumericReg(v);
-    return n ? `ANW${String(n).padStart(4, '0')}` : '';
+    return n ? `ANW${String(n).padStart(4, '0')}` : '—';
+  }
+  function renderProfilePhoto(dataUrl){
+    const box = document.getElementById('pfPhotoPreview');
+    const removeBtn = document.getElementById('btnRemovePhoto');
+    if(!box) return;
+    const safe = String(dataUrl || '').trim();
+    if(safe){
+      box.classList.add('has-photo');
+      box.innerHTML = `<img alt="Profile photo" src="${safe}">`;
+      if(removeBtn) removeBtn.style.display = 'inline-flex';
+    } else {
+      box.classList.remove('has-photo');
+      box.textContent = '👤';
+      if(removeBtn) removeBtn.style.display = 'none';
+    }
+  }
+  function resizeImageToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const size = 360;
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, size, size);
+          const scale = Math.max(size / img.width, size / img.height);
+          const w = img.width * scale;
+          const h = img.height * scale;
+          const x = (size - w) / 2;
+          const y = (size - h) / 2;
+          ctx.drawImage(img, x, y, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.86));
+        };
+        img.onerror = reject;
+        img.src = reader.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
-  function anwNextRegId(list){
-    const users = Array.isArray(list) ? list : [];
-    let max = 0;
-    users.forEach(u => {
-      const n = getResidentNumericReg(u && (u.regId || u.regNo));
-      if(n > max) max = n;
+  const KEY_USERS     = ANW_KEYS.USERS;
+  const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
+
+  async function ensureIdentityUser(){
+    if(!window.netlifyIdentity) return null;
+    return await new Promise((resolve)=>{
+      let done = false;
+      const finish = (u)=>{ if(done) return; done = true; resolve(u || null); };
+      try{
+        window.netlifyIdentity.on('init', finish);
+        window.netlifyIdentity.init();
+      }catch(e){}
+      setTimeout(()=>{
+        try{
+          const u = (typeof window.netlifyIdentity.currentUser === 'function') ? window.netlifyIdentity.currentUser() : null;
+          finish(u);
+        }catch(e){ finish(null); }
+      }, 500);
     });
-    return formatResidentRegId(max + 1);
   }
 
-  function assignMissingResidentNumbers(list){
-    const users = Array.isArray(list) ? list : [];
-    let max = 0;
+  const identityUser = await ensureIdentityUser();
+  const loggedEmail = String((identityUser && identityUser.email) || (typeof anwGetLoggedEmail === 'function' ? anwGetLoggedEmail() : '') || '').trim();
+  let users = anwLoad(KEY_USERS, []);
+  if(!Array.isArray(users)) users = [];
+  const me = loggedEmail ? users.find(u => anwNormEmail(u.email) === anwNormEmail(loggedEmail)) : null;
 
-    users.forEach(u => {
-      const n = getResidentNumericReg(u && (u.regId || u.regNo));
-      if(n > max) max = n;
-    });
+  const notLoggedBox = document.getElementById('dbNotLogged');
+  const profileArea = document.getElementById('dbProfileArea');
 
-    let changed = false;
-    users.forEach(u => {
-      const status = String((u && u.status) || '').toLowerCase();
-      const approved = ['active','approved'].includes(status);
-      const currentRaw = u && (u.regId || u.regNo);
-      const normalized = formatResidentRegId(currentRaw);
+  if(!loggedEmail || !me){
+    notLoggedBox.style.display = 'block';
+    profileArea.style.display = 'none';
+  } else {
+    notLoggedBox.style.display = 'none';
+    profileArea.style.display = 'block';
+  }
 
-      if(approved && !currentRaw){
-        max += 1;
-        const id = formatResidentRegId(max);
-        u.regId = id;
-        u.regNo = id;
-        changed = true;
-      } else if(normalized && ((u.regId !== normalized) || (u.regNo !== normalized))){
-        u.regId = normalized;
-        u.regNo = normalized;
-        changed = true;
+  const tabBtns = document.querySelectorAll('.dash-tab');
+  const tabPanels = document.querySelectorAll('.dash-tab-content');
+
+  function showTab(id){
+    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+    tabPanels.forEach(p => p.style.display = (p.id === id ? 'block' : 'none'));
+  }
+  tabBtns.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+  function electedLabelFromUser(u){
+    const r = String(u?.electedRole || '').toLowerCase();
+    if(r === 'assistant') return 'Assistant Area Coordinator';
+    if(r === 'area') return 'Area Coordinator';
+    return '—';
+  }
+
+  if(me){
+    const approvedStatuses = ['approved','active'];
+    if(!getResidentNumericReg(me.regId || me.regNo) && approvedStatuses.includes(String(me.status || '').toLowerCase())){
+      const maxReg = users.reduce((max, user) => Math.max(max, getResidentNumericReg(user && (user.regId || user.regNo))), 0);
+      const nextReg = formatResidentRegId(maxReg + 1);
+      me.regId = nextReg;
+      me.regNo = nextReg;
+      try{ await anwSave(KEY_USERS, users); }catch(err){ console.warn('Could not persist generated reg id', err); }
+    }
+    document.getElementById('pfRegId').value = formatResidentRegId(me.regId || me.regNo);
+    document.getElementById('pfStatus').value = me.status || 'pending';
+    document.getElementById('pfName').value = me.name || '';
+    document.getElementById('pfPhone').value = me.phone || '';
+    document.getElementById('pfEmail').value = me.email || '';
+    document.getElementById('pfEir').value = me.eircode || '';
+    document.getElementById('pfAddress').value = me.address || '';
+    renderProfilePhoto(me.profilePhoto || me.photo || '');
+
+    const ac = me.alertsConsent || {};
+    const cb = document.getElementById('pfAlertOptIn');
+    if(cb) cb.checked = !!ac.optIn || !!ac.email || !!ac.sms;
+
+    const meta = document.getElementById('pfAlertMeta');
+    if(meta){
+      meta.textContent = ac.updatedAt
+        ? ('Last updated: ' + new Date(ac.updatedAt).toLocaleString())
+        : 'No alert preference recorded yet (Email/SMS/WhatsApp).';
+    }
+
+    document.getElementById('pfType').value = me.type || '';
+    document.getElementById('pfMgmt').value = me.managementCompany || '';
+
+    document.getElementById('pfElected').value = electedLabelFromUser(me);
+
+    const ul = document.getElementById('pfVolRoles');
+    ul.innerHTML = '';
+    const vr = me.vol_roles || {};
+    const labels = {
+      streetWatch:'Street watch / patrols',
+      leaflets:'Distribute leaflets',
+      tech:'Tech support',
+      elderly:'Elderly checks',
+      meetings:'Meeting organiser',
+      translation:'Translation'
+    };
+    Object.keys(labels).forEach(k=>{
+      if(vr[k]){
+        const li = document.createElement('li');
+        li.textContent = labels[k];
+        ul.appendChild(li);
       }
     });
-
-    return changed;
-  }
-
-  function updateAdminLoginNavLabel(){
-    try{
-      const u = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
-        ? window.netlifyIdentity.currentUser()
-        : null;
-      document.querySelectorAll('nav.nav a[href="login.html"]').forEach(a => {
-        a.textContent = u ? 'My Account' : 'Login / Register';
-      });
-    }catch(_){}
-  }
-  window.addEventListener('DOMContentLoaded', updateAdminLoginNavLabel);
-</script>
-
-<script>
-  (function loadAssets(){
-    var prefix = (location.protocol === 'file:') ? '' : '/';
-    function addJs(src, defer){
-      var s = document.createElement('script');
-      s.src = src;
-      if(defer) s.defer = true;
-      document.head.appendChild(s);
-    }
-    addJs('https://identity.netlify.com/v1/netlify-identity-widget.js', true);
-    addJs(prefix + 'assets/identity.js', true);
-    addJs(prefix + 'assets/app-core.js', true);
-    addJs(prefix + 'assets/acl-guard.js', true);
-  })();
-</script>
-</head>
-
-<body>
-
-<header class="site-header">
-  <div class="brand">
-    <a href="index.html" class="site-logo"><img src="/assets/logo/logo.png" alt="Aderrig Neighbourhood Watch" class="logo-img"></a>
-    <div class="brand-text">
-      <h1>Aderrig NW</h1>
-      <p class="muted">Adamstown</p>
-    </div>
-  </div>
-  <nav class="nav">
-    <a href="index.html">Home</a>
-    <a href="about.html">About</a>
-    <a href="report.html">Report</a>
-    <a href="alerts.html">Community Alerts</a>
-    <a href="projects.html">Community Projects</a>
-    <a href="handbook.html">Handbook</a>
-    <a href="login.html">Login / Register</a>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="household.html">Household</a>
-    <a href="admin.html" class="active">Admin</a>
-  </nav>
-</header>
-
-<main class="wrap">
-  <section class="card">
-    <h2>Admin panel</h2>
-    <p class="muted">Manage resident registrations, elections and volunteer tasks.</p>
-    <p id="adminGateMsg" class="tiny muted" style="margin-top:0.5rem; display:none;"></p>
-
-    <div class="actions admin-tabs" style="margin-top:0.5rem;">
-      <button type="button" class="btn small admin-tab active" data-tab="tabResidents">Residents</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabTasks">Volunteer tasks</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabElections">Elections</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabReports">Reports</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabNotices">Notices</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabHandbook">Handbook</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabProjects">Projects Monitoring</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabAccessControl">Access Control</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabTools">Tools</button>
-    </div>
-  </section>
-
-  <!-- ================= RESIDENTS ================= -->
-  <section class="card admin-tab-content" id="tabResidents">
-    <h3>Residents</h3>
-
-    <div class="actions resident-tabs" style="margin-top:0.25rem;">
-      <button type="button" class="btn small resident-tab active" data-subtab="subPending">Pending</button>
-      <button type="button" class="btn small resident-tab" data-subtab="subApproved">Approved</button>
-      <button type="button" class="btn small resident-tab" data-subtab="subAll">All</button>
-    </div>
-
-    <div id="resSummary" class="tiny muted" style="margin-top:0.5rem;"></div>
-
-    <div class="resident-table-wrap">
-      <table class="resident-table">
-        <colgroup>
-          <col class="resident-reg-col">
-          <col class="resident-name-col">
-          <col class="resident-email-col">
-          <col class="resident-eir-col">
-          <col class="resident-address-col">
-          <col class="resident-status-col">
-          <col class="resident-roles-col">
-          <col class="resident-actions-col">
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Reg No</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Eircode</th>
-            <th>Address</th>
-            <th>Status</th>
-            <th>Roles</th>
-            <th class="resident-actions-col">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="resBody"></tbody>
-      </table>
-    </div>
-
-    <p id="resEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No residents found.</p>
-  </section>
-
-  <div id="modalResident" class="modal" style="display:none;">
-    <div class="modal-content card">
-      <div class="modal-header">
-        <div>
-          <h3 style="margin:0;">Resident details</h3>
-          <p class="sub" style="margin-top:0.25rem;">Email, Eircode and Registration No are protected and cannot be changed.</p>
-        </div>
-        <button type="button" class="btn-line small" id="btnCloseResident">Close</button>
-      </div>
-
-      <div class="modal-body">
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Registration No</label>
-            <input id="mRegId" type="text" disabled>
-          </div>
-          <div class="field">
-            <label>Status</label>
-            <input id="mStatus" type="text" disabled>
-          </div>
-        </div>
-
-        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
-          <div class="field">
-            <label>Email</label>
-            <input id="mEmail" type="email" disabled>
-          </div>
-          <div class="field">
-            <label>Eircode</label>
-            <input id="mEir" type="text" disabled>
-          </div>
-        </div>
-
-        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
-          <div class="field">
-            <label>Full name</label>
-            <input id="mName" type="text">
-          </div>
-          <div class="field">
-            <label>Phone</label>
-            <input id="mPhone" type="text">
-          </div>
-        </div>
-
-        <div class="field" style="margin-top:1rem;">
-          <label>Address</label>
-          <input id="mAddress" type="text" disabled>
-        </div>
-
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Resident type</label>
-            <select id="mType">
-              <option value="">Select…</option>
-              <option value="owner">Owner</option>
-              <option value="tenant">Tenant</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Management company</label>
-            <input id="mMgmt" type="text">
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Roles</label>
-          <label class="chk"><input id="mCoord" type="checkbox"> <span>Street Coordinator</span></label>
-          <label class="chk"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
-          <label class="chk"><input id="mAlertAdmin" type="checkbox" disabled> <span>Community Alerts admin (set after approval)</span></label>
-
-          <div id="mVolunteerRolesWrap" style="margin:0.5rem 0 0 1.25rem;">
-            <p class="tiny muted" style="margin:0 0 0.25rem;">Volunteer roles (8): select one or more extra functions for this resident.</p>
-            <div style="display:grid; grid-template-columns:repeat(2, minmax(180px, 1fr)); column-gap:18px; row-gap:4px;">
-              <label class="chk"><input id="mVStreet" type="checkbox"> <span>Street watch / patrols</span></label>
-              <label class="chk"><input id="mVLeaf" type="checkbox"> <span>Distribute leaflets</span></label>
-              <label class="chk"><input id="mVTech" type="checkbox"> <span>Tech support</span></label>
-              <label class="chk"><input id="mVEld" type="checkbox"> <span>Elderly checks</span></label>
-              <label class="chk"><input id="mVClean" type="checkbox"> <span>Community clean-up</span></label>
-              <label class="chk"><input id="mVPark" type="checkbox"> <span>Parking assistance</span></label>
-              <label class="chk"><input id="mVMeet" type="checkbox"> <span>Meeting organiser</span></label>
-              <label class="chk"><input id="mVTrans" type="checkbox"> <span>Translation</span></label>
-            </div>
-          </div>
-        </div>
-
-        <p class="tiny muted" id="mMsg" style="margin-top:0.5rem;"></p>
-
-        <div class="actions" id="residentModalActions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn-line small" id="btnReject">Reject</button>
-          <button type="button" class="btn-line small" id="btnSuspendResident">Suspend</button>
-          <button type="button" class="btn-line small" id="btnRemoveResident">Remove</button>
-          <button type="button" class="btn small" id="btnSaveResident">Save</button>
-          <button type="button" class="btn small" id="btnApprove">Approve</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="modalInterest" class="modal" style="display:none;">
-    <div class="modal-content card">
-      <div class="actions" style="justify-content:space-between; align-items:center;">
-        <h3 style="margin:0;">Candidate interest</h3>
-        <button type="button" class="btn-line small" id="btnCloseInterest">Close</button>
-      </div>
-
-      <div class="grid-2" style="gap:1rem; margin-top:0.5rem;">
-        <div class="field">
-          <label>Candidate</label>
-          <input id="iName" type="text" disabled>
-        </div>
-        <div class="field">
-          <label>Email</label>
-          <input id="iEmail" type="text" disabled>
-        </div>
-      </div>
-
-      <div class="grid-2" style="gap:1rem;">
-        <div class="field">
-          <label>Role</label>
-          <input id="iRole" type="text" disabled>
-        </div>
-        <div class="field">
-          <label>Status</label>
-          <input id="iStatus" type="text" disabled>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Submitted</label>
-        <input id="iDate" type="text" disabled>
-      </div>
-
-      <div class="field">
-        <label>Motivation / experience</label>
-        <textarea id="iText" rows="8" readonly></textarea>
-      </div>
-
-      <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-        <button class="btn-line" type="button" id="btnInterestReject">Reject</button>
-        <button class="btn" type="button" id="btnInterestApprove">Approve</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= TASKS ================= -->
-  <section class="card admin-tab-content" id="tabTasks" style="display:none;">
-    <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-      <div>
-        <h3 style="margin:0;">Volunteer tasks</h3>
-        <p class="tiny muted" style="margin:6px 0 0;">
-          Create and manage volunteer tasks for the community. Households can accept open tasks in the Household page.
-        </p>
-      </div>
-      <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button type="button" class="btn small btn-line" id="btnTaskRefresh">Refresh</button>
-        <button type="button" class="btn small" id="btnTaskNew">New task</button>
-      </div>
-    </div>
-
-    <div class="grid" style="grid-template-columns: 1fr 1fr; gap:14px; margin-top:12px;">
-      <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
-        <h4 style="margin:0;">Task builder</h4>
-        <p class="tiny muted" style="margin:6px 0 10px;">
-          Use targeting to limit tasks to specific Eircodes or streets, and set suitable volunteer roles.
-        </p>
-
-        <div class="grid-2" style="gap:12px;">
-          <div class="field">
-            <label>Task code</label>
-            <input id="admTaskCode" type="text" disabled>
-          </div>
-          <div class="field">
-            <label>Status</label>
-            <select id="admTaskStatus">
-              <option value="open">Open</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Title</label>
-          <input id="admTaskTitle" type="text" placeholder="e.g., Leaflet drop on Street A">
-        </div>
-
-        <div class="field">
-          <label>Description</label>
-          <textarea id="admTaskDesc" rows="4" placeholder="What needs to be done, any instructions, and who to contact."></textarea>
-        </div>
-
-        <div class="grid-2" style="gap:12px;">
-          <div class="field">
-            <label>Targeting</label>
-            <select id="admTaskType">
-              <option value="general">General (all volunteers)</option>
-              <option value="eircode">Eircode(s)</option>
-              <option value="street">Street(s)</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Preferred completion date</label>
-            <input id="admTaskDue" type="date">
-          </div>
-        </div>
-
-        <div class="grid-2" style="gap:12px;">
-          <div class="field">
-            <label>Eircode(s) (semicolon separated)</label>
-            <input id="admTaskEircodes" type="text" placeholder="e.g., K78XXXX; K78YYYY">
-          </div>
-          <div class="field">
-            <label>Street(s) (semicolon separated)</label>
-            <input id="admTaskStreets" type="text" placeholder="e.g., The Avenue; Main Street">
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Suitable volunteer roles (semicolon separated)</label>
-          <input id="admTaskRoles" type="text" placeholder="e.g., Distribute leaflets; Street watch / patrols">
-          <p class="tiny muted" style="margin:6px 0 0;">Leave blank to show the task to any volunteer household.</p>
-        </div>
-
-        <p class="tiny muted" id="admTaskMsg" style="margin-top:10px;"></p>
-
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
-          <button type="button" class="btn-line small" id="btnTaskDelete" style="display:none;">Delete</button>
-          <button type="button" class="btn-line small" id="btnTaskClear">Clear</button>
-          <button type="button" class="btn small" id="btnTaskSave">Save task</button>
-        </div>
-      </div>
-
-      <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-          <h4 style="margin:0;">Tasks</h4>
-          <div class="tiny muted" id="admTasksSummary"></div>
-        </div>
-
-        <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
-          <div class="field" style="min-width:220px; margin:0;">
-            <label class="tiny muted" for="admTasksFilter">Status filter</label>
-            <select id="admTasksFilter" class="input" style="width:100%;">
-              <option value="all">All</option>
-              <option value="open">Open</option>
-              <option value="assigned">Assigned</option>
-              <option value="completed">Completed</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-
-          <div class="field" style="min-width:280px; margin:0;">
-            <label class="tiny muted" for="admTasksSearch">Search</label>
-            <input id="admTasksSearch" type="text" placeholder="Code, title, eircode, street, volunteer email...">
-          </div>
-        </div>
-
-        <div style="overflow-x:auto; margin-top:10px;">
-          <table style="width:100%; min-width:920px;">
-            <thead>
-              <tr>
-                <th style="text-align:left;">Code</th>
-                <th style="text-align:left;">Title</th>
-                <th style="text-align:left;">Target</th>
-                <th style="text-align:left;">Due</th>
-                <th style="text-align:left;">Status</th>
-                <th style="text-align:left;">Assigned to</th>
-                <th style="text-align:left;">Updated</th>
-                <th style="text-align:left;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="admTasksTbody"></tbody>
-          </table>
-        </div>
-        <p id="admTasksEmpty" class="tiny muted" style="display:none; margin-top:0.75rem;">No tasks found.</p>
-      </div>
-    </div>
-  </section>
-  <!-- ================= ELECTIONS ================= -->
-  <section class="card admin-tab-content" id="tabElections" style="display:none;">
-    <h3>Elections</h3>
-
-    <div class="actions resident-tabs" style="margin-top:0.25rem;">
-      <button type="button" class="btn small elect-tab active" data-subtab="subManage">Manage</button>
-      <button type="button" class="btn small elect-tab" data-subtab="subCandidates">Candidates</button>
-      <button type="button" class="btn small elect-tab" data-subtab="subResults">Results</button>
-    </div>
-
-    <div id="subManage" class="elect-subtab" style="margin-top:0.75rem;">
-      <div class="grid-2" style="gap:1rem;">
-        <div class="field">
-          <label>Role</label>
-          <select id="elRole">
-            <option value="">Select…</option>
-            <option value="area">Area Coordinator</option>
-            <option value="assistant">Assistant Area Coordinator</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Status</label>
-          <select id="elStatus">
-            <option value="open">Open</option>
-            <option value="closed">Closed</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="grid-2" style="gap:1rem;">
-        <div class="field">
-          <label>Start date</label>
-          <input id="elStart" type="date">
-        </div>
-        <div class="field">
-          <label>End date</label>
-          <input id="elEnd" type="date">
-        </div>
-      </div>
-
-      <p class="tiny muted" id="elMsg" style="margin-top:0.5rem;"></p>
-
-      <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-        <button class="btn" type="button" id="btnCreateElection">Create / Update</button>
-      </div>
-
-      <div style="overflow-x:auto; margin-top:0.75rem;">
-        <table style="width:100%;">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Role</th>
-              <th>Period</th>
-              <th>Status</th>
-              <th>Winner</th>
-              <th style="width:200px;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="elBody"></tbody>
-        </table>
-      </div>
-      <p id="elEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No elections configured.</p>
-    </div>
-
-    <div id="subCandidates" class="elect-subtab" style="display:none; margin-top:0.75rem;">
-      <p class="tiny muted" style="margin-top:0;">
-        Candidates come from residents who submitted Interest in their dashboard and were approved here.
-      </p>
-
-      <div style="overflow-x:auto; margin-top:0.75rem;">
-        <table style="width:100%;">
-          <thead>
-            <tr>
-              <th>Role</th>
-              <th>Reg No</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Interest status</th>
-              <th style="width:160px;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="candBody"></tbody>
-        </table>
-      </div>
-      <p id="candEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No interests submitted.</p>
-    </div>
-
-    <div id="subResults" class="elect-subtab" style="display:none; margin-top:0.75rem;">
-      <p class="tiny muted" style="margin-top:0;">
-        Results are calculated from votes stored as 1 vote per household (Reg No) per role.
-        A winner is declared only if the leading candidate reaches at least <strong>60%</strong> of total approved households.
-      </p>
-      <div id="resultsBox"></div>
-    </div>
-  </section>
-
-  <!-- ================= REPORTS ================= -->
-  <section class="card admin-tab-content" id="tabReports" style="display:none;">
-    <h3>Reports</h3>
-    <p class="tiny muted" style="margin-top:0;">
-      View and manage incident reports submitted via the <a href="report.html">Report</a> page.
-    </p>
-
-    <div class="actions" style="justify-content:flex-start; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem;">
-      <div class="field" style="min-width:220px; margin:0;">
-        <label class="tiny muted" for="repStatusFilter">Status</label>
-        <select id="repStatusFilter" class="input" style="width:100%;">
-          <option value="all">All</option>
-          <option value="submitted">Submitted</option>
-          <option value="in_review">In review</option>
-          <option value="sent_to_garda">Sent to Gardaí</option>
-          <option value="closed">Closed</option>
-        </select>
-      </div>
-
-      <div class="field" style="min-width:280px; margin:0;">
-        <label class="tiny muted" for="repSearch">Search (ID / email / location)</label>
-        <input id="repSearch" type="text" placeholder="e.g., RPT-0003 or someone@email.com" />
-      </div>
-
-      <div style="display:flex; gap:0.5rem; align-items:flex-end;">
-        <button type="button" class="btn" id="btnRepRefresh">Refresh</button>
-        <button type="button" class="btn btn-line" id="btnRepExport">Export file</button>
-      </div>
-    </div>
-
-    <p id="repMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
-
-    <div style="overflow-x:auto; margin-top:0.75rem;">
-      <table style="width:100%; min-width:980px;">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Created</th>
-            <th>Category</th>
-            <th>Location</th>
-            <th>Reporter email</th>
-            <th>Status</th>
-            <th style="width:260px;">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="repBody"></tbody>
-      </table>
-    </div>
-
-    <p id="repEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No reports found.</p>
-  </section>
-
-  <!-- ================= NOTICES ================= -->
-  <section class="card admin-tab-content" id="tabNotices" style="display:none;">
-    <h3>Notices</h3>
-    <p class="tiny muted" style="margin-top:0;">Create official notices that appear on member dashboards. Messages are read-only for residents.</p>
-
-    <div class="grid-2" style="gap:1rem; align-items:flex-start;">
-      <div>
-        <h4 style="margin-top:0;">Create / Update notice</h4>
-        <div class="field">
-          <label>Title</label>
-          <input id="ntTitle" type="text" maxlength="120" placeholder="e.g., Visits to elderly residents" />
-        </div>
-        <div class="field">
-          <label>Message</label>
-          <textarea id="ntMessage" rows="5" maxlength="600" placeholder="Short reminder for members..."></textarea>
-        </div>
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Category (optional)</label>
-            <select id="ntCategory">
-              <option value="General">General</option>
-              <option value="Volunteer">Volunteer</option>
-              <option value="Safety">Safety</option>
-              <option value="Meeting">Meeting</option>
-              <option value="Garda">Garda</option>
-              <option value="Bins">Bins</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Expiry (optional)</label>
-            <input id="ntExpires" type="date" />
-          </div>
-        </div>
-
-        <h4 style="margin:0.75rem 0 0.25rem;">Home carousel</h4>
-        <p class="tiny muted" style="margin-top:0;">Optional. If enabled, this notice can appear as a compact carousel banner on the Home page.</p>
-        <div class="grid-2" style="gap:1rem; align-items:flex-end;">
-          <div class="field" style="margin:0;">
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
-              <input id="ntHomeEnabled" type="checkbox">
-              <span>Show on Home</span>
-            </label>
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Home visibility</label>
-            <select id="ntHomeVisibility">
-              <option value="private" selected>Private (members only)</option>
-              <option value="public">Public (everyone)</option>
-            </select>
-          </div>
-        </div>
-
-        <h4 style="margin:0.75rem 0 0.25rem;">Send to</h4>
-        <p class="tiny muted" style="margin-top:0;">Choose one or more targeting options. If you select nothing, the notice will be visible to all logged-in members.</p>
-
-        <div class="field" style="margin:0.25rem 0 0.5rem;">
-          <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
-            <input id="ntAllLogged" type="checkbox" checked>
-            <span>All logged-in members</span>
-          </label>
-        </div>
-
-        <div class="field" style="margin:0.25rem 0 0.5rem;">
-          <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
-            <input id="ntNonAdminOnly" type="checkbox">
-            <span>Residents only (exclude admins/owners)</span>
-          </label>
-        </div>
-
-        <div class="field">
-          <label>By role (optional)</label>
-          <div class="grid-2" style="gap:0.5rem;">
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="resident"> <span>Residents</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="street_admin"> <span>Street Coordinators</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="area_coordinator"> <span>Area Coordinators</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="aux_coordinator"> <span>Assistant Area Coordinators</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="volunteer"> <span>Project Volunteers</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="platform_support"> <span>Platform/Admin Support</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="admin"> <span>Admins</span></label>
-          </div>
-        </div>
-
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Eircode prefix (optional)</label>
-            <input id="ntEirPrefixes" type="text" placeholder="e.g., K78 (comma separated)" />
-          </div>
-          <div class="field">
-            <label>Street name(s) (optional)</label>
-            <input id="ntStreets" type="text" placeholder="e.g., Aderrig Park, Castlegate Way" />
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Specific Eircodes (optional, one per line)</label>
-          <textarea id="ntEircodes" rows="3" placeholder="K78XXXX&#10;K78YYYY"></textarea>
-        </div>
-
-        <div class="field">
-          <label>Specific member emails (optional, one per line)</label>
-          <textarea id="ntEmails" rows="3" placeholder="person@email.com"></textarea>
-        </div>
-
-        <p id="ntMsg" class="tiny muted"></p>
-
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnNtClear">Clear</button>
-          <button type="button" class="btn" id="btnNtPublish">Publish notice</button>
-        </div>
-      </div>
-
-      <div class="card" style="padding:1rem; margin-top:1rem;">
-        <h4 style="margin-top:0;">Bin collection import</h4>
-        <p class="tiny muted" style="margin-top:0;">
-          Use only the CSV file. Imported bin notices are saved automatically as public Home notices and will be shown for <strong>this week and next week</strong>.
-        </p>
-
-        <div class="field" style="display:none;">
-          <label>Schedule lines</label>
-          <textarea id="binCsv" rows="6"></textarea>
-        </div>
-
-        <div class="field">
-          <label>Collection CSV file</label>
-          <input id="binCsvFile" type="file" accept=".csv,text/csv" />
-          <p class="tiny muted" style="margin-top:6px;">Select the collection CSV and click <strong>Import collection CSV</strong>.</p>
-        </div>
-
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnClearBinNotices">Clear imported bin notices</button>
-          <button type="button" class="btn" id="btnBinImport">Import collection CSV</button>
-        </div>
-
-        <p id="binMsg" class="tiny muted"></p>
-      </div>
-
-      <div>
-        <h4 style="margin-top:0;">Existing notices</h4>
-        <p class="tiny muted" id="ntListMsg" style="margin-top:0.5rem;"></p>
-        <div id="ntList"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= HANDBOOK ================= -->
-  <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
-    <h3>Handbook</h3>
-    <p class="tiny muted" style="margin-top:0;">Create categories and items for the resident Handbook. Residents can view published items only. Prefer external links for large PDFs.</p>
-
-    <div class="grid-2" style="gap:1rem; align-items:flex-start;">
-      <div>
-        <h4 style="margin-top:0;">Categories</h4>
-        <div class="field">
-          <label>Category title</label>
-          <input id="hbCatTitle" type="text" maxlength="80" placeholder="e.g., Waste & Recycling" />
-        </div>
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Icon (emoji)</label>
-            <input id="hbCatIcon" type="text" maxlength="8" placeholder="🗑️" />
-          </div>
-          <div class="field">
-            <label>Order</label>
-            <input id="hbCatOrder" type="number" min="1" step="1" placeholder="1" />
-          </div>
-        </div>
-        <div class="field">
-          <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
-            <input id="hbCatActive" type="checkbox" checked>
-            <span>Active</span>
-          </label>
-        </div>
-        <p id="hbCatMsg" class="tiny muted"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnHbCatClear">Clear</button>
-          <button type="button" class="btn" id="btnHbCatSave">Save category</button>
-        </div>
-
-        <div style="overflow-x:auto; margin-top:0.75rem;">
-          <table style="width:100%;">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th style="width:90px;">Order</th>
-                <th style="width:90px;">Status</th>
-                <th style="width:160px;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="hbCatBody"></tbody>
-          </table>
-        </div>
-        <p id="hbCatEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No categories yet.</p>
-      </div>
-
-      <div>
-        <h4 style="margin-top:0;">Items</h4>
-        <div class="field">
-          <label>Category</label>
-          <select id="hbItemCategory"></select>
-        </div>
-        <div class="field">
-          <label>Item title</label>
-          <input id="hbItemTitle" type="text" maxlength="120" placeholder="e.g., Visitor Parking Locations" />
-        </div>
-        <div class="field">
-          <label>Summary (optional)</label>
-          <input id="hbItemSummary" type="text" maxlength="160" placeholder="Short description shown in the list" />
-        </div>
-
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Type</label>
-            <select id="hbItemType">
-              <option value="page" selected>Page (content on site)</option>
-              <option value="link">External link</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Status</label>
-            <select id="hbItemStatus">
-              <option value="published" selected>Published</option>
-              <option value="draft">Draft</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>External URL (for Link type)</label>
-          <input id="hbItemUrl" type="url" placeholder="https://..." />
-        </div>
-
-        <div class="field">
-          <label>Hero image (optional)</label>
-          <input id="hbItemHeroUrl" type="url" placeholder="https://... (recommended)" />
-          <div class="tiny muted" style="margin-top:6px;">Tip: prefer a link (Netlify Large Media/Drive) to avoid storing large files in the KV store.</div>
-        </div>
-
-        <div class="field">
-          <label>Content (HTML allowed)</label>
-          <textarea id="hbItemContent" rows="7" placeholder="Write the page content here..."></textarea>
-        </div>
-
-        <div class="field">
-          <label>Attachments (one per line: Label | URL)</label>
-          <textarea id="hbItemAttachments" rows="4" placeholder="Map PDF | https://...&#10;Bin schedule | https://..."></textarea>
-        </div>
-
-        <p id="hbItemMsg" class="tiny muted"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnHbItemClear">Clear</button>
-          <button type="button" class="btn" id="btnHbItemSave">Save item</button>
-        </div>
-
-        <div class="card" style="padding:1rem; margin-top:1rem;">
-          <h4 style="margin-top:0;">Items in selected category</h4>
-          <div id="hbItemList" class="grid" style="gap:10px;"></div>
-          <p id="hbItemEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No items in this category.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-  <!-- ================= PROJECTS ================= -->
-  <section class="card admin-tab-content" id="tabProjects" style="display:none;">
-    <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-      <div>
-        <h3 style="margin:0;">Projects Monitoring</h3>
-        <p class="tiny muted" style="margin:6px 0 0;">
-          Review projects and recipient-tracking entries saved in the central store.
-        </p>
-        <div id="pmStoreNote" class="tiny" style="margin-top:8px;"></div>
-      </div>
-      <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button type="button" class="btn small btn-line" id="btnPmRefresh">Refresh</button>
-        <button type="button" class="btn small" id="btnPmExport">Export</button>
-      </div>
-    </div>
-
-    <div class="grid-2" style="gap:1rem; margin-top:1rem;">
-      <div class="field">
-        <label>Filter by status</label>
-        <select id="pmStatusFilter">
-          <option value="all">All</option>
-          <option value="planned">Planned</option>
-          <option value="active">Active</option>
-          <option value="on_hold">On hold</option>
-          <option value="completed">Completed</option>
-          <option value="archived">Archived</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Search</label>
-        <input id="pmSearch" type="text" placeholder="Project title, owner, street, recipient...">
-      </div>
-    </div>
-
-    <div style="overflow-x:auto; margin-top:0.75rem;">
-      <table style="width:100%; min-width:860px;">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Project</th>
-            <th>Status</th>
-            <th>Owner</th>
-            <th>Updated</th>
-            <th style="width:160px;">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="pmBody"></tbody>
-      </table>
-    </div>
-    <p id="pmEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No projects found.</p>
-
-    <div class="card" style="padding:1rem; margin-top:1rem;">
-      <h4 style="margin-top:0;">Recipient tracking</h4>
-      <div style="overflow-x:auto;">
-        <table style="width:100%;">
-          <thead>
-            <tr>
-              <th>Project</th>
-              <th>Recipient</th>
-              <th>Address / Eircode</th>
-              <th>Status</th>
-              <th>Updated</th>
-            </tr>
-          </thead>
-          <tbody id="pmRecipientsBody"></tbody>
-        </table>
-      </div>
-      <p id="pmRecipientsEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No recipient records found.</p>
-    </div>
-  </section>
-
-  <!-- ================= ACCESS CONTROL ================= -->
-  <section class="card admin-tab-content" id="tabAccessControl" style="display:none;">
-    <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-      <div>
-        <h3 style="margin:0;">Access Control</h3>
-        <p class="tiny muted" style="margin:6px 0 0;">
-          Control which roles can access pages and feature groups.
-        </p>
-      </div>
-      <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button type="button" class="btn small btn-line" id="btnAcRefresh">Refresh</button>
-        <button type="button" class="btn small btn-line" id="btnAcPrint">Print</button>
-        <button type="button" class="btn small" id="btnAcSave">Save access rules</button>
-      </div>
-    </div>
-
-    <p id="acMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
-
-    <div class="ac-wrap" style="margin-top:0.75rem;">
-      <table class="ac-table">
-        <thead>
-          <tr>
-            <th style="min-width:320px;">Page / feature</th>
-            <th>Resident</th>
-            <th>Street Coord.</th>
-            <th>Volunteer</th>
-            <th>Area Coord.</th>
-            <th>Assistant</th>
-            <th>Platform</th>
-            <th>Admin</th>
-          </tr>
-        </thead>
-        <tbody id="acBody"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- ================= TOOLS ================= -->
-  <section class="card admin-tab-content" id="tabTools" style="display:none;">
-    <h3>Tools</h3>
-    <p class="tiny muted" style="margin-top:0;">
-      Maintenance tools for backups, restore, exports and diagnostics.
-    </p>
-
-    <details class="anw-acc" open>
-      <summary><strong>Backups</strong></summary>
-      <div class="acc-body">
-        <div class="card" style="padding:1rem;">
-          <div class="grid" style="grid-template-columns: 1fr 1fr; gap:14px;">
-            <div>
-              <h4 style="margin-top:0;">Backup status</h4>
-              <p class="tiny muted" id="backupStatusText">Checking backup status…</p>
-              <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
-                <span id="backupStatusBadge" class="tag gray">Unknown</span>
-                <span id="backupLastRun" class="tag gray">Last run: —</span>
-              </div>
-            </div>
-
-            <div>
-              <h4 style="margin-top:0;">Actions</h4>
-              <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-                <button type="button" class="btn small" id="btnBackupNow">Run backup now</button>
-                <button type="button" class="btn small btn-line" id="btnBackupRefresh">Refresh status</button>
-              </div>
-
-              <div class="field" style="margin-top:1rem;">
-                <label for="restoreBackupFile">Restore backup file</label>
-                <input id="restoreBackupFile" type="file" accept=".json,application/json" />
-              </div>
-
-              <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-                <button type="button" class="btn small btn-line" id="btnRestoreBackup">Restore backup</button>
-              </div>
-
-              <p id="backupMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </details>
-
-    <details class="anw-acc" style="margin-top:12px;">
-      <summary><strong>Exports</strong></summary>
-      <div class="acc-body">
-        <div class="card" style="padding:1rem;">
-          <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-            <button type="button" class="btn small btn-line" id="btnExportUsers">Export residents</button>
-            <button type="button" class="btn small btn-line" id="btnExportNotices">Export notices</button>
-            <button type="button" class="btn small btn-line" id="btnExportReports">Export reports</button>
-            <button type="button" class="btn small btn-line" id="btnExportProjects">Export projects</button>
-          </div>
-          <p id="exportMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
-        </div>
-      </div>
-    </details>
-
-    <details class="anw-acc" style="margin-top:12px;">
-      <summary><strong>Diagnostics</strong></summary>
-      <div class="acc-body">
-        <div class="card" style="padding:1rem;">
-          <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-            <button type="button" class="btn small btn-line" id="btnDiagRun">Run diagnostics</button>
-          </div>
-          <pre id="diagOut" style="white-space:pre-wrap; overflow:auto; margin-top:10px; background:#f8faf8; border:1px solid var(--line); border-radius:12px; padding:12px; min-height:120px;"></pre>
-        </div>
-      </div>
-    </details>
-  </section>
-</main>
-
-<footer class="site-footer">
-  <div class="footer-row">
-    <div class="footer-left">
-      <span class="page-access">Admin Page</span>
-    </div>
-    <div class="footer-center">
-      © 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a>
-    </div>
-  </div>
-</footer>
-
-<script>
-(function(){
-  'use strict';
-
-  const KEYS = window.ANW_KEYS || {};
-  const KEY_USERS = KEYS.USERS || 'anw_users';
-  const KEY_ELECTIONS = KEYS.ELECTIONS || 'anw_elections';
-  const KEY_ELECTION_INTEREST = KEYS.ELECTION_INTEREST || 'anw_election_interest';
-  const KEY_REPORTS = KEYS.REPORTS || 'anw_reports';
-  const KEY_PROJECTS = KEYS.PROJECTS || 'anw_projects';
-  const KEY_PROJECT_RECIPIENTS = KEYS.PROJECT_RECIPIENTS || 'anw_project_recipients';
-  const KEY_HANDBOOK_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
-  const KEY_HANDBOOK_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
-  const KEY_ACCESS = KEYS.ACCESS || 'anw_access_control';
-  const KEY_TASKS = KEYS.TASKS || 'anw_tasks';
-  const KEY_NOTICES = window.getNoticesKey();
-
-  const $ = (sel, root=document) => root.querySelector(sel);
-  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-  const byId = id => document.getElementById(id);
-
-  const ADMIN_ALLOWED_ROLES = ['admin','owner','platform_support','area_coordinator','aux_coordinator'];
-
-  function hasAllowedAdminRole(roles){
-    const list = Array.isArray(roles) ? roles : [roles];
-    return list.map(v => String(v||'').toLowerCase()).some(v => ADMIN_ALLOWED_ROLES.includes(v));
-  }
-
-  async function anwLoadSafe(key, fallback){
-    try{
-      if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback);
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    }catch(_){
-      return fallback;
+    if(!ul.children.length){
+      ul.innerHTML = '<li class="muted">No volunteer roles selected</li>';
     }
   }
 
-  async function anwSaveSafe(key, value){
+
+  const pfPhotoFile = document.getElementById('pfPhotoFile');
+  document.getElementById('btnUploadPhoto')?.addEventListener('click', ()=> pfPhotoFile?.click());
+  document.getElementById('btnRemovePhoto')?.addEventListener('click', ()=>{
+    if(!me) return;
+    me.profilePhoto = '';
+    renderProfilePhoto('');
+    setText('pfPhotoMsg', 'Photo removed. Click Save to confirm.');
+  });
+  pfPhotoFile?.addEventListener('change', async (ev)=>{
+    const file = ev.target && ev.target.files && ev.target.files[0];
+    if(!file || !me) return;
     try{
-      if(typeof window.anwSave === 'function') return await window.anwSave(key, value);
-      localStorage.setItem(key, JSON.stringify(value));
-      return true;
+      me.profilePhoto = await resizeImageToDataUrl(file);
+      renderProfilePhoto(me.profilePhoto);
+      setText('pfPhotoMsg', 'Photo ready. Click Save to confirm.');
     }catch(err){
-      console.error(err);
-      throw err;
+      setText('pfPhotoMsg', 'Could not process this image.');
+      toast('Could not process this image.', 'error');
+    }
+    ev.target.value = '';
+  });
+
+  document.getElementById('btnSaveProfile')?.addEventListener('click', async ()=>{
+    if(!me) return;
+
+    try{
+      me.name = document.getElementById('pfName').value.trim();
+      me.phone = document.getElementById('pfPhone').value.trim();
+      if(me.regId || me.regNo){
+        const normalizedReg = formatResidentRegId(me.regId || me.regNo);
+        me.regId = normalizedReg;
+        me.regNo = normalizedReg;
+      }
+
+      const cb = document.getElementById('pfAlertOptIn');
+      const nextOptIn = !!(cb && cb.checked);
+      const now = new Date().toISOString();
+
+      me.termsAccepted = true;
+      if(!me.termsAcceptedAt) me.termsAcceptedAt = me.createdAt || now;
+
+      const prev = me.alertsConsent || { email:false, sms:false, history:[] };
+      const prevOptIn = !!(prev.optIn || prev.email || prev.sms);
+      const changed = (prevOptIn !== nextOptIn);
+
+      if(changed){
+        const hist = Array.isArray(prev.history) ? prev.history.slice() : [];
+        hist.push({ at: now, email: nextOptIn, sms: nextOptIn, source: 'profile' });
+        me.alertsConsent = { optIn: nextOptIn, email: nextOptIn, sms: nextOptIn, updatedAt: now, history: hist };
+      }else{
+        me.alertsConsent = {
+          optIn: prevOptIn,
+          email: !!prev.email,
+          sms: !!prev.sms,
+          updatedAt: prev.updatedAt || now,
+          history: Array.isArray(prev.history) ? prev.history : []
+        };
+      }
+
+      await anwSave(KEY_USERS, users);
+
+      setText('pfMsg', 'Profile updated.');
+      setText('pfPhotoMsg', me.profilePhoto ? 'Profile photo saved.' : 'No profile photo saved.');
+      toast('Profile updated.', 'success');
+
+      const meta = document.getElementById('pfAlertMeta');
+      if(meta){
+        meta.textContent = me.alertsConsent?.updatedAt
+          ? ('Last updated: ' + new Date(me.alertsConsent.updatedAt).toLocaleString())
+          : 'No alert preference recorded yet (Email/SMS/WhatsApp).';
+      }
+    }catch(err){
+      setText('pfMsg', 'Error updating profile.');
+      modal('Error updating profile. Please try again.', 'Error');
+      toast('Error updating profile.', 'error');
+    }
+  });
+
+  const interestBlocked = document.getElementById('interestBlocked');
+  const interestArea = document.getElementById('interestArea');
+
+  const allowed = !!(me && anwIsApproved(me));
+
+  if(!allowed){
+    interestBlocked.style.display = 'block';
+    interestArea.style.display = 'none';
+  } else {
+    interestBlocked.style.display = 'none';
+    interestArea.style.display = 'block';
+  }
+
+  const intRole = document.getElementById('intRole');
+  const intText = document.getElementById('intText');
+  const intMeta = document.getElementById('intMeta');
+  const btnSubmitInterest = document.getElementById('btnSubmitInterest');
+  const btnWithdrawInterest = document.getElementById('btnWithdrawInterest');
+
+  function renderInterest(){
+    if(!me) return;
+
+    if(me.interest){
+      intRole.value = me.interest.role || '';
+      intText.value = me.interest.text || '';
+      intMeta.textContent =
+        'Submitted on ' + (me.interest.date || '—') +
+        ' · Status: ' + (me.interest.status || 'pending');
+      btnWithdrawInterest.style.display = 'inline-block';
+      btnSubmitInterest.textContent = 'Update';
+    } else {
+      intRole.value = '';
+      intText.value = '';
+      intMeta.textContent = '';
+      btnWithdrawInterest.style.display = 'none';
+      btnSubmitInterest.textContent = 'Submit';
     }
   }
+  renderInterest();
 
-  function downloadText(filename, text, type='application/json'){
-    const blob = new Blob([text], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 500);
-  }
+  btnSubmitInterest?.addEventListener('click', async ()=>{
+    if(!me) return;
 
-  function esc(s){
-    return String(s == null ? '' : s)
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'",'&#39;');
-  }
+    const roleVal = (intRole.value || '').trim();
+    const textVal = (intText.value || '').trim();
 
-  function fmtDate(v){
-    if(!v) return '—';
-    const d = new Date(v);
-    if(Number.isNaN(d.getTime())) return String(v);
-    return d.toLocaleString();
-  }
+    if(!roleVal || !textVal){
+      intMeta.textContent = 'Please complete all fields.';
+      toast('Please complete all fields.', 'warn');
+      modal('Please complete all fields before submitting.', 'Missing information');
+      return;
+    }
 
-  function fmtDateShort(v){
-    if(!v) return '—';
-    const d = new Date(v + 'T12:00:00');
-    if(Number.isNaN(d.getTime())) return String(v);
-    return d.toLocaleDateString();
-  }
+    try{
+      const existingStatus = me.interest?.status || 'pending';
 
-  function normList(v){
-    if(Array.isArray(v)) return v.filter(Boolean);
-    if(v == null || v === '') return [];
-    return String(v).split(/[;,|]/).map(s => s.trim()).filter(Boolean);
-  }
+      me.interest = {
+        role: roleVal,
+        text: textVal,
+        date: new Date().toISOString().slice(0,10),
+        status: existingStatus
+      };
 
-  function uniqueBy(arr, getKey){
-    const seen = new Set();
-    return arr.filter(item => {
-      const k = getKey(item);
-      if(seen.has(k)) return false;
-      seen.add(k);
-      return true;
+      await anwSave(KEY_USERS, users);
+      renderInterest();
+
+      intMeta.textContent = 'Interest saved. Awaiting admin approval if pending.';
+      toast('Interest saved.', 'success');
+    }catch(err){
+      intMeta.textContent = 'Error saving interest.';
+      toast('Error saving interest.', 'error');
+      modal('Error saving your interest. Please try again.', 'Error');
+    }
+  });
+
+  btnWithdrawInterest?.addEventListener('click', async ()=>{
+    if(!me || !me.interest) return;
+
+    const ok = await confirmModal('Withdraw your submitted interest?', 'Confirm');
+    if(!ok) return;
+
+    try{
+      delete me.interest;
+      await anwSave(KEY_USERS, users);
+      renderInterest();
+      intMeta.textContent = 'Interest withdrawn.';
+      toast('Interest withdrawn.', 'info');
+    }catch(err){
+      intMeta.textContent = 'Error withdrawing interest.';
+      toast('Error withdrawing interest.', 'error');
+      modal('Error withdrawing interest. Please try again.', 'Error');
+    }
+  });
+
+  const electionsBody = document.getElementById('electionsBody');
+  const electionsEmpty = document.getElementById('electionsEmpty');
+  const elections = anwLoad(KEY_ELECTIONS, []);
+
+  electionsBody.innerHTML = '';
+  if(!Array.isArray(elections) || !elections.length){
+    electionsEmpty.style.display = 'block';
+  } else {
+    electionsEmpty.style.display = 'none';
+    elections.forEach(e=>{
+      const tr = document.createElement('tr');
+      const roleLabel = (String(e.role||'').toLowerCase()==='assistant')
+        ? 'Assistant Area Coordinator'
+        : 'Area Coordinator';
+
+      const winner = e.electedName || e.winnerName || e.electedEmail || '—';
+
+      tr.innerHTML = `
+        <td>${roleLabel}</td>
+        <td>${e.start || '—'} → ${e.end || '—'}</td>
+        <td>${e.status || '—'}</td>
+        <td>${winner}</td>
+      `;
+      electionsBody.appendChild(tr);
     });
   }
 
-  function slugify(v){
-    return String(v||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  /* =========================
+     Notices (dashboard)
+     ========================= */
+
+  const KEY_NOTICES = ANW_KEYS.NOTICES || 'anw_notices';
+  const noticesBadge = document.getElementById('noticesBadge');
+  const noticesBadgeTop = document.getElementById('noticesBadgeTop');
+  const noticesEmpty = document.getElementById('noticesEmpty');
+  const noticesList = document.getElementById('noticesList');
+
+  function getReadSet(){
+    try{
+      const key = `anw_notices_read_${anwNormEmail(loggedEmail)}`;
+      const raw = localStorage.getItem(key);
+      const arr = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(arr) ? arr : []);
+    }catch{ return new Set(); }
+  }
+  function saveReadSet(set){
+    try{
+      const key = `anw_notices_read_${anwNormEmail(loggedEmail)}`;
+      localStorage.setItem(key, JSON.stringify(Array.from(set)));
+    }catch{}
   }
 
-  function parseCsvLine(line){
-    const out = [];
-    let cur = '';
-    let quote = false;
-    for(let i=0;i<line.length;i++){
-      const ch = line[i];
-      if(ch === '"'){
-        if(quote && line[i+1] === '"'){ cur += '"'; i++; }
-        else quote = !quote;
-      } else if(!quote && (ch === ',' || ch === ';' || ch === '\t')){
-        out.push(cur.trim());
-        cur = '';
-      } else {
-        cur += ch;
-      }
-    }
-    out.push(cur.trim());
-    return out;
+  function isAdminRole(role){
+    const r = String(role||'').toLowerCase();
+    return r === 'admin' || r === 'owner';
   }
 
-  function parseFlexibleDate(v){
-    const s = String(v||'').trim();
-    if(!s) return '';
-    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-    const m1 = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if(m1) return `${m1[3]}-${m1[2]}-${m1[1]}`;
-    const m2 = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-    if(m2) return `${m2[3]}-${m2[2]}-${m2[1]}`;
-    const d = new Date(s);
-    if(!Number.isNaN(d.getTime())){
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    }
+  function getStreetName(address){
+    const a = String(address||'').trim();
+    if(!a) return '';
+    // Remove eircode (7 chars) and trailing commas
+    let s = a.replace(/[A-Z]\d{2}\s?[A-Z0-9]{4}\b/gi, '').replace(/\s{2,}/g,' ').trim();
+    // Take first segment before comma
+    s = s.split(',')[0] || s;
+    // Remove leading house number
+    s = s.replace(/^\s*\d+[A-Za-z]?\s+/, '').trim();
     return s;
   }
 
-  function startOfWeekMonday(dateStr){
-    const d = new Date(dateStr + 'T12:00:00');
-    if(Number.isNaN(d.getTime())) return dateStr;
-    const day = d.getDay();
-    const offset = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + offset);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
+  function noticeMatchesUser(n, user){
+    const t = n?.target || {};
+    const inc = t.include || {};
+    const exc = t.exclude || {};
 
-  function endOfNextWeekSunday(dateStr){
-    const d = new Date(dateStr + 'T12:00:00');
-    if(Number.isNaN(d.getTime())) return dateStr;
-    const day = d.getDay();
-    const offsetToMonday = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + offsetToMonday + 13);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
+    const role = String(user?.role || 'resident').toLowerCase();
+    const isAdmin = isAdminRole(role);
+    const eir = String(user?.eircode || '').replace(/\s+/g,'').toUpperCase();
+    const street = getStreetName(user?.address || user?.fullAddress || '');
 
-  function getCurrentAdminTabId(){
-    const active = document.querySelector('.admin-tab.active');
-    return active ? active.getAttribute('data-tab') : 'tabResidents';
-  }
+    // Exclude rules (hard)
+    if(Array.isArray(exc.roles) && exc.roles.map(String).map(x=>x.toLowerCase()).includes(role)) return false;
+    if(Array.isArray(exc.eircodes) && exc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return false;
+    if(Array.isArray(exc.emails) && exc.emails.map(anwNormEmail).includes(anwNormEmail(user?.email))) return false;
 
-  function showAdminTab(tabId){
-    $$('.admin-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId));
-    $$('.admin-tab-content').forEach(p => { p.style.display = (p.id === tabId) ? 'block' : 'none'; });
-  }
+    // If nonAdminOnly and user is admin, block
+    if(inc.nonAdminOnly && isAdmin) return false;
 
-  function showResidentSubtab(id){
-    $$('.resident-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-subtab') === id));
-    const mode = id === 'subPending' ? 'pending' : id === 'subApproved' ? 'approved' : 'all';
-    renderResidents(mode);
-  }
+    // If include is empty => visible to all logged-in
+    const hasAnyInclude = !!(
+      inc.allLoggedIn ||
+      (Array.isArray(inc.roles) && inc.roles.length) ||
+      (Array.isArray(inc.eircodes) && inc.eircodes.length) ||
+      (Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.length) ||
+      (Array.isArray(inc.streets) && inc.streets.length) ||
+      (Array.isArray(inc.emails) && inc.emails.length)
+    );
 
-  function showElectionSubtab(id){
-    $$('.elect-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-subtab') === id));
-    $$('.elect-subtab').forEach(p => p.style.display = (p.id === id ? 'block' : 'none'));
-  }
+    if(!hasAnyInclude) return true;
 
-  function adminApplyRoleVisibility(role){
-    const normalized = String(role||'').toLowerCase();
-    const allowAll = hasAllowedAdminRole(normalized);
-    document.body.classList.toggle('admin-allowed', allowAll);
-  }
-
-  function adminMarkReady(){
-    document.documentElement.classList.remove('admin-booting');
-    document.body.classList.remove('admin-booting');
-  }
-
-  async function runAdminGate(){
-    const msg = byId('adminGateMsg');
-    try{
-      let allowed = false;
-      let role = '';
-      const currentUser = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
-        ? window.netlifyIdentity.currentUser()
-        : null;
-
-      if(currentUser && currentUser.email){
-        const users = await anwLoadSafe(KEY_USERS, []);
-        const email = String(currentUser.email || '').trim().toLowerCase();
-        const row = users.find(u => String((u && u.email) || '').trim().toLowerCase() === email);
-        if(row){
-          const roles = []
-            .concat(normList(row.role))
-            .concat(normList(row.roles))
-            .concat(normList(row.userRole))
-            .concat(normList(row.userRoles));
-          allowed = hasAllowedAdminRole(roles);
-          role = roles[0] || '';
-        }
-      }
-
-      adminApplyRoleVisibility(role);
-
-      if(msg){
-        if(allowed){
-          msg.style.display = 'none';
-          msg.textContent = '';
-        }else{
-          msg.style.display = 'block';
-          msg.textContent = 'Admin access is restricted to approved admin roles. Some sections may be hidden until your role is confirmed.';
-        }
-      }
-    }catch(err){
-      console.error(err);
-      if(msg){
-        msg.style.display = 'block';
-        msg.textContent = 'Unable to fully verify admin access right now. Local admin tools are still available.';
-      }
-    }finally{
-      showAdminTab(getCurrentAdminTabId());
-      showElectionSubtab('subManage');
-      adminMarkReady();
+    if(inc.allLoggedIn) return true;
+    if(Array.isArray(inc.roles) && inc.roles.map(String).map(x=>x.toLowerCase()).includes(role)) return true;
+    if(Array.isArray(inc.emails) && inc.emails.map(anwNormEmail).includes(anwNormEmail(user?.email))) return true;
+    if(Array.isArray(inc.eircodes) && inc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return true;
+    if(Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.map(String).map(x=>x.toUpperCase()).some(p=>eir.startsWith(p))) return true;
+    if(Array.isArray(inc.streets) && street){
+      const stList = inc.streets.map(String).map(x=>x.trim().toLowerCase()).filter(Boolean);
+      if(stList.includes(street.toLowerCase())) return true;
     }
+    return false;
   }
-  // ---------- Residents ----------
-  let RESIDENTS_CACHE = [];
-  let CURRENT_RESIDENT = null;
 
-  async function loadResidents(){
-    RESIDENTS_CACHE = await anwLoadSafe(KEY_USERS, []);
-    if(assignMissingResidentNumbers(RESIDENTS_CACHE)){
-      await anwSaveSafe(KEY_USERS, RESIDENTS_CACHE);
+  function setBadge(count){
+    const show = Number(count||0) > 0;
+    if(noticesBadge){
+      noticesBadge.textContent = String(count||0);
+      noticesBadge.style.display = show ? 'inline-flex' : 'none';
     }
-    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
-      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
-      : 'pending');
-  }
-
-  function getResidentRolesLabel(u){
-    const roles = [];
-    if(u.streetCoordinator || u.isStreetCoordinator || normList(u.roles).includes('street_admin') || normList(u.role).includes('street_admin')) roles.push('Street Coordinator');
-    if(u.volunteer || normList(u.roles).includes('volunteer') || normList(u.role).includes('volunteer')) roles.push('Volunteer');
-    if(normList(u.roles).includes('admin') || normList(u.role).includes('admin')) roles.push('Admin');
-    return roles.length ? roles.join(', ') : '—';
-  }
-
-  function renderResidents(mode){
-    const body = byId('resBody');
-    const empty = byId('resEmpty');
-    const summary = byId('resSummary');
-    if(!body) return;
-
-    const rows = (RESIDENTS_CACHE || []).filter(u => {
-      const status = String((u && u.status) || '').toLowerCase();
-      if(mode === 'pending') return !['approved','active'].includes(status);
-      if(mode === 'approved') return ['approved','active'].includes(status);
-      return true;
-    });
-
-    body.innerHTML = rows.map((u, idx) => `
-      <tr>
-        <td class="resident-nowrap">${esc(formatResidentRegId(u.regId || u.regNo) || '—')}</td>
-        <td class="resident-break">${esc(u.name || '—')}</td>
-        <td class="resident-break">${esc(u.email || '—')}</td>
-        <td class="resident-nowrap">${esc(u.eircode || '—')}</td>
-        <td class="resident-break">${esc(u.address || '—')}</td>
-        <td class="resident-nowrap">${esc(u.status || 'pending')}</td>
-        <td class="resident-break">${esc(getResidentRolesLabel(u))}</td>
-        <td class="resident-actions-col">
-          <div class="resident-action-cell">
-            <button type="button" class="btn-line small" data-res-index="${idx}" data-act="openResident">
-              ${String((u.status||'')).toLowerCase() === 'approved' || String((u.status||'')).toLowerCase() === 'active' ? 'Edit' : 'Open'}
-            </button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-
-    summary.textContent = `${rows.length} resident(s) shown`;
-    empty.style.display = rows.length ? 'none' : 'block';
-
-    $$('[data-act="openResident"]', body).forEach(btn => {
-      btn.addEventListener('click', () => {
-        const u = rows[Number(btn.getAttribute('data-res-index'))];
-        openResidentModal(u);
-      });
-    });
-  }
-
-  function openResidentModal(user){
-    CURRENT_RESIDENT = user || null;
-    if(!CURRENT_RESIDENT) return;
-
-    byId('modalResident').style.display = 'block';
-    byId('mRegId').value = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
-    byId('mStatus').value = CURRENT_RESIDENT.status || 'pending';
-    byId('mEmail').value = CURRENT_RESIDENT.email || '';
-    byId('mEir').value = CURRENT_RESIDENT.eircode || '';
-    byId('mName').value = CURRENT_RESIDENT.name || '';
-    byId('mPhone').value = CURRENT_RESIDENT.phone || '';
-    byId('mAddress').value = CURRENT_RESIDENT.address || '';
-    byId('mType').value = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '';
-    byId('mMgmt').value = CURRENT_RESIDENT.managementCompany || CURRENT_RESIDENT.mgmt || '';
-
-    const roles = normList(CURRENT_RESIDENT.roles).concat(normList(CURRENT_RESIDENT.role));
-    byId('mCoord').checked = roles.includes('street_admin') || !!CURRENT_RESIDENT.streetCoordinator;
-    byId('mVol').checked = roles.includes('volunteer') || !!CURRENT_RESIDENT.volunteer;
-
-    const vr = normList(CURRENT_RESIDENT.volunteerRoles);
-    byId('mVStreet').checked = vr.includes('Street watch / patrols');
-    byId('mVLeaf').checked = vr.includes('Distribute leaflets');
-    byId('mVTech').checked = vr.includes('Tech support');
-    byId('mVEld').checked = vr.includes('Elderly checks');
-    byId('mVClean').checked = vr.includes('Community clean-up');
-    byId('mVPark').checked = vr.includes('Parking assistance');
-    byId('mVMeet').checked = vr.includes('Meeting organiser');
-    byId('mVTrans').checked = vr.includes('Translation');
-
-    byId('mMsg').textContent = '';
-
-    const status = String(CURRENT_RESIDENT.status || '').toLowerCase();
-    const alreadyApproved = ['approved','active'].includes(status);
-    if(byId('btnApprove')){
-      byId('btnApprove').style.display = alreadyApproved ? 'none' : 'inline-flex';
-    }
-    if(byId('btnReject')){
-      byId('btnReject').style.display = alreadyApproved ? 'none' : 'inline-flex';
+    if(noticesBadgeTop){
+      noticesBadgeTop.textContent = String(count||0);
+      noticesBadgeTop.style.display = show ? 'inline-flex' : 'none';
     }
   }
 
-  function closeResidentModal(){
-    byId('modalResident').style.display = 'none';
-    CURRENT_RESIDENT = null;
-  }
-
-  async function saveCurrentResident(nextStatus){
-    if(!CURRENT_RESIDENT) return;
-    const users = await anwLoadSafe(KEY_USERS, []);
-    const idx = users.findIndex(u => String(u.email||'').toLowerCase() === String(CURRENT_RESIDENT.email||'').toLowerCase());
-    if(idx < 0) return;
-
-    const roles = [];
-    if(byId('mCoord').checked) roles.push('street_admin');
-    if(byId('mVol').checked) roles.push('volunteer');
-    if(normList(users[idx].roles).includes('admin')) roles.push('admin');
-
-    const volunteerRoles = [
-      byId('mVStreet').checked ? 'Street watch / patrols' : '',
-      byId('mVLeaf').checked ? 'Distribute leaflets' : '',
-      byId('mVTech').checked ? 'Tech support' : '',
-      byId('mVEld').checked ? 'Elderly checks' : '',
-      byId('mVClean').checked ? 'Community clean-up' : '',
-      byId('mVPark').checked ? 'Parking assistance' : '',
-      byId('mVMeet').checked ? 'Meeting organiser' : '',
-      byId('mVTrans').checked ? 'Translation' : ''
-    ].filter(Boolean);
-
-    users[idx].name = byId('mName').value.trim();
-    users[idx].phone = byId('mPhone').value.trim();
-    users[idx].residentType = byId('mType').value;
-    users[idx].managementCompany = byId('mMgmt').value.trim();
-    users[idx].roles = uniqueBy(roles, x => x);
-    users[idx].role = users[idx].roles[0] || '';
-    users[idx].volunteerRoles = volunteerRoles;
-
-    if(nextStatus){
-      users[idx].status = nextStatus;
-      if(['approved','active'].includes(nextStatus) && !(users[idx].regId || users[idx].regNo)){
-        const nextId = anwNextRegId(users);
-        users[idx].regId = nextId;
-        users[idx].regNo = nextId;
-      }
-    }
-
-    assignMissingResidentNumbers(users);
-    await anwSaveSafe(KEY_USERS, users);
-    RESIDENTS_CACHE = users;
-    byId('mMsg').textContent = 'Resident saved.';
-    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
-      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
-      : 'pending');
-  }
-
-  // ---------- Notices ----------
-  async function loadNoticesFresh(){
-    return await anwLoadSafe(window.getNoticesKey(), []);
-  }
-
-  function collectNoticeForm(){
-    return {
-      title: byId('ntTitle').value.trim(),
-      message: byId('ntMessage').value.trim(),
-      category: byId('ntCategory').value || 'General',
-      expires: byId('ntExpires').value || '',
-      targets: {
-        allLogged: !!byId('ntAllLogged').checked,
-        nonAdminOnly: !!byId('ntNonAdminOnly').checked,
-        roles: $$('.ntRole').filter(x => x.checked).map(x => x.value),
-        eirPrefixes: normList(byId('ntEirPrefixes').value),
-        streets: normList(byId('ntStreets').value),
-        eircodes: byId('ntEircodes').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean),
-        emails: byId('ntEmails').value.split(/\r?\n/).map(s => s.trim().toLowerCase()).filter(Boolean)
-      },
-      home: {
-        enabled: !!byId('ntHomeEnabled').checked,
-        visibility: byId('ntHomeVisibility').value || 'private'
-      }
-    };
-  }
-
-  async function publishNotice(){
-    const msg = byId('ntMsg');
-    const form = collectNoticeForm();
-    if(!form.title || !form.message){
-      msg.textContent = 'Title and message are required.';
+  function renderNotices(){
+    if(!noticesList || !noticesEmpty) return;
+    if(!loggedEmail || !me){
+      setBadge(0);
+      noticesEmpty.style.display = 'block';
+      noticesList.style.display = 'none';
       return;
     }
 
-    const list = await loadNoticesFresh();
-    const next = [{
-      id: 'nt_' + Date.now(),
-      title: form.title,
-      message: form.message,
-      category: form.category,
-      createdAt: new Date().toISOString(),
-      expires: form.expires,
-      public: form.home.enabled && form.home.visibility === 'public',
-      isPublic: form.home.enabled && form.home.visibility === 'public',
-      showOnHome: !!form.home.enabled,
-      published: true,
-      status: (form.home.enabled && form.home.visibility === 'public') ? 'public' : 'private',
-      targets: form.targets,
-      home: form.home
-    }].concat(list || []);
+    const all = anwLoad(KEY_NOTICES, []);
+    const arr = Array.isArray(all) ? all : [];
+    const now = Date.now();
+    const filtered = arr
+      .filter(n => {
+        const exp = n?.expiresAt ? Date.parse(n.expiresAt) : NaN;
+        if(!isNaN(exp) && exp < now) return false;
+        return noticeMatchesUser(n, me);
+      })
+      .sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
 
-    await anwSaveSafe(window.getNoticesKey(), next);
-    msg.textContent = 'Notice published.';
-    await renderNoticesList();
-  }
+    const read = getReadSet();
+    const unread = filtered.filter(n => n?.id && !read.has(n.id)).length;
+    setBadge(unread);
 
-  function renderNoticeRowActions(n){
-    const isBinImport = !!(n && n.meta && n.meta.type === 'bin_collection_import');
-    if(!isBinImport) return '';
-    return `
-      <div class="notice-actions">
-        <button type="button" class="btn btn-line small" data-del-notice="${esc(n.id || '')}">Delete</button>
-      </div>
-    `;
-  }
-
-  async function deleteNoticeById(id){
-    const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => String((n && n.id) || '') !== String(id || ''));
-    await anwSaveSafe(window.getNoticesKey(), next);
-    await renderNoticesList();
-  }
-
-  async function clearImportedBinNotices(){
-    const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
-    await anwSaveSafe(window.getNoticesKey(), next);
-    byId('binMsg').textContent = 'Imported bin notices removed.';
-    await renderNoticesList();
-  }
-
-  async function renderNoticesList(){
-    const listEl = byId('ntList');
-    const notes = await loadNoticesFresh();
-    const sorted = (notes || []).slice().sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
-
-    if(byId('ntListMsg')){
-      byId('ntListMsg').textContent = sorted.length ? `${sorted.length} notice(s) saved.` : 'No notices found.';
+    if(!filtered.length){
+      noticesEmpty.style.display = 'block';
+      noticesList.style.display = 'none';
+      return;
     }
+    noticesEmpty.style.display = 'none';
+    noticesList.style.display = 'block';
 
-    listEl.innerHTML = sorted.map(n => `
-      <div class="card" style="padding:12px; margin-bottom:10px;">
-        <div>
-          <strong>${esc(n.title || 'Untitled')}</strong>
-          <div class="tiny muted">${esc(n.category || 'General')} · ${esc(fmtDate(n.createdAt || n.date || ''))}</div>
-          <div style="margin-top:6px;">${esc(n.message || '')}</div>
-
-          <div class="notice-card-meta">
-            <span class="notice-chip">Home: ${(n.home && n.home.enabled) ? esc(n.home.visibility || 'private') : 'disabled'}</span>
-            ${n.date ? `<span class="notice-chip">Collection date: ${esc(fmtDateShort(n.date))}</span>` : ''}
-            ${n.startsOn ? `<span class="notice-chip">Show from: ${esc(fmtDateShort(n.startsOn))}</span>` : ''}
-            ${n.endsOn ? `<span class="notice-chip">Show until: ${esc(fmtDateShort(n.endsOn))}</span>` : ''}
+    noticesList.innerHTML = '';
+    filtered.forEach(n => {
+      const isUnread = n?.id && !read.has(n.id);
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.margin = '0.75rem 0';
+      card.style.cursor = 'pointer';
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:${isUnread ? '800' : '700'};">
+              ${String(n?.title || 'Notice').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+              ${isUnread ? '<span class="badge" style="margin-left:8px;">NEW</span>' : ''}
+            </div>
+            <div class="tiny muted" style="margin-top:4px; font-weight:${isUnread ? '700' : '400'};">
+              ${String(n?.message || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+            </div>
           </div>
-
-          ${renderNoticeRowActions(n)}
+          <div class="tiny muted">${n?.createdAt ? new Date(n.createdAt).toLocaleDateString() : ''}</div>
         </div>
-      </div>
-    `).join('') || '<p class="tiny muted">No notices found.</p>';
-
-    $$('[data-del-notice]', listEl).forEach(btn => {
-      btn.addEventListener('click', async () => {
-        await deleteNoticeById(btn.getAttribute('data-del-notice'));
+      `;
+      card.addEventListener('click', async () => {
+        if(n?.id){
+          read.add(n.id);
+          saveReadSet(read);
+          renderNotices();
+        }
       });
+      noticesList.appendChild(card);
     });
   }
 
-  async function importPandaSchedule(){
-    const fileEl = byId('binCsvFile');
-    const msg = byId('binMsg');
-    const file = fileEl && fileEl.files && fileEl.files[0];
-    if(!file){
-      msg.textContent = 'Please select the CSV file first.';
-      return;
-    }
-
-    const text = await file.text();
-    const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-
-    const imported = [];
-    for(const line of lines){
-      const cols = parseCsvLine(line);
-      if(!cols.length) continue;
-
-      const headerLike = cols.join(' ').toLowerCase();
-      if(headerLike.includes('date') && headerLike.includes('provider')) continue;
-      if(cols.length < 3) continue;
-
-      const date = parseFlexibleDate(cols[0]);
-      if(!date) continue;
-
-      const provider = String(cols[1] || '').trim();
-      const bin = String(cols[2] || '').trim();
-      const visibility = String(cols[3] || 'public').trim().toLowerCase();
-
-      const startsOn = startOfWeekMonday(date);
-      const endsOn = endOfNextWeekSunday(date);
-
-      imported.push({
-        id: `bin_${date}_${slugify(bin)}`,
-        title: 'Bin collection update',
-        message: `${bin} bin collection scheduled for ${date}.`,
-        category: 'Bins',
-        provider,
-        bin,
-        date,
-        startsOn,
-        endsOn,
-        startDate: startsOn,
-        endDate: endsOn,
-        createdAt: new Date().toISOString(),
-        showOnHome: true,
-        public: true,
-        isPublic: true,
-        published: true,
-        status: visibility === 'private' ? 'private' : 'public',
-        home: { enabled: true, visibility: 'public' },
-        meta: { type: 'bin_collection_import' }
-      });
-    }
-
-    const current = await loadNoticesFresh();
-
-    const currentKept = (current || []).filter(n => {
-      if(!(n && n.meta && n.meta.type === 'bin_collection_import')) return true;
-      const key = `${String(n.date||'')}|${String(n.bin||'').toLowerCase()}`;
-      const incoming = imported.some(x => `${String(x.date||'')}|${String(x.bin||'').toLowerCase()}` === key);
-      return !incoming;
+  // Render once on load, and again when user switches tabs
+  renderNotices();
+  document.querySelectorAll('.dash-tab').forEach(b => {
+    b.addEventListener('click', () => {
+      if(b.dataset.tab === 'tabNotices') renderNotices();
     });
+  });
 
-    const merged = [...currentKept, ...imported];
-    await anwSaveSafe(window.getNoticesKey(), merged);
 
-    msg.textContent = `${imported.length} collection notice(s) imported and saved. They are public and enabled for Home automatically for this week and next week.`;
-    await renderNoticesList();
-  }
 
-  // ---------- Light stubs for remaining tabs ----------
-  async function renderSimpleTable(key, tbodyId, emptyId, mapRow){
-    const rows = await anwLoadSafe(key, []);
-    const body = byId(tbodyId);
-    const empty = byId(emptyId);
-    if(!body) return;
-    body.innerHTML = rows.map(mapRow).join('');
-    if(empty) empty.style.display = rows.length ? 'none' : 'block';
-  }
 
-  async function loadReports(){
-    await renderSimpleTable(KEY_REPORTS, 'repBody', 'repEmpty', r => `
-      <tr>
-        <td>${esc(r.id || '—')}</td>
-        <td>${esc(fmtDate(r.createdAt || r.created || ''))}</td>
-        <td>${esc(r.category || '—')}</td>
-        <td>${esc(r.location || r.address || '—')}</td>
-        <td>${esc(r.email || r.reporterEmail || '—')}</td>
-        <td>${esc(r.status || 'submitted')}</td>
-        <td><button type="button" class="btn-line small" disabled>View</button></td>
-      </tr>
-    `);
-  }
+  /* =========================
+     Garda & Safety (dashboard)
+     ========================= */
+  (function(){
+    'use strict';
+    const statusEl = document.getElementById('gardaStatus');
+    const chipsEl  = document.getElementById('gardaChips');
+    const listEl   = document.getElementById('gardaList');
 
-  async function loadProjects(){
-    await renderSimpleTable(KEY_PROJECTS, 'pmBody', 'pmEmpty', p => `
-      <tr>
-        <td>${esc(p.id || '—')}</td>
-        <td>${esc(p.title || p.project || '—')}</td>
-        <td>${esc(p.status || '—')}</td>
-        <td>${esc(p.owner || '—')}</td>
-        <td>${esc(fmtDate(p.updatedAt || p.updated || ''))}</td>
-        <td><button type="button" class="btn-line small" disabled>View</button></td>
-      </tr>
-    `);
-    await renderSimpleTable(KEY_PROJECT_RECIPIENTS, 'pmRecipientsBody', 'pmRecipientsEmpty', p => `
-      <tr>
-        <td>${esc(p.project || p.projectTitle || '—')}</td>
-        <td>${esc(p.recipient || p.name || '—')}</td>
-        <td>${esc([p.address, p.eircode].filter(Boolean).join(' · ') || '—')}</td>
-        <td>${esc(p.status || '—')}</td>
-        <td>${esc(fmtDate(p.updatedAt || p.updated || ''))}</td>
-      </tr>
-    `);
-  }
-
-  async function loadAccessControl(){
-    const defaults = [
-      { key:'page:dashboard', label:'Dashboard' },
-      { key:'page:household', label:'Household' },
-      { key:'page:report', label:'Report Incident' },
-      { key:'page:alerts', label:'Community Alerts' },
-      { key:'page:handbook', label:'Handbook' },
-      { key:'page:admin', label:'Admin' }
+    const FALLBACK_CATEGORIES = [
+      { label:'Fraud / Economic Crime', url:'https://www.garda.ie/en/crime/fraud/', snippet:'Official Garda guidance on scams, fraud prevention and reporting economic crime.' },
+      { label:'Cyber Crime', url:'https://www.garda.ie/en/crime/cyber-crime/', snippet:'Advice on staying safe online and reporting cyber incidents.' },
+      { label:'Burglary & Theft', url:'https://www.garda.ie/en/crime/burglary-theft/', snippet:'Information on burglary, theft prevention and what to do after an incident.' },
+      { label:'Community Policing', url:'https://www.garda.ie/en/crime-prevention/community-engagement/neighbourhood-watch.html', snippet:'Neighbourhood Watch and community safety guidance for residents.' },
+      { label:'Traffic Matters', url:'https://www.garda.ie/en/roads-policing/', snippet:'Road safety and roads policing information from Garda.' },
+      { label:'Useful Contacts', url:'https://www.garda.ie/en/contact-us/useful-contact-numbers/', snippet:'Emergency and useful Garda contact numbers.' }
     ];
 
-    const saved = await anwLoadSafe(KEY_ACCESS, []);
-    const rules = Array.isArray(saved) && saved.length ? saved : defaults.map(x => ({
-      ...x,
-      resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true
-    }));
-
-    const roles = ['resident','street_admin','volunteer','area_coordinator','aux_coordinator','platform_support','admin'];
-    const body = byId('acBody');
-
-    body.innerHTML = rules.map((r, idx) => `
-      <tr data-ac-row="${idx}">
-        <td>
-          <div class="ac-item">
-            <div>
-              <div class="ac-indent-0">${esc(r.label)}</div>
-              <div class="ac-key">${esc(r.key)}</div>
-            </div>
-          </div>
-        </td>
-        ${roles.map(role => `
-          <td>
-            <button type="button" class="ac-toggle ${r[role] ? 'allowed' : 'denied'}" data-role="${role}" data-row="${idx}">${r[role] ? '✓' : '—'}</button>
-          </td>
-        `).join('')}
-      </tr>
-    `).join('');
-
-    $$('.ac-toggle', body).forEach(btn => {
-      btn.addEventListener('click', () => {
-        const row = Number(btn.getAttribute('data-row'));
-        const role = btn.getAttribute('data-role');
-        rules[row][role] = !rules[row][role];
-        loadAccessControlFromData(rules);
+    function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function validUrl(url){ return /^https:\/\/(www\.)?garda\.ie\//i.test(String(url || '')); }
+    function cleanItems(items){
+      const seen = new Set();
+      return (items || []).filter(Boolean).filter(item => {
+        const url = String(item.url || '').trim();
+        const title = String(item.title || item.label || '').trim();
+        if(!url || !title || !validUrl(url)) return false;
+        const key = url.toLowerCase();
+        if(seen.has(key)) return false;
+        seen.add(key);
+        return !/page not found|404/i.test(`${title} ${item.snippet || ''}`);
       });
-    });
-
-    byId('btnAcSave').onclick = async () => {
-      await anwSaveSafe(KEY_ACCESS, rules);
-      byId('acMsg').textContent = 'Access rules saved.';
-    };
-
-    byId('btnAcPrint').onclick = () => {
-      document.body.classList.add('print-access-control');
-      window.print();
-      setTimeout(() => document.body.classList.remove('print-access-control'), 200);
-    };
-
-    byId('btnAcRefresh').onclick = loadAccessControl;
-  }
-
-  function loadAccessControlFromData(rules){
-    const roles = ['resident','street_admin','volunteer','area_coordinator','aux_coordinator','platform_support','admin'];
-    const body = byId('acBody');
-
-    body.innerHTML = rules.map((r, idx) => `
-      <tr>
-        <td>
-          <div class="ac-item">
-            <div>
-              <div class="ac-indent-0">${esc(r.label)}</div>
-              <div class="ac-key">${esc(r.key)}</div>
-            </div>
-          </div>
-        </td>
-        ${roles.map(role => `<td><button type="button" class="ac-toggle ${r[role] ? 'allowed':'denied'}" data-role="${role}" data-row="${idx}">${r[role] ? '✓':'—'}</button></td>`).join('')}
-      </tr>
-    `).join('');
-
-    $$('.ac-toggle', body).forEach(btn => {
-      btn.addEventListener('click', () => {
-        const row = Number(btn.getAttribute('data-row'));
-        const role = btn.getAttribute('data-role');
-        rules[row][role] = !rules[row][role];
-        loadAccessControlFromData(rules);
-      });
-    });
-
-    byId('btnAcSave').onclick = async () => {
-      await anwSaveSafe(KEY_ACCESS, rules);
-      byId('acMsg').textContent = 'Access rules saved.';
-    };
-  }
-
-  async function loadDiagnostics(){
-    const data = {
-      users: (await anwLoadSafe(KEY_USERS, [])).length,
-      notices: (await anwLoadSafe(window.getNoticesKey(), [])).length,
-      reports: (await anwLoadSafe(KEY_REPORTS, [])).length,
-      projects: (await anwLoadSafe(KEY_PROJECTS, [])).length
-    };
-    byId('diagOut').textContent = JSON.stringify(data, null, 2);
-  }
-
-  // ---------- Events ----------
-  document.addEventListener('click', ev => {
-    const btn = ev.target.closest('.admin-tab');
-    if(btn){ showAdminTab(btn.getAttribute('data-tab')); }
-
-    const rtab = ev.target.closest('.resident-tab');
-    if(rtab){ showResidentSubtab(rtab.getAttribute('data-subtab')); }
-
-    const etab = ev.target.closest('.elect-tab');
-    if(etab){ showElectionSubtab(etab.getAttribute('data-subtab')); }
-  });
-
-  byId('btnCloseResident')?.addEventListener('click', closeResidentModal);
-  byId('btnSaveResident')?.addEventListener('click', () => saveCurrentResident());
-  byId('btnApprove')?.addEventListener('click', async () => { await saveCurrentResident('approved'); closeResidentModal(); });
-  byId('btnReject')?.addEventListener('click', async () => { await saveCurrentResident('rejected'); closeResidentModal(); });
-  byId('btnSuspendResident')?.addEventListener('click', async () => { await saveCurrentResident('suspended'); closeResidentModal(); });
-  byId('btnRemoveResident')?.addEventListener('click', async () => {
-    if(!CURRENT_RESIDENT) return;
-    const users = await anwLoadSafe(KEY_USERS, []);
-    const next = users.filter(u => String(u.email||'').toLowerCase() !== String(CURRENT_RESIDENT.email||'').toLowerCase());
-    await anwSaveSafe(KEY_USERS, next);
-    RESIDENTS_CACHE = next;
-    closeResidentModal();
-    renderResidents('all');
-  });
-
-  byId('btnNtPublish')?.addEventListener('click', publishNotice);
-  byId('btnNtClear')?.addEventListener('click', () => {
-    ['ntTitle','ntMessage','ntExpires','ntEirPrefixes','ntStreets','ntEircodes','ntEmails'].forEach(id => { if(byId(id)) byId(id).value = ''; });
-    if(byId('ntCategory')) byId('ntCategory').value = 'General';
-    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = false;
-    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = 'private';
-    if(byId('ntAllLogged')) byId('ntAllLogged').checked = true;
-    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = false;
-    $$('.ntRole').forEach(x => x.checked = false);
-    byId('ntMsg').textContent = '';
-  });
-
-  byId('btnBinImport')?.addEventListener('click', importPandaSchedule);
-  byId('btnClearBinNotices')?.addEventListener('click', clearImportedBinNotices);
-
-  byId('btnRepRefresh')?.addEventListener('click', loadReports);
-  byId('btnPmRefresh')?.addEventListener('click', loadProjects);
-  byId('btnAcRefresh')?.addEventListener('click', loadAccessControl);
-  byId('btnDiagRun')?.addEventListener('click', loadDiagnostics);
-
-  byId('btnExportUsers')?.addEventListener('click', async () => downloadText('residents.json', JSON.stringify(await anwLoadSafe(KEY_USERS, []), null, 2)));
-  byId('btnExportNotices')?.addEventListener('click', async () => downloadText('notices.json', JSON.stringify(await loadNoticesFresh(), null, 2)));
-  byId('btnExportReports')?.addEventListener('click', async () => downloadText('reports.json', JSON.stringify(await anwLoadSafe(KEY_REPORTS, []), null, 2)));
-  byId('btnExportProjects')?.addEventListener('click', async () => downloadText('projects.json', JSON.stringify(await anwLoadSafe(KEY_PROJECTS, []), null, 2)));
-
-  byId('btnBackupRefresh')?.addEventListener('click', async () => {
-    byId('backupStatusText').textContent = 'Backups are available through Netlify Functions.';
-    byId('backupStatusBadge').textContent = 'Ready';
-    byId('backupStatusBadge').className = 'tag ok';
-    byId('backupLastRun').textContent = 'Last run: check server log';
-  });
-
-  byId('btnBackupNow')?.addEventListener('click', async () => {
-    byId('backupMsg').textContent = 'Trigger backup from the connected function endpoint.';
-  });
-
-  byId('btnRestoreBackup')?.addEventListener('click', async () => {
-    byId('backupMsg').textContent = 'Restore uses the selected backup file with the restore function.';
-  });
-
-  // ---------- Init ----------
-  document.addEventListener('DOMContentLoaded', async () => {
-    try{
-      showAdminTab('tabResidents');
-      showElectionSubtab('subManage');
-      await Promise.all([
-        loadResidents(),
-        renderNoticesList(),
-        loadReports(),
-        loadProjects(),
-        loadAccessControl(),
-        loadDiagnostics()
-      ]);
-    }catch(err){
-      console.error(err);
-    }finally{
-      runAdminGate();
     }
-  });
+    function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
+    function groupFor(item){ return String(item.category || item.label || 'Other').trim() || 'Other'; }
 
-  window.addEventListener('load', () => {
-    adminMarkReady();
-  });
+    function render(items){
+      if(!chipsEl || !listEl) return;
+      const safeItems = cleanItems(items);
+      const cats = ['All', ...Array.from(new Set(safeItems.map(groupFor))).sort((a,b)=>a.localeCompare(b))];
+
+      chipsEl.innerHTML = cats.map((cat, idx) => `
+        <button type="button" class="chip garda-chip ${idx === 0 ? 'active' : ''}" data-cat="${esc(cat)}">${esc(cat)}</button>
+      `).join('');
+
+      function draw(cat){
+        chipsEl.querySelectorAll('.garda-chip').forEach(btn => btn.classList.toggle('active', btn.dataset.cat === cat));
+        const visible = cat === 'All' ? safeItems : safeItems.filter(item => groupFor(item) === cat);
+        listEl.innerHTML = visible.map(item => `
+          <article class="garda-item">
+            <div class="row">
+              <h4 class="title">${esc(item.title || item.label || '')}</h4>
+              <div class="date">${esc(item.date || 'Official link')}</div>
+            </div>
+            ${item.snippet ? `<div class="snippet">${esc(item.snippet)}</div>` : ''}
+            <a class="link" href="${esc(item.url)}" target="_blank" rel="noopener">Open official Garda page</a>
+            <div class="meta">${esc(groupFor(item))}</div>
+          </article>
+        `).join('') || '<div class="tiny muted">No Garda resources available right now.</div>';
+      }
+
+      chipsEl.querySelectorAll('.garda-chip').forEach(btn => btn.addEventListener('click', () => draw(btn.dataset.cat)));
+      draw('All');
+    }
+
+    function renderFallback(){
+      render(FALLBACK_CATEGORIES.map(item => ({
+        title: item.label,
+        category: item.label,
+        date: 'Official link',
+        url: item.url,
+        snippet: item.snippet
+      })));
+    }
+
+    async function loadGardaFeed(){
+      renderFallback();
+      setStatus('Official Garda resources');
+      try{
+        const controller = ('AbortController' in window) ? new AbortController() : null;
+        const timer = controller ? setTimeout(() => controller.abort(), 2500) : null;
+        const res = await fetch('/.netlify/functions/garda-feed', {
+          cache: 'no-store',
+          signal: controller ? controller.signal : undefined
+        });
+        if (timer) clearTimeout(timer);
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const merged = cleanItems([
+          ...(Array.isArray(data.categories) ? data.categories.map(item => ({
+            title: item.title || item.label,
+            category: item.category || item.label,
+            date: 'Official link',
+            url: item.url,
+            snippet: item.snippet || ''
+          })) : []),
+          ...(Array.isArray(data.recent) ? data.recent.map(item => ({
+            title: item.title || 'Official Garda update',
+            category: item.category || 'Latest updates',
+            date: item.date || 'Latest update',
+            url: item.url,
+            snippet: item.snippet || ''
+          })) : [])
+        ]);
+        if(merged.length){
+          render(merged);
+          setStatus(Array.isArray(data.recent) && data.recent.length
+            ? `Official Garda resources · ${data.recent.length} latest update${data.recent.length === 1 ? '' : 's'}`
+            : 'Official Garda resources');
+        }
+      }catch(err){
+        console.warn('garda-feed failed', err);
+        setStatus('Official Garda resources');
+        renderFallback();
+      }
+    }
+
+    loadGardaFeed();
+  })();
+
 })();
 </script>
+<script>
+    (function(){
+      const btn = document.getElementById('scrollTopBtn');
+      if(!btn) return;
+
+      function isScrollable(el){
+        if(!el || el === document.documentElement) return false;
+        const cs = window.getComputedStyle(el);
+        const oy = cs.overflowY;
+        if(!(oy === 'auto' || oy === 'scroll')) return false;
+        return el.scrollHeight > (el.clientHeight + 5);
+      }
+
+      function scrollElementToTop(el){
+        try{
+          if(typeof el.scrollTo === 'function'){
+            el.scrollTo({ top: 0, behavior: 'smooth' });
+          }else{
+            el.scrollTop = 0;
+          }
+        }catch(e){
+          try{ el.scrollTop = 0; }catch(_){}
+        }
+      }
+
+      function scrollEverythingToTop(){
+        // 1) Try the document scroller first
+        const docEl = document.scrollingElement || document.documentElement;
+        scrollElementToTop(docEl);
+        scrollElementToTop(document.documentElement);
+        scrollElementToTop(document.body);
+
+        // 2) Try scrollable ancestors of the button (most reliable for container-scroll layouts)
+        let p = btn.parentElement;
+        while(p){
+          if(isScrollable(p)) scrollElementToTop(p);
+          p = p.parentElement;
+        }
+
+        // 3) As a last resort, scroll any visible vertical scroll containers on the page
+        document.querySelectorAll('*').forEach(el => {
+          if(isScrollable(el)) scrollElementToTop(el);
+        });
+
+        // Also attempt window scroll (some browsers prefer this)
+        try{ window.scrollTo({ top: 0, behavior: 'smooth' }); }catch(e){ try{ window.scrollTo(0,0);}catch(_){} }
+      }
+
+      btn.addEventListener('click', () => {
+        // visual feedback
+        btn.classList.add('is-active');
+        scrollEverythingToTop();
+        setTimeout(() => btn.classList.remove('is-active'), 600);
+      });
+    })();
+  </script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const notice = document.getElementById('anwAccessNotice');
+
+  const showNotice = (msg) => {
+    if(notice){
+      notice.style.display = 'block';
+      notice.innerHTML = msg;
+    }
+  };
+  const hideNotice = () => {
+    if(notice) notice.style.display = 'none';
+  };
+
+  const ensureIdentityUser = async () => {
+    if(!window.netlifyIdentity) return null;
+    return await new Promise((resolve)=>{
+      let done=false;
+      const finish=(u)=>{ if(done) return; done=true; resolve(u||null); };
+      try{
+        window.netlifyIdentity.on('init', (u)=>finish(u));
+        window.netlifyIdentity.init();
+      }catch(e){}
+      setTimeout(()=>{
+        try{
+          const u = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
+          finish(u);
+        }catch(e){ finish(null); }
+      }, 300);
+    });
+  };
+
+  const user = await ensureIdentityUser();
+  if(!window.ANW_PUBLIC_MODE && !user){
+    showNotice('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access your dashboard.');
+    return;
+  }
+
+  if(window.ANW_PUBLIC_MODE){
+    hideNotice();
+    return;
+  }
+
+  try{
+    const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
+    const email = user.email?.toLowerCase();
+    const profile = users.find(u => u.email?.toLowerCase() === email);
+
+    if(!profile || !(profile.approved || profile.active)){
+      showNotice('Your account is logged in but not yet approved. Please wait for approval.');
+      return;
+    }
+  }catch(e){}
+
+  hideNotice();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const label = document.getElementById('pageAccessLabel');
+  if(!label) return;
+
+  const normalize = (s) => String(s || '').toLowerCase().replace(/\s+/g,' ').trim();
+  const isGardaTab = (btn) => {
+    const t = normalize(btn?.textContent);
+    return t.includes('garda') && t.includes('safety');
+  };
+  const setLabelForButton = (btn) => {
+    if(isGardaTab(btn)) label.textContent = 'Public Page';
+    else label.textContent = 'Private Page';
+  };
+
+  // Collect likely tab buttons by text
+  const tabButtons = Array.from(document.querySelectorAll('button, a'))
+    .filter(el => {
+      const t = normalize(el.textContent);
+      return t === 'profile' || t === 'interest' || t === 'elections' || t === 'notices' || (t.includes('garda') && t.includes('safety'));
+    });
+
+  tabButtons.forEach(btn => btn.addEventListener('click', () => setLabelForButton(btn)));
+
+  // Initial label
+  const active = tabButtons.find(b => b.getAttribute('aria-selected') === 'true' || b.classList.contains('active'));
+  setLabelForButton(active || tabButtons.find(isGardaTab) || tabButtons[0]);
+});
+</script>
+<script src="assets/acl-guard.js"></script>
 </body>
 </html>
