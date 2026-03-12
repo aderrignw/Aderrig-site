@@ -262,9 +262,9 @@
 
     const todayItem = dated.find((it) => isSameDay(it.__binDate, today));
     const yesterdayItem = dated.find((it) => isSameDay(it.__binDate, yesterday));
-    const nextItem = dated.find((it) => it.__binDate.getTime() > today.getTime());
+    const firstFutureItem = dated.find((it) => it.__binDate.getTime() > today.getTime());
 
-    let primary = todayItem || yesterdayItem || nextItem || dated[dated.length - 1];
+    let primary = todayItem || yesterdayItem || firstFutureItem || dated[dated.length - 1];
     if (!primary) return [];
 
     const primaryName = getBinName(primary);
@@ -288,12 +288,14 @@
       lead = `${formatLongDate(yesterdayItem.__binDate)} collection completed.`;
     }
 
-    const nextHtml = nextItem
+    const nextUpcomingItem = dated.find((it) => it.__binDate.getTime() > primary.__binDate.getTime());
+
+    const nextHtml = nextUpcomingItem
       ? `
         <div class="home-bin-card__next">
           <div class="home-bin-card__next-label">Next collection</div>
-          <div class="home-bin-card__next-title">${buildBinChip(getBinName(nextItem))}</div>
-          <div class="home-bin-card__next-date">${esc(formatLongDate(nextItem.__binDate))}</div>
+          <div class="home-bin-card__next-title">${buildBinChip(getBinName(nextUpcomingItem))}</div>
+          <div class="home-bin-card__next-date">${esc(formatLongDate(nextUpcomingItem.__binDate))}</div>
         </div>`
       : '';
 
