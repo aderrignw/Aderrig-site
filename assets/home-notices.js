@@ -4,7 +4,6 @@
    - Shows Home + Private notices to logged-in members when targeting matches
    - Keeps a visible placeholder on the Home page when there are no active notices
    - Bin collection notices are condensed into a single resident-friendly card
-   - Bin card shows: completed this week + next week
    ========================= */
 
 (function () {
@@ -17,6 +16,7 @@
   const STORE_URL = '/.netlify/functions/store';
   const PUBLIC_URL = '/.netlify/functions/public-notices';
   const KEY_NOTICES = (window.ANW_KEYS && window.ANW_KEYS.NOTICES) || 'anw_notices';
+  const DAY_MS = 24 * 60 * 60 * 1000;
 
   function esc(s) {
     return String(s || '')
@@ -146,8 +146,8 @@
       return new Date(y, m - 1, d);
     }
 
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
-      const [d, m, y] = raw.split('/').map(Number);
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)) {
+      const [m, d, y] = raw.split('/').map(Number);
       return new Date(y, m - 1, d);
     }
 
@@ -159,6 +159,12 @@
     const d = parseDateValue(value);
     if (!d) return null;
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  function isSameDay(a, b) {
+    const da = startOfDay(a);
+    const db = startOfDay(b);
+    return !!(da && db && da.getTime() === db.getTime());
   }
 
   function formatLongDate(value) {
@@ -175,13 +181,13 @@
   function formatMonthShort(value) {
     const d = parseDateValue(value);
     if (!d) return '';
-    return d.toLocaleDateString('en-IE', { month: 'short' });
+    return d.toLocaleDateString(undefined, { month: 'short' });
   }
 
   function formatWeekdayShort(value) {
     const d = parseDateValue(value);
     if (!d) return '';
-    return d.toLocaleDateString('en-IE', { weekday: 'short' });
+    return d.toLocaleDateString(undefined, { weekday: 'short' });
   }
 
   function getDayNumber(value) {
@@ -197,48 +203,7 @@
   }
 
   function getBinDate(it) {
-    return startOfDay(
-      it?.date ||
-      it?.collectionDate ||
-      it?.meta?.collectionDate ||
-      it?.meta?.date ||
-      it?.startsOn ||
-      it?.startDate ||
-      it?.startsAt ||
-      it?.endsOn ||
-      it?.endDate ||
-      null
-    );
-  }
-
-  function startOfWeek(value) {
-    const d = startOfDay(value);
-    if (!d) return null;
-    const day = d.getDay();
-    const diff = day === 0 ? -6 : 1 - day; // Monday start
-    d.setDate(d.getDate() + diff);
-    return d;
-  }
-
-  function endOfWeek(value) {
-    const d = startOfWeek(value);
-    if (!d) return null;
-    d.setDate(d.getDate() + 6);
-    return d;
-  }
-
-  function addDays(value, days) {
-    const d = startOfDay(value);
-    if (!d) return null;
-    d.setDate(d.getDate() + Number(days || 0));
-    return d;
-  }
-
-  function isWithinRange(value, start, end) {
-    const d = startOfDay(value);
-    const s = startOfDay(start);
-    const e = startOfDay(end);
-    return !!(d && s && e && d.getTime() >= s.getTime() && d.getTime() <= e.getTime());
+    return startOfDay(it?.date || it?.collectionDate || it?.startsOn || it?.startDate || it?.startsAt || null);
   }
 
   function getBinName(it) {
@@ -291,7 +256,6 @@
     const fallbackUpcoming = remainingThisWeek[0] || futureItems[0] || null;
     const upcoming = nextWeekUpcoming || fallbackUpcoming || null;
     const primary = upcoming || completed || dated[dated.length - 1];
-
     if (!primary) return [];
 
     const primaryName = getBinName(primary);
@@ -493,12 +457,6 @@
       .filter(n => noticeMatchesUser(n, me));
   }
 
-  function getNoticeSortValue(it){
-    if (typeof it?._sortTs === 'number') return it._sortTs;
-    const fromDate = Date.parse(it?.date || it?.startDate || it?.startsOn || it?.createdAt || 0);
-    return Number.isNaN(fromDate) ? 0 : fromDate;
-  }
-
   async function main() {
     try {
       const publicItems = (await loadPublicNotices())
@@ -521,7 +479,7 @@
           seen.add(id);
           return true;
         })
-        .sort((a, b) => getNoticeSortValue(b) - getNoticeSortValue(a))
+        .sort((a, b) => Date.parse(b?.createdAt || 0) - Date.parse(a?.createdAt || 0))
         .slice(0, 8);
 
       render(merged);
