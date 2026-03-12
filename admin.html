@@ -77,8 +77,20 @@
     display:flex;
     gap:8px;
     align-items:center;
+    justify-content:center;
     flex-wrap:wrap;
+    width:100%;
+    min-height:44px;
   }
+  .resident-actions-col{
+    width:220px;
+    min-width:220px;
+    text-align:center;
+  }
+  #tabResidents table{ width:100%; table-layout:fixed; }
+  #tabResidents th.resident-actions-col,
+  #tabResidents td.resident-actions-col{ text-align:center; vertical-align:middle; }
+  #tabResidents td.resident-actions-col .btn-line{ margin:0 auto; }
 
   .notice-actions{
     display:flex;
@@ -171,6 +183,11 @@
     return m ? parseInt(m[1], 10) || 0 : 0;
   }
 
+  function formatResidentRegId(v){
+    const n = getResidentNumericReg(v);
+    return n ? `ANW${String(n).padStart(3, '0')}` : '';
+  }
+
   function anwNextRegId(list){
     const users = Array.isArray(list) ? list : [];
     let max = 0;
@@ -178,7 +195,7 @@
       const n = getResidentNumericReg(u && (u.regId || u.regNo));
       if(n > max) max = n;
     });
-    return String(max + 1).padStart(2, '0');
+    return formatResidentRegId(max + 1);
   }
 
   function assignMissingResidentNumbers(list){
@@ -194,17 +211,19 @@
     users.forEach(u => {
       const status = String((u && u.status) || '').toLowerCase();
       const approved = ['active','approved'].includes(status);
+      const currentRaw = u && (u.regId || u.regNo);
+      const normalized = formatResidentRegId(currentRaw);
 
-      if(approved && !(u && (u.regId || u.regNo))){
+      if(approved && !currentRaw){
         max += 1;
-        const id = String(max).padStart(2, '0');
+        const id = formatResidentRegId(max);
         u.regId = id;
         u.regNo = id;
         changed = true;
-      } else if(u && u.regId && !u.regNo){
-        u.regNo = u.regId;
-      } else if(u && u.regNo && !u.regId){
-        u.regId = u.regNo;
+      } else if(normalized && ((u.regId !== normalized) || (u.regNo !== normalized))){
+        u.regId = normalized;
+        u.regNo = normalized;
+        changed = true;
       }
     });
 
@@ -307,7 +326,7 @@
             <th>Address</th>
             <th>Status</th>
             <th>Roles</th>
-            <th style="width:220px;">Actions</th>
+            <th class="resident-actions-col">Actions</th>
           </tr>
         </thead>
         <tbody id="resBody"></tbody>
@@ -672,7 +691,7 @@
               <th>Name</th>
               <th>Email</th>
               <th>Interest status</th>
-              <th style="width:220px;">Actions</th>
+              <th style="width:160px;">Actions</th>
             </tr>
           </thead>
           <tbody id="candBody"></tbody>
@@ -927,7 +946,7 @@
                 <th>Title</th>
                 <th style="width:90px;">Order</th>
                 <th style="width:90px;">Status</th>
-                <th style="width:220px;">Actions</th>
+                <th style="width:160px;">Actions</th>
               </tr>
             </thead>
             <tbody id="hbCatBody"></tbody>
@@ -1046,7 +1065,7 @@
             <th>Status</th>
             <th>Owner</th>
             <th>Updated</th>
-            <th style="width:220px;">Actions</th>
+            <th style="width:160px;">Actions</th>
           </tr>
         </thead>
         <tbody id="pmBody"></tbody>
@@ -1468,14 +1487,14 @@
 
     body.innerHTML = rows.map((u, idx) => `
       <tr>
-        <td>${esc(u.regId || u.regNo || '—')}</td>
+        <td>${esc(formatResidentRegId(u.regId || u.regNo) || '—')}</td>
         <td>${esc(u.name || '—')}</td>
         <td>${esc(u.email || '—')}</td>
         <td>${esc(u.eircode || '—')}</td>
         <td>${esc(u.address || '—')}</td>
         <td>${esc(u.status || 'pending')}</td>
         <td>${esc(getResidentRolesLabel(u))}</td>
-        <td>
+        <td class="resident-actions-col">
           <div class="resident-action-cell">
             <button type="button" class="btn-line small" data-res-index="${idx}" data-act="openResident">
               ${String((u.status||'')).toLowerCase() === 'approved' || String((u.status||'')).toLowerCase() === 'active' ? 'Edit' : 'Open'}
@@ -1501,7 +1520,7 @@
     if(!CURRENT_RESIDENT) return;
 
     byId('modalResident').style.display = 'block';
-    byId('mRegId').value = CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo || '—';
+    byId('mRegId').value = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
     byId('mStatus').value = CURRENT_RESIDENT.status || 'pending';
     byId('mEmail').value = CURRENT_RESIDENT.email || '';
     byId('mEir').value = CURRENT_RESIDENT.eircode || '';
@@ -1591,50 +1610,8 @@
   }
 
   // ---------- Notices ----------
-  async function getStoreAuthHeaders(){
-    const headers = { 'content-type': 'application/json' };
-    try{
-      const user = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-      if(user && typeof user.jwt === 'function'){
-        const token = await user.jwt();
-        if(token) headers.authorization = `Bearer ${token}`;
-      }
-    }catch(_){}
-    return headers;
-  }
-
   async function loadNoticesFresh(){
-    const key = window.getNoticesKey();
-    try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
-        method: 'GET',
-        headers: await getStoreAuthHeaders(),
-        cache: 'no-store'
-      });
-      if(res.ok){
-        const data = await res.json().catch(() => []);
-        const list = Array.isArray(data) ? data : [];
-        try{ localStorage.setItem(key, JSON.stringify(list)); }catch(_){}
-        return list;
-      }
-    }catch(_){}
-    return await anwLoadSafe(key, []);
-  }
-
-  async function saveNoticesFresh(list){
-    const key = window.getNoticesKey();
-    try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
-        method: 'POST',
-        headers: await getStoreAuthHeaders(),
-        body: JSON.stringify(Array.isArray(list) ? list : [])
-      });
-      if(!res.ok) throw new Error('store save failed');
-    }catch(err){
-      console.warn('Notice server sync failed, keeping local copy.', err);
-    }
-    try{ localStorage.setItem(key, JSON.stringify(Array.isArray(list) ? list : [])); }catch(_){}
-    return true;
+    return await anwLoadSafe(window.getNoticesKey(), []);
   }
 
   function collectNoticeForm(){
@@ -1684,7 +1661,7 @@
       home: form.home
     }].concat(list || []);
 
-    await saveNoticesFresh(next);
+    await anwSaveSafe(window.getNoticesKey(), next);
     msg.textContent = 'Notice published.';
     await renderNoticesList();
   }
@@ -1702,14 +1679,14 @@
   async function deleteNoticeById(id){
     const list = await loadNoticesFresh();
     const next = (list || []).filter(n => String((n && n.id) || '') !== String(id || ''));
-    await saveNoticesFresh(next);
+    await anwSaveSafe(window.getNoticesKey(), next);
     await renderNoticesList();
   }
 
   async function clearImportedBinNotices(){
     const list = await loadNoticesFresh();
     const next = (list || []).filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
-    await saveNoticesFresh(next);
+    await anwSaveSafe(window.getNoticesKey(), next);
     byId('binMsg').textContent = 'Imported bin notices removed.';
     await renderNoticesList();
   }
@@ -1813,7 +1790,7 @@
     });
 
     const merged = [...currentKept, ...imported];
-    await saveNoticesFresh(merged);
+    await anwSaveSafe(window.getNoticesKey(), merged);
 
     msg.textContent = `${imported.length} collection notice(s) imported and saved. They are public and enabled for Home automatically for this week and next week.`;
     await renderNoticesList();
