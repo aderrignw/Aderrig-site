@@ -92,6 +92,39 @@
       color:#6b7280;
       font-weight:700;
     }
+
+  .profile-photo-card{
+    display:flex;
+    gap:1rem;
+    align-items:flex-start;
+    margin:1rem 0;
+    padding:1rem;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#f9fafb;
+  }
+  .profile-photo-preview{
+    width:108px;
+    height:108px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:#eef3f0 center/cover no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:2rem;
+    color:var(--muted);
+    overflow:hidden;
+    flex:0 0 auto;
+  }
+  .profile-photo-preview.has-photo{ color:transparent; }
+  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
+  .profile-photo-note{ margin:0.4rem 0 0; }
+  @media (max-width: 720px){
+    .profile-photo-card{ flex-direction:column; }
+  }
+
 </style>
 <style>
     /* Garda tab: in-page TOP button (does not float) */
@@ -108,7 +141,40 @@
       border-radius: 999px;
       font-weight: 800;
     }
-  </style>
+  
+  .profile-photo-card{
+    display:flex;
+    gap:1rem;
+    align-items:flex-start;
+    margin:1rem 0;
+    padding:1rem;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#f9fafb;
+  }
+  .profile-photo-preview{
+    width:108px;
+    height:108px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:#eef3f0 center/cover no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:2rem;
+    color:var(--muted);
+    overflow:hidden;
+    flex:0 0 auto;
+  }
+  .profile-photo-preview.has-photo{ color:transparent; }
+  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
+  .profile-photo-note{ margin:0.4rem 0 0; }
+  @media (max-width: 720px){
+    .profile-photo-card{ flex-direction:column; }
+  }
+
+</style>
 <style>
     /* In-page back-to-top tab-style button */
     .garda-top-wrap{
@@ -130,7 +196,40 @@
       background: var(--brand, #1f7a3f);
       color: #fff;
     }
-  </style>
+  
+  .profile-photo-card{
+    display:flex;
+    gap:1rem;
+    align-items:flex-start;
+    margin:1rem 0;
+    padding:1rem;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#f9fafb;
+  }
+  .profile-photo-preview{
+    width:108px;
+    height:108px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:#eef3f0 center/cover no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:2rem;
+    color:var(--muted);
+    overflow:hidden;
+    flex:0 0 auto;
+  }
+  .profile-photo-preview.has-photo{ color:transparent; }
+  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
+  .profile-photo-note{ margin:0.4rem 0 0; }
+  @media (max-width: 720px){
+    .profile-photo-card{ flex-direction:column; }
+  }
+
+</style>
 <style>
     /* Garda categories: responsive grid with SVG icons (Option A) */
     #tabGarda .chip-row{
@@ -199,7 +298,40 @@
     #tabGarda .garda-cat.is-active .icon svg{
       stroke:#fff;
     }
-  </style>
+  
+  .profile-photo-card{
+    display:flex;
+    gap:1rem;
+    align-items:flex-start;
+    margin:1rem 0;
+    padding:1rem;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#f9fafb;
+  }
+  .profile-photo-preview{
+    width:108px;
+    height:108px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:#eef3f0 center/cover no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:2rem;
+    color:var(--muted);
+    overflow:hidden;
+    flex:0 0 auto;
+  }
+  .profile-photo-preview.has-photo{ color:transparent; }
+  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
+  .profile-photo-note{ margin:0.4rem 0 0; }
+  @media (max-width: 720px){
+    .profile-photo-card{ flex-direction:column; }
+  }
+
+</style>
 <style id="page-access-style">
   footer.site-footer { position: relative; }
   footer.site-footer .page-access {
@@ -208,6 +340,39 @@
     color: green;
     font-weight: normal;
   }
+
+  .profile-photo-card{
+    display:flex;
+    gap:1rem;
+    align-items:flex-start;
+    margin:1rem 0;
+    padding:1rem;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#f9fafb;
+  }
+  .profile-photo-preview{
+    width:108px;
+    height:108px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:#eef3f0 center/cover no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:2rem;
+    color:var(--muted);
+    overflow:hidden;
+    flex:0 0 auto;
+  }
+  .profile-photo-preview.has-photo{ color:transparent; }
+  .profile-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .profile-photo-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:0.75rem; }
+  .profile-photo-note{ margin:0.4rem 0 0; }
+  @media (max-width: 720px){
+    .profile-photo-card{ flex-direction:column; }
+  }
+
 </style>
 </head>
 <body>
@@ -271,6 +436,20 @@
 <label>Status</label>
 <input disabled="" id="pfStatus" type="text"/>
 </div>
+</div>
+
+<div class="profile-photo-card">
+  <div class="profile-photo-preview" id="pfPhotoPreview" aria-label="Profile photo preview">👤</div>
+  <div style="flex:1; min-width:240px;">
+    <label style="display:block; margin-bottom:0.25rem;">Profile photo</label>
+    <p class="tiny muted" style="margin-top:0;">Add a clear face photo for resident identification.</p>
+    <input accept="image/*" id="pfPhotoFile" style="display:none;" type="file"/>
+    <div class="profile-photo-actions">
+      <button class="btn-line small" id="btnUploadPhoto" type="button">Insert photo</button>
+      <button class="btn-line small" id="btnRemovePhoto" type="button">Remove photo</button>
+    </div>
+    <p class="tiny muted profile-photo-note" id="pfPhotoMsg">JPG or PNG recommended.</p>
+  </div>
 </div>
 <div class="grid-2" style="gap:1rem;">
 <div class="field">
@@ -460,6 +639,59 @@
     const el = document.getElementById(id);
     if(el) el.textContent = (value ?? '').toString();
   }
+  function getResidentNumericReg(v){
+    const raw = String(v == null ? '' : v).trim();
+    if(!raw) return 0;
+    const m = raw.match(/(\d+)/);
+    return m ? parseInt(m[1], 10) || 0 : 0;
+  }
+  function formatResidentRegId(v){
+    const n = getResidentNumericReg(v);
+    return n ? `ANW${String(n).padStart(3, '0')}` : '—';
+  }
+  function renderProfilePhoto(dataUrl){
+    const box = document.getElementById('pfPhotoPreview');
+    const removeBtn = document.getElementById('btnRemovePhoto');
+    if(!box) return;
+    const safe = String(dataUrl || '').trim();
+    if(safe){
+      box.classList.add('has-photo');
+      box.innerHTML = `<img alt="Profile photo" src="${safe}">`;
+      if(removeBtn) removeBtn.style.display = 'inline-flex';
+    } else {
+      box.classList.remove('has-photo');
+      box.textContent = '👤';
+      if(removeBtn) removeBtn.style.display = 'none';
+    }
+  }
+  function resizeImageToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const size = 360;
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, size, size);
+          const scale = Math.max(size / img.width, size / img.height);
+          const w = img.width * scale;
+          const h = img.height * scale;
+          const x = (size - w) / 2;
+          const y = (size - h) / 2;
+          ctx.drawImage(img, x, y, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.86));
+        };
+        img.onerror = reject;
+        img.src = reader.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
 
   const KEY_USERS     = ANW_KEYS.USERS;
   const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
@@ -516,13 +748,14 @@
   }
 
   if(me){
-    document.getElementById('pfRegId').value = me.regId || '—';
+    document.getElementById('pfRegId').value = formatResidentRegId(me.regId || me.regNo);
     document.getElementById('pfStatus').value = me.status || 'pending';
     document.getElementById('pfName').value = me.name || '';
     document.getElementById('pfPhone').value = me.phone || '';
     document.getElementById('pfEmail').value = me.email || '';
     document.getElementById('pfEir').value = me.eircode || '';
     document.getElementById('pfAddress').value = me.address || '';
+    renderProfilePhoto(me.profilePhoto || me.photo || '');
 
     const ac = me.alertsConsent || {};
     const cb = document.getElementById('pfAlertOptIn');
@@ -563,12 +796,40 @@
     }
   }
 
+
+  const pfPhotoFile = document.getElementById('pfPhotoFile');
+  document.getElementById('btnUploadPhoto')?.addEventListener('click', ()=> pfPhotoFile?.click());
+  document.getElementById('btnRemovePhoto')?.addEventListener('click', ()=>{
+    if(!me) return;
+    me.profilePhoto = '';
+    renderProfilePhoto('');
+    setText('pfPhotoMsg', 'Photo removed. Click Save to confirm.');
+  });
+  pfPhotoFile?.addEventListener('change', async (ev)=>{
+    const file = ev.target && ev.target.files && ev.target.files[0];
+    if(!file || !me) return;
+    try{
+      me.profilePhoto = await resizeImageToDataUrl(file);
+      renderProfilePhoto(me.profilePhoto);
+      setText('pfPhotoMsg', 'Photo ready. Click Save to confirm.');
+    }catch(err){
+      setText('pfPhotoMsg', 'Could not process this image.');
+      toast('Could not process this image.', 'error');
+    }
+    ev.target.value = '';
+  });
+
   document.getElementById('btnSaveProfile')?.addEventListener('click', async ()=>{
     if(!me) return;
 
     try{
       me.name = document.getElementById('pfName').value.trim();
       me.phone = document.getElementById('pfPhone').value.trim();
+      if(me.regId || me.regNo){
+        const normalizedReg = formatResidentRegId(me.regId || me.regNo);
+        me.regId = normalizedReg;
+        me.regNo = normalizedReg;
+      }
 
       const cb = document.getElementById('pfAlertOptIn');
       const nextOptIn = !!(cb && cb.checked);
@@ -598,6 +859,7 @@
       await anwSave(KEY_USERS, users);
 
       setText('pfMsg', 'Profile updated.');
+      setText('pfPhotoMsg', me.profilePhoto ? 'Profile photo saved.' : 'No profile photo saved.');
       toast('Profile updated.', 'success');
 
       const meta = document.getElementById('pfAlertMeta');
