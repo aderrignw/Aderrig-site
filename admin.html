@@ -77,62 +77,92 @@
     display:flex;
     gap:8px;
     align-items:center;
-    justify-content:center;
     flex-wrap:wrap;
+  }
+
+  .resident-table-wrap{ margin-top:0.75rem; }
+  .resident-table{
     width:100%;
-    min-height:44px;
+    table-layout:fixed;
+    border-collapse:collapse;
   }
-  .resident-actions-col{
-    width:140px;
-    min-width:140px;
-    text-align:center;
+  .resident-table th,
+  .resident-table td{
+    padding:12px 14px;
+    vertical-align:middle;
+    border-bottom:1px solid var(--line);
   }
-  #tabResidents .resident-table-wrap{
-    overflow-x:auto;
-    margin-top:0.75rem;
+  .resident-table th:nth-child(1), .resident-table td:nth-child(1){ width:110px; }
+  .resident-table th:nth-child(2), .resident-table td:nth-child(2){ width:190px; }
+  .resident-table th:nth-child(3), .resident-table td:nth-child(3){ width:120px; }
+  .resident-table th:nth-child(4), .resident-table td:nth-child(4){ width:120px; }
+  .resident-table th:nth-child(5), .resident-table td:nth-child(5){ width:auto; }
+  .resident-table th:nth-child(6), .resident-table td:nth-child(6){ width:120px; text-align:center; }
+  .resident-table td:nth-child(2),
+  .resident-table td:nth-child(5){
+    word-break:break-word;
+  }
+  .resident-action-cell{
+    justify-content:center;
+  }
+  .resident-modal-top{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 230px;
+    gap:18px;
+    align-items:start;
+  }
+  .resident-modal-compact{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,220px));
+    gap:1rem;
+    align-items:start;
+  }
+  .resident-photo-panel{
     border:1px solid var(--line);
     border-radius:18px;
-    background:#fff;
+    background:#f8faf8;
+    padding:14px;
+    min-height:100%;
   }
-  #tabResidents table.resident-table{
+  .resident-photo-head{
+    font-weight:700;
+    margin:0 0 8px;
+  }
+  .resident-photo-box{
+    width:100px;
+    height:100px;
+    border-radius:18px;
+    overflow:hidden;
+    background:#eef2ef;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#6b7280;
+    font-size:2rem;
+    margin-bottom:10px;
+  }
+  .resident-photo-box img{
     width:100%;
-    min-width:1120px;
-    table-layout:fixed;
-    border-collapse:separate;
-    border-spacing:0;
+    height:100%;
+    object-fit:cover;
+    display:block;
   }
-  #tabResidents table.resident-table th,
-  #tabResidents table.resident-table td{
-    padding:14px 16px;
-    vertical-align:middle;
-    border-bottom:1px solid rgba(17,24,39,.08);
+  .resident-photo-note{
+    margin:0;
+    font-size:.9rem;
+    color:rgba(17,24,39,.68);
+    line-height:1.4;
   }
-  #tabResidents table.resident-table thead th{
-    font-weight:800;
-    white-space:nowrap;
-    background:#fff;
-  }
-  #tabResidents table.resident-table tbody tr:last-child td{ border-bottom:none; }
-  #tabResidents table.resident-table td{
-    overflow-wrap:anywhere;
-    word-break:break-word;
-    line-height:1.45;
-  }
-  #tabResidents .resident-reg-col{ width:110px; }
-  #tabResidents .resident-name-col{ width:180px; }
-  #tabResidents .resident-email-col{ width:250px; }
-  #tabResidents .resident-eir-col{ width:120px; }
-  #tabResidents .resident-address-col{ width:260px; }
-  #tabResidents .resident-status-col{ width:120px; }
-  #tabResidents .resident-roles-col{ width:170px; }
-  #tabResidents .resident-actions-col{ width:140px; min-width:140px; text-align:center; }
-  #tabResidents th.resident-actions-col,
-  #tabResidents td.resident-actions-col{ text-align:center; vertical-align:middle; }
-  #tabResidents td.resident-actions-col .btn-line{ margin:0 auto; }
-  #tabResidents .resident-nowrap{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #tabResidents .resident-break{ white-space:normal; }
-  @media (max-width: 960px){
-    #tabResidents table.resident-table{ min-width:980px; }
+  @media (max-width: 980px){
+    .resident-table{
+      table-layout:auto;
+    }
+    .resident-modal-top{
+      grid-template-columns:1fr;
+    }
+    .resident-modal-compact{
+      grid-template-columns:1fr;
+    }
   }
 
   .notice-actions{
@@ -226,9 +256,10 @@
     return m ? parseInt(m[1], 10) || 0 : 0;
   }
 
-  function formatResidentRegId(v){
-    const n = getResidentNumericReg(v);
-    return n ? `ANW${String(n).padStart(4, '0')}` : '';
+  function formatResidentRegId(value){
+    const n = getResidentNumericReg(value);
+    if(!n) return '—';
+    return 'ANW' + String(n).padStart(4, '0');
   }
 
   function anwNextRegId(list){
@@ -254,19 +285,20 @@
     users.forEach(u => {
       const status = String((u && u.status) || '').toLowerCase();
       const approved = ['active','approved'].includes(status);
-      const currentRaw = u && (u.regId || u.regNo);
-      const normalized = formatResidentRegId(currentRaw);
+      const current = formatResidentRegId(u && (u.regId || u.regNo));
 
-      if(approved && !currentRaw){
+      if(approved && !(u && (u.regId || u.regNo))){
         max += 1;
         const id = formatResidentRegId(max);
         u.regId = id;
         u.regNo = id;
         changed = true;
-      } else if(normalized && ((u.regId !== normalized) || (u.regNo !== normalized))){
-        u.regId = normalized;
-        u.regNo = normalized;
-        changed = true;
+      } else if(u && (u.regId || u.regNo)){
+        if(u.regId !== current || u.regNo !== current){
+          u.regId = current;
+          u.regNo = current;
+          changed = true;
+        }
       }
     });
 
@@ -360,26 +392,14 @@
 
     <div class="resident-table-wrap">
       <table class="resident-table">
-        <colgroup>
-          <col class="resident-reg-col">
-          <col class="resident-name-col">
-          <col class="resident-email-col">
-          <col class="resident-eir-col">
-          <col class="resident-address-col">
-          <col class="resident-status-col">
-          <col class="resident-roles-col">
-          <col class="resident-actions-col">
-        </colgroup>
         <thead>
           <tr>
             <th>Reg No</th>
             <th>Name</th>
-            <th>Email</th>
             <th>Eircode</th>
-            <th>Address</th>
             <th>Status</th>
             <th>Roles</th>
-            <th class="resident-actions-col">Actions</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="resBody"></tbody>
@@ -400,29 +420,39 @@
       </div>
 
       <div class="modal-body">
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Registration No</label>
-            <input id="mRegId" type="text" disabled>
+        <div class="resident-modal-top">
+          <div>
+            <div class="resident-modal-compact">
+              <div class="field">
+                <label>Registration No</label>
+                <input id="mRegId" type="text" disabled>
+              </div>
+              <div class="field">
+                <label>Status</label>
+                <input id="mStatus" type="text" disabled>
+              </div>
+            </div>
+
+            <div class="resident-modal-compact" style="margin-top:1rem;">
+              <div class="field">
+                <label>Email</label>
+                <input id="mEmail" type="email" disabled>
+              </div>
+              <div class="field">
+                <label>Eircode</label>
+                <input id="mEir" type="text" disabled>
+              </div>
+            </div>
           </div>
-          <div class="field">
-            <label>Status</label>
-            <input id="mStatus" type="text" disabled>
-          </div>
+
+          <aside class="resident-photo-panel">
+            <p class="resident-photo-head">Resident photo</p>
+            <div class="resident-photo-box" id="mPhotoBox">👤</div>
+            <p class="resident-photo-note" id="mPhotoNote">No profile photo saved by this resident yet.</p>
+          </aside>
         </div>
 
-        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
-          <div class="field">
-            <label>Email</label>
-            <input id="mEmail" type="email" disabled>
-          </div>
-          <div class="field">
-            <label>Eircode</label>
-            <input id="mEir" type="text" disabled>
-          </div>
-        </div>
-
-        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
+        <div class="resident-modal-compact" style="margin-top:1rem; grid-template-columns:minmax(0,1fr) minmax(0,220px);">
           <div class="field">
             <label>Full name</label>
             <input id="mName" type="text">
@@ -437,6 +467,7 @@
           <label>Address</label>
           <input id="mAddress" type="text" disabled>
         </div>
+
 
         <div class="grid-2" style="gap:1rem;">
           <div class="field">
@@ -744,7 +775,7 @@
               <th>Name</th>
               <th>Email</th>
               <th>Interest status</th>
-              <th style="width:160px;">Actions</th>
+              <th style="width:220px;">Actions</th>
             </tr>
           </thead>
           <tbody id="candBody"></tbody>
@@ -795,7 +826,7 @@
     <p id="repMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
 
     <div style="overflow-x:auto; margin-top:0.75rem;">
-      <table style="width:100%; min-width:980px;">
+      <table style="width:100%;">
         <thead>
           <tr>
             <th>ID</th>
@@ -999,7 +1030,7 @@
                 <th>Title</th>
                 <th style="width:90px;">Order</th>
                 <th style="width:90px;">Status</th>
-                <th style="width:160px;">Actions</th>
+                <th style="width:220px;">Actions</th>
               </tr>
             </thead>
             <tbody id="hbCatBody"></tbody>
@@ -1110,7 +1141,7 @@
     </div>
 
     <div style="overflow-x:auto; margin-top:0.75rem;">
-      <table style="width:100%; min-width:860px;">
+      <table style="width:100%;">
         <thead>
           <tr>
             <th>ID</th>
@@ -1118,7 +1149,7 @@
             <th>Status</th>
             <th>Owner</th>
             <th>Updated</th>
-            <th style="width:160px;">Actions</th>
+            <th style="width:220px;">Actions</th>
           </tr>
         </thead>
         <tbody id="pmBody"></tbody>
@@ -1540,14 +1571,12 @@
 
     body.innerHTML = rows.map((u, idx) => `
       <tr>
-        <td class="resident-nowrap">${esc(formatResidentRegId(u.regId || u.regNo) || '—')}</td>
-        <td class="resident-break">${esc(u.name || '—')}</td>
-        <td class="resident-break">${esc(u.email || '—')}</td>
-        <td class="resident-nowrap">${esc(u.eircode || '—')}</td>
-        <td class="resident-break">${esc(u.address || '—')}</td>
-        <td class="resident-nowrap">${esc(u.status || 'pending')}</td>
-        <td class="resident-break">${esc(getResidentRolesLabel(u))}</td>
-        <td class="resident-actions-col">
+        <td>${esc(formatResidentRegId(u.regId || u.regNo || '—'))}</td>
+        <td>${esc(u.name || '—')}</td>
+        <td>${esc(u.eircode || '—')}</td>
+        <td>${esc(u.status || 'pending')}</td>
+        <td>${esc(getResidentRolesLabel(u))}</td>
+        <td>
           <div class="resident-action-cell">
             <button type="button" class="btn-line small" data-res-index="${idx}" data-act="openResident">
               ${String((u.status||'')).toLowerCase() === 'approved' || String((u.status||'')).toLowerCase() === 'active' ? 'Edit' : 'Open'}
@@ -1573,7 +1602,7 @@
     if(!CURRENT_RESIDENT) return;
 
     byId('modalResident').style.display = 'block';
-    byId('mRegId').value = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
+    byId('mRegId').value = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo || '—');
     byId('mStatus').value = CURRENT_RESIDENT.status || 'pending';
     byId('mEmail').value = CURRENT_RESIDENT.email || '';
     byId('mEir').value = CURRENT_RESIDENT.eircode || '';
@@ -1596,6 +1625,16 @@
     byId('mVPark').checked = vr.includes('Parking assistance');
     byId('mVMeet').checked = vr.includes('Meeting organiser');
     byId('mVTrans').checked = vr.includes('Translation');
+
+    const photoBox = byId('mPhotoBox');
+    const photoNote = byId('mPhotoNote');
+    const safePhoto = String(CURRENT_RESIDENT.profilePhoto || CURRENT_RESIDENT.photo || '').trim();
+    if(photoBox){
+      photoBox.innerHTML = safePhoto ? `<img alt="Resident photo" src="${esc(safePhoto)}">` : '👤';
+    }
+    if(photoNote){
+      photoNote.textContent = safePhoto ? 'Photo copied from the resident dashboard profile.' : 'No profile photo saved by this resident yet.';
+    }
 
     byId('mMsg').textContent = '';
 
