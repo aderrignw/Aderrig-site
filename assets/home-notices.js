@@ -27,6 +27,101 @@
       .replaceAll("'", '&#039;');
   }
 
+  function injectBinCardStyles() {
+    if (document.getElementById('anw-bin-card-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'anw-bin-card-styles';
+    style.textContent = `
+      .home-bin-card{
+        display:grid;
+        grid-template-columns:92px 1fr;
+        gap:16px;
+        align-items:stretch;
+        padding:18px;
+        border:1px solid rgba(31,111,74,.16);
+        border-radius:18px;
+        background:linear-gradient(180deg,#fcfffd 0%,#f6fbf8 100%);
+        box-shadow:0 8px 24px rgba(17,24,39,.06);
+      }
+      .home-bin-card__date{
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        border-radius:16px;
+        background:#17324d;
+        color:#fff;
+        min-height:110px;
+        padding:12px 10px;
+        text-align:center;
+      }
+      .home-bin-card__dow{ font-size:0.82rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; opacity:.92; }
+      .home-bin-card__day{ font-size:2rem; line-height:1; font-weight:900; margin:6px 0 4px; }
+      .home-bin-card__month{ font-size:.9rem; font-weight:700; opacity:.95; }
+      .home-bin-card__body{ min-width:0; }
+      .home-bin-card__eyebrow{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        font-size:.82rem;
+        font-weight:800;
+        color:#1f6f4a;
+        letter-spacing:.02em;
+        text-transform:uppercase;
+        margin-bottom:6px;
+      }
+      .home-bin-card__status{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:6px 12px;
+        border-radius:999px;
+        font-size:.82rem;
+        font-weight:800;
+        background:rgba(31,111,74,.10);
+        color:#1f6f4a;
+        margin-bottom:10px;
+      }
+      .home-bin-card__status--done{ background:rgba(23,50,77,.10); color:#17324d; }
+      .home-bin-card__title{ margin:0 0 8px; font-size:1.35rem; line-height:1.2; font-weight:900; color:#1f2937; }
+      .home-bin-card__lead{ margin:0; font-size:1rem; line-height:1.55; color:#334155; }
+      .home-bin-card__next{
+        margin-top:14px;
+        padding:14px 16px;
+        border-radius:14px;
+        background:#fff;
+        border:1px solid rgba(17,24,39,.08);
+      }
+      .home-bin-card__next-label{ font-size:.78rem; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+      .home-bin-card__next-title{ font-size:1rem; font-weight:800; color:#111827; }
+      .home-bin-card__next-date{ margin-top:2px; color:#475569; }
+      .bin-chip{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        font-weight:800;
+      }
+      .bin-chip__dot{
+        width:12px;
+        height:12px;
+        border-radius:999px;
+        display:inline-block;
+        border:1px solid rgba(17,24,39,.16);
+        background:#cbd5e1;
+      }
+      .bin-chip--brown .bin-chip__dot{ background:#8b5e3c; }
+      .bin-chip--black .bin-chip__dot{ background:#111827; }
+      .bin-chip--green .bin-chip__dot{ background:#2f855a; }
+      .bin-chip--blue .bin-chip__dot{ background:#2563eb; }
+      @media (max-width: 720px){
+        .home-bin-card{ grid-template-columns:1fr; }
+        .home-bin-card__date{ min-height:unset; flex-direction:row; gap:10px; justify-content:flex-start; }
+        .home-bin-card__day{ margin:0; font-size:1.5rem; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   const ICONS = {
     info: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20Zm0 4a1.25 1.25 0 1 1 0 2.5A1.25 1.25 0 0 1 12 6Zm2 14h-4v-2h1v-5h-1v-2h3v7h1v2Z"/></svg>',
     success: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20Zm4.3 7.7-5.2 6.1a1 1 0 0 1-1.5.1l-2.6-2.6 1.4-1.4 1.9 1.9 4.5-5.2 1.5 1.1Z"/></svg>',
@@ -101,10 +196,21 @@
     });
   }
 
-  function formatWeekday(value) {
+  function formatMonthShort(value) {
     const d = parseDateValue(value);
     if (!d) return '';
-    return d.toLocaleDateString(undefined, { weekday: 'long' });
+    return d.toLocaleDateString(undefined, { month: 'short' });
+  }
+
+  function formatWeekdayShort(value) {
+    const d = parseDateValue(value);
+    if (!d) return '';
+    return d.toLocaleDateString(undefined, { weekday: 'short' });
+  }
+
+  function getDayNumber(value) {
+    const d = parseDateValue(value);
+    return d ? String(d.getDate()) : '';
   }
 
   function isBinNotice(it) {
@@ -123,7 +229,22 @@
     if (direct) return direct;
     const msg = String(it?.message || '');
     const match = msg.match(/([^\n.]+?)\s+bin\s+collection/i);
-    return match ? String(match[1]).trim() : 'Bin';
+    return match ? String(match[1]).trim() : 'General';
+  }
+
+  function getBinTone(name) {
+    const n = normalizeText(name);
+    if (n.includes('brown')) return 'brown';
+    if (n.includes('black')) return 'black';
+    if (n.includes('green')) return 'green';
+    if (n.includes('blue')) return 'blue';
+    return 'default';
+  }
+
+  function buildBinChip(name) {
+    const label = esc(`${name} bin`);
+    const tone = esc(getBinTone(name));
+    return `<span class="bin-chip bin-chip--${tone}"><span class="bin-chip__dot" aria-hidden="true"></span><span>${label}</span></span>`;
   }
 
   function buildBinSummary(binItems) {
@@ -146,35 +267,63 @@
     let primary = todayItem || yesterdayItem || nextItem || dated[dated.length - 1];
     if (!primary) return [];
 
-    let title = '';
-    let mainLine = '';
-    const nextLine = nextItem
-      ? `Next collection: ${getBinName(nextItem)} bin on ${formatLongDate(nextItem.__binDate)}.`
-      : '';
+    const primaryName = getBinName(primary);
+    const primaryChip = buildBinChip(primaryName);
+    let statusLabel = 'Next collection';
+    let statusClass = '';
+    let title = `${primaryName} bin collection`;
+    let lead = `${formatLongDate(primary.__binDate)} collection scheduled.`;
 
     if (todayItem) {
+      primary = todayItem;
+      statusLabel = 'Today';
+      statusClass = '';
       title = `${getBinName(todayItem)} bin collection today`;
-      mainLine = `${formatLongDate(todayItem.__binDate)} collection is today.`;
+      lead = `${formatLongDate(todayItem.__binDate)} collection is today.`;
     } else if (yesterdayItem) {
-      title = `${getBinName(yesterdayItem)} bin collection completed`;
-      mainLine = `${formatLongDate(yesterdayItem.__binDate)} collection completed.`;
       primary = yesterdayItem;
-    } else {
-      title = `${getBinName(primary)} bin collection`;
-      mainLine = `${formatLongDate(primary.__binDate)} collection scheduled.`;
+      statusLabel = 'Completed';
+      statusClass = ' home-bin-card__status--done';
+      title = `${getBinName(yesterdayItem)} bin collection completed`;
+      lead = `${formatLongDate(yesterdayItem.__binDate)} collection completed.`;
     }
+
+    const nextHtml = nextItem
+      ? `
+        <div class="home-bin-card__next">
+          <div class="home-bin-card__next-label">Next collection</div>
+          <div class="home-bin-card__next-title">${buildBinChip(getBinName(nextItem))}</div>
+          <div class="home-bin-card__next-date">${esc(formatLongDate(nextItem.__binDate))}</div>
+        </div>`
+      : '';
+
+    injectBinCardStyles();
 
     return [{
       id: `bin_summary_${primary.id || primary.__binDate.getTime()}`,
       title,
-      message: nextLine ? `${mainLine}\n${nextLine}` : mainLine,
+      message: lead,
       category: '',
       home: primary.home,
       createdAt: primary.createdAt,
-      _displayVariant: (todayItem || yesterdayItem) ? 'success' : 'info',
+      _displayVariant: 'info',
       _displayMeta: '',
-      _displayMessageHtml: [mainLine, nextLine].filter(Boolean).map((line) => `<div>${esc(line)}</div>`).join(''),
-      _displayBadge: formatVisibility(primary)
+      _displayBadge: '',
+      _displayCustomHtml: `
+        <article class="home-bin-card" aria-label="Bin collection notice">
+          <div class="home-bin-card__date" aria-hidden="true">
+            <div class="home-bin-card__dow">${esc(formatWeekdayShort(primary.__binDate))}</div>
+            <div class="home-bin-card__day">${esc(getDayNumber(primary.__binDate))}</div>
+            <div class="home-bin-card__month">${esc(formatMonthShort(primary.__binDate))}</div>
+          </div>
+          <div class="home-bin-card__body">
+            <div class="home-bin-card__eyebrow">♻️ Panda Waste</div>
+            <div class="home-bin-card__status${statusClass}">${esc(statusLabel)}</div>
+            <h4 class="home-bin-card__title">${primaryChip}</h4>
+            <p class="home-bin-card__lead">${esc(lead)}</p>
+            ${nextHtml}
+          </div>
+        </article>`
     }];
   }
 
@@ -198,6 +347,8 @@
       return;
     }
     listEl.innerHTML = items.map((it) => {
+      if (it?._displayCustomHtml) return it._displayCustomHtml;
+
       const variant = it?._displayVariant || pickVariant(it);
       const title = esc(it?.title || 'Notice');
       const msgHtml = it?._displayMessageHtml || esc(it?.message || it?.text || '');
@@ -209,7 +360,7 @@
           <div class="home-notice-card__body">
             <div class="home-notice-card__head">
               <h4 class="home-notice-card__title">${title}</h4>
-              <span class="home-notice-card__badge">${visibility}</span>
+              ${visibility ? `<span class="home-notice-card__badge">${visibility}</span>` : ''}
             </div>
             <div class="home-notice-card__msg">${msgHtml}</div>
             ${meta ? `<div class="home-notice-card__meta">${esc(meta)}</div>` : ''}
@@ -275,38 +426,24 @@
     return false;
   }
 
-  function getStartDate(n) {
-    return n?.startsAt || n?.startsOn || n?.startDate || null;
-  }
-
-  function getEndDate(n) {
-    return n?.expiresAt || n?.endsOn || n?.endDate || null;
+  function isExpired(n) {
+    const raw = n?.expiresAt || n?.endsOn || n?.endDate || n?.expires || n?.showUntil || '';
+    const exp = raw ? Date.parse(raw) : NaN;
+    return !Number.isNaN(exp) && exp < Date.now();
   }
 
   function isNotStarted(n) {
-    const st = getStartDate(n);
-    const d = parseDateValue(st);
-    return !!(d && d.getTime() > Date.now());
-  }
-
-  function isStarted(n) { return !isNotStarted(n); }
-
-  function isExpired(n) {
-    const exp = getEndDate(n);
-    const d = parseDateValue(exp);
-    return !!(d && d.getTime() < Date.now());
-  }
-
-  function isHomeEnabled(n) {
-    return !!(n && n.home && n.home.enabled);
+    const raw = n?.startsAt || n?.startsOn || n?.startDate || n?.showFrom || '';
+    const st = raw ? Date.parse(raw) : NaN;
+    return !Number.isNaN(st) && st > Date.now();
   }
 
   function isPublicHome(n) {
-    return isHomeEnabled(n) && String(n?.home?.visibility || 'private').toLowerCase() === 'public';
+    return !!(n && n.home && n.home.enabled) && String(n?.home?.visibility || 'private').toLowerCase() === 'public';
   }
 
   function isPrivateHome(n) {
-    return isHomeEnabled(n) && String(n?.home?.visibility || 'private').toLowerCase() !== 'public';
+    return !!(n && n.home && n.home.enabled) && String(n?.home?.visibility || 'private').toLowerCase() !== 'public';
   }
 
   async function loadPublicNotices() {
@@ -337,36 +474,38 @@
     const all = Array.isArray(data?.value) ? data.value : (Array.isArray(data) ? data : []);
 
     return all
-      .filter(n => !isExpired(n)).filter(isStarted)
+      .filter(n => !isExpired(n))
+      .filter(n => !isNotStarted(n))
       .filter(n => isPrivateHome(n))
       .filter(n => noticeMatchesUser(n, me));
   }
 
-  function buildDisplayItems(items) {
-    const binItems = items.filter(isBinNotice);
-    const otherItems = items.filter((it) => !isBinNotice(it));
-    const binSummary = buildBinSummary(binItems);
-    return [...binSummary, ...otherItems]
-      .sort((a, b) => Date.parse(b?.createdAt || 0) - Date.parse(a?.createdAt || 0))
-      .slice(0, 8);
-  }
-
   async function main() {
     try {
-      const pub = (await loadPublicNotices()).filter(n => !isExpired(n)).filter(isStarted).filter(isPublicHome);
-      const priv = await loadPrivateNoticesForLoggedUser();
+      const publicItems = (await loadPublicNotices())
+        .filter(n => !isExpired(n))
+        .filter(n => isPublicHome(n));
+
+      const privateItems = await loadPrivateNoticesForLoggedUser();
+
+      const publicBinItems = publicItems.filter(isBinNotice);
+      const publicRegularItems = publicItems.filter(n => !isBinNotice(n)).filter(n => !isNotStarted(n));
+
+      const binSummary = buildBinSummary(publicBinItems);
 
       const seen = new Set();
-      const merged = [...pub, ...priv]
+      const merged = [...binSummary, ...publicRegularItems, ...privateItems]
         .filter(it => {
           const id = String(it?.id || '');
           if (!id) return true;
           if (seen.has(id)) return false;
           seen.add(id);
           return true;
-        });
+        })
+        .sort((a, b) => Date.parse(b?.createdAt || 0) - Date.parse(a?.createdAt || 0))
+        .slice(0, 8);
 
-      render(buildDisplayItems(merged));
+      render(merged);
     } catch {
       renderPlaceholder();
     }
