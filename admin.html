@@ -1416,6 +1416,43 @@
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
 
+  function binNoticeSortTs(n){
+    const raw = String((n && (n.date || (n.meta && (n.meta.collectionDate || n.meta.date)))) || '').trim();
+    if(/^\d{4}-\d{2}-\d{2}$/.test(raw)) return Date.parse(raw + 'T12:00:00') || 0;
+    const parsed = Date.parse(raw || '');
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
+  function sortNoticesForStorage(list){
+    return (Array.isArray(list) ? list.slice() : []).sort((a, b) => {
+      const aBin = !!(a && a.meta && a.meta.type === 'bin_collection_import');
+      const bBin = !!(b && b.meta && b.meta.type === 'bin_collection_import');
+
+      if(aBin && bBin) return binNoticeSortTs(a) - binNoticeSortTs(b);
+      if(aBin && !bBin) return 1;
+      if(!aBin && bBin) return -1;
+
+      const aCreated = Date.parse((a && a.createdAt) || 0);
+      const bCreated = Date.parse((b && b.createdAt) || 0);
+      return (Number.isNaN(bCreated) ? 0 : bCreated) - (Number.isNaN(aCreated) ? 0 : aCreated);
+    });
+  }
+
+  function sortNoticesForAdminDisplay(list){
+    return (Array.isArray(list) ? list.slice() : []).sort((a, b) => {
+      const aBin = !!(a && a.meta && a.meta.type === 'bin_collection_import');
+      const bBin = !!(b && b.meta && b.meta.type === 'bin_collection_import');
+
+      if(aBin && bBin) return binNoticeSortTs(a) - binNoticeSortTs(b);
+      if(aBin && !bBin) return 1;
+      if(!aBin && bBin) return -1;
+
+      const aCreated = Date.parse((a && a.createdAt) || 0);
+      const bCreated = Date.parse((b && b.createdAt) || 0);
+      return (Number.isNaN(bCreated) ? 0 : bCreated) - (Number.isNaN(aCreated) ? 0 : aCreated);
+    });
+  }
+
   function getCurrentAdminTabId(){
     const active = document.querySelector('.admin-tab.active');
     return active ? active.getAttribute('data-tab') : 'tabResidents';
@@ -1766,7 +1803,7 @@
   async function renderNoticesList(){
     const listEl = byId('ntList');
     const notes = await loadNoticesFresh();
-    const sorted = (notes || []).slice().sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
+    const sorted = sortNoticesForAdminDisplay(notes || []);
 
     if(byId('ntListMsg')){
       byId('ntListMsg').textContent = sorted.length ? `${sorted.length} notice(s) saved.` : 'No notices found.';
@@ -1852,6 +1889,8 @@
       });
     }
 
+    imported.sort((a, b) => binNoticeSortTs(a) - binNoticeSortTs(b));
+
     const current = await loadNoticesFresh();
 
     const currentKept = (current || []).filter(n => {
@@ -1861,7 +1900,7 @@
       return !incoming;
     });
 
-    const merged = [...currentKept, ...imported];
+    const merged = sortNoticesForStorage([...currentKept, ...imported]);
     await anwSaveSafe(window.getNoticesKey(), merged);
 
     msg.textContent = `${imported.length} collection notice(s) imported and saved. They are public and enabled for Home automatically for this week and next week.`;
