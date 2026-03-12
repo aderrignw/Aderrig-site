@@ -2,8 +2,8 @@
   Public Notices feed (Home banner)
   - No auth required
   - Returns notices explicitly marked for Home + Public
-  - Bin notices are allowed through even when their display window has not started yet,
-    so the Home page can show the upcoming collection as "Next collection".
+  - Bin notices are returned in chronological order and are NOT truncated,
+    so the Home page can compute "completed this week + next week" correctly.
 */
 
 import { getStore } from '@netlify/blobs';
@@ -37,16 +37,39 @@ function isBinNotice(n) {
   return cat === 'bins' || type === 'bin_collection_import' || title.includes('bin collection');
 }
 
+function parseDateValue(value) {
+  if (!value) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [y, m, d] = raw.split('-').map(Number);
+    return new Date(y, m - 1, d, 12, 0, 0, 0);
+  }
+
+  if (/^\d{2}-\d{2}-\d{4}$/.test(raw)) {
+    const [d, m, y] = raw.split('-').map(Number);
+    return new Date(y, m - 1, d, 12, 0, 0, 0);
+  }
+
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+    const [m, d, y] = raw.split('/').map(Number);
+    return new Date(y, m - 1, d, 12, 0, 0, 0);
+  }
+
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function isNotStarted(n) {
-  const startValue = n?.startsAt || n?.startsOn || n?.startDate || n?.showFrom || '';
-  const st = startValue ? Date.parse(startValue) : NaN;
-  return !Number.isNaN(st) && st > Date.now();
+  const d = parseDateValue(n?.startsAt || n?.startsOn || n?.startDate || n?.showFrom || '');
+  return !!(d && d.getTime() > Date.now());
 }
 
 function isExpired(n) {
-  const endValue = n?.expiresAt || n?.endsOn || n?.endDate || n?.expires || n?.showUntil || '';
-  const exp = endValue ? Date.parse(endValue) : NaN;
-  return !Number.isNaN(exp) && exp < Date.now();
+  const d = parseDateValue(n?.expiresAt || n?.endsOn || n?.endDate || n?.expires || n?.showUntil || '');
+  return !!(d && d.getTime() < Date.now());
 }
 
 function isPublicHome(n) {
@@ -67,6 +90,16 @@ function aclAllowsPublicHome(acl) {
   return roles.map(String).map(r => r.toLowerCase()).includes('public');
 }
 
+function binSortTs(n) {
+  const d = parseDateValue(n?.date || n?.meta?.collectionDate || n?.meta?.date || n?.startsOn || n?.startDate || null);
+  return d ? d.getTime() : 0;
+}
+
+function createdSortTs(n) {
+  const d = parseDateValue(n?.createdAt || null);
+  return d ? d.getTime() : 0;
+}
+
 export default async (req, context) => {
   try {
     const store = getCentralStore(context);
@@ -84,27 +117,36 @@ export default async (req, context) => {
 
     const all = (await loadKey(store, KEY_NOTICES)) || [];
     const list = Array.isArray(all) ? all : [];
-    const items = list
+
+    const publicHome = list
       .filter(n => n && typeof n === 'object')
       .filter(isPublicHome)
       .filter(n => !isExpired(n))
-      .filter(n => isBinNotice(n) || !isNotStarted(n))
-      .sort((a, b) => Date.parse(b?.createdAt || 0) - Date.parse(a?.createdAt || 0))
-      .slice(0, 20)
-      .map(n => ({
-        id: n.id,
-        title: n.title,
-        message: n.message,
-        createdAt: n.createdAt,
-        category: n.category,
-        home: n.home,
-        startsAt: n.startsAt || n.startsOn || n.startDate || null,
-        expiresAt: n.expiresAt || n.endsOn || n.endDate || n.expires || null,
-        date: n.date || null,
-        bin: n.bin || null,
-        provider: n.provider || null,
-        meta: n.meta || null
-      }));
+      .filter(n => isBinNotice(n) || !isNotStarted(n));
+
+    const binItems = publicHome
+      .filter(isBinNotice)
+      .sort((a, b) => binSortTs(a) - binSortTs(b));
+
+    const regularItems = publicHome
+      .filter(n => !isBinNotice(n))
+      .sort((a, b) => createdSortTs(b) - createdSortTs(a))
+      .slice(0, 20);
+
+    const items = [...binItems, ...regularItems].map(n => ({
+      id: n.id,
+      title: n.title,
+      message: n.message,
+      createdAt: n.createdAt,
+      category: n.category,
+      home: n.home,
+      startsAt: n.startsAt || n.startsOn || n.startDate || null,
+      expiresAt: n.expiresAt || n.endsOn || n.endDate || n.expires || null,
+      date: n.date || null,
+      bin: n.bin || null,
+      provider: n.provider || null,
+      meta: n.meta || null
+    }));
 
     return new Response(JSON.stringify({ items }), {
       status: 200,
@@ -113,8 +155,8 @@ export default async (req, context) => {
         'cache-control': 'no-store'
       }
     });
-  } catch {
-    return new Response(JSON.stringify({ error: 'Unable to load public notices.' }), {
+  } catch (err) {
+    return new Response(JSON.stringify({ error: 'Unable to load public notices.', detail: String(err?.message || err || '') }), {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',
