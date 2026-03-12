@@ -87,30 +87,33 @@
     min-width:220px;
     text-align:center;
   }
-  #tabResidents .resident-table-wrap{ overflow-x:hidden; margin-top:0.75rem; }
   #tabResidents table{ width:100%; table-layout:fixed; }
-  #tabResidents th,
-  #tabResidents td{ padding:12px 10px; vertical-align:middle; }
-  #tabResidents th:nth-child(1), #tabResidents td:nth-child(1){ width:11%; }
-  #tabResidents th:nth-child(2), #tabResidents td:nth-child(2){ width:16%; }
-  #tabResidents th:nth-child(3), #tabResidents td:nth-child(3){ width:23%; }
-  #tabResidents th:nth-child(4), #tabResidents td:nth-child(4){ width:10%; }
-  #tabResidents th:nth-child(5), #tabResidents td:nth-child(5){ width:11%; }
-  #tabResidents th:nth-child(6), #tabResidents td:nth-child(6){ width:20%; }
-  #tabResidents th:nth-child(7), #tabResidents td:nth-child(7){ width:9%; }
-  #tabResidents td{ word-break:break-word; overflow-wrap:anywhere; }
-  #tabResidents td.resident-actions-col,
-  #tabResidents th.resident-actions-col{ text-align:center; vertical-align:middle; white-space:nowrap; }
+  #tabResidents th.resident-actions-col,
+  #tabResidents td.resident-actions-col{ text-align:center; vertical-align:middle; }
   #tabResidents td.resident-actions-col .btn-line{ margin:0 auto; }
-  .resident-modal-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; }
-  .resident-photo-card{ display:flex; align-items:center; gap:0.9rem; min-width:260px; margin-top:0.25rem; }
-  .resident-photo-preview{ width:84px; height:84px; border-radius:14px; border:1px solid var(--line); background:#f5f7f6; display:flex; align-items:center; justify-content:center; overflow:hidden; color:#6f7b76; font-size:1.6rem; flex:0 0 auto; }
+
+  #tabResidents .resident-table-wrap{ margin-top:0.75rem; overflow-x:visible; }
+  #tabResidents table{ width:100%; table-layout:fixed; border-collapse:collapse; }
+  #tabResidents th, #tabResidents td{ vertical-align:middle; }
+  #tabResidents td{ word-break:normal; overflow-wrap:anywhere; }
+  #tabResidents th:nth-child(1), #tabResidents td:nth-child(1){ width:10%; }
+  #tabResidents th:nth-child(2), #tabResidents td:nth-child(2){ width:16%; }
+  #tabResidents th:nth-child(3), #tabResidents td:nth-child(3){ width:24%; }
+  #tabResidents th:nth-child(4), #tabResidents td:nth-child(4){ width:10%; }
+  #tabResidents th:nth-child(5), #tabResidents td:nth-child(5){ width:10%; }
+  #tabResidents th:nth-child(6), #tabResidents td:nth-child(6){ width:20%; }
+  #tabResidents th:nth-child(7), #tabResidents td:nth-child(7){ width:10%; }
+  #tabResidents td:nth-child(3){ line-height:1.35; }
+  .resident-modal-top{ display:flex; gap:1rem; align-items:flex-start; justify-content:space-between; }
+  .resident-modal-top .resident-id-grid{ flex:1; min-width:0; }
+  .resident-photo-box{ width:108px; flex:0 0 108px; text-align:center; }
+  .resident-photo-preview{ width:88px; height:88px; border-radius:16px; border:1px solid var(--line); background:#eef3f0 center/cover no-repeat; margin:0 auto 8px; overflow:hidden; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.8rem; }
   .resident-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .resident-photo-copy{ min-width:0; }
-  .resident-photo-copy p{ margin:0.2rem 0 0; }
-  @media (max-width: 980px){
-    #tabResidents th,#tabResidents td{ padding:10px 8px; font-size:0.95rem; }
-    .resident-photo-card{ width:100%; }
+  .resident-photo-preview.has-photo{ color:transparent; }
+  @media (max-width: 900px){
+    .resident-modal-top{ flex-direction:column; }
+    .resident-photo-box{ width:100%; flex:0 0 auto; text-align:left; }
+    .resident-photo-preview{ margin:0 0 8px; }
   }
 
   .notice-actions{
@@ -337,7 +340,7 @@
     <div id="resSummary" class="tiny muted" style="margin-top:0.5rem;"></div>
 
     <div class="resident-table-wrap">
-      <table>
+      <table style="width:100%;">
         <thead>
           <tr>
             <th>Reg No</th>
@@ -368,7 +371,7 @@
 
       <div class="modal-body">
         <div class="resident-modal-top">
-          <div style="flex:1 1 420px; min-width:280px;">
+          <div class="resident-id-grid">
             <div class="grid-2" style="gap:1rem;">
               <div class="field">
                 <label>Registration No</label>
@@ -380,12 +383,9 @@
               </div>
             </div>
           </div>
-          <div class="resident-photo-card">
-            <div class="resident-photo-preview" id="mPhotoPreview" aria-label="Resident photo preview">👤</div>
-            <div class="resident-photo-copy">
-              <label style="display:block; margin-bottom:0.25rem;">Profile photo</label>
-              <p class="tiny muted">Resident profile photo synced from the dashboard profile.</p>
-            </div>
+          <div class="resident-photo-box">
+            <div class="resident-photo-preview" id="mPhotoPreview">👤</div>
+            <div class="tiny muted">Profile photo</div>
           </div>
         </div>
 
@@ -690,7 +690,7 @@
         <button class="btn" type="button" id="btnCreateElection">Create / Update</button>
       </div>
 
-      <div style="overflow-x:auto; margin-top:0.75rem;">
+      <div class="resident-table-wrap">
         <table style="width:100%;">
           <thead>
             <tr>
@@ -713,7 +713,7 @@
         Candidates come from residents who submitted Interest in their dashboard and were approved here.
       </p>
 
-      <div style="overflow-x:auto; margin-top:0.75rem;">
+      <div class="resident-table-wrap">
         <table style="width:100%;">
           <thead>
             <tr>
@@ -772,7 +772,7 @@
 
     <p id="repMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
 
-    <div style="overflow-x:auto; margin-top:0.75rem;">
+    <div class="resident-table-wrap">
       <table style="width:100%;">
         <thead>
           <tr>
@@ -970,7 +970,7 @@
           <button type="button" class="btn" id="btnHbCatSave">Save category</button>
         </div>
 
-        <div style="overflow-x:auto; margin-top:0.75rem;">
+        <div class="resident-table-wrap">
           <table style="width:100%;">
             <thead>
               <tr>
@@ -1087,7 +1087,7 @@
       </div>
     </div>
 
-    <div style="overflow-x:auto; margin-top:0.75rem;">
+    <div class="resident-table-wrap">
       <table style="width:100%;">
         <thead>
           <tr>
@@ -1275,65 +1275,38 @@
 
   async function anwLoadSafe(key, fallback){
     try{
-      if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback);
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
+      const data = await res.json();
+      try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){ }
+      return data;
     }catch(_){
-      return fallback;
+      try{
+        if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback);
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      }catch(__){
+        return fallback;
+      }
     }
   }
 
   async function anwSaveSafe(key, value){
     try{
-      if(key === KEY_USERS && typeof window.anwUsersSaveRemote === 'function'){
-        return await window.anwUsersSaveRemote(value);
-      }
-      if(typeof window.anwSave === 'function') return await window.anwSave(key, value);
-      localStorage.setItem(key, JSON.stringify(value));
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(value)
+      });
+      if(!res.ok) throw new Error('store save failed');
+      try{ if(typeof window.anwSave === 'function') window.anwSave(key, value); }catch(_){ }
       return true;
     }catch(err){
+      try{ localStorage.setItem(key, JSON.stringify(value)); }catch(_){ }
       console.error(err);
       throw err;
     }
   }
-
-  async function loadUsersRemote(){
-    try{
-      const token = (typeof window.anwGetIdentityToken === 'function') ? await window.anwGetIdentityToken() : null;
-      const headers = token ? { Authorization: 'Bearer ' + token } : {};
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, { headers, cache:'no-store' });
-      if(!res.ok) throw new Error('Failed to load residents');
-      const data = await res.json();
-      const list = Array.isArray(data) ? data : [];
-      localStorage.setItem(KEY_USERS, JSON.stringify(list));
-      return list;
-    }catch(err){
-      const raw = localStorage.getItem(KEY_USERS);
-      return raw ? JSON.parse(raw) : [];
-    }
-  }
-
-  async function saveUsersRemote(users){
-    const list = Array.isArray(users) ? users : [];
-    const token = (typeof window.anwGetIdentityToken === 'function') ? await window.anwGetIdentityToken() : null;
-    const headers = { 'Content-Type':'application/json' };
-    if(token) headers.Authorization = 'Bearer ' + token;
-    const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
-      method:'POST',
-      headers,
-      body: JSON.stringify(list)
-    });
-    if(!res.ok){
-      let msg = '';
-      try{ msg = await res.text(); }catch{}
-      throw new Error(msg || 'Failed to save residents');
-    }
-    localStorage.setItem(KEY_USERS, JSON.stringify(list));
-    return true;
-  }
-
-  window.anwUsersLoadRemote = loadUsersRemote;
-  window.anwUsersSaveRemote = saveUsersRemote
 
   function downloadText(filename, text, type='application/json'){
     const blob = new Blob([text], { type });
@@ -1485,7 +1458,7 @@
         : null;
 
       if(currentUser && currentUser.email){
-        const users = await loadUsersRemote();
+        const users = await anwLoadSafe(KEY_USERS, []);
         const email = String(currentUser.email || '').trim().toLowerCase();
         const row = users.find(u => String((u && u.email) || '').trim().toLowerCase() === email);
         if(row){
@@ -1527,7 +1500,7 @@
   let CURRENT_RESIDENT = null;
 
   async function loadResidents(){
-    RESIDENTS_CACHE = await loadUsersRemote();
+    RESIDENTS_CACHE = await anwLoadSafe(KEY_USERS, []);
     if(assignMissingResidentNumbers(RESIDENTS_CACHE)){
       await anwSaveSafe(KEY_USERS, RESIDENTS_CACHE);
     }
@@ -1586,17 +1559,6 @@
     });
   }
 
-  function renderResidentPhoto(src){
-    const box = byId('mPhotoPreview');
-    if(!box) return;
-    const safe = String(src || '').trim();
-    if(safe){
-      box.innerHTML = `<img alt="Resident profile photo" src="${safe.replace(/"/g, '&quot;')}">`;
-    } else {
-      box.textContent = '👤';
-    }
-  }
-
   function openResidentModal(user){
     CURRENT_RESIDENT = user || null;
     if(!CURRENT_RESIDENT) return;
@@ -1616,15 +1578,28 @@
     byId('mCoord').checked = roles.includes('street_admin') || !!CURRENT_RESIDENT.streetCoordinator;
     byId('mVol').checked = roles.includes('volunteer') || !!CURRENT_RESIDENT.volunteer;
 
-    const vr = normList(CURRENT_RESIDENT.volunteerRoles);
-    byId('mVStreet').checked = vr.includes('Street watch / patrols');
-    byId('mVLeaf').checked = vr.includes('Distribute leaflets');
-    byId('mVTech').checked = vr.includes('Tech support');
-    byId('mVEld').checked = vr.includes('Elderly checks');
-    byId('mVClean').checked = vr.includes('Community clean-up');
-    byId('mVPark').checked = vr.includes('Parking assistance');
-    byId('mVMeet').checked = vr.includes('Meeting organiser');
-    byId('mVTrans').checked = vr.includes('Translation');
+    const vrList = normList(CURRENT_RESIDENT.volunteerRoles);
+    const vrObj = CURRENT_RESIDENT.vol_roles || CURRENT_RESIDENT.volunteer_roles || {};
+    byId('mVStreet').checked = vrList.includes('Street watch / patrols') || !!vrObj.streetWatch;
+    byId('mVLeaf').checked = vrList.includes('Distribute leaflets') || !!vrObj.leaflets;
+    byId('mVTech').checked = vrList.includes('Tech support') || !!vrObj.tech || !!vrObj.techSupport;
+    byId('mVEld').checked = vrList.includes('Elderly checks') || !!vrObj.elderly;
+    byId('mVClean').checked = vrList.includes('Community clean-up') || !!vrObj.cleanUp || !!vrObj.cleanup;
+    byId('mVPark').checked = vrList.includes('Parking assistance') || !!vrObj.parkingAssistance || !!vrObj.parking;
+    byId('mVMeet').checked = vrList.includes('Meeting organiser') || !!vrObj.meetings;
+    byId('mVTrans').checked = vrList.includes('Translation') || !!vrObj.translation;
+
+    const photoUrl = CURRENT_RESIDENT.profilePhoto || CURRENT_RESIDENT.photo || CURRENT_RESIDENT.photoURL || '';
+    const photoBox = byId('mPhotoPreview');
+    if(photoBox){
+      if(photoUrl){
+        photoBox.classList.add('has-photo');
+        photoBox.innerHTML = `<img src="${esc(photoUrl)}" alt="Resident profile photo">`;
+      }else{
+        photoBox.classList.remove('has-photo');
+        photoBox.textContent = '👤';
+      }
+    }
 
     byId('mMsg').textContent = '';
 
@@ -1664,14 +1639,29 @@
       byId('mVMeet').checked ? 'Meeting organiser' : '',
       byId('mVTrans').checked ? 'Translation' : ''
     ].filter(Boolean);
+    const volunteerRoleFlags = {
+      streetWatch: byId('mVStreet').checked,
+      leaflets: byId('mVLeaf').checked,
+      tech: byId('mVTech').checked,
+      elderly: byId('mVEld').checked,
+      cleanUp: byId('mVClean').checked,
+      parkingAssistance: byId('mVPark').checked,
+      meetings: byId('mVMeet').checked,
+      translation: byId('mVTrans').checked
+    };
 
     users[idx].name = byId('mName').value.trim();
     users[idx].phone = byId('mPhone').value.trim();
     users[idx].residentType = byId('mType').value;
+    users[idx].type = byId('mType').value;
     users[idx].managementCompany = byId('mMgmt').value.trim();
     users[idx].roles = uniqueBy(roles, x => x);
     users[idx].role = users[idx].roles[0] || '';
     users[idx].volunteerRoles = volunteerRoles;
+    users[idx].vol_roles = volunteerRoleFlags;
+    users[idx].volunteer_roles = volunteerRoleFlags;
+    users[idx].streetCoordinator = byId('mCoord').checked;
+    users[idx].volunteer = byId('mVol').checked;
 
     if(nextStatus){
       users[idx].status = nextStatus;
