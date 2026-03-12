@@ -79,6 +79,26 @@
   font-weight:700;
 }
 
+
+/* Profile header layout */
+.profile-header-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:1.25rem;
+}
+.profile-main{
+  flex:1 1 auto;
+  min-width:0;
+}
+.profile-side{
+  flex:0 0 320px;
+  max-width:320px;
+}
+.profile-header-row .grid-2.compact{
+  grid-template-columns:minmax(180px, 240px) minmax(180px, 240px);
+}
+
 /* Profile photo card */
 .profile-photo-card{
   display:flex;
@@ -87,13 +107,13 @@
   margin:1rem 0;
   padding:1rem;
   border:1px solid var(--line);
-  border-radius:18px;
+  border-radius:14px;
   background:#f9fafb;
 }
 .profile-photo-preview{
-  width:108px;
-  height:108px;
-  border-radius:18px;
+  width:84px;
+  height:84px;
+  border-radius:16px;
   border:1px solid var(--line);
   background:#eef3f0 center/cover no-repeat;
   display:flex;
@@ -118,6 +138,25 @@
   margin-top:.75rem;
 }
 .profile-photo-note{ margin:.4rem 0 0; }
+
+
+@media (max-width: 980px){
+  .profile-header-row{
+    flex-direction:column;
+  }
+  .profile-side{
+    width:100%;
+    max-width:none;
+  }
+  .profile-header-row .grid-2.compact{
+    grid-template-columns:1fr 1fr;
+  }
+}
+@media (max-width: 640px){
+  .profile-header-row .grid-2.compact{
+    grid-template-columns:1fr;
+  }
+}
 
 /* In-page back-to-top button */
 .garda-top-wrap{
@@ -279,10 +318,12 @@ footer.site-footer .page-access{
       </p>
 </div>
 <div id="dbProfileArea" style="display:none;">
+<div class="profile-header-row">
+<div class="profile-main">
 <p class="tiny muted" style="margin-top:0;">
         Email and Eircode are protected and cannot be changed.
       </p>
-<div class="grid-2" style="gap:1rem;">
+<div class="grid-2 compact" style="gap:1rem;">
 <div class="field">
 <label>Registration No</label>
 <input disabled="" id="pfRegId" type="text"/>
@@ -292,9 +333,11 @@ footer.site-footer .page-access{
 <input disabled="" id="pfStatus" type="text"/>
 </div>
 </div>
-<div class="profile-photo-card">
+</div>
+<div class="profile-side">
+<div class="profile-photo-card" style="margin-top:0;">
 <div aria-label="Profile photo preview" class="profile-photo-preview" id="pfPhotoPreview">👤</div>
-<div style="flex:1; min-width:240px;">
+<div style="flex:1; min-width:0;">
 <label style="display:block; margin-bottom:0.25rem;">Profile photo</label>
 <p class="tiny muted" style="margin-top:0;">Add a clear face photo for resident identification.</p>
 <input accept="image/*" id="pfPhotoFile" style="display:none;" type="file"/>
@@ -305,7 +348,9 @@ footer.site-footer .page-access{
 <p class="tiny muted profile-photo-note" id="pfPhotoMsg">JPG or PNG recommended.</p>
 </div>
 </div>
-<div class="grid-2" style="gap:1rem;">
+</div>
+</div>
+<div class="grid-2" style="gap:1rem; margin-top:1rem;">
 <div class="field">
 <label>Full name</label>
 <input id="pfName" type="text"/>
