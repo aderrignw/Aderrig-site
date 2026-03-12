@@ -198,7 +198,48 @@
   }
 
   function getBinDate(it) {
-    return startOfDay(it?.date || it?.collectionDate || it?.startsOn || it?.startDate || it?.startsAt || null);
+    return startOfDay(
+      it?.date ||
+      it?.collectionDate ||
+      it?.meta?.collectionDate ||
+      it?.meta?.date ||
+      it?.startsOn ||
+      it?.startDate ||
+      it?.startsAt ||
+      it?.endsOn ||
+      it?.endDate ||
+      null
+    );
+  }
+
+  function startOfWeek(value) {
+    const d = startOfDay(value);
+    if (!d) return null;
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    return d;
+  }
+
+  function endOfWeek(value) {
+    const d = startOfWeek(value);
+    if (!d) return null;
+    d.setDate(d.getDate() + 6);
+    return d;
+  }
+
+  function addDays(value, days) {
+    const d = startOfDay(value);
+    if (!d) return null;
+    d.setDate(d.getDate() + Number(days || 0));
+    return d;
+  }
+
+  function isWithinRange(value, start, end) {
+    const d = startOfDay(value);
+    const s = startOfDay(start);
+    const e = startOfDay(end);
+    return !!(d && s && e && d.getTime() >= s.getTime() && d.getTime() <= e.getTime());
   }
 
   function getBinName(it) {
@@ -235,12 +276,34 @@
     if (!dated.length) return [];
 
     const today = startOfDay(new Date());
-    const primary = dated.find((it) => it.__binDate.getTime() >= today.getTime()) || dated[dated.length - 1];
+    const weekStart = startOfWeek(today);
+    const weekEnd = endOfWeek(today);
+    const nextWeekStart = addDays(weekEnd, 1);
+    const nextWeekEnd = addDays(nextWeekStart, 6);
+
+    const completedThisWeek = dated.filter((it) => isWithinRange(it.__binDate, weekStart, today));
+    const nextWeekItems = dated.filter((it) => isWithinRange(it.__binDate, nextWeekStart, nextWeekEnd));
+    const firstUpcoming = dated.find((it) => it.__binDate.getTime() > today.getTime()) || null;
+
+    const completed = completedThisWeek.length ? completedThisWeek[completedThisWeek.length - 1] : null;
+    const upcoming = nextWeekItems[0] || firstUpcoming;
+    const primary = upcoming || completed;
     if (!primary) return [];
 
     const primaryName = getBinName(primary);
     const primaryChip = buildBinChip(primaryName);
-    const lead = `Next collection: ${formatLongDate(primary.__binDate)}.`;
+
+    const lines = [];
+    if (completed) {
+      lines.push(`Completed this week: ${getBinName(completed)} bin on ${formatLongDate(completed.__binDate)}.`);
+    }
+    if (upcoming) {
+      lines.push(`Next week: ${getBinName(upcoming)} bin on ${formatLongDate(upcoming.__binDate)}.`);
+    } else if (!completed) {
+      lines.push(`Next collection: ${formatLongDate(primary.__binDate)}.`);
+    }
+
+    const lead = lines.join(' ');
 
     injectBinCardStyles();
 
@@ -250,7 +313,7 @@
       message: lead,
       category: '',
       home: primary.home,
-      createdAt: primary.createdAt,
+      createdAt: primary.createdAt || primary.date,
       _displayVariant: 'info',
       _displayMeta: '',
       _displayBadge: '',
