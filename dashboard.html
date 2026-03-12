@@ -92,8 +92,8 @@
   min-width:0;
 }
 .profile-side{
-  flex:0 0 320px;
-  max-width:320px;
+  flex:0 0 260px;
+  max-width:260px;
 }
 .profile-header-row .grid-2.compact{
   grid-template-columns:minmax(180px, 240px) minmax(180px, 240px);
@@ -102,24 +102,25 @@
 /* Profile photo card */
 .profile-photo-card{
   display:flex;
-  gap:1rem;
-  align-items:flex-start;
-  margin:1rem 0;
+  flex-direction:column;
+  align-items:center;
+  gap:.65rem;
+  margin:0;
   padding:1rem;
   border:1px solid var(--line);
-  border-radius:14px;
+  border-radius:16px;
   background:#f9fafb;
 }
 .profile-photo-preview{
-  width:84px;
-  height:84px;
-  border-radius:16px;
+  width:112px;
+  height:112px;
+  border-radius:18px;
   border:1px solid var(--line);
   background:#eef3f0 center/cover no-repeat;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:2rem;
+  font-size:2.2rem;
   color:var(--muted);
   overflow:hidden;
   flex:0 0 auto;
@@ -131,13 +132,25 @@
   object-fit:cover;
   display:block;
 }
+.profile-photo-title{
+  margin:0;
+  font-size:1rem;
+  font-weight:800;
+  text-align:center;
+}
 .profile-photo-actions{
   display:flex;
-  gap:10px;
+  gap:8px;
   flex-wrap:wrap;
-  margin-top:.75rem;
+  justify-content:center;
+  margin-top:0;
 }
-.profile-photo-note{ margin:.4rem 0 0; }
+.profile-photo-note{
+  margin:0;
+  font-size:12px;
+  color:var(--muted);
+  text-align:center;
+}
 
 
 @media (max-width: 980px){
@@ -337,16 +350,13 @@ footer.site-footer .page-access{
 <div class="profile-side">
 <div class="profile-photo-card" style="margin-top:0;">
 <div aria-label="Profile photo preview" class="profile-photo-preview" id="pfPhotoPreview">👤</div>
-<div style="flex:1; min-width:0;">
-<label style="display:block; margin-bottom:0.25rem;">Profile photo</label>
-<p class="tiny muted" style="margin-top:0;">Add a clear face photo for resident identification.</p>
+<p class="profile-photo-title">Profile photo</p>
 <input accept="image/*" id="pfPhotoFile" style="display:none;" type="file"/>
 <div class="profile-photo-actions">
-<button class="btn-line small" id="btnUploadPhoto" type="button">Insert photo</button>
-<button class="btn-line small" id="btnRemovePhoto" type="button">Remove photo</button>
+<button class="btn-line small" id="btnUploadPhoto" type="button">Add</button>
+<button class="btn-line small" id="btnRemovePhoto" type="button">Remove</button>
 </div>
-<p class="tiny muted profile-photo-note" id="pfPhotoMsg">JPG or PNG recommended.</p>
-</div>
+<p class="profile-photo-note" id="pfPhotoMsg">JPG / PNG</p>
 </div>
 </div>
 </div>
