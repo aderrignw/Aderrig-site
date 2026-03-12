@@ -79,18 +79,30 @@
     align-items:center;
     justify-content:center;
     flex-wrap:wrap;
-    width:100%;
-    min-height:44px;
   }
-  .resident-actions-col{
-    width:220px;
-    min-width:220px;
-    text-align:center;
-  }
-  #tabResidents table{ width:100%; table-layout:fixed; }
-  #tabResidents th.resident-actions-col,
-  #tabResidents td.resident-actions-col{ text-align:center; vertical-align:middle; }
-  #tabResidents td.resident-actions-col .btn-line{ margin:0 auto; }
+
+  #tabResidents .res-table-wrap{ overflow-x:auto; margin-top:0.75rem; }
+  #tabResidents table.resident-table{ width:100%; table-layout:fixed; border-collapse:separate; border-spacing:0; }
+  #tabResidents table.resident-table th,
+  #tabResidents table.resident-table td{ vertical-align:top; word-break:break-word; overflow-wrap:anywhere; }
+  #tabResidents table.resident-table th:nth-child(1),
+  #tabResidents table.resident-table td:nth-child(1){ width:10%; }
+  #tabResidents table.resident-table th:nth-child(2),
+  #tabResidents table.resident-table td:nth-child(2){ width:14%; }
+  #tabResidents table.resident-table th:nth-child(3),
+  #tabResidents table.resident-table td:nth-child(3){ width:18%; }
+  #tabResidents table.resident-table th:nth-child(4),
+  #tabResidents table.resident-table td:nth-child(4){ width:10%; }
+  #tabResidents table.resident-table th:nth-child(5),
+  #tabResidents table.resident-table td:nth-child(5){ width:22%; }
+  #tabResidents table.resident-table th:nth-child(6),
+  #tabResidents table.resident-table td:nth-child(6){ width:10%; }
+  #tabResidents table.resident-table th:nth-child(7),
+  #tabResidents table.resident-table td:nth-child(7){ width:10%; }
+  #tabResidents table.resident-table th:nth-child(8),
+  #tabResidents table.resident-table td:nth-child(8){ width:6.5rem; text-align:center; }
+  #tabResidents table.resident-table .cell-wrap{ display:block; line-height:1.45; }
+  .resident-action-cell{ justify-content:center; }
 
   .notice-actions{
     display:flex;
@@ -183,11 +195,6 @@
     return m ? parseInt(m[1], 10) || 0 : 0;
   }
 
-  function formatResidentRegId(v){
-    const n = getResidentNumericReg(v);
-    return n ? `ANW${String(n).padStart(3, '0')}` : '';
-  }
-
   function anwNextRegId(list){
     const users = Array.isArray(list) ? list : [];
     let max = 0;
@@ -195,7 +202,7 @@
       const n = getResidentNumericReg(u && (u.regId || u.regNo));
       if(n > max) max = n;
     });
-    return formatResidentRegId(max + 1);
+    return String(max + 1).padStart(2, '0');
   }
 
   function assignMissingResidentNumbers(list){
@@ -211,19 +218,17 @@
     users.forEach(u => {
       const status = String((u && u.status) || '').toLowerCase();
       const approved = ['active','approved'].includes(status);
-      const currentRaw = u && (u.regId || u.regNo);
-      const normalized = formatResidentRegId(currentRaw);
 
-      if(approved && !currentRaw){
+      if(approved && !(u && (u.regId || u.regNo))){
         max += 1;
-        const id = formatResidentRegId(max);
+        const id = String(max).padStart(2, '0');
         u.regId = id;
         u.regNo = id;
         changed = true;
-      } else if(normalized && ((u.regId !== normalized) || (u.regNo !== normalized))){
-        u.regId = normalized;
-        u.regNo = normalized;
-        changed = true;
+      } else if(u && u.regId && !u.regNo){
+        u.regNo = u.regId;
+      } else if(u && u.regNo && !u.regId){
+        u.regId = u.regNo;
       }
     });
 
@@ -315,8 +320,8 @@
 
     <div id="resSummary" class="tiny muted" style="margin-top:0.5rem;"></div>
 
-    <div style="overflow-x:auto; margin-top:0.75rem;">
-      <table style="width:100%;">
+    <div class="res-table-wrap">
+      <table class="resident-table">
         <thead>
           <tr>
             <th>Reg No</th>
@@ -326,7 +331,7 @@
             <th>Address</th>
             <th>Status</th>
             <th>Roles</th>
-            <th class="resident-actions-col">Actions</th>
+            <th style="width:220px;">Actions</th>
           </tr>
         </thead>
         <tbody id="resBody"></tbody>
@@ -691,7 +696,7 @@
               <th>Name</th>
               <th>Email</th>
               <th>Interest status</th>
-              <th style="width:160px;">Actions</th>
+              <th style="width:220px;">Actions</th>
             </tr>
           </thead>
           <tbody id="candBody"></tbody>
@@ -741,8 +746,8 @@
 
     <p id="repMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
 
-    <div style="overflow-x:auto; margin-top:0.75rem;">
-      <table style="width:100%;">
+    <div class="res-table-wrap">
+      <table class="resident-table">
         <thead>
           <tr>
             <th>ID</th>
@@ -946,7 +951,7 @@
                 <th>Title</th>
                 <th style="width:90px;">Order</th>
                 <th style="width:90px;">Status</th>
-                <th style="width:160px;">Actions</th>
+                <th style="width:220px;">Actions</th>
               </tr>
             </thead>
             <tbody id="hbCatBody"></tbody>
@@ -1056,8 +1061,8 @@
       </div>
     </div>
 
-    <div style="overflow-x:auto; margin-top:0.75rem;">
-      <table style="width:100%;">
+    <div class="res-table-wrap">
+      <table class="resident-table">
         <thead>
           <tr>
             <th>ID</th>
@@ -1065,7 +1070,7 @@
             <th>Status</th>
             <th>Owner</th>
             <th>Updated</th>
-            <th style="width:160px;">Actions</th>
+            <th style="width:220px;">Actions</th>
           </tr>
         </thead>
         <tbody id="pmBody"></tbody>
@@ -1487,14 +1492,14 @@
 
     body.innerHTML = rows.map((u, idx) => `
       <tr>
-        <td>${esc(formatResidentRegId(u.regId || u.regNo) || '—')}</td>
-        <td>${esc(u.name || '—')}</td>
-        <td>${esc(u.email || '—')}</td>
-        <td>${esc(u.eircode || '—')}</td>
-        <td>${esc(u.address || '—')}</td>
-        <td>${esc(u.status || 'pending')}</td>
-        <td>${esc(getResidentRolesLabel(u))}</td>
-        <td class="resident-actions-col">
+        <td><span class="cell-wrap">${esc(u.regId || u.regNo || '—')}</span></td>
+        <td><span class="cell-wrap">${esc(u.name || '—')}</span></td>
+        <td><span class="cell-wrap">${esc(u.email || '—')}</span></td>
+        <td><span class="cell-wrap">${esc(u.eircode || '—')}</span></td>
+        <td><span class="cell-wrap">${esc(u.address || '—')}</span></td>
+        <td><span class="cell-wrap">${esc(u.status || 'pending')}</span></td>
+        <td><span class="cell-wrap">${esc(getResidentRolesLabel(u))}</span></td>
+        <td>
           <div class="resident-action-cell">
             <button type="button" class="btn-line small" data-res-index="${idx}" data-act="openResident">
               ${String((u.status||'')).toLowerCase() === 'approved' || String((u.status||'')).toLowerCase() === 'active' ? 'Edit' : 'Open'}
@@ -1520,7 +1525,7 @@
     if(!CURRENT_RESIDENT) return;
 
     byId('modalResident').style.display = 'block';
-    byId('mRegId').value = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
+    byId('mRegId').value = CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo || '—';
     byId('mStatus').value = CURRENT_RESIDENT.status || 'pending';
     byId('mEmail').value = CURRENT_RESIDENT.email || '';
     byId('mEir').value = CURRENT_RESIDENT.eircode || '';
