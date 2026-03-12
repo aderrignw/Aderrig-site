@@ -87,42 +87,52 @@
     min-width:140px;
     text-align:center;
   }
-  #tabResidents .resident-table-wrap{ overflow-x:auto; margin-top:0.75rem; }
-  #tabResidents .resident-table{
+  #tabResidents .resident-table-wrap{
+    overflow-x:auto;
+    margin-top:0.75rem;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#fff;
+  }
+  #tabResidents table.resident-table{
     width:100%;
-    min-width:1180px;
+    min-width:1120px;
+    table-layout:fixed;
     border-collapse:separate;
     border-spacing:0;
-    table-layout:auto;
   }
-  #tabResidents .resident-table th,
-  #tabResidents .resident-table td{
-    padding:12px 14px;
-    vertical-align:top;
-    text-align:left;
-  }
-  #tabResidents .resident-table thead th{
-    white-space:nowrap;
-  }
-  #tabResidents .resident-table tbody td{
-    border-top:1px solid var(--line);
-  }
-  #tabResidents .resident-table td.resident-actions-col,
-  #tabResidents .resident-table th.resident-actions-col{
-    text-align:center;
+  #tabResidents table.resident-table th,
+  #tabResidents table.resident-table td{
+    padding:14px 16px;
     vertical-align:middle;
+    border-bottom:1px solid rgba(17,24,39,.08);
   }
-  #tabResidents .resident-table td.resident-actions-col .btn-line{ margin:0 auto; }
-  #tabResidents .resident-cell-wrap{
-    white-space:normal;
+  #tabResidents table.resident-table thead th{
+    font-weight:800;
+    white-space:nowrap;
+    background:#fff;
+  }
+  #tabResidents table.resident-table tbody tr:last-child td{ border-bottom:none; }
+  #tabResidents table.resident-table td{
     overflow-wrap:anywhere;
     word-break:break-word;
-    line-height:1.5;
+    line-height:1.45;
   }
-  #tabResidents .resident-cell-eircode{
-    white-space:nowrap;
-    overflow-wrap:normal;
-    word-break:normal;
+  #tabResidents .resident-reg-col{ width:110px; }
+  #tabResidents .resident-name-col{ width:180px; }
+  #tabResidents .resident-email-col{ width:250px; }
+  #tabResidents .resident-eir-col{ width:120px; }
+  #tabResidents .resident-address-col{ width:260px; }
+  #tabResidents .resident-status-col{ width:120px; }
+  #tabResidents .resident-roles-col{ width:170px; }
+  #tabResidents .resident-actions-col{ width:140px; min-width:140px; text-align:center; }
+  #tabResidents th.resident-actions-col,
+  #tabResidents td.resident-actions-col{ text-align:center; vertical-align:middle; }
+  #tabResidents td.resident-actions-col .btn-line{ margin:0 auto; }
+  #tabResidents .resident-nowrap{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #tabResidents .resident-break{ white-space:normal; }
+  @media (max-width: 960px){
+    #tabResidents table.resident-table{ min-width:980px; }
   }
 
   .notice-actions{
@@ -218,7 +228,7 @@
 
   function formatResidentRegId(v){
     const n = getResidentNumericReg(v);
-    return n ? `ANW${String(n).padStart(3, '0')}` : '';
+    return n ? `ANW${String(n).padStart(4, '0')}` : '';
   }
 
   function anwNextRegId(list){
@@ -350,6 +360,16 @@
 
     <div class="resident-table-wrap">
       <table class="resident-table">
+        <colgroup>
+          <col class="resident-reg-col">
+          <col class="resident-name-col">
+          <col class="resident-email-col">
+          <col class="resident-eir-col">
+          <col class="resident-address-col">
+          <col class="resident-status-col">
+          <col class="resident-roles-col">
+          <col class="resident-actions-col">
+        </colgroup>
         <thead>
           <tr>
             <th>Reg No</th>
@@ -774,8 +794,8 @@
 
     <p id="repMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
 
-    <div class="resident-table-wrap">
-      <table class="resident-table">
+    <div style="overflow-x:auto; margin-top:0.75rem;">
+      <table style="width:100%; min-width:980px;">
         <thead>
           <tr>
             <th>ID</th>
@@ -1089,8 +1109,8 @@
       </div>
     </div>
 
-    <div class="resident-table-wrap">
-      <table class="resident-table">
+    <div style="overflow-x:auto; margin-top:0.75rem;">
+      <table style="width:100%; min-width:860px;">
         <thead>
           <tr>
             <th>ID</th>
@@ -1520,13 +1540,13 @@
 
     body.innerHTML = rows.map((u, idx) => `
       <tr>
-        <td>${esc(formatResidentRegId(u.regId || u.regNo) || '—')}</td>
-        <td>${esc(u.name || '—')}</td>
-        <td>${esc(u.email || '—')}</td>
-        <td>${esc(u.eircode || '—')}</td>
-        <td>${esc(u.address || '—')}</td>
-        <td>${esc(u.status || 'pending')}</td>
-        <td>${esc(getResidentRolesLabel(u))}</td>
+        <td class="resident-nowrap">${esc(formatResidentRegId(u.regId || u.regNo) || '—')}</td>
+        <td class="resident-break">${esc(u.name || '—')}</td>
+        <td class="resident-break">${esc(u.email || '—')}</td>
+        <td class="resident-nowrap">${esc(u.eircode || '—')}</td>
+        <td class="resident-break">${esc(u.address || '—')}</td>
+        <td class="resident-nowrap">${esc(u.status || 'pending')}</td>
+        <td class="resident-break">${esc(getResidentRolesLabel(u))}</td>
         <td class="resident-actions-col">
           <div class="resident-action-cell">
             <button type="button" class="btn-line small" data-res-index="${idx}" data-act="openResident">
