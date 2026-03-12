@@ -2,8 +2,8 @@
    Home Notices section
    - Shows Home + Public notices to everyone
    - Shows Home + Private notices to logged-in members when targeting matches
-   - Expands automatically with 1, 2, 3+ notices
    - Keeps a visible placeholder on the Home page when there are no active notices
+   - Bin collection notices are condensed into a single resident-friendly card
    ========================= */
 
 (function () {
@@ -16,6 +16,7 @@
   const STORE_URL = '/.netlify/functions/store';
   const PUBLIC_URL = '/.netlify/functions/public-notices';
   const KEY_NOTICES = (window.ANW_KEYS && window.ANW_KEYS.NOTICES) || 'anw_notices';
+  const DAY_MS = 24 * 60 * 60 * 1000;
 
   function esc(s) {
     return String(s || '')
@@ -57,152 +58,124 @@
     return vis === 'public' ? 'Public' : 'Members only';
   }
 
-  function asDate(d){
-    const v = d ? new Date(d) : null;
-    return v && !Number.isNaN(v.getTime()) ? v.toLocaleDateString() : '';
-  }
-
-  function isNotStarted(n) {
-    const startValue = n?.startsAt || n?.startsOn || n?.startDate || n?.showFrom || '';
-    const st = startValue ? Date.parse(startValue) : NaN;
-    return !isNaN(st) && st > Date.now();
-  }
-  function isStarted(n) { return !isNotStarted(n); }
-  function isExpired(n) {
-    const endValue = n?.expiresAt || n?.endsOn || n?.endDate || n?.expires || n?.showUntil || '';
-    const exp = endValue ? Date.parse(endValue) : NaN;
-    return !isNaN(exp) && exp < Date.now();
-  }
-  function isHomeEnabled(n) {
-    return !!(n && n.home && n.home.enabled);
-  }
-  function isPublicHome(n) {
-    return isHomeEnabled(n) && String(n?.home?.visibility || 'private').toLowerCase() === 'public';
-  }
-  function isBinNotice(n){
-    const category = normalizeText(n?.category);
-    const metaType = normalizeText(n?.meta?.type);
-    return category === 'bins' || metaType === 'bin_collection_import' || (!!n?.bin && !!n?.date);
-  }
-
-  function parseNoticeDateValue(n){
-    const raw = n?.date || n?.collectionDate || n?.startsAt || n?.startsOn || '';
+  function parseDateValue(value) {
+    if (!value) return null;
+    if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+    const raw = String(value).trim();
     if (!raw) return null;
-    const d = new Date(raw);
-    if (Number.isNaN(d.getTime())) return null;
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      const [y, m, d] = raw.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)) {
+      const [m, d, y] = raw.split('/').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  function startOfDay(value) {
+    const d = parseDateValue(value);
+    if (!d) return null;
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   }
 
-  function startOfToday(){
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  function isSameDay(a, b) {
+    const da = startOfDay(a);
+    const db = startOfDay(b);
+    return !!(da && db && da.getTime() === db.getTime());
   }
 
-  function addDays(date, days){
-    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    d.setDate(d.getDate() + days);
-    return d;
-  }
-
-  function sameDay(a, b){
-    return !!a && !!b &&
-      a.getFullYear() === b.getFullYear() &&
-      a.getMonth() === b.getMonth() &&
-      a.getDate() === b.getDate();
-  }
-
-  function dayName(d){
-    return d ? d.toLocaleDateString(undefined, { weekday: 'long' }) : '';
-  }
-
-  function prettyDate(d){
-    return d ? d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : '';
-  }
-
-  function niceBinName(v){
-    const raw = String(v || '').trim();
-    if (!raw) return 'Bin';
-    return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
-  }
-
-  function buildBinDisplayNotices(items){
-    const today = startOfToday();
-    const yesterday = addDays(today, -1);
-
-    const bins = items
-      .filter(isBinNotice)
-      .map((n) => ({ ...n, _collectionDate: parseNoticeDateValue(n) }))
-      .filter((n) => !!n._collectionDate)
-      .sort((a, b) => a._collectionDate - b._collectionDate);
-
-    if (!bins.length) return [];
-
-    const results = [];
-
-    const todays = bins.filter((n) => sameDay(n._collectionDate, today));
-    todays.forEach((n) => {
-      const binName = niceBinName(n.bin);
-      results.push({
-        ...n,
-        id: `${n.id || 'bin'}__today`,
-        title: `${binName} bin collection — Today`,
-        message: `${dayName(n._collectionDate)}: ${binName} bin collection is scheduled for today (${prettyDate(n._collectionDate)}).`,
-        category: 'Bins',
-        _priority: 0
-      });
+  function formatLongDate(value) {
+    const d = parseDateValue(value);
+    if (!d) return '';
+    return d.toLocaleDateString(undefined, {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
     });
+  }
 
-    const completedYesterday = bins.filter((n) => sameDay(n._collectionDate, yesterday));
-    completedYesterday.forEach((n) => {
-      const binName = niceBinName(n.bin);
-      results.push({
-        ...n,
-        id: `${n.id || 'bin'}__completed`,
-        title: `${binName} bin collection completed`,
-        message: `${dayName(n._collectionDate)} ${prettyDate(n._collectionDate)} collection completed.`,
-        category: 'Bins',
-        _priority: 1
-      });
-    });
+  function formatWeekday(value) {
+    const d = parseDateValue(value);
+    if (!d) return '';
+    return d.toLocaleDateString(undefined, { weekday: 'long' });
+  }
 
-    const upcomingAnchor = todays.length ? addDays(today, 1) : today;
-    const nextUpcoming = bins.find((n) => n._collectionDate >= upcomingAnchor);
-    if (nextUpcoming) {
-      const binName = niceBinName(nextUpcoming.bin);
-      const isToday = sameDay(nextUpcoming._collectionDate, today);
-      results.push({
-        ...nextUpcoming,
-        id: `${nextUpcoming.id || 'bin'}__next`,
-        title: isToday ? `${binName} bin collection — Today` : `Next bin collection — ${binName} bin`,
-        message: isToday
-          ? `${dayName(nextUpcoming._collectionDate)}: ${binName} bin collection is scheduled for today (${prettyDate(nextUpcoming._collectionDate)}).`
-          : `${dayName(nextUpcoming._collectionDate)}: ${binName} bin collection scheduled for ${prettyDate(nextUpcoming._collectionDate)}.`,
-        category: 'Bins',
-        _priority: 2
-      });
+  function isBinNotice(it) {
+    const cat = normalizeText(it?.category);
+    const type = normalizeText(it?.meta?.type);
+    const title = normalizeText(it?.title);
+    return cat === 'bins' || type === 'bin_collection_import' || title.includes('bin collection');
+  }
+
+  function getBinDate(it) {
+    return startOfDay(it?.date || it?.collectionDate || it?.startsOn || it?.startDate || it?.startsAt || null);
+  }
+
+  function getBinName(it) {
+    const direct = String(it?.bin || '').trim();
+    if (direct) return direct;
+    const msg = String(it?.message || '');
+    const match = msg.match(/([^\n.]+?)\s+bin\s+collection/i);
+    return match ? String(match[1]).trim() : 'Bin';
+  }
+
+  function buildBinSummary(binItems) {
+    if (!Array.isArray(binItems) || !binItems.length) return [];
+
+    const dated = binItems
+      .map((it) => ({ ...it, __binDate: getBinDate(it) }))
+      .filter((it) => it.__binDate)
+      .sort((a, b) => a.__binDate - b.__binDate);
+
+    if (!dated.length) return [];
+
+    const today = startOfDay(new Date());
+    const yesterday = new Date(today.getTime() - DAY_MS);
+
+    const todayItem = dated.find((it) => isSameDay(it.__binDate, today));
+    const yesterdayItem = dated.find((it) => isSameDay(it.__binDate, yesterday));
+    const nextItem = dated.find((it) => it.__binDate.getTime() > today.getTime());
+
+    let primary = todayItem || yesterdayItem || nextItem || dated[dated.length - 1];
+    if (!primary) return [];
+
+    let title = '';
+    let mainLine = '';
+    const nextLine = nextItem
+      ? `Next collection: ${getBinName(nextItem)} bin on ${formatLongDate(nextItem.__binDate)}.`
+      : '';
+
+    if (todayItem) {
+      title = `${getBinName(todayItem)} bin collection today`;
+      mainLine = `${formatLongDate(todayItem.__binDate)} collection is today.`;
+    } else if (yesterdayItem) {
+      title = `${getBinName(yesterdayItem)} bin collection completed`;
+      mainLine = `${formatLongDate(yesterdayItem.__binDate)} collection completed.`;
+      primary = yesterdayItem;
+    } else {
+      title = `${getBinName(primary)} bin collection`;
+      mainLine = `${formatLongDate(primary.__binDate)} collection scheduled.`;
     }
 
-    const seen = new Set();
-    return results.filter((item) => {
-      const key = `${item.title}|${item.message}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }
-
-  function prepareDisplayItems(items){
-    const source = Array.isArray(items) ? items.slice() : [];
-    const binDisplay = buildBinDisplayNotices(source);
-    const otherNotices = source.filter((n) => !isBinNotice(n));
-    return [...binDisplay, ...otherNotices]
-      .sort((a, b) => {
-        const ap = Number(a?._priority ?? 99);
-        const bp = Number(b?._priority ?? 99);
-        if (ap !== bp) return ap - bp;
-        return Date.parse(b?.createdAt || 0) - Date.parse(a?.createdAt || 0);
-      })
-      .slice(0, 8);
+    return [{
+      id: `bin_summary_${primary.id || primary.__binDate.getTime()}`,
+      title,
+      message: nextLine ? `${mainLine}\n${nextLine}` : mainLine,
+      category: '',
+      home: primary.home,
+      createdAt: primary.createdAt,
+      _displayVariant: (todayItem || yesterdayItem) ? 'success' : 'info',
+      _displayMeta: '',
+      _displayMessageHtml: [mainLine, nextLine].filter(Boolean).map((line) => `<div>${esc(line)}</div>`).join(''),
+      _displayBadge: formatVisibility(primary)
+    }];
   }
 
   function renderPlaceholder(){
@@ -220,25 +193,16 @@
   }
 
   function render(items){
-    const displayItems = prepareDisplayItems(items);
-    if (!Array.isArray(displayItems) || !displayItems.length) {
+    if (!Array.isArray(items) || !items.length) {
       renderPlaceholder();
       return;
     }
-    listEl.innerHTML = displayItems.map((it) => {
-      const variant = pickVariant(it);
-      const expires = asDate(it?.expiresAt);
-      const category = esc(it?.category || 'General');
+    listEl.innerHTML = items.map((it) => {
+      const variant = it?._displayVariant || pickVariant(it);
       const title = esc(it?.title || 'Notice');
-      const msg = esc(it?.message || it?.text || '');
-      const visibility = esc(formatVisibility(it));
-      const weekday = it?._collectionDate ? dayName(it._collectionDate) : '';
-      const meta = [
-        category,
-        weekday,
-        visibility,
-        expires ? `Visible until ${esc(expires)}` : ''
-      ].filter(Boolean).join(' · ');
+      const msgHtml = it?._displayMessageHtml || esc(it?.message || it?.text || '');
+      const visibility = esc(it?._displayBadge || formatVisibility(it));
+      const meta = String(it?._displayMeta || '').trim();
       return `
         <article class="home-notice-card home-notice-card--${variant}">
           <div class="home-notice-card__icon" aria-hidden="true">${ICONS[variant] || ICONS.info}</div>
@@ -247,8 +211,8 @@
               <h4 class="home-notice-card__title">${title}</h4>
               <span class="home-notice-card__badge">${visibility}</span>
             </div>
-            <div class="home-notice-card__msg">${msg}</div>
-            <div class="home-notice-card__meta">${meta}</div>
+            <div class="home-notice-card__msg">${msgHtml}</div>
+            ${meta ? `<div class="home-notice-card__meta">${esc(meta)}</div>` : ''}
           </div>
         </article>
       `;
@@ -311,6 +275,40 @@
     return false;
   }
 
+  function getStartDate(n) {
+    return n?.startsAt || n?.startsOn || n?.startDate || null;
+  }
+
+  function getEndDate(n) {
+    return n?.expiresAt || n?.endsOn || n?.endDate || null;
+  }
+
+  function isNotStarted(n) {
+    const st = getStartDate(n);
+    const d = parseDateValue(st);
+    return !!(d && d.getTime() > Date.now());
+  }
+
+  function isStarted(n) { return !isNotStarted(n); }
+
+  function isExpired(n) {
+    const exp = getEndDate(n);
+    const d = parseDateValue(exp);
+    return !!(d && d.getTime() < Date.now());
+  }
+
+  function isHomeEnabled(n) {
+    return !!(n && n.home && n.home.enabled);
+  }
+
+  function isPublicHome(n) {
+    return isHomeEnabled(n) && String(n?.home?.visibility || 'private').toLowerCase() === 'public';
+  }
+
+  function isPrivateHome(n) {
+    return isHomeEnabled(n) && String(n?.home?.visibility || 'private').toLowerCase() !== 'public';
+  }
+
   async function loadPublicNotices() {
     const res = await fetch(PUBLIC_URL, { cache: 'no-store' });
     if (!res.ok) return [];
@@ -344,6 +342,15 @@
       .filter(n => noticeMatchesUser(n, me));
   }
 
+  function buildDisplayItems(items) {
+    const binItems = items.filter(isBinNotice);
+    const otherItems = items.filter((it) => !isBinNotice(it));
+    const binSummary = buildBinSummary(binItems);
+    return [...binSummary, ...otherItems]
+      .sort((a, b) => Date.parse(b?.createdAt || 0) - Date.parse(a?.createdAt || 0))
+      .slice(0, 8);
+  }
+
   async function main() {
     try {
       const pub = (await loadPublicNotices()).filter(n => !isExpired(n)).filter(isStarted).filter(isPublicHome);
@@ -357,11 +364,9 @@
           if (seen.has(id)) return false;
           seen.add(id);
           return true;
-        })
-        .sort((a, b) => Date.parse(b?.createdAt || 0) - Date.parse(a?.createdAt || 0))
-        .slice(0, 8);
+        });
 
-      render(merged);
+      render(buildDisplayItems(merged));
     } catch {
       renderPlaceholder();
     }
