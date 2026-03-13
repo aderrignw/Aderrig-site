@@ -92,6 +92,30 @@
   #tabResidents td.resident-actions-col{ text-align:center; vertical-align:middle; }
   #tabResidents td.resident-actions-col .btn-line{ margin:0 auto; }
 
+  #tabResidents .resident-table-wrap{ margin-top:0.75rem; overflow-x:visible; }
+  #tabResidents table{ width:100%; table-layout:fixed; border-collapse:collapse; }
+  #tabResidents th, #tabResidents td{ vertical-align:middle; }
+  #tabResidents td{ word-break:normal; overflow-wrap:anywhere; }
+  #tabResidents th:nth-child(1), #tabResidents td:nth-child(1){ width:10%; }
+  #tabResidents th:nth-child(2), #tabResidents td:nth-child(2){ width:16%; }
+  #tabResidents th:nth-child(3), #tabResidents td:nth-child(3){ width:24%; }
+  #tabResidents th:nth-child(4), #tabResidents td:nth-child(4){ width:10%; }
+  #tabResidents th:nth-child(5), #tabResidents td:nth-child(5){ width:10%; }
+  #tabResidents th:nth-child(6), #tabResidents td:nth-child(6){ width:20%; }
+  #tabResidents th:nth-child(7), #tabResidents td:nth-child(7){ width:10%; }
+  #tabResidents td:nth-child(3){ line-height:1.35; }
+  .resident-modal-top{ display:flex; gap:1rem; align-items:flex-start; justify-content:space-between; }
+  .resident-modal-top .resident-id-grid{ flex:1; min-width:0; }
+  .resident-photo-box{ width:108px; flex:0 0 108px; text-align:center; }
+  .resident-photo-preview{ width:88px; height:88px; border-radius:16px; border:1px solid var(--line); background:#eef3f0 center/cover no-repeat; margin:0 auto 8px; overflow:hidden; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.8rem; }
+  .resident-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .resident-photo-preview.has-photo{ color:transparent; }
+  @media (max-width: 900px){
+    .resident-modal-top{ flex-direction:column; }
+    .resident-photo-box{ width:100%; flex:0 0 auto; text-align:left; }
+    .resident-photo-preview{ margin:0 0 8px; }
+  }
+
   .notice-actions{
     display:flex;
     gap:8px;
@@ -315,7 +339,7 @@
 
     <div id="resSummary" class="tiny muted" style="margin-top:0.5rem;"></div>
 
-    <div style="overflow-x:auto; margin-top:0.75rem;">
+    <div class="resident-table-wrap">
       <table style="width:100%;">
         <thead>
           <tr>
@@ -323,7 +347,6 @@
             <th>Name</th>
             <th>Email</th>
             <th>Eircode</th>
-            <th>Address</th>
             <th>Status</th>
             <th>Roles</th>
             <th class="resident-actions-col">Actions</th>
@@ -347,14 +370,22 @@
       </div>
 
       <div class="modal-body">
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Registration No</label>
-            <input id="mRegId" type="text" disabled>
+        <div class="resident-modal-top">
+          <div class="resident-id-grid">
+            <div class="grid-2" style="gap:1rem;">
+              <div class="field">
+                <label>Registration No</label>
+                <input id="mRegId" type="text" disabled>
+              </div>
+              <div class="field">
+                <label>Status</label>
+                <input id="mStatus" type="text" disabled>
+              </div>
+            </div>
           </div>
-          <div class="field">
-            <label>Status</label>
-            <input id="mStatus" type="text" disabled>
+          <div class="resident-photo-box">
+            <div class="resident-photo-preview" id="mPhotoPreview">👤</div>
+            <div class="tiny muted">Profile photo</div>
           </div>
         </div>
 
@@ -659,7 +690,7 @@
         <button class="btn" type="button" id="btnCreateElection">Create / Update</button>
       </div>
 
-      <div style="overflow-x:auto; margin-top:0.75rem;">
+      <div class="resident-table-wrap">
         <table style="width:100%;">
           <thead>
             <tr>
@@ -682,7 +713,7 @@
         Candidates come from residents who submitted Interest in their dashboard and were approved here.
       </p>
 
-      <div style="overflow-x:auto; margin-top:0.75rem;">
+      <div class="resident-table-wrap">
         <table style="width:100%;">
           <thead>
             <tr>
@@ -741,7 +772,7 @@
 
     <p id="repMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
 
-    <div style="overflow-x:auto; margin-top:0.75rem;">
+    <div class="resident-table-wrap">
       <table style="width:100%;">
         <thead>
           <tr>
@@ -939,7 +970,7 @@
           <button type="button" class="btn" id="btnHbCatSave">Save category</button>
         </div>
 
-        <div style="overflow-x:auto; margin-top:0.75rem;">
+        <div class="resident-table-wrap">
           <table style="width:100%;">
             <thead>
               <tr>
@@ -1056,7 +1087,7 @@
       </div>
     </div>
 
-    <div style="overflow-x:auto; margin-top:0.75rem;">
+    <div class="resident-table-wrap">
       <table style="width:100%;">
         <thead>
           <tr>
@@ -1385,6 +1416,43 @@
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
 
+  function binNoticeSortTs(n){
+    const raw = String((n && (n.date || (n.meta && (n.meta.collectionDate || n.meta.date)))) || '').trim();
+    if(/^\d{4}-\d{2}-\d{2}$/.test(raw)) return Date.parse(raw + 'T12:00:00') || 0;
+    const parsed = Date.parse(raw || '');
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
+  function sortNoticesForStorage(list){
+    return (Array.isArray(list) ? list.slice() : []).sort((a, b) => {
+      const aBin = !!(a && a.meta && a.meta.type === 'bin_collection_import');
+      const bBin = !!(b && b.meta && b.meta.type === 'bin_collection_import');
+
+      if(aBin && bBin) return binNoticeSortTs(a) - binNoticeSortTs(b);
+      if(aBin && !bBin) return 1;
+      if(!aBin && bBin) return -1;
+
+      const aCreated = Date.parse((a && a.createdAt) || 0);
+      const bCreated = Date.parse((b && b.createdAt) || 0);
+      return (Number.isNaN(bCreated) ? 0 : bCreated) - (Number.isNaN(aCreated) ? 0 : aCreated);
+    });
+  }
+
+  function sortNoticesForAdminDisplay(list){
+    return (Array.isArray(list) ? list.slice() : []).sort((a, b) => {
+      const aBin = !!(a && a.meta && a.meta.type === 'bin_collection_import');
+      const bBin = !!(b && b.meta && b.meta.type === 'bin_collection_import');
+
+      if(aBin && bBin) return binNoticeSortTs(a) - binNoticeSortTs(b);
+      if(aBin && !bBin) return 1;
+      if(!aBin && bBin) return -1;
+
+      const aCreated = Date.parse((a && a.createdAt) || 0);
+      const bCreated = Date.parse((b && b.createdAt) || 0);
+      return (Number.isNaN(bCreated) ? 0 : bCreated) - (Number.isNaN(aCreated) ? 0 : aCreated);
+    });
+  }
+
   function getCurrentAdminTabId(){
     const active = document.querySelector('.admin-tab.active');
     return active ? active.getAttribute('data-tab') : 'tabResidents';
@@ -1505,7 +1573,6 @@
         <td>${esc(u.name || '—')}</td>
         <td>${esc(u.email || '—')}</td>
         <td>${esc(u.eircode || '—')}</td>
-        <td>${esc(u.address || '—')}</td>
         <td>${esc(u.status || 'pending')}</td>
         <td>${esc(getResidentRolesLabel(u))}</td>
         <td class="resident-actions-col">
@@ -1527,26 +1594,6 @@
         openResidentModal(u);
       });
     });
-  }
-
-  function refreshResidentActionButtons(){
-    const suspendBtn = byId('btnSuspendResident');
-    const approveBtn = byId('btnApprove');
-    const rejectBtn = byId('btnReject');
-    if(!CURRENT_RESIDENT) return;
-    const status = String(CURRENT_RESIDENT.status || '').toLowerCase();
-    const isApproved = ['approved','active'].includes(status);
-    const isSuspended = status === 'suspended';
-    if(suspendBtn){
-      suspendBtn.textContent = isSuspended ? 'Reactivate' : 'Suspend';
-      suspendBtn.style.display = isApproved || isSuspended ? 'inline-flex' : 'none';
-    }
-    if(approveBtn){
-      approveBtn.style.display = isApproved || isSuspended ? 'none' : 'inline-flex';
-    }
-    if(rejectBtn){
-      rejectBtn.style.display = isApproved || isSuspended ? 'none' : 'inline-flex';
-    }
   }
 
   function openResidentModal(user){
@@ -1579,8 +1626,28 @@
     byId('mVMeet').checked = vrList.includes('Meeting organiser') || !!vrObj.meetings;
     byId('mVTrans').checked = vrList.includes('Translation') || !!vrObj.translation;
 
+    const photoUrl = CURRENT_RESIDENT.profilePhoto || CURRENT_RESIDENT.photo || CURRENT_RESIDENT.photoURL || '';
+    const photoBox = byId('mPhotoPreview');
+    if(photoBox){
+      if(photoUrl){
+        photoBox.classList.add('has-photo');
+        photoBox.innerHTML = `<img src="${esc(photoUrl)}" alt="Resident profile photo">`;
+      }else{
+        photoBox.classList.remove('has-photo');
+        photoBox.textContent = '👤';
+      }
+    }
+
     byId('mMsg').textContent = '';
-    refreshResidentActionButtons();
+
+    const status = String(CURRENT_RESIDENT.status || '').toLowerCase();
+    const alreadyApproved = ['approved','active'].includes(status);
+    if(byId('btnApprove')){
+      byId('btnApprove').style.display = alreadyApproved ? 'none' : 'inline-flex';
+    }
+    if(byId('btnReject')){
+      byId('btnReject').style.display = alreadyApproved ? 'none' : 'inline-flex';
+    }
   }
 
   function closeResidentModal(){
@@ -1736,7 +1803,7 @@
   async function renderNoticesList(){
     const listEl = byId('ntList');
     const notes = await loadNoticesFresh();
-    const sorted = (notes || []).slice().sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
+    const sorted = sortNoticesForAdminDisplay(notes || []);
 
     if(byId('ntListMsg')){
       byId('ntListMsg').textContent = sorted.length ? `${sorted.length} notice(s) saved.` : 'No notices found.';
@@ -1822,6 +1889,8 @@
       });
     }
 
+    imported.sort((a, b) => binNoticeSortTs(a) - binNoticeSortTs(b));
+
     const current = await loadNoticesFresh();
 
     const currentKept = (current || []).filter(n => {
@@ -1831,7 +1900,7 @@
       return !incoming;
     });
 
-    const merged = [...currentKept, ...imported];
+    const merged = sortNoticesForStorage([...currentKept, ...imported]);
     await anwSaveSafe(window.getNoticesKey(), merged);
 
     msg.textContent = `${imported.length} collection notice(s) imported and saved. They are public and enabled for Home automatically for this week and next week.`;
@@ -2003,13 +2072,7 @@
   byId('btnSaveResident')?.addEventListener('click', () => saveCurrentResident());
   byId('btnApprove')?.addEventListener('click', async () => { await saveCurrentResident('approved'); closeResidentModal(); });
   byId('btnReject')?.addEventListener('click', async () => { await saveCurrentResident('rejected'); closeResidentModal(); });
-  byId('btnSuspendResident')?.addEventListener('click', async () => {
-    if(!CURRENT_RESIDENT) return;
-    const currentStatus = String(CURRENT_RESIDENT.status || '').toLowerCase();
-    const nextStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
-    await saveCurrentResident(nextStatus);
-    closeResidentModal();
-  });
+  byId('btnSuspendResident')?.addEventListener('click', async () => { await saveCurrentResident('suspended'); closeResidentModal(); });
   byId('btnRemoveResident')?.addEventListener('click', async () => {
     if(!CURRENT_RESIDENT) return;
     const users = await anwLoadSafe(KEY_USERS, []);
