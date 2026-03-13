@@ -197,7 +197,7 @@
             out.innerHTML = `
               <strong>Nearby support:</strong><br>
               ${c} street coordinator(s) and ${v} volunteer(s) near your Eircode.<br>
-              <small>Login or register to see names and phone numbers.</small>
+              <small>Login or register to see names and email addresses.</small>
             `;
             return true;
           }
@@ -212,12 +212,11 @@
             if (addr) addrInput.value = addr;
           }
 
-
           if (data.mode !== 'details') {
             out.innerHTML = `
               <strong>Nearby support:</strong><br>
               ${c} street coordinator(s) and ${v} volunteer(s) near your Eircode.<br>
-              <small>Login or register to see names and phone numbers.</small>
+              <small>Login or register to see names and email addresses.</small>
             `;
             return false;
           }
@@ -226,8 +225,8 @@
           if (data.coordinators && data.coordinators.length) {
             lines.push('<strong>Street coordinators near you:</strong>');
             data.coordinators.forEach(u => {
-              const phone = u.phone || '(phone not available)';
-              lines.push(`${u.name} — Street coordinator — ${phone}`);
+              const email = u.email || '(email not available)';
+              lines.push(`${u.name} — Street coordinator — ${email}`);
             });
             lines.push('');
           }
@@ -235,8 +234,8 @@
           if (data.volunteers && data.volunteers.length) {
             lines.push('<strong>Volunteers near you:</strong>');
             data.volunteers.forEach(u => {
-              const phone = u.phone || '(phone not available)';
-              lines.push(`${u.name} — ${u.role || 'Volunteer'} — ${phone}`);
+              const email = u.email || '(email not available)';
+              lines.push(`${u.name} — ${u.role || 'Volunteer'} — ${email}`);
             });
           }
 
@@ -258,7 +257,7 @@
           out.innerHTML = `
             <strong>Nearby support:</strong><br>
             0 street coordinator(s) and 0 volunteer(s) near your Eircode.<br>
-            <small>Login or register to see names and phone numbers.</small>
+            <small>Login or register to see names and email addresses.</small>
           `;
           return false;
         }
