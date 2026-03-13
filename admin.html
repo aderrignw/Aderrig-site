@@ -28,6 +28,37 @@
   .tag.ok { background: rgba(47,125,91,.10); border-color: rgba(47,125,91,.25); color: var(--brand); }
   .tag.gray { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.10); color: inherit; }
 
+  .status-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:92px;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:.82rem;
+    font-weight:600;
+    border:1px solid rgba(0,0,0,.10);
+    background:rgba(0,0,0,.04);
+    color:inherit;
+  }
+  .status-badge.status-active,
+  .status-badge.status-approved{
+    background: rgba(47,125,91,.10);
+    border-color: rgba(47,125,91,.25);
+    color: var(--brand);
+  }
+  .status-badge.status-suspended{
+    background: rgba(185,28,28,.10);
+    border-color: rgba(185,28,28,.22);
+    color: #b91c1c;
+  }
+  .status-badge.status-pending,
+  .status-badge.status-rejected{
+    background: rgba(0,0,0,.04);
+    border-color: rgba(0,0,0,.10);
+    color: inherit;
+  }
+
   #backupEnabled{ display:none !important; }
   label[for="backupEnabled"]{ display:none !important; }
 
@@ -457,7 +488,7 @@
 
         <div class="actions" id="residentModalActions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
           <button type="button" class="btn-line small" id="btnReject">Reject</button>
-          <button type="button" class="btn-line small" id="btnSuspendResident">Suspend</button>
+          <button type="button" class="btn-line small" id="btnToggleSuspendResident">Suspend</button>
           <button type="button" class="btn-line small" id="btnRemoveResident">Remove</button>
           <button type="button" class="btn small" id="btnSaveResident">Save</button>
           <button type="button" class="btn small" id="btnApprove">Approve</button>
@@ -1554,6 +1585,30 @@
     return roles.length ? roles.join(', ') : '—';
   }
 
+  function getResidentStatusKey(status){
+    return String(status || 'pending').trim().toLowerCase() || 'pending';
+  }
+
+  function getResidentStatusLabel(status){
+    const key = getResidentStatusKey(status);
+    if(key === 'active') return 'Active';
+    if(key === 'approved') return 'Approved';
+    if(key === 'suspended') return 'Suspended';
+    if(key === 'rejected') return 'Rejected';
+    return 'Pending';
+  }
+
+  function getResidentStatusBadge(status){
+    const key = getResidentStatusKey(status);
+    return `<span class="status-badge status-${esc(key)}">${esc(getResidentStatusLabel(status))}</span>`;
+  }
+
+  function syncResidentSuspendButton(status){
+    const btn = byId('btnToggleSuspendResident');
+    if(!btn) return;
+    btn.textContent = getResidentStatusKey(status) === 'suspended' ? 'Reactivate' : 'Suspend';
+  }
+
   function renderResidents(mode){
     const body = byId('resBody');
     const empty = byId('resEmpty');
@@ -1573,12 +1628,12 @@
         <td>${esc(u.name || '—')}</td>
         <td>${esc(u.email || '—')}</td>
         <td>${esc(u.eircode || '—')}</td>
-        <td>${esc(u.status || 'pending')}</td>
+        <td>${getResidentStatusBadge(u.status)}</td>
         <td>${esc(getResidentRolesLabel(u))}</td>
         <td class="resident-actions-col">
           <div class="resident-action-cell">
             <button type="button" class="btn-line small" data-res-index="${idx}" data-act="openResident">
-              ${String((u.status||'')).toLowerCase() === 'approved' || String((u.status||'')).toLowerCase() === 'active' ? 'Edit' : 'Open'}
+              ${['approved','active','suspended'].includes(getResidentStatusKey(u.status)) ? 'Edit' : 'Open'}
             </button>
           </div>
         </td>
@@ -1602,7 +1657,8 @@
 
     byId('modalResident').style.display = 'block';
     byId('mRegId').value = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
-    byId('mStatus').value = CURRENT_RESIDENT.status || 'pending';
+    byId('mStatus').value = getResidentStatusLabel(CURRENT_RESIDENT.status);
+    syncResidentSuspendButton(CURRENT_RESIDENT.status);
     byId('mEmail').value = CURRENT_RESIDENT.email || '';
     byId('mEir').value = CURRENT_RESIDENT.eircode || '';
     byId('mName').value = CURRENT_RESIDENT.name || '';
@@ -1712,6 +1768,9 @@
     assignMissingResidentNumbers(users);
     await anwSaveSafe(KEY_USERS, users);
     RESIDENTS_CACHE = users;
+    CURRENT_RESIDENT = users[idx];
+    byId('mStatus').value = getResidentStatusLabel(users[idx].status);
+    syncResidentSuspendButton(users[idx].status);
     byId('mMsg').textContent = 'Resident saved.';
     renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
       : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
@@ -2072,7 +2131,12 @@
   byId('btnSaveResident')?.addEventListener('click', () => saveCurrentResident());
   byId('btnApprove')?.addEventListener('click', async () => { await saveCurrentResident('approved'); closeResidentModal(); });
   byId('btnReject')?.addEventListener('click', async () => { await saveCurrentResident('rejected'); closeResidentModal(); });
-  byId('btnSuspendResident')?.addEventListener('click', async () => { await saveCurrentResident('suspended'); closeResidentModal(); });
+  byId('btnToggleSuspendResident')?.addEventListener('click', async () => {
+    if(!CURRENT_RESIDENT) return;
+    const nextStatus = getResidentStatusKey(CURRENT_RESIDENT.status) === 'suspended' ? 'active' : 'suspended';
+    await saveCurrentResident(nextStatus);
+    closeResidentModal();
+  });
   byId('btnRemoveResident')?.addEventListener('click', async () => {
     if(!CURRENT_RESIDENT) return;
     const users = await anwLoadSafe(KEY_USERS, []);
