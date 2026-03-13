@@ -312,6 +312,76 @@ async function readJsonBody(req) {
   }
 }
 
+function getBearerToken(req) {
+  try {
+    const auth = req.headers.get("authorization") || "";
+    const match = auth.match(/^Bearer\s+(.+)$/i);
+    return match ? match[1].trim() : "";
+  } catch {
+    return "";
+  }
+}
+
+function decodeBase64Url(value) {
+  const input = String(value || "");
+  if (!input) return "";
+  const normalized = input.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - (normalized.length % 4 || 4)) % 4);
+  return Buffer.from(padded, "base64").toString("utf8");
+}
+
+function parseJwtPayload(token) {
+  try {
+    const parts = String(token || "").split(".");
+    if (parts.length < 2) return null;
+    const payloadJson = decodeBase64Url(parts[1]);
+    return JSON.parse(payloadJson);
+  } catch {
+    return null;
+  }
+}
+
+function parseNetlifyCustomContext(context) {
+  try {
+    const raw = context?.clientContext?.custom?.netlify;
+    if (!raw) return null;
+
+    if (typeof raw === "object") {
+      return raw;
+    }
+
+    const decoded = Buffer.from(String(raw), "base64").toString("utf8");
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+}
+
+function readCurrentUser(context, req) {
+  const directUser = context?.clientContext?.user;
+  if (directUser?.email) {
+    return directUser;
+  }
+
+  const netlifyContext = parseNetlifyCustomContext(context);
+  if (netlifyContext?.user?.email) {
+    return netlifyContext.user;
+  }
+  if (netlifyContext?.identity?.email) {
+    return netlifyContext.identity;
+  }
+
+  const token = getBearerToken(req);
+  if (token) {
+    const payload = parseJwtPayload(token);
+    if (payload?.email) {
+      return payload;
+    }
+  }
+
+  return null;
+}
+
 export default async (req, context) => {
   const url = new URL(req.url);
   const key = url.searchParams.get("key");
@@ -342,9 +412,11 @@ export default async (req, context) => {
       }
 
       const activeUsers = users.filter((u) => isActiveStatus(u?.status));
-      const currentUser = context?.clientContext?.user || null;
-      const currentUserRecord = currentUser
-        ? users.find((u) => normalizeEmail(u?.email) === normalizeEmail(currentUser.email)) || null
+
+      const currentUser = readCurrentUser(context, req);
+      const currentUserEmail = normalizeEmail(currentUser?.email || currentUser?.user_metadata?.email || "");
+      const currentUserRecord = currentUserEmail
+        ? users.find((u) => normalizeEmail(u?.email) === currentUserEmail) || null
         : null;
 
       const targetStreet = resolveTargetStreet({
@@ -397,7 +469,7 @@ export default async (req, context) => {
         volunteers: volunteers.length,
       };
 
-      if (!currentUser) {
+      if (!currentUserEmail) {
         return json({
           ok: true,
           mode: "public",
