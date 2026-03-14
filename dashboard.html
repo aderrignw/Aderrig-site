@@ -281,23 +281,14 @@ footer.site-footer .page-access{
 <meta charset="utf-8"/>
 <meta content="page:dashboard" name="anw-acl-key"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<!-- Dashboard access uses inline gate like the other pages -->
+<!-- Auth pre-check disabled (temporary public mode) -->
+<script>
+  (function(){
+    try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
+  })();
+</script>
 <title>Dashboard — Aderrig NW</title>
 <link href="assets/style.css" rel="stylesheet"/>
-<style id="dashboard-access-style">
-  .dash-tab-content{ display:none; }
-  .dash-tabs .dash-tab{ cursor:pointer; }
-  .dash-tabs.is-locked .dash-tab{ opacity:1; }
-  #anwAccessNotice{
-    margin-top:12px;
-    display:none;
-    padding:12px 14px;
-    border:1px solid #d9e5dc;
-    border-radius:12px;
-    background:#f7fbf8;
-  }
-  #anwAccessNotice a{ font-weight:700; }
-</style>
 
 
 
@@ -709,14 +700,10 @@ footer.site-footer .page-access{
   const tabPanels = document.querySelectorAll('.dash-tab-content');
 
   function showTab(id){
-    const target = id || 'tabProfile';
-    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === target));
-    if (typeof window.anwDashboardRequestTab === 'function') {
-      window.anwDashboardRequestTab(target);
-      return;
-    }
-    tabPanels.forEach(p => p.style.display = (p.id === target ? 'block' : 'none'));
+    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+    tabPanels.forEach(p => p.style.display = (p.id === id ? 'block' : 'none'));
   }
+  tabBtns.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
   function electedLabelFromUser(u){
     const r = String(u?.electedRole || '').toLowerCase();
@@ -1261,37 +1248,14 @@ footer.site-footer .page-access{
     }
     function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
     function showFallback(){
+      // In tests/offline we still want content; render preset links quietly.
       renderPreset();
-      setStatus('Official Garda resources');
-    }
-
-    function bindCategoryButtons(getItemsForCategory){
-      chipsEl.querySelectorAll('.garda-cat').forEach((b) => {
-        b.addEventListener('click', () => {
-          const cat = b.dataset.cat || 'All';
-          chipsEl.querySelectorAll('.garda-cat').forEach((x) => x.classList.toggle('is-active', x.dataset.cat === cat));
-          const show = getItemsForCategory(cat);
-          listEl.innerHTML = (show || []).map(x => `
-            <div class="garda-item">
-              <div class="row">
-                <div class="title">${esc(x.title || '')}</div>
-                <div class="date">${esc(x.date || '')}</div>
-              </div>
-              ${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}
-              <a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a>
-              <div class="meta">${esc(x.category || 'Other')}</div>
-            </div>
-          `).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
-        });
-      });
-      const first = chipsEl.querySelector('.garda-cat[data-cat="All"]') || chipsEl.querySelector('.garda-cat');
-      if(first) first.click();
     }
 
     function render(items){
       if(!chipsEl || !listEl) return;
-      const safe = filterItems(items || []);
-      const cats = Array.from(new Set(safe.map(x => x.category || 'Other'))).sort((a,b)=>a.localeCompare(b));
+
+      const cats = Array.from(new Set((items||[]).map(x => x.category || 'Other'))).sort((a,b)=>a.localeCompare(b));
       const allCats = ['All', ...cats];
 
       chipsEl.innerHTML = `
@@ -1305,31 +1269,69 @@ footer.site-footer .page-access{
         </div>
       `;
 
-      bindCategoryButtons((cat) => (cat === 'All') ? safe : safe.filter(x => (x.category || 'Other') === cat));
-    }
+      function apply(cat){
+        chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat));
+        const show = (cat === 'All') ? items : items.filter(x => (x.category||'Other') === cat);
 
-    function buildPresetItems(){
-      const items = [];
-      PRESET.categories.forEach((cc) => {
-        (PRESET.linksByCategory[cc] || []).forEach((l) => {
-          items.push({
-            category: cc,
-            title: l.title,
-            url: l.url,
-            snippet: (l.snippet || ''),
-            date: 'Official link'
-          });
-        });
-      });
-      return filterItems(items);
+        listEl.innerHTML = (show||[]).map(x => `
+          <div class="garda-item">
+            <div class="row">
+              <div class="title">${esc(x.title || '')}</div>
+              <div class="date">${esc(x.date || '')}</div>
+            </div>
+            ${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}
+            <a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a>
+            <div class="meta">${esc(x.category || 'Other')}</div>
+          </div>
+        `).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
+      }
+
+      chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat)));
+      apply('All');
     }
 
     function renderPreset(){
       if(!chipsEl || !listEl) return;
-      render(buildPresetItems());
+      const allCats = ['All', ...PRESET.categories];
+
+      chipsEl.innerHTML = `
+        <div class="garda-cat-grid">
+          ${allCats.map((c,i)=>`
+            <button type="button" class="garda-cat ${i===0?'is-active':''}" data-cat="${esc(c)}">
+              <span class="icon">${iconSvg(c)}</span>
+              <span class="label">${esc(c)}</span>
+            </button>
+          `).join('')}
+        </div>
+      `;
+
+      function apply(cat){
+        chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat));
+        const cats = (cat === 'All') ? PRESET.categories : [cat];
+        const items = [];
+        cats.forEach(cc => (PRESET.linksByCategory[cc] || []).forEach(l => items.push({ category: cc, title: l.title, url: l.url, snippet: (l.snippet || '') })));
+
+        const safeItems = filterItems(items);
+
+        listEl.innerHTML = safeItems.map(x => `
+          <div class="garda-item">
+            <div class="row">
+              <div class="title">${esc(x.title || '')}</div>
+              <div class="date">Official link</div>
+            </div>
+            ${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}
+            <a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a>
+            <div class="meta">${esc(x.category || 'Other')}</div>
+          </div>
+        `).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
+      }
+
+      chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat)));
+      apply('All');
     }
 
     async function loadGardaFeed(){
+      // Always render stable preset links immediately so the panel never looks empty.
       renderPreset();
       setStatus('Loading Garda updates…');
       try{
@@ -1360,14 +1362,15 @@ footer.site-footer .page-access{
               title: c.title || c.label || 'Official Garda resource',
               url: c.url || '',
               category: c.category || c.label || 'Other',
-              date: c.date || 'Official link',
+              date: 'Official link',
               snippet: c.snippet || ''
             }))
           : [];
 
         const items = filterItems([...recentItems, ...categoryItems]);
         if(!items.length){
-          showFallback();
+          setStatus('Official Garda resources');
+          renderPreset();
           return;
         }
 
@@ -1375,41 +1378,30 @@ footer.site-footer .page-access{
         setStatus(recentCount
           ? `Official Garda resources + ${recentCount} latest update${recentCount === 1 ? '' : 's'}`
           : 'Official Garda resources (source: Garda.ie)');
-        render(items.slice(0, 80));
+        render(items.slice(0, 60));
       }catch(e){
         console.warn('garda-feed failed', e);
-        showFallback();
+        setStatus('Official Garda resources');
+        renderPreset();
       }
     }
 
     let loaded = false;
-    let started = false;
-
     function ensureGardaLoaded(){
       if(loaded) return;
       loaded = true;
       loadGardaFeed();
     }
 
-    function primeGardaPanel(){
-      if(started) return;
-      started = true;
-      renderPreset();
-      setStatus('Official Garda resources');
-      setTimeout(ensureGardaLoaded, 0);
-    }
-
-    document.addEventListener('DOMContentLoaded', primeGardaPanel, { once:true });
-
     document.querySelectorAll('.dash-tab').forEach(b => {
       b.addEventListener('click', () => {
         if(b.dataset.tab !== 'tabGarda') return;
-        primeGardaPanel();
+        ensureGardaLoaded();
       });
     });
 
     const activeTab = document.querySelector('.dash-tab.active[data-tab="tabGarda"]');
-    if(activeTab) primeGardaPanel();
+    if(activeTab) ensureGardaLoaded();
   })();
 
 })();
@@ -1471,141 +1463,61 @@ footer.site-footer .page-access{
     })();
   </script>
 <script>
-/* =========================
-   Access Control (same procedure as Community Alerts)
-   - Page opens normally
-   - Tabs stay visible
-   - Panels are gated inline without redirect/flash
-========================= */
-(function(){
+document.addEventListener('DOMContentLoaded', async () => {
   const notice = document.getElementById('anwAccessNotice');
-  const tabsWrap = document.querySelector('.dash-tabs');
-  const tabs = Array.from(document.querySelectorAll('.dash-tab'));
-  const panels = Array.from(document.querySelectorAll('.dash-tab-content'));
-  let currentTab = 'tabProfile';
 
-  const showNotice = (html) => {
-    if(!notice) return;
-    notice.style.display = 'block';
-    notice.innerHTML = html;
+  const showNotice = (msg) => {
+    if(notice){
+      notice.style.display = 'block';
+      notice.innerHTML = msg;
+    }
   };
   const hideNotice = () => {
     if(notice) notice.style.display = 'none';
   };
 
-  const hidePanels = () => {
-    panels.forEach((panel) => { panel.style.display = 'none'; });
-  };
-
-  const setActiveTab = (which) => {
-    currentTab = which || currentTab || 'tabProfile';
-    tabs.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === currentTab));
-  };
-
-  const showPanel = (which) => {
-    const target = which || currentTab || 'tabProfile';
-    setActiveTab(target);
-    panels.forEach((panel) => {
-      panel.style.display = (panel.id === target) ? 'block' : 'none';
-    });
-  };
-
   const ensureIdentityUser = async () => {
     if(!window.netlifyIdentity) return null;
     return await new Promise((resolve)=>{
-      let done = false;
-      const finish = (user) => {
-        if(done) return;
-        done = true;
-        resolve(user || null);
-      };
-      try {
-        window.netlifyIdentity.on('init', (user) => finish(user));
+      let done=false;
+      const finish=(u)=>{ if(done) return; done=true; resolve(u||null); };
+      try{
+        window.netlifyIdentity.on('init', (u)=>finish(u));
         window.netlifyIdentity.init();
-      } catch(e) {}
-      setTimeout(() => {
-        try {
-          const user = (typeof window.netlifyIdentity.currentUser === 'function')
-            ? window.netlifyIdentity.currentUser()
-            : null;
-          finish(user);
-        } catch(e) {
-          finish(null);
-        }
+      }catch(e){}
+      setTimeout(()=>{
+        try{
+          const u = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
+          finish(u);
+        }catch(e){ finish(null); }
       }, 300);
     });
   };
 
-  const getRegistryProfile = async (user) => {
-    try { await window.anwInitStore?.(); } catch(e) {}
-    try {
-      const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
-      const email = String(user?.email || '').toLowerCase().trim();
-      return (users || []).find(u => String(u.email || '').toLowerCase().trim() === email) || null;
-    } catch(e) {
-      return null;
-    }
-  };
-
-  const isApproved = (profile) => {
-    if(!profile) return false;
-    const status = String(profile.status || profile.accountStatus || '').toLowerCase();
-    return (profile.approved === true) || (profile.active === true) || status === 'active' || status === 'approved';
-  };
-
-  async function evaluate(which){
-    const target = which || currentTab || 'tabProfile';
-    setActiveTab(target);
-
-    if(window.ANW_PUBLIC_MODE){
-      hideNotice();
-      showPanel(target);
-      return;
-    }
-
-    const user = await ensureIdentityUser();
-    const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function'
-      ? String(window.anwGetLoggedEmail() || '')
-      : '').toLowerCase().trim();
-
-    if(!user && !fallbackEmail){
-      hidePanels();
-      showNotice('The dashboard is available to registered residents only. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to continue.');
-      return;
-    }
-
-    const profile = await getRegistryProfile(user || { email: fallbackEmail });
-
-    if(!profile || !isApproved(profile)){
-      hidePanels();
-      showNotice('Your account is logged in, but it is still waiting for approval. Please wait for confirmation.');
-      return;
-    }
-
-    hideNotice();
-    showPanel(target);
+  const user = await ensureIdentityUser();
+  if(!window.ANW_PUBLIC_MODE && !user){
+    showNotice('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access your dashboard.');
+    return;
   }
 
-  window.anwDashboardRequestTab = function(which){
-    evaluate(which || currentTab || 'tabProfile');
-  };
+  if(window.ANW_PUBLIC_MODE){
+    hideNotice();
+    return;
+  }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    hidePanels();
-    setActiveTab('tabProfile');
-    if(tabsWrap) tabsWrap.classList.add('is-locked');
+  try{
+    const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
+    const email = user.email?.toLowerCase();
+    const profile = users.find(u => u.email?.toLowerCase() === email);
 
-    tabs.forEach((btn) => {
-      btn.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        window.anwDashboardRequestTab(btn.dataset.tab || 'tabProfile');
-      });
-    });
+    if(!profile || !(profile.approved || profile.active)){
+      showNotice('Your account is logged in but not yet approved. Please wait for approval.');
+      return;
+    }
+  }catch(e){}
 
-    evaluate('tabProfile');
-  }, { once:true });
-})();
+  hideNotice();
+});
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -1739,5 +1651,242 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const notice = document.getElementById('anwAccessNotice');
+  const tabBtns = Array.from(document.querySelectorAll('.dash-tab'));
+  const tabPanels = Array.from(document.querySelectorAll('.dash-tab-content'));
+  const ACL_KEY = (window.ANW_KEYS && window.ANW_KEYS.ACL) ? window.ANW_KEYS.ACL : 'acl';
+  const USERS_KEY = (window.ANW_KEYS && window.ANW_KEYS.USERS) ? window.ANW_KEYS.USERS : 'anw_users';
+  const PAGE_KEY = 'page:dashboard';
+  const PUBLIC_TAB_ID = 'tabGarda';
+  const PUBLIC_FEATURE_KEY = 'dashboard:tab_garda';
+
+  if (!tabBtns.length || !tabPanels.length) return;
+
+  const setNotice = (html) => {
+    if (!notice) return;
+    notice.style.display = html ? 'block' : 'none';
+    notice.innerHTML = html || '';
+  };
+
+  const setActiveTab = (id) => {
+    tabBtns.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === id));
+  };
+
+  const showPanel = (id) => {
+    tabPanels.forEach((panel) => {
+      panel.style.display = (panel.id === id) ? 'block' : 'none';
+    });
+  };
+
+  const hidePanels = () => {
+    tabPanels.forEach((panel) => { panel.style.display = 'none'; });
+  };
+
+  const normEmail = (v) => String(v || '').trim().toLowerCase();
+
+  const readAcl = () => {
+    try {
+      if (typeof window.anwLoad === 'function') return window.anwLoad(ACL_KEY, {});
+      const raw = localStorage.getItem(ACL_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (_) {
+      return {};
+    }
+  };
+
+  const normalizeAclValue = (value) => {
+    if (typeof value === 'boolean') return value;
+    if (value == null) return null;
+    if (typeof value === 'string') {
+      const v = value.trim().toLowerCase();
+      if (['true','1','yes','on','open','allow','allowed','enable','enabled','public','visible'].includes(v)) return true;
+      if (['false','0','no','off','closed','close','deny','denied','disable','disabled','private','hidden'].includes(v)) return false;
+      return null;
+    }
+    if (typeof value === 'number') return value > 0;
+    if (typeof value === 'object') {
+      for (const key of ['public','open','enabled','allowed','allow','visible','value']) {
+        if (key in value) {
+          const n = normalizeAclValue(value[key]);
+          if (n !== null) return n;
+        }
+      }
+    }
+    return null;
+  };
+
+  const aclFeatureEnabled = (featureKey) => {
+    const acl = readAcl() || {};
+    const candidates = [
+      acl[featureKey],
+      acl.features && acl.features[featureKey],
+      acl.public && acl.public[featureKey],
+      acl.featureAccess && acl.featureAccess[featureKey],
+      acl.permissions && acl.permissions[featureKey],
+      acl.pages && acl.pages[PAGE_KEY] && acl.pages[PAGE_KEY][featureKey],
+      acl.pages && acl.pages[PAGE_KEY] && acl.pages[PAGE_KEY].features && acl.pages[PAGE_KEY].features[featureKey],
+      acl.dashboard && acl.dashboard[featureKey],
+      acl.dashboard && acl.dashboard.features && acl.dashboard.features[featureKey]
+    ];
+
+    if (Array.isArray(acl.publicFeatures) && acl.publicFeatures.includes(featureKey)) return true;
+    if (Array.isArray(acl.openFeatures) && acl.openFeatures.includes(featureKey)) return true;
+    if (Array.isArray(acl.closedFeatures) && acl.closedFeatures.includes(featureKey)) return false;
+
+    for (const candidate of candidates) {
+      const n = normalizeAclValue(candidate);
+      if (n !== null) return n;
+    }
+    return false;
+  };
+
+  const isApprovedProfile = (profile) => {
+    try {
+      if (typeof window.anwIsApproved === 'function') return !!window.anwIsApproved(profile);
+    } catch (_) {}
+    const status = String(profile?.status || profile?.accountStatus || profile?.registrationStatus || '').trim().toLowerCase();
+    return profile?.approved === true || profile?.active === true || status === 'approved' || status === 'active';
+  };
+
+  const ensureIdentityUser = async () => {
+    if (!window.netlifyIdentity) return null;
+    return await new Promise((resolve) => {
+      let done = false;
+      const finish = (u) => {
+        if (done) return;
+        done = true;
+        resolve(u || null);
+      };
+      try {
+        if (typeof window.netlifyIdentity.on === 'function') {
+          window.netlifyIdentity.on('init', finish);
+        }
+        if (typeof window.netlifyIdentity.init === 'function') {
+          window.netlifyIdentity.init();
+        }
+      } catch (_) {}
+      setTimeout(() => {
+        try {
+          const user = (typeof window.netlifyIdentity.currentUser === 'function')
+            ? window.netlifyIdentity.currentUser()
+            : null;
+          finish(user);
+        } catch (_) {
+          finish(null);
+        }
+      }, 350);
+    });
+  };
+
+  const getApprovedAccess = async () => {
+    const identityUser = await ensureIdentityUser();
+    const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function')
+      ? String(window.anwGetLoggedEmail() || '')
+      : '';
+    const email = normEmail(identityUser?.email || fallbackEmail);
+    if (!email) return { logged: false, approved: false, profile: null };
+
+    try {
+      await window.anwInitStore?.();
+    } catch (_) {}
+
+    try {
+      const users = (typeof window.anwLoad === 'function')
+        ? window.anwLoad(USERS_KEY, [])
+        : JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+      const profile = Array.isArray(users)
+        ? users.find((u) => normEmail(u?.email) === email) || null
+        : null;
+      return {
+        logged: true,
+        approved: !!profile && isApprovedProfile(profile),
+        profile
+      };
+    } catch (_) {
+      return { logged: true, approved: false, profile: null };
+    }
+  };
+
+  const openPublicTab = (messageHtml) => {
+    setActiveTab(PUBLIC_TAB_ID);
+    showPanel(PUBLIC_TAB_ID);
+    setNotice(messageHtml || '');
+  };
+
+  const openLockedState = (messageHtml) => {
+    hidePanels();
+    setActiveTab('tabProfile');
+    setNotice(messageHtml || '');
+  };
+
+  async function routeDashboardTab(requestedId) {
+    const target = requestedId || PUBLIC_TAB_ID;
+    const gardaPublicEnabled = aclFeatureEnabled(PUBLIC_FEATURE_KEY);
+
+    if (target === PUBLIC_TAB_ID) {
+      if (gardaPublicEnabled) {
+        openPublicTab('');
+        return;
+      }
+      const access = await getApprovedAccess();
+      if (access.logged && access.approved) {
+        setActiveTab(PUBLIC_TAB_ID);
+        showPanel(PUBLIC_TAB_ID);
+        setNotice('');
+        return;
+      }
+      openLockedState('Garda &amp; Safety is currently controlled by Access Control and is not public right now. Please <a href="login.html">log in</a> to open this section.');
+      return;
+    }
+
+    const access = await getApprovedAccess();
+
+    if (!access.logged) {
+      if (gardaPublicEnabled) {
+        openPublicTab('Only Garda &amp; Safety is public right now. The other dashboard tabs depend on login and approval.');
+      } else {
+        openLockedState('This dashboard section depends on login. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to continue.');
+      }
+      return;
+    }
+
+    if (!access.approved) {
+      if (gardaPublicEnabled) {
+        openPublicTab('Your account is logged in, but it is still waiting for approval. Garda &amp; Safety remains open only while Access Control allows it.');
+      } else {
+        openLockedState('Your account is logged in, but it is still waiting for approval.');
+      }
+      return;
+    }
+
+    setActiveTab(target);
+    showPanel(target);
+    setNotice('');
+  }
+
+  window.anwDashboardRequestTab = routeDashboardTab;
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      routeDashboardTab(btn.dataset.tab || PUBLIC_TAB_ID);
+    }, true);
+  });
+
+  window.addEventListener('storage', (event) => {
+    if (!event) return;
+    if (event.key === ACL_KEY || event.key === USERS_KEY || event.key === ((window.ANW_KEYS && window.ANW_KEYS.SESSION) ? window.ANW_KEYS.SESSION : 'anw_session')) {
+      const current = (tabBtns.find((btn) => btn.classList.contains('active')) || {}).dataset?.tab || PUBLIC_TAB_ID;
+      routeDashboardTab(current);
+    }
+  });
+
+  const initial = (tabBtns.find((btn) => btn.classList.contains('active')) || {}).dataset?.tab || PUBLIC_TAB_ID;
+  routeDashboardTab(initial);
+}, { once: true });
+</script>
 </body>
 </html>
