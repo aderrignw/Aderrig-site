@@ -281,14 +281,23 @@ footer.site-footer .page-access{
 <meta charset="utf-8"/>
 <meta content="page:dashboard" name="anw-acl-key"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<!-- Auth pre-check disabled (temporary public mode) -->
-<script>
-  (function(){
-    try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
-  })();
-</script>
+<!-- Dashboard access uses inline gate like the other pages -->
 <title>Dashboard — Aderrig NW</title>
 <link href="assets/style.css" rel="stylesheet"/>
+<style id="dashboard-access-style">
+  .dash-tab-content{ display:none; }
+  .dash-tabs .dash-tab{ cursor:pointer; }
+  .dash-tabs.is-locked .dash-tab{ opacity:1; }
+  #anwAccessNotice{
+    margin-top:12px;
+    display:none;
+    padding:12px 14px;
+    border:1px solid #d9e5dc;
+    border-radius:12px;
+    background:#f7fbf8;
+  }
+  #anwAccessNotice a{ font-weight:700; }
+</style>
 
 
 
@@ -624,17 +633,17 @@ footer.site-footer .page-access{
     });
   }
 
-  const KEY_USERS     = ANW_KEYS.USERS;
-  const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
+  const KEY_USERS     = ANW_KEYS.USERS || 'anw_users';
+  const KEY_ELECTIONS = ANW_KEYS.ELECTIONS || 'anw_elections';
 
   async function dashboardLoadUsers(){
     try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, { cache:'no-store' });
-      if(!res.ok) throw new Error('store load failed');
-      const data = await res.json();
-      if(Array.isArray(data)){
-        try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, data); }catch(_){ }
-        return data;
+      if(typeof window.anwStoreGetKey === 'function'){
+        const data = await window.anwStoreGetKey(KEY_USERS);
+        if(Array.isArray(data)){
+          try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, data); }catch(_){ }
+          return data;
+        }
       }
     }catch(_){ }
     try{
@@ -648,14 +657,12 @@ footer.site-footer .page-access{
   async function dashboardSaveUsers(nextUsers){
     const payload = Array.isArray(nextUsers) ? nextUsers : [];
     try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if(!res.ok) throw new Error('store save failed');
+      if(typeof window.anwStoreSetKey === 'function'){
+        await window.anwStoreSetKey(KEY_USERS, payload);
+      }
     }catch(err){
       console.error(err);
+      throw err;
     }
     try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, payload); }catch(_){ }
     return payload;
@@ -700,10 +707,14 @@ footer.site-footer .page-access{
   const tabPanels = document.querySelectorAll('.dash-tab-content');
 
   function showTab(id){
-    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === id));
-    tabPanels.forEach(p => p.style.display = (p.id === id ? 'block' : 'none'));
+    const target = id || 'tabProfile';
+    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === target));
+    if (typeof window.anwDashboardRequestTab === 'function') {
+      window.anwDashboardRequestTab(target);
+      return;
+    }
+    tabPanels.forEach(p => p.style.display = (p.id === target ? 'block' : 'none'));
   }
-  tabBtns.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
   function electedLabelFromUser(u){
     const r = String(u?.electedRole || '').toLowerCase();
@@ -952,7 +963,7 @@ footer.site-footer .page-access{
 
   const electionsBody = document.getElementById('electionsBody');
   const electionsEmpty = document.getElementById('electionsEmpty');
-  const elections = anwLoad(KEY_ELECTIONS, []);
+  const elections = anwLoad(KEY_ELECTIONS || 'anw_elections', []);
 
   electionsBody.innerHTML = '';
   if(!Array.isArray(elections) || !elections.length){
@@ -1463,61 +1474,147 @@ footer.site-footer .page-access{
     })();
   </script>
 <script>
-document.addEventListener('DOMContentLoaded', async () => {
+/* =========================
+   Access Control (same procedure as Community Alerts)
+   - Page opens normally
+   - Tabs stay visible
+   - Panels are gated inline without redirect/flash
+========================= */
+(function(){
   const notice = document.getElementById('anwAccessNotice');
+  const tabsWrap = document.querySelector('.dash-tabs');
+  const tabs = Array.from(document.querySelectorAll('.dash-tab'));
+  const panels = Array.from(document.querySelectorAll('.dash-tab-content'));
+  let currentTab = 'tabProfile';
 
-  const showNotice = (msg) => {
-    if(notice){
-      notice.style.display = 'block';
-      notice.innerHTML = msg;
-    }
+  const showNotice = (html) => {
+    if(!notice) return;
+    notice.style.display = 'block';
+    notice.innerHTML = html;
   };
   const hideNotice = () => {
     if(notice) notice.style.display = 'none';
   };
 
+  const hidePanels = () => {
+    panels.forEach((panel) => { panel.style.display = 'none'; });
+  };
+
+  const setActiveTab = (which) => {
+    currentTab = which || currentTab || 'tabProfile';
+    tabs.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === currentTab));
+  };
+
+  const showPanel = (which) => {
+    const target = which || currentTab || 'tabProfile';
+    setActiveTab(target);
+    panels.forEach((panel) => {
+      panel.style.display = (panel.id === target) ? 'block' : 'none';
+    });
+  };
+
   const ensureIdentityUser = async () => {
     if(!window.netlifyIdentity) return null;
     return await new Promise((resolve)=>{
-      let done=false;
-      const finish=(u)=>{ if(done) return; done=true; resolve(u||null); };
-      try{
-        window.netlifyIdentity.on('init', (u)=>finish(u));
+      let done = false;
+      const finish = (user) => {
+        if(done) return;
+        done = true;
+        resolve(user || null);
+      };
+      try {
+        window.netlifyIdentity.on('init', (user) => finish(user));
         window.netlifyIdentity.init();
-      }catch(e){}
-      setTimeout(()=>{
-        try{
-          const u = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
-          finish(u);
-        }catch(e){ finish(null); }
+      } catch(e) {}
+      setTimeout(() => {
+        try {
+          const user = (typeof window.netlifyIdentity.currentUser === 'function')
+            ? window.netlifyIdentity.currentUser()
+            : null;
+          finish(user);
+        } catch(e) {
+          finish(null);
+        }
       }, 300);
     });
   };
 
-  const user = await ensureIdentityUser();
-  if(!window.ANW_PUBLIC_MODE && !user){
-    showNotice('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access your dashboard.');
-    return;
-  }
+  const getRegistryProfile = async (user) => {
+    try { await window.anwInitStore?.(); } catch(e) {}
+    try {
+      const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
+      const email = String(user?.email || '').toLowerCase().trim();
+      return (users || []).find(u => String(u.email || '').toLowerCase().trim() === email) || null;
+    } catch(e) {
+      return null;
+    }
+  };
 
-  if(window.ANW_PUBLIC_MODE){
-    hideNotice();
-    return;
-  }
+  const isApproved = (profile) => {
+    if(!profile) return false;
+    const status = String(profile.status || profile.accountStatus || '').toLowerCase();
+    return (profile.approved === true) || (profile.active === true) || status === 'active' || status === 'approved';
+  };
 
-  try{
-    const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
-    const email = user.email?.toLowerCase();
-    const profile = users.find(u => u.email?.toLowerCase() === email);
+  async function evaluate(which){
+    const target = which || currentTab || 'tabProfile';
+    setActiveTab(target);
 
-    if(!profile || !(profile.approved || profile.active)){
-      showNotice('Your account is logged in but not yet approved. Please wait for approval.');
+    if(window.ANW_PUBLIC_MODE){
+      hideNotice();
+      showPanel(target);
       return;
     }
-  }catch(e){}
 
-  hideNotice();
-});
+    const user = await ensureIdentityUser();
+    const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function'
+      ? String(window.anwGetLoggedEmail() || '')
+      : '').toLowerCase().trim();
+
+    if(!user && !fallbackEmail){
+      hidePanels();
+      showNotice('The dashboard is available to registered residents only. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to continue.');
+      return;
+    }
+
+    const profile = await getRegistryProfile(user || { email: fallbackEmail });
+
+    if(!profile || !isApproved(profile)){
+      hidePanels();
+      showNotice('Your account is logged in, but it is still waiting for approval. Please wait for confirmation.');
+      return;
+    }
+
+    try{
+      if(typeof window.anwSyncFromServer === 'function'){
+        await window.anwSyncFromServer([KEY_USERS, KEY_ELECTIONS, (ANW_KEYS.NOTICES || 'anw_notices')], 0);
+      }
+    }catch(_){ }
+
+    hideNotice();
+    showPanel(target);
+  }
+
+  window.anwDashboardRequestTab = function(which){
+    evaluate(which || currentTab || 'tabProfile');
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    hidePanels();
+    setActiveTab('tabProfile');
+    if(tabsWrap) tabsWrap.classList.add('is-locked');
+
+    tabs.forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        window.anwDashboardRequestTab(btn.dataset.tab || 'tabProfile');
+      });
+    });
+
+    evaluate('tabProfile');
+  }, { once:true });
+})();
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -1581,7 +1678,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function doLogout(){
     try{ sessionStorage.removeItem(SESSION_START_KEY); }catch(_){}
-    try{ if(window.netlifyIdentity && typeof window.netlifyIdentity.logout === 'function'){ await window.netlifyIdentity.logout(); } }catch(_){}
+    try{
+      if(typeof window.anwLogout === 'function'){
+        await window.anwLogout();
+        return;
+      }
+      if(window.netlifyIdentity && typeof window.netlifyIdentity.logout === 'function'){
+        await window.netlifyIdentity.logout();
+      }
+    }catch(_){}
+    try{ if(typeof window.anwClearSession === 'function') window.anwClearSession(); }catch(_){}
     window.location.href = 'login.html';
   }
 
@@ -1609,6 +1715,21 @@ document.addEventListener('DOMContentLoaded', () => {
       window.addEventListener(evt, resetInactivity, { passive:true });
     });
   }
+
+  function handleAuthLogoutSync(){
+    try{ sessionStorage.removeItem(SESSION_START_KEY); }catch(_){}
+    const card = document.getElementById('sessionClockCard');
+    if(card) card.style.display = 'none';
+    window.location.replace('login.html');
+  }
+
+  try{ window.addEventListener('anw:auth-logout', handleAuthLogoutSync); }catch(_){ }
+  try{
+    if(window.netlifyIdentity && typeof window.netlifyIdentity.on === 'function'){
+      window.netlifyIdentity.on('logout', handleAuthLogoutSync);
+    }
+  }catch(_){ }
+
 
   function initSessionUi(){
     document.getElementById('btnLogoutProfile')?.addEventListener('click', doLogout);
