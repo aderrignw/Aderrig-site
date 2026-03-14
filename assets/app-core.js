@@ -10,14 +10,15 @@ window.ANW_KEYS = window.ANW_KEYS || {
   SESSION: "anw_session",
   USERS: "anw_users",
   ACL: "acl",
+  ELECTIONS: "anw_elections",
+  NOTICES: "anw_notices",
 };
 
 // ---------------------------
 // Temporary public mode + master owner
 // ---------------------------
-// You asked to keep the site 100% public while you restructure.
-// To re-enable gating later, set this to false.
-window.ANW_PUBLIC_MODE = true;
+// Production mode: private areas must stay protected.
+window.ANW_PUBLIC_MODE = false;
 
 // Master email (always treated as owner)
 window.ANW_MASTER_EMAIL = "claudiosantos1968@gmail.com";
@@ -64,19 +65,59 @@ function anwGetSession() {
   return anwLoad(ANW_KEYS.SESSION, null);
 }
 
+const ANW_AUTH_EVENT_KEY = "anw_auth_event";
+const ANW_AUTH_CHANNEL_NAME = "anw_auth_channel";
+
+function anwClearSession() {
+  try { localStorage.removeItem(ANW_KEYS.SESSION); } catch {}
+}
+
+function anwBroadcastAuthEvent(type, extra) {
+  const payload = Object.assign({
+    type: String(type || "sync"),
+    at: Date.now(),
+    href: String((window.location && window.location.href) || "")
+  }, extra || {});
+
+  try { localStorage.setItem(ANW_AUTH_EVENT_KEY, JSON.stringify(payload)); } catch {}
+  try {
+    if (window.BroadcastChannel) {
+      if (!window.__anwAuthChannel) window.__anwAuthChannel = new BroadcastChannel(ANW_AUTH_CHANNEL_NAME);
+      window.__anwAuthChannel.postMessage(payload);
+    }
+  } catch {}
+  return payload;
+}
+
+function anwHandleRemoteLogout() {
+  anwClearSession();
+  try { window.dispatchEvent(new CustomEvent("anw:auth-logout", { detail: { at: Date.now() } })); } catch {}
+  const here = String((window.location && window.location.pathname) || "");
+  if (/login\.html$/i.test(here)) return;
+  try { window.location.replace("login.html"); } catch { window.location.href = "login.html"; }
+}
+
 function anwGetLoggedEmail() {
+  try {
+    const hasIdentity = !!(window.netlifyIdentity && window.netlifyIdentity.currentUser);
+    const u = hasIdentity ? window.netlifyIdentity.currentUser() : null;
+    if (u && u.email) return String(u.email);
+    if (hasIdentity && !u) return "";
+  } catch {}
+
   const s = anwGetSession();
   if (s && s.email) return String(s.email);
-  try {
-    const u = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-    if (u && u.email) return String(u.email);
-  } catch {}
   return "";
 }
 
-function anwLogout() {
-  try { window.netlifyIdentity && window.netlifyIdentity.logout && window.netlifyIdentity.logout(); } catch {}
-  localStorage.removeItem(ANW_KEYS.SESSION);
+async function anwLogout() {
+  anwClearSession();
+  anwBroadcastAuthEvent("logout");
+  try {
+    if (window.netlifyIdentity && window.netlifyIdentity.logout) {
+      await window.netlifyIdentity.logout();
+    }
+  } catch {}
   window.location.href = "login.html";
 }
 
@@ -189,6 +230,70 @@ async function anwInitStore() {
   }
 }
 
+
+function anwBindIdentitySync() {
+  if (window.__anwIdentitySyncBound) return;
+  window.__anwIdentitySyncBound = true;
+
+  const onAuthEvent = (payload) => {
+    const type = String(payload && payload.type || "").toLowerCase();
+    if (type === "logout") {
+      anwHandleRemoteLogout();
+      return;
+    }
+    if (type === "login") {
+      try { window.dispatchEvent(new CustomEvent("anw:auth-login", { detail: payload || {} })); } catch {}
+    }
+  };
+
+  try {
+    window.addEventListener("storage", (event) => {
+      if (event.key === ANW_AUTH_EVENT_KEY && event.newValue) {
+        try { onAuthEvent(JSON.parse(event.newValue)); } catch {}
+      }
+      if (event.key === ANW_KEYS.SESSION && !event.newValue) {
+        onAuthEvent({ type: "logout", at: Date.now(), source: "storage" });
+      }
+    });
+  } catch {}
+
+  try {
+    if (window.BroadcastChannel) {
+      if (!window.__anwAuthChannel) window.__anwAuthChannel = new BroadcastChannel(ANW_AUTH_CHANNEL_NAME);
+      window.__anwAuthChannel.onmessage = (event) => onAuthEvent(event && event.data ? event.data : {});
+    }
+  } catch {}
+
+  try {
+    if (window.netlifyIdentity && typeof window.netlifyIdentity.on === "function") {
+      window.netlifyIdentity.on("login", (user) => {
+        const email = user && user.email ? String(user.email).toLowerCase() : "";
+        if (email) {
+          const current = anwGetSession() || {};
+          anwSave(ANW_KEYS.SESSION, Object.assign({}, current, { email, loginAt: new Date().toISOString() }));
+        }
+        anwBroadcastAuthEvent("login", { email });
+      });
+      window.netlifyIdentity.on("logout", () => {
+        anwClearSession();
+        try { window.dispatchEvent(new CustomEvent("anw:auth-logout", { detail: { at: Date.now(), source: "identity" } })); } catch {}
+        anwBroadcastAuthEvent("logout");
+      });
+      window.netlifyIdentity.on("init", (user) => {
+        if (!user) {
+          anwClearSession();
+          return;
+        }
+        const email = user && user.email ? String(user.email).toLowerCase() : "";
+        if (email) {
+          const current = anwGetSession() || {};
+          anwSave(ANW_KEYS.SESSION, Object.assign({}, current, { email }));
+        }
+      });
+    }
+  } catch {}
+}
+
 // ---------------------------
 // UI helper
 // ---------------------------
@@ -200,6 +305,7 @@ function anwDisplayLoggedUser() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  anwBindIdentitySync();
   // Do not force sync for anonymous visitors
   if (anwIsLoggedIn()) {
     await anwInitStore();
@@ -247,3 +353,28 @@ window.anwStoreAppendMe = async function(profile){
 window.anwStoreAdminSaveUsers = async function(usersArray){
   return await anwFetchStorePost(ANW_KEYS.USERS, { action: "admin_save_users", users: usersArray || [] });
 };
+
+window.anwGetIdentityToken = anwGetIdentityToken;
+window.anwStoreGetKey = async function(key){
+  return await anwFetchStoreKey(key);
+};
+window.anwStoreSetKey = async function(key, payload){
+  const token = await anwGetIdentityToken();
+  if (!token) throw new Error("Not authenticated (missing token)");
+  const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok){
+    let t = "";
+    try { t = await res.text(); } catch {}
+    throw new Error(`Store POST failed ${res.status} for ${key}${t ? ": " + t : ""}`);
+  }
+  return await res.json();
+};
+window.anwBroadcastAuthEvent = anwBroadcastAuthEvent;
+window.anwClearSession = anwClearSession;
+window.anwHandleRemoteLogout = anwHandleRemoteLogout;
+
+
