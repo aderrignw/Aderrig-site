@@ -295,7 +295,7 @@ footer.site-footer .page-access{
 
 
 </head>
-<body>
+<body data-acl-shell-public="true">
 <header class="site-header">
 <div class="brand">
 <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
@@ -1548,129 +1548,82 @@ document.addEventListener('DOMContentLoaded', () => {
   setLabelForButton(active || tabButtons.find(isGardaTab) || tabButtons[0]);
 });
 </script>
+
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const ACL_KEY = (window.ANW_KEYS && window.ANW_KEYS.ACL) ? window.ANW_KEYS.ACL : 'acl';
-  const GARDA_TAB_ID = 'tabGarda';
-  const GARDA_FEATURE_KEY = 'dashboard:tab_garda';
+(function(){
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabsWrap = document.querySelector('.dash-tabs');
+    const tabs = Array.from(document.querySelectorAll('.dash-tab'));
+    const panels = Array.from(document.querySelectorAll('.dash-tab-content'));
+    const notice = document.getElementById('anwAccessNotice');
+    let currentTab = 'tabProfile';
 
-  const tabsWrap = document.querySelector('.dash-tabs');
-  const tabs = Array.from(document.querySelectorAll('.dash-tab'));
-  const panels = Array.from(document.querySelectorAll('.dash-tab-content'));
-  const notice = document.getElementById('anwAccessNotice');
+    if(!tabs.length || !panels.length) return;
 
-  if (!tabs.length || !panels.length) return;
+    const hideNotice = () => { if(notice) notice.style.display = 'none'; };
+    const showNotice = (html) => { if(notice){ notice.style.display='block'; notice.innerHTML = html || ''; } };
+    const hidePanels = () => panels.forEach((p)=> p.style.display='none');
+    const setActiveTab = (id) => { currentTab = id || currentTab; tabs.forEach((b)=> b.classList.toggle('active', b.dataset.tab === currentTab)); };
+    const showPanel = (id) => panels.forEach((p)=> p.style.display = (p.id === id ? 'block' : 'none'));
 
-  const norm = (v) => String(v || '').trim().toLowerCase();
+    function readAcl(){
+      try{
+        return (typeof window.anwLoad === 'function') ? window.anwLoad((window.ANW_KEYS && ANW_KEYS.ACL) ? ANW_KEYS.ACL : 'acl', {}) : {};
+      }catch(_){ return {}; }
+    }
+    function resolveAclRule(keyOrRule){
+      const raw = String(keyOrRule || '').trim();
+      if(!raw) return 'Public';
+      if(['Public','Authenticated','owner','admin','resident'].includes(raw)) return raw;
+      const acl = readAcl();
+      try{
+        if (acl && Object.prototype.hasOwnProperty.call(acl, raw)) return acl[raw];
+        if (acl && acl.features && Object.prototype.hasOwnProperty.call(acl.features, raw)) return acl.features[raw];
+      }catch(_){}
+      return raw;
+    }
+    function gardaIsPublicByAcl(){ return String(resolveAclRule('dashboard:tab_garda')).trim() === 'Public'; }
+    async function ensureIdentityUser(){
+      if(!window.netlifyIdentity) return null;
+      return await new Promise((resolve)=>{
+        let done = false;
+        const finish = (u)=>{ if(done) return; done = true; resolve(u || null); };
+        try{ window.netlifyIdentity.on('init', finish); window.netlifyIdentity.init(); }catch(_){}
+        setTimeout(()=>{ try{ finish(window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null); }catch(_){ finish(null); } }, 350);
+      });
+    }
+    async function evaluate(which){
+      const target = which || currentTab || 'tabProfile';
+      const isGarda = target === 'tabGarda';
+      const gardaPublic = gardaIsPublicByAcl();
+      setActiveTab(target);
 
-  function readAcl(){
-    try{
-      return (typeof window.anwLoad === 'function') ? window.anwLoad(ACL_KEY, {}) : {};
-    }catch(_){ return {}; }
-  }
+      if(isGarda && gardaPublic){ hideNotice(); showPanel('tabGarda'); return; }
 
-  function resolveRule(keyOrRule){
-    const raw = String(keyOrRule || '').trim();
-    if(!raw) return 'Public';
-    if (['Public','Authenticated','owner','admin','resident'].includes(raw)) return raw;
-    const acl = readAcl();
-    try{
-      if (acl && Object.prototype.hasOwnProperty.call(acl, raw)) return acl[raw];
-      if (acl && acl.features && Object.prototype.hasOwnProperty.call(acl.features, raw)) return acl.features[raw];
-      if (acl && acl.pages) {
-        for (const pageKey of Object.keys(acl.pages)) {
-          const page = acl.pages[pageKey];
-          if (page && Object.prototype.hasOwnProperty.call(page, raw)) return page[raw];
-          if (page && page.features && Object.prototype.hasOwnProperty.call(page.features, raw)) return page.features[raw];
+      const user = await ensureIdentityUser();
+      const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function' ? String(window.anwGetLoggedEmail() || '') : '').toLowerCase().trim();
+
+      if(!user && !fallbackEmail){
+        if(gardaPublic){
+          setActiveTab('tabGarda'); showPanel('tabGarda');
+          if(!isGarda) showNotice('Only Garda &amp; Safety is public right now. Please <a href="login.html">log in</a> to open the other dashboard tabs.');
+          else hideNotice();
+          return;
         }
+        hidePanels(); showNotice('Please <a href="login.html">log in</a> to access this dashboard section.'); return;
       }
-    }catch(_){}
-    return raw;
-  }
-
-  function ruleAllowsPublic(rule){
-    return String(rule || '').trim() === 'Public';
-  }
-
-  function setNotice(html){
-    if(!notice) return;
-    notice.style.display = html ? 'block' : 'none';
-    notice.innerHTML = html || '';
-  }
-
-  function setActive(id){
-    tabs.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === id));
-  }
-
-  function showOnly(id){
-    panels.forEach((panel) => {
-      panel.style.display = (panel.id === id) ? 'block' : 'none';
-    });
-  }
-
-  function hidePrivateTabsForGuests(){
-    tabs.forEach((btn) => {
-      const isGarda = btn.dataset.tab === GARDA_TAB_ID;
-      btn.style.display = isGarda ? '' : 'none';
-    });
-  }
-
-  function restoreTabsVisibility(){
-    tabs.forEach((btn) => { btn.style.display = ''; });
-  }
-
-  function isLogged(){
-    try{
-      if (typeof window.anwIsLoggedIn === 'function') return !!window.anwIsLoggedIn();
-      return !!(window.netlifyIdentity && window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser());
-    }catch(_){ return false; }
-  }
-
-  function gardaPublicByAcl(){
-    return ruleAllowsPublic(resolveRule(GARDA_FEATURE_KEY));
-  }
-
-  const originalRequestTab = window.anwDashboardRequestTab;
-
-  window.anwDashboardRequestTab = function(which){
-    const target = which || GARDA_TAB_ID;
-    const gardaIsPublic = gardaPublicByAcl();
-    const logged = isLogged();
-
-    if (!logged && gardaIsPublic) {
-      hidePrivateTabsForGuests();
-      setActive(GARDA_TAB_ID);
-      showOnly(GARDA_TAB_ID);
-      setNotice('');
-      if (target === GARDA_TAB_ID) return;
-      setNotice('Only Garda &amp; Safety is public right now. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to open the other dashboard tabs.');
-      return;
+      hideNotice(); showPanel(target);
     }
 
-    restoreTabsVisibility();
-
-    if (typeof originalRequestTab === 'function') {
-      originalRequestTab(target);
-      return;
-    }
-
-    setActive(target);
-    showOnly(target);
-  };
-
-  const initialTarget = (!isLogged() && gardaPublicByAcl()) ? GARDA_TAB_ID : ((tabs.find((b) => b.classList.contains('active')) || {}).dataset?.tab || 'tabProfile');
-  window.anwDashboardRequestTab(initialTarget);
-
-  try {
-    window.addEventListener('storage', (event) => {
-      if (event && event.key === ACL_KEY && !isLogged()) {
-        const next = gardaPublicByAcl() ? GARDA_TAB_ID : 'tabProfile';
-        window.anwDashboardRequestTab(next);
-      }
-    });
-  } catch(_) {}
-}, { once:true });
+    window.anwDashboardRequestTab = evaluate;
+    hidePanels();
+    if(tabsWrap) tabsWrap.classList.add('is-locked');
+    tabs.forEach((btn)=> btn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); evaluate(btn.dataset.tab || 'tabProfile'); }, true));
+    evaluate(gardaIsPublicByAcl() ? 'tabGarda' : 'tabProfile');
+  }, { once:true });
+})();
 </script>
+
 <script src="assets/acl-guard.js"></script>
 
 <script>
