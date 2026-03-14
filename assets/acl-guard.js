@@ -38,11 +38,18 @@
     } catch { return {}; }
   }
 
+  function isShellPublicPage() {
+    try {
+      return document.body && document.body.getAttribute("data-acl-shell-public") === "true";
+    } catch {
+      return false;
+    }
+  }
+
   function resolveAclRule(acl, keyOrRule) {
     const raw = String(keyOrRule || "").trim();
     if (!raw) return "Public";
 
-    // direct rules still supported
     if (raw === "Public" || raw === "Authenticated" || raw === "owner" || raw === "admin" || raw === "resident") {
       return raw;
     }
@@ -67,7 +74,6 @@
       }
     } catch {}
 
-    // fallback: treat raw itself as a direct rule
     return raw;
   }
 
@@ -108,6 +114,9 @@
       ...document.querySelectorAll("[data-feature-acl]"),
     ];
     nodes.forEach((el) => {
+      if (isShellPublicPage() && (el.classList.contains("dash-tab") || el.classList.contains("dash-tab-content"))) {
+        return;
+      }
       const keyOrRule = el.getAttribute("data-acl-feature") || el.getAttribute("data-feature-acl");
       const rule = resolveAclRule(acl, keyOrRule);
       if (!ruleAllows(rule, role)) el.style.display = "none";
@@ -116,6 +125,7 @@
 
   function enforcePage(role, acl) {
     if(isPublicMode()) return;
+    if(isShellPublicPage()) return;
     const key = getPageKey();
     const rule = key ? resolveAclRule(acl, key) : "Public";
     const r = classify(rule);
