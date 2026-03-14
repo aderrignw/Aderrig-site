@@ -38,45 +38,6 @@
     } catch { return {}; }
   }
 
-  function isShellPublicPage() {
-    try {
-      return document.body && document.body.getAttribute("data-acl-shell-public") === "true";
-    } catch {
-      return false;
-    }
-  }
-
-  function resolveAclRule(acl, keyOrRule) {
-    const raw = String(keyOrRule || "").trim();
-    if (!raw) return "Public";
-
-    if (raw === "Public" || raw === "Authenticated" || raw === "owner" || raw === "admin" || raw === "resident") {
-      return raw;
-    }
-
-    try {
-      if (acl && typeof acl === "object" && Object.prototype.hasOwnProperty.call(acl, raw)) {
-        return acl[raw];
-      }
-      if (acl && acl.features && Object.prototype.hasOwnProperty.call(acl.features, raw)) {
-        return acl.features[raw];
-      }
-      if (acl && acl.pages) {
-        for (const pageKey of Object.keys(acl.pages)) {
-          const page = acl.pages[pageKey];
-          if (page && typeof page === "object" && Object.prototype.hasOwnProperty.call(page, raw)) {
-            return page[raw];
-          }
-          if (page && page.features && Object.prototype.hasOwnProperty.call(page.features, raw)) {
-            return page.features[raw];
-          }
-        }
-      }
-    } catch {}
-
-    return raw;
-  }
-
   async function ensureFresh() {
     try {
       if (typeof anwInitStore === "function" && isLoggedIn()) {
@@ -102,8 +63,7 @@
 
   function applyNav(role, acl) {
     document.querySelectorAll("[data-acl]").forEach((el) => {
-      const keyOrRule = el.getAttribute("data-acl");
-      const rule = resolveAclRule(acl, keyOrRule);
+      const rule = el.getAttribute("data-acl");
       if (!ruleAllows(rule, role)) el.style.display = "none";
     });
   }
@@ -114,20 +74,15 @@
       ...document.querySelectorAll("[data-feature-acl]"),
     ];
     nodes.forEach((el) => {
-      if (isShellPublicPage() && (el.classList.contains("dash-tab") || el.classList.contains("dash-tab-content"))) {
-        return;
-      }
-      const keyOrRule = el.getAttribute("data-acl-feature") || el.getAttribute("data-feature-acl");
-      const rule = resolveAclRule(acl, keyOrRule);
+      const rule = el.getAttribute("data-acl-feature") || el.getAttribute("data-feature-acl");
       if (!ruleAllows(rule, role)) el.style.display = "none";
     });
   }
 
   function enforcePage(role, acl) {
     if(isPublicMode()) return;
-    if(isShellPublicPage()) return;
     const key = getPageKey();
-    const rule = key ? resolveAclRule(acl, key) : "Public";
+    const rule = key && acl ? acl[key] : "Public";
     const r = classify(rule);
 
     if (r === "Public") return;
