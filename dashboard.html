@@ -633,17 +633,17 @@ footer.site-footer .page-access{
     });
   }
 
-  const KEY_USERS     = ANW_KEYS.USERS || 'anw_users';
-  const KEY_ELECTIONS = ANW_KEYS.ELECTIONS || 'anw_elections';
+  const KEY_USERS     = ANW_KEYS.USERS;
+  const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
 
   async function dashboardLoadUsers(){
     try{
-      if(typeof window.anwStoreGetKey === 'function'){
-        const data = await window.anwStoreGetKey(KEY_USERS);
-        if(Array.isArray(data)){
-          try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, data); }catch(_){ }
-          return data;
-        }
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
+      const data = await res.json();
+      if(Array.isArray(data)){
+        try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, data); }catch(_){ }
+        return data;
       }
     }catch(_){ }
     try{
@@ -657,12 +657,14 @@ footer.site-footer .page-access{
   async function dashboardSaveUsers(nextUsers){
     const payload = Array.isArray(nextUsers) ? nextUsers : [];
     try{
-      if(typeof window.anwStoreSetKey === 'function'){
-        await window.anwStoreSetKey(KEY_USERS, payload);
-      }
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if(!res.ok) throw new Error('store save failed');
     }catch(err){
       console.error(err);
-      throw err;
     }
     try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, payload); }catch(_){ }
     return payload;
@@ -963,7 +965,7 @@ footer.site-footer .page-access{
 
   const electionsBody = document.getElementById('electionsBody');
   const electionsEmpty = document.getElementById('electionsEmpty');
-  const elections = anwLoad(KEY_ELECTIONS || 'anw_elections', []);
+  const elections = anwLoad(KEY_ELECTIONS, []);
 
   electionsBody.innerHTML = '';
   if(!Array.isArray(elections) || !elections.length){
@@ -1259,14 +1261,37 @@ footer.site-footer .page-access{
     }
     function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
     function showFallback(){
-      // In tests/offline we still want content; render preset links quietly.
       renderPreset();
+      setStatus('Official Garda resources');
+    }
+
+    function bindCategoryButtons(getItemsForCategory){
+      chipsEl.querySelectorAll('.garda-cat').forEach((b) => {
+        b.addEventListener('click', () => {
+          const cat = b.dataset.cat || 'All';
+          chipsEl.querySelectorAll('.garda-cat').forEach((x) => x.classList.toggle('is-active', x.dataset.cat === cat));
+          const show = getItemsForCategory(cat);
+          listEl.innerHTML = (show || []).map(x => `
+            <div class="garda-item">
+              <div class="row">
+                <div class="title">${esc(x.title || '')}</div>
+                <div class="date">${esc(x.date || '')}</div>
+              </div>
+              ${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}
+              <a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a>
+              <div class="meta">${esc(x.category || 'Other')}</div>
+            </div>
+          `).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
+        });
+      });
+      const first = chipsEl.querySelector('.garda-cat[data-cat="All"]') || chipsEl.querySelector('.garda-cat');
+      if(first) first.click();
     }
 
     function render(items){
       if(!chipsEl || !listEl) return;
-
-      const cats = Array.from(new Set((items||[]).map(x => x.category || 'Other'))).sort((a,b)=>a.localeCompare(b));
+      const safe = filterItems(items || []);
+      const cats = Array.from(new Set(safe.map(x => x.category || 'Other'))).sort((a,b)=>a.localeCompare(b));
       const allCats = ['All', ...cats];
 
       chipsEl.innerHTML = `
@@ -1280,69 +1305,31 @@ footer.site-footer .page-access{
         </div>
       `;
 
-      function apply(cat){
-        chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat));
-        const show = (cat === 'All') ? items : items.filter(x => (x.category||'Other') === cat);
+      bindCategoryButtons((cat) => (cat === 'All') ? safe : safe.filter(x => (x.category || 'Other') === cat));
+    }
 
-        listEl.innerHTML = (show||[]).map(x => `
-          <div class="garda-item">
-            <div class="row">
-              <div class="title">${esc(x.title || '')}</div>
-              <div class="date">${esc(x.date || '')}</div>
-            </div>
-            ${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}
-            <a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a>
-            <div class="meta">${esc(x.category || 'Other')}</div>
-          </div>
-        `).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
-      }
-
-      chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat)));
-      apply('All');
+    function buildPresetItems(){
+      const items = [];
+      PRESET.categories.forEach((cc) => {
+        (PRESET.linksByCategory[cc] || []).forEach((l) => {
+          items.push({
+            category: cc,
+            title: l.title,
+            url: l.url,
+            snippet: (l.snippet || ''),
+            date: 'Official link'
+          });
+        });
+      });
+      return filterItems(items);
     }
 
     function renderPreset(){
       if(!chipsEl || !listEl) return;
-      const allCats = ['All', ...PRESET.categories];
-
-      chipsEl.innerHTML = `
-        <div class="garda-cat-grid">
-          ${allCats.map((c,i)=>`
-            <button type="button" class="garda-cat ${i===0?'is-active':''}" data-cat="${esc(c)}">
-              <span class="icon">${iconSvg(c)}</span>
-              <span class="label">${esc(c)}</span>
-            </button>
-          `).join('')}
-        </div>
-      `;
-
-      function apply(cat){
-        chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat));
-        const cats = (cat === 'All') ? PRESET.categories : [cat];
-        const items = [];
-        cats.forEach(cc => (PRESET.linksByCategory[cc] || []).forEach(l => items.push({ category: cc, title: l.title, url: l.url, snippet: (l.snippet || '') })));
-
-        const safeItems = filterItems(items);
-
-        listEl.innerHTML = safeItems.map(x => `
-          <div class="garda-item">
-            <div class="row">
-              <div class="title">${esc(x.title || '')}</div>
-              <div class="date">Official link</div>
-            </div>
-            ${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}
-            <a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a>
-            <div class="meta">${esc(x.category || 'Other')}</div>
-          </div>
-        `).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
-      }
-
-      chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat)));
-      apply('All');
+      render(buildPresetItems());
     }
 
     async function loadGardaFeed(){
-      // Always render stable preset links immediately so the panel never looks empty.
       renderPreset();
       setStatus('Loading Garda updates…');
       try{
@@ -1373,15 +1360,14 @@ footer.site-footer .page-access{
               title: c.title || c.label || 'Official Garda resource',
               url: c.url || '',
               category: c.category || c.label || 'Other',
-              date: 'Official link',
+              date: c.date || 'Official link',
               snippet: c.snippet || ''
             }))
           : [];
 
         const items = filterItems([...recentItems, ...categoryItems]);
         if(!items.length){
-          setStatus('Official Garda resources');
-          renderPreset();
+          showFallback();
           return;
         }
 
@@ -1389,30 +1375,41 @@ footer.site-footer .page-access{
         setStatus(recentCount
           ? `Official Garda resources + ${recentCount} latest update${recentCount === 1 ? '' : 's'}`
           : 'Official Garda resources (source: Garda.ie)');
-        render(items.slice(0, 60));
+        render(items.slice(0, 80));
       }catch(e){
         console.warn('garda-feed failed', e);
-        setStatus('Official Garda resources');
-        renderPreset();
+        showFallback();
       }
     }
 
     let loaded = false;
+    let started = false;
+
     function ensureGardaLoaded(){
       if(loaded) return;
       loaded = true;
       loadGardaFeed();
     }
 
+    function primeGardaPanel(){
+      if(started) return;
+      started = true;
+      renderPreset();
+      setStatus('Official Garda resources');
+      setTimeout(ensureGardaLoaded, 0);
+    }
+
+    document.addEventListener('DOMContentLoaded', primeGardaPanel, { once:true });
+
     document.querySelectorAll('.dash-tab').forEach(b => {
       b.addEventListener('click', () => {
         if(b.dataset.tab !== 'tabGarda') return;
-        ensureGardaLoaded();
+        primeGardaPanel();
       });
     });
 
     const activeTab = document.querySelector('.dash-tab.active[data-tab="tabGarda"]');
-    if(activeTab) ensureGardaLoaded();
+    if(activeTab) primeGardaPanel();
   })();
 
 })();
@@ -1584,12 +1581,6 @@ footer.site-footer .page-access{
       showNotice('Your account is logged in, but it is still waiting for approval. Please wait for confirmation.');
       return;
     }
-
-    try{
-      if(typeof window.anwSyncFromServer === 'function'){
-        await window.anwSyncFromServer([KEY_USERS, KEY_ELECTIONS, (ANW_KEYS.NOTICES || 'anw_notices')], 0);
-      }
-    }catch(_){ }
 
     hideNotice();
     showPanel(target);
