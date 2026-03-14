@@ -163,6 +163,17 @@
     }
     body.print-access-control main.wrap { max-width: 100% !important; padding: 0 !important; }
   }
+#tabAccessControl .ac-note{
+    margin-top:8px;
+    font-size:.82rem;
+    color:var(--muted);
+  }
+  #tabAccessControl .ac-group{
+    background:#fafcfb;
+  }
+  #tabAccessControl .ac-group td{
+    background:#fafcfb;
+  }
 </style>
 
 <style id="page-access-style">
@@ -1134,7 +1145,7 @@
       <div>
         <h3 style="margin:0;">Access Control</h3>
         <p class="tiny muted" style="margin:6px 0 0;">
-          Control which roles can access pages and feature groups.
+          Control which pages, tabs and sub-tabs are public or require login. Garda & Safety can stay public while the other dashboard tabs remain protected.
         </p>
       </div>
       <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -1145,12 +1156,14 @@
     </div>
 
     <p id="acMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
+    <p class="ac-note">Tip: use <strong>Public</strong> to open something for visitors. For the dashboard, keep <code>page:dashboard</code> public and control each dashboard sub-tab below.</p>
 
     <div class="ac-wrap" style="margin-top:0.75rem;">
       <table class="ac-table">
         <thead>
           <tr>
             <th style="min-width:320px;">Page / feature</th>
+            <th>Public</th>
             <th>Resident</th>
             <th>Street Coord.</th>
             <th>Volunteer</th>
@@ -1262,7 +1275,7 @@
   const KEY_PROJECT_RECIPIENTS = KEYS.PROJECT_RECIPIENTS || 'anw_project_recipients';
   const KEY_HANDBOOK_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
   const KEY_HANDBOOK_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
-  const KEY_ACCESS = KEYS.ACCESS || 'anw_access_control';
+  const KEY_ACCESS = KEYS.ACL || KEYS.ACCESS || 'acl';
   const KEY_TASKS = KEYS.TASKS || 'anw_tasks';
   const KEY_NOTICES = window.getNoticesKey();
 
@@ -1918,55 +1931,190 @@
     `);
   }
 
-  async function loadAccessControl(){
-    const defaults = [
-      { key:'page:dashboard', label:'Dashboard' },
-      { key:'page:household', label:'Household' },
-      { key:'page:report', label:'Report Incident' },
-      { key:'page:alerts', label:'Community Alerts' },
-      { key:'page:handbook', label:'Handbook' },
-      { key:'page:admin', label:'Admin' }
-    ];
+  
+  const ACL_ROLES = ['public','resident','street_admin','volunteer','area_coordinator','aux_coordinator','platform_support','admin'];
 
-    const saved = await anwLoadSafe(KEY_ACCESS, []);
-    const rules = Array.isArray(saved) && saved.length ? saved : defaults.map(x => ({
-      ...x,
-      resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true
-    }));
+  const ACL_ITEMS = [
+    { key:'page:index', label:'Home', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:about', label:'About', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:report', label:'Report Incident', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:alerts', label:'Community Alerts', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:projects', label:'Community Projects', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:handbook', label:'Handbook', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:privacy', label:'Privacy Policy', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:login', label:'Login / Register', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:dashboard', label:'Dashboard shell', group:'Dashboard', indent:0, defaults:{ public:true } },
+    { key:'dashboard:tab_profile', label:'Profile tab', group:'Dashboard', indent:1, defaults:{ resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true } },
+    { key:'dashboard:tab_interest', label:'Interest tab', group:'Dashboard', indent:1, defaults:{ resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true } },
+    { key:'dashboard:tab_elections', label:'Elections tab', group:'Dashboard', indent:1, defaults:{ resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true } },
+    { key:'dashboard:tab_notices', label:'Notices tab', group:'Dashboard', indent:1, defaults:{ resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true } },
+    { key:'dashboard:tab_garda', label:'Garda & Safety tab', group:'Dashboard', indent:1, defaults:{ public:true } },
+    { key:'page:household', label:'Household', group:'Site pages', indent:0, defaults:{ resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true } },
+    { key:'page:admin', label:'Admin shell', group:'Admin', indent:0, defaults:{ admin:true, platform_support:true, area_coordinator:true, aux_coordinator:true } },
+    { key:'page:access-control', label:'Access Control shortcut', group:'Admin', indent:1, defaults:{ admin:true, platform_support:true, area_coordinator:true, aux_coordinator:true } },
+    { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true } },
+    { key:'page:preview', label:'Preview', group:'Site pages', indent:0, defaults:{ admin:true, platform_support:true } }
+  ];
 
-    const roles = ['resident','street_admin','volunteer','area_coordinator','aux_coordinator','platform_support','admin'];
+  let ACCESS_RULES_CACHE = [];
+
+  function aclEmptyRule(item){
+    const out = { key:item.key, label:item.label, group:item.group || '', indent:Number(item.indent || 0) };
+    ACL_ROLES.forEach(role => { out[role] = false; });
+    const defaults = item.defaults || {};
+    Object.keys(defaults).forEach(k => { out[k] = !!defaults[k]; });
+    return out;
+  }
+
+  function classifyMatrixToRule(entry){
+    if(entry.public) return 'Public';
+
+    const selected = ACL_ROLES.filter(role => role !== 'public' && !!entry[role]);
+
+    if(!selected.length) return 'admin';
+    if(selected.length === 7) return 'Authenticated';
+
+    const onlyAdmin = selected.every(role => ['admin','platform_support','area_coordinator','aux_coordinator'].includes(role));
+    if(onlyAdmin) return 'admin';
+
+    if(selected.length === 1){
+      const only = selected[0];
+      if(only === 'resident') return 'resident';
+      if(only === 'admin') return 'admin';
+    }
+
+    return 'Authenticated';
+  }
+
+  function mapSavedAclToMatrix(saved){
+    const matrix = ACL_ITEMS.map(aclEmptyRule);
+
+    const source = (saved && typeof saved === 'object' && !Array.isArray(saved)) ? saved : {};
+    const matrixSource = (source.__matrix && typeof source.__matrix === 'object') ? source.__matrix : {};
+
+    matrix.forEach((row) => {
+      const fromMatrix = matrixSource[row.key];
+      if(fromMatrix && typeof fromMatrix === 'object'){
+        ACL_ROLES.forEach(role => {
+          if(role in fromMatrix) row[role] = !!fromMatrix[role];
+        });
+        return;
+      }
+
+      const direct = (
+        Object.prototype.hasOwnProperty.call(source, row.key) ? source[row.key] :
+        source.features && Object.prototype.hasOwnProperty.call(source.features, row.key) ? source.features[row.key] :
+        null
+      );
+
+      const rule = String(direct == null ? '' : direct).trim();
+
+      if(rule === 'Public'){
+        row.public = true;
+      } else if(rule === 'Authenticated'){
+        ACL_ROLES.filter(role => role !== 'public').forEach(role => row[role] = true);
+      } else if(rule === 'resident'){
+        row.resident = true;
+      } else if(rule === 'admin'){
+        row.admin = true;
+        row.platform_support = true;
+        row.area_coordinator = true;
+        row.aux_coordinator = true;
+      }
+    });
+
+    return matrix;
+  }
+
+  function matrixToAclPayload(matrix){
+    const payload = { features:{}, pages:{}, publicFeatures:[], __matrix:{} };
+
+    matrix.forEach((row) => {
+      const rule = classifyMatrixToRule(row);
+      payload[row.key] = rule;
+      payload.__matrix[row.key] = Object.fromEntries(ACL_ROLES.map(role => [role, !!row[role]]));
+
+      if(row.key.startsWith('dashboard:')){
+        payload.features[row.key] = rule;
+        if(row.public) payload.publicFeatures.push(row.key);
+      }
+
+      if(row.key === 'page:dashboard'){
+        payload.pages['page:dashboard'] = payload.pages['page:dashboard'] || { shell: rule, features:{} };
+        payload.pages['page:dashboard'].shell = rule;
+      }
+
+      if(row.key.startsWith('dashboard:tab_')){
+        payload.pages['page:dashboard'] = payload.pages['page:dashboard'] || { shell:'Public', features:{} };
+        payload.pages['page:dashboard'].features[row.key] = rule;
+      }
+    });
+
+    return payload;
+  }
+
+  function renderAccessControlFromData(rules){
     const body = byId('acBody');
+    if(!body) return;
 
-    body.innerHTML = rules.map((r, idx) => `
+    let lastGroup = '';
+    body.innerHTML = rules.map((r, idx) => {
+      const groupHeader = (r.group && r.group !== lastGroup)
+        ? `<tr class="ac-group"><td colspan="9"><strong>${esc(r.group)}</strong></td></tr>`
+        : '';
+      lastGroup = r.group || lastGroup;
+
+      return `${groupHeader}
       <tr data-ac-row="${idx}">
         <td>
           <div class="ac-item">
             <div>
-              <div class="ac-indent-0">${esc(r.label)}</div>
+              <div class="ac-indent-${Math.min(Number(r.indent || 0), 3)}">${esc(r.label)}</div>
               <div class="ac-key">${esc(r.key)}</div>
             </div>
           </div>
         </td>
-        ${roles.map(role => `
+        ${ACL_ROLES.map(role => `
           <td>
-            <button type="button" class="ac-toggle ${r[role] ? 'allowed' : 'denied'}" data-role="${role}" data-row="${idx}">${r[role] ? '✓' : '—'}</button>
+            <button
+              type="button"
+              class="ac-toggle ${r[role] ? 'allowed' : 'denied'}"
+              data-role="${role}"
+              data-row="${idx}"
+              title="${role === 'public' ? 'Visible without login' : role}"
+            >${r[role] ? '✓' : '—'}</button>
           </td>
         `).join('')}
-      </tr>
-    `).join('');
+      </tr>`;
+    }).join('');
 
-    $$('.ac-toggle', body).forEach(btn => {
+    $$('.ac-toggle', body).forEach((btn) => {
       btn.addEventListener('click', () => {
         const row = Number(btn.getAttribute('data-row'));
         const role = btn.getAttribute('data-role');
-        rules[row][role] = !rules[row][role];
-        loadAccessControlFromData(rules);
+        if(!Number.isFinite(row) || !rules[row]) return;
+
+        if(role === 'public'){
+          const next = !rules[row].public;
+          ACL_ROLES.forEach(k => { rules[row][k] = false; });
+          rules[row].public = next;
+        } else {
+          rules[row][role] = !rules[row][role];
+          if(rules[row][role]) rules[row].public = false;
+        }
+
+        ACCESS_RULES_CACHE = rules;
+        renderAccessControlFromData(rules);
       });
     });
 
     byId('btnAcSave').onclick = async () => {
-      await anwSaveSafe(KEY_ACCESS, rules);
-      byId('acMsg').textContent = 'Access rules saved.';
+      const payload = matrixToAclPayload(rules);
+      await anwSaveSafe(KEY_ACCESS, payload);
+      try{
+        if(typeof window.anwSave === 'function') window.anwSave(KEY_ACCESS, payload);
+      }catch(_){}
+      byId('acMsg').textContent = 'Access rules saved and synchronized with pages, tabs and sub-tabs.';
     };
 
     byId('btnAcPrint').onclick = () => {
@@ -1978,38 +2126,12 @@
     byId('btnAcRefresh').onclick = loadAccessControl;
   }
 
-  function loadAccessControlFromData(rules){
-    const roles = ['resident','street_admin','volunteer','area_coordinator','aux_coordinator','platform_support','admin'];
-    const body = byId('acBody');
-
-    body.innerHTML = rules.map((r, idx) => `
-      <tr>
-        <td>
-          <div class="ac-item">
-            <div>
-              <div class="ac-indent-0">${esc(r.label)}</div>
-              <div class="ac-key">${esc(r.key)}</div>
-            </div>
-          </div>
-        </td>
-        ${roles.map(role => `<td><button type="button" class="ac-toggle ${r[role] ? 'allowed':'denied'}" data-role="${role}" data-row="${idx}">${r[role] ? '✓':'—'}</button></td>`).join('')}
-      </tr>
-    `).join('');
-
-    $$('.ac-toggle', body).forEach(btn => {
-      btn.addEventListener('click', () => {
-        const row = Number(btn.getAttribute('data-row'));
-        const role = btn.getAttribute('data-role');
-        rules[row][role] = !rules[row][role];
-        loadAccessControlFromData(rules);
-      });
-    });
-
-    byId('btnAcSave').onclick = async () => {
-      await anwSaveSafe(KEY_ACCESS, rules);
-      byId('acMsg').textContent = 'Access rules saved.';
-    };
+  async function loadAccessControl(){
+    const saved = await anwLoadSafe(KEY_ACCESS, {});
+    ACCESS_RULES_CACHE = mapSavedAclToMatrix(saved);
+    renderAccessControlFromData(ACCESS_RULES_CACHE);
   }
+
 
   async function loadDiagnostics(){
     const data = {
