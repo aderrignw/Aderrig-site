@@ -38,6 +38,39 @@
     } catch { return {}; }
   }
 
+  function resolveAclRule(acl, keyOrRule) {
+    const raw = String(keyOrRule || "").trim();
+    if (!raw) return "Public";
+
+    // direct rules still supported
+    if (raw === "Public" || raw === "Authenticated" || raw === "owner" || raw === "admin" || raw === "resident") {
+      return raw;
+    }
+
+    try {
+      if (acl && typeof acl === "object" && Object.prototype.hasOwnProperty.call(acl, raw)) {
+        return acl[raw];
+      }
+      if (acl && acl.features && Object.prototype.hasOwnProperty.call(acl.features, raw)) {
+        return acl.features[raw];
+      }
+      if (acl && acl.pages) {
+        for (const pageKey of Object.keys(acl.pages)) {
+          const page = acl.pages[pageKey];
+          if (page && typeof page === "object" && Object.prototype.hasOwnProperty.call(page, raw)) {
+            return page[raw];
+          }
+          if (page && page.features && Object.prototype.hasOwnProperty.call(page.features, raw)) {
+            return page.features[raw];
+          }
+        }
+      }
+    } catch {}
+
+    // fallback: treat raw itself as a direct rule
+    return raw;
+  }
+
   async function ensureFresh() {
     try {
       if (typeof anwInitStore === "function" && isLoggedIn()) {
@@ -63,7 +96,8 @@
 
   function applyNav(role, acl) {
     document.querySelectorAll("[data-acl]").forEach((el) => {
-      const rule = el.getAttribute("data-acl");
+      const keyOrRule = el.getAttribute("data-acl");
+      const rule = resolveAclRule(acl, keyOrRule);
       if (!ruleAllows(rule, role)) el.style.display = "none";
     });
   }
@@ -74,7 +108,8 @@
       ...document.querySelectorAll("[data-feature-acl]"),
     ];
     nodes.forEach((el) => {
-      const rule = el.getAttribute("data-acl-feature") || el.getAttribute("data-feature-acl");
+      const keyOrRule = el.getAttribute("data-acl-feature") || el.getAttribute("data-feature-acl");
+      const rule = resolveAclRule(acl, keyOrRule);
       if (!ruleAllows(rule, role)) el.style.display = "none";
     });
   }
@@ -82,7 +117,7 @@
   function enforcePage(role, acl) {
     if(isPublicMode()) return;
     const key = getPageKey();
-    const rule = key && acl ? acl[key] : "Public";
+    const rule = key ? resolveAclRule(acl, key) : "Public";
     const r = classify(rule);
 
     if (r === "Public") return;
