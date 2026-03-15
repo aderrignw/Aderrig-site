@@ -729,8 +729,10 @@ footer.site-footer .page-access{
       window.anwDashboardRequestTab(target);
       return;
     }
+    tabPanels.forEach(p => p.style.display = (p.id === target ? 'block' : 'none'));
+  }
 
-  function electedLabelFromUser(u){
+function electedLabelFromUser(u){
     const r = String(u?.electedRole || '').toLowerCase();
     if(r === 'assistant') return 'Assistant Area Coordinator';
     if(r === 'area') return 'Area Coordinator';
