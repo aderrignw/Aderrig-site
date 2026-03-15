@@ -719,8 +719,16 @@ footer.site-footer .page-access{
     profileArea.style.display = 'block';
   }
 
-      tabPanels.forEach(p => p.style.display = (p.id === target ? 'block' : 'none'));
-  }
+  const tabBtns = document.querySelectorAll('.dash-tab');
+  const tabPanels = document.querySelectorAll('.dash-tab-content');
+
+  function showTab(id){
+    const target = id || 'tabProfile';
+    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === target));
+    if (typeof window.anwDashboardRequestTab === 'function') {
+      window.anwDashboardRequestTab(target);
+      return;
+    }
 
   function electedLabelFromUser(u){
     const r = String(u?.electedRole || '').toLowerCase();
@@ -1481,10 +1489,11 @@ footer.site-footer .page-access{
   </script>
 <script>
 /* =========================
-   Access Control (same procedure as Community Alerts)
-   - Page opens normally
+   Dashboard access controller (final)
+   - Dashboard shell always loads
    - Tabs stay visible
-   - Panels are gated inline without redirect/flash
+   - Garda & Safety can be public via ACL
+   - Other tabs require login + approved resident profile
 ========================= */
 (function(){
   const notice = document.getElementById('anwAccessNotice');
@@ -1496,10 +1505,12 @@ footer.site-footer .page-access{
   const showNotice = (html) => {
     if(!notice) return;
     notice.style.display = 'block';
-    notice.innerHTML = html;
+    notice.innerHTML = html || '';
   };
+
   const hideNotice = () => {
-    if(notice) notice.style.display = 'none';
+    if(!notice) return;
+    notice.style.display = 'none';
   };
 
   const hidePanels = () => {
@@ -1519,56 +1530,97 @@ footer.site-footer .page-access{
     });
   };
 
-  const ensureIdentityUser = async () => {
+  function readAcl(){
+    try{
+      return (typeof window.anwLoad === 'function')
+        ? window.anwLoad((window.ANW_KEYS && ANW_KEYS.ACL) ? window.ANW_KEYS.ACL : 'acl', {})
+        : {};
+    }catch(_){ return {}; }
+  }
+
+  function resolveAclRule(keyOrRule){
+    const raw = String(keyOrRule || '').trim();
+    if(!raw) return 'Public';
+    if(['Public','Authenticated','owner','admin','resident'].includes(raw)) return raw;
+    const acl = readAcl();
+    try{
+      if (acl && Object.prototype.hasOwnProperty.call(acl, raw)) return acl[raw];
+      if (acl && acl.features && Object.prototype.hasOwnProperty.call(acl.features, raw)) return acl.features[raw];
+      if (acl && acl.pages) {
+        for (const pageKey of Object.keys(acl.pages)) {
+          const page = acl.pages[pageKey];
+          if (page && Object.prototype.hasOwnProperty.call(page, raw)) return page[raw];
+          if (page && page.features && Object.prototype.hasOwnProperty.call(page.features, raw)) return page.features[raw];
+        }
+      }
+    }catch(_){}
+    return raw;
+  }
+
+  function gardaIsPublicByAcl(){
+    return String(resolveAclRule('dashboard:tab_garda')).trim() === 'Public';
+  }
+
+  async function ensureIdentityUser(){
     if(!window.netlifyIdentity) return null;
-    return await new Promise((resolve)=>{
+    return await new Promise((resolve) => {
       let done = false;
-      const finish = (user) => {
+      const finish = (u) => {
         if(done) return;
         done = true;
-        resolve(user || null);
+        resolve(u || null);
       };
-      try {
-        window.netlifyIdentity.on('init', (user) => finish(user));
-        window.netlifyIdentity.init();
-      } catch(e) {}
+      try{
+        if(typeof window.netlifyIdentity.on === 'function'){
+          window.netlifyIdentity.on('init', finish);
+        }
+        if(typeof window.netlifyIdentity.init === 'function'){
+          window.netlifyIdentity.init();
+        }
+      }catch(_){}
       setTimeout(() => {
-        try {
-          const user = (typeof window.netlifyIdentity.currentUser === 'function')
-            ? window.netlifyIdentity.currentUser()
-            : null;
-          finish(user);
-        } catch(e) {
+        try{
+          finish(window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null);
+        }catch(_){
           finish(null);
         }
-      }, 300);
+      }, 350);
     });
-  };
+  }
 
-  const getRegistryProfile = async (user) => {
-    try { await window.anwInitStore?.(); } catch(e) {}
-    try {
+  async function getRegistryProfile(user){
+    try { await window.anwInitStore?.(); } catch(_){}
+    try{
       const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
       const email = String(user?.email || '').toLowerCase().trim();
-      return (users || []).find(u => String(u.email || '').toLowerCase().trim() === email) || null;
-    } catch(e) {
+      return (users || []).find((u) => String(u.email || '').toLowerCase().trim() === email) || null;
+    }catch(_){
       return null;
     }
-  };
+  }
 
-  const isApproved = (profile) => {
+  function isApproved(profile){
     if(!profile) return false;
-    const status = String(profile.status || profile.accountStatus || '').toLowerCase();
-    return (profile.approved === true) || (profile.active === true) || status === 'active' || status === 'approved';
-  };
+    const status = String(profile.status || profile.accountStatus || profile.registrationStatus || '').toLowerCase();
+    return profile.approved === true || profile.active === true || status === 'active' || status === 'approved';
+  }
 
   async function evaluate(which){
     const target = which || currentTab || 'tabProfile';
+    const isGarda = target === 'tabGarda';
+    const gardaPublic = gardaIsPublicByAcl();
+
     setActiveTab(target);
 
     if(window.ANW_PUBLIC_MODE){
       hideNotice();
       showPanel(target);
+      return;
+    }
+
+    if(isGarda && gardaPublic){
+      hideNotice();
+      showPanel('tabGarda');
       return;
     }
 
@@ -1578,6 +1630,16 @@ footer.site-footer .page-access{
       : '').toLowerCase().trim();
 
     if(!user && !fallbackEmail){
+      if(gardaPublic){
+        setActiveTab('tabGarda');
+        showPanel('tabGarda');
+        if(!isGarda){
+          showNotice('Only Garda &amp; Safety is public right now. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to open the other dashboard tabs.');
+        }else{
+          hideNotice();
+        }
+        return;
+      }
       hidePanels();
       showNotice('The dashboard is available to registered residents only. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to continue.');
       return;
@@ -1586,6 +1648,16 @@ footer.site-footer .page-access{
     const profile = await getRegistryProfile(user || { email: fallbackEmail });
 
     if(!profile || !isApproved(profile)){
+      if(gardaPublic){
+        setActiveTab('tabGarda');
+        showPanel('tabGarda');
+        if(!isGarda){
+          showNotice('Your account is logged in, but it is still waiting for approval. Garda &amp; Safety remains available while the other dashboard tabs stay locked.');
+        }else{
+          hideNotice();
+        }
+        return;
+      }
       hidePanels();
       showNotice('Your account is logged in, but it is still waiting for approval. Please wait for confirmation.');
       return;
@@ -1595,24 +1667,21 @@ footer.site-footer .page-access{
     showPanel(target);
   }
 
-  window.anwDashboardRequestTab = function(which){
-    evaluate(which || currentTab || 'tabProfile');
-  };
+  window.anwDashboardRequestTab = evaluate;
 
   document.addEventListener('DOMContentLoaded', () => {
     hidePanels();
-    
     if(tabsWrap) tabsWrap.classList.add('is-locked');
 
     tabs.forEach((btn) => {
       btn.addEventListener('click', (event) => {
         event.preventDefault();
-        event.stopPropagation();
-        window.anwDashboardRequestTab(btn.dataset.tab || 'tabProfile');
-      });
+        event.stopImmediatePropagation();
+        evaluate(btn.dataset.tab || (gardaIsPublicByAcl() ? 'tabGarda' : 'tabProfile'));
+      }, true);
     });
 
-    
+    evaluate(gardaIsPublicByAcl() ? 'tabGarda' : 'tabProfile');
   }, { once:true });
 })();
 </script>
