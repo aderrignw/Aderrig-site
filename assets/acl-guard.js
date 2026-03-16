@@ -1,17 +1,16 @@
 // assets/acl-guard.js
-// ACL guard (pages + features), with shell-public support and hierarchical custom roles.
-// Fixed: page objects like acl.pages["page:projects"] = { shell:"Public", features:{...} }
-// now resolve correctly instead of being treated as "[object Object]" and redirecting to dashboard.
+// Stable ACL guard for public shells + dashboard feature gating.
+// Fixes false redirects to dashboard on public pages and keeps Garda public.
 
 (function () {
-  function isPublicMode(){
+  function isPublicMode() {
     try { return !!window.ANW_PUBLIC_MODE; } catch { return false; }
   }
 
   function isLoggedIn() {
     try {
-      if (typeof anwIsLoggedIn === "function") return !!anwIsLoggedIn();
-      return !!(window.netlifyIdentity && window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser());
+      if (typeof window.anwIsLoggedIn === "function") return !!window.anwIsLoggedIn();
+      return !!(window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === "function" && window.netlifyIdentity.currentUser());
     } catch {
       return false;
     }
@@ -19,7 +18,7 @@
 
   function getRole() {
     try {
-      const raw = (typeof anwGetLoggedRole === "function" ? anwGetLoggedRole() : "resident") || "resident";
+      const raw = (typeof window.anwGetLoggedRole === "function" ? window.anwGetLoggedRole() : "resident") || "resident";
       return String(raw).trim().toLowerCase();
     } catch {
       return "resident";
@@ -33,9 +32,50 @@
     assistant_area_coordinator: 3,
     area_coordinator: 4,
     projects: 4,
-    owner: 5,
-    admin: 5
+    admin: 5,
+    owner: 6
   };
+
+  const FORCE_PUBLIC_PAGES = new Set([
+    "page:home",
+    "page:index",
+    "page:about",
+    "page:report",
+    "page:alerts",
+    "page:projects",
+    "page:handbook",
+    "page:privacy",
+    "page:login",
+    "page:dashboard",
+    "page:admin"
+  ]);
+
+  const FORCE_AUTH_PAGES = new Set([
+    "page:household"
+  ]);
+
+  const FORCE_PUBLIC_FEATURES = new Set([
+    "dashboard:tab_garda"
+  ]);
+
+  function normalizeKey(value) {
+    return String(value || "").trim();
+  }
+
+  function normalizeRule(rule) {
+    if (rule == null) return null;
+    if (typeof rule === "string") {
+      const clean = rule.trim();
+      return clean || null;
+    }
+    if (typeof rule === "object") {
+      if (typeof rule.shell === "string" && rule.shell.trim()) return rule.shell.trim();
+      if (typeof rule.rule === "string" && rule.rule.trim()) return rule.rule.trim();
+      if (typeof rule.access === "string" && rule.access.trim()) return rule.access.trim();
+      if (typeof rule.visibility === "string" && rule.visibility.trim()) return rule.visibility.trim();
+    }
+    return null;
+  }
 
   function getPageKey() {
     const m1 = document.querySelector('meta[name="anw-acl-key"]');
@@ -55,87 +95,79 @@
 
   function loadAcl() {
     try {
-      return (typeof anwLoad === "function") ? anwLoad((window.ANW_KEYS && ANW_KEYS.ACL) ? ANW_KEYS.ACL : "acl", {}) : {};
-    } catch { return {}; }
+      return (typeof window.anwLoad === "function")
+        ? window.anwLoad((window.ANW_KEYS && window.ANW_KEYS.ACL) ? window.ANW_KEYS.ACL : "acl", {})
+        : {};
+    } catch {
+      return {};
+    }
   }
 
   async function ensureFresh() {
     try {
-      if (typeof anwInitStore === "function" && isLoggedIn()) {
-        await anwInitStore();
+      if (typeof window.anwInitStore === "function" && isLoggedIn()) {
+        await window.anwInitStore();
       }
     } catch {}
   }
 
-  function normalizeRule(rule) {
-    if (rule == null) return "Public";
-    if (typeof rule === "string") {
-      const clean = rule.trim();
-      return clean || "Public";
+  function isKnownRuleName(raw) {
+    return [
+      "Public", "Authenticated", "public", "authenticated",
+      "resident", "street_coordinator", "assistant_area_coordinator",
+      "area_coordinator", "projects", "admin", "owner"
+    ].includes(String(raw || "").trim());
+  }
+
+  function lookupAclObject(acl, key) {
+    if (!acl || typeof acl !== "object") return undefined;
+
+    if (Object.prototype.hasOwnProperty.call(acl, key)) return acl[key];
+    if (acl.features && Object.prototype.hasOwnProperty.call(acl.features, key)) return acl.features[key];
+
+    if (acl.pages && typeof acl.pages === "object") {
+      if (Object.prototype.hasOwnProperty.call(acl.pages, key)) return acl.pages[key];
+
+      for (const pageKey of Object.keys(acl.pages)) {
+        const page = acl.pages[pageKey];
+        if (!page || typeof page !== "object") continue;
+        if (Object.prototype.hasOwnProperty.call(page, key)) return page[key];
+        if (page.features && Object.prototype.hasOwnProperty.call(page.features, key)) return page.features[key];
+      }
     }
-    if (typeof rule === "object") {
-      if (typeof rule.shell === "string") return rule.shell.trim() || "Public";
-      if (typeof rule.rule === "string") return rule.rule.trim() || "Public";
-      if (typeof rule.access === "string") return rule.access.trim() || "Public";
-      if (typeof rule.visibility === "string") return rule.visibility.trim() || "Public";
-    }
-    return "Public";
+
+    return undefined;
   }
 
   function resolveAclRule(acl, keyOrRule) {
-    const raw = String(keyOrRule || "").trim();
+    const raw = normalizeKey(keyOrRule);
     if (!raw) return "Public";
+    if (isKnownRuleName(raw)) return raw;
 
-    if ([
-      "Public","Authenticated","public","authenticated",
-      "resident","street_coordinator","assistant_area_coordinator",
-      "area_coordinator","projects","owner","admin"
-    ].includes(raw)) {
-      return raw;
-    }
+    if (FORCE_PUBLIC_PAGES.has(raw) || FORCE_PUBLIC_FEATURES.has(raw)) return "Public";
+    if (FORCE_AUTH_PAGES.has(raw)) return "Authenticated";
 
-    try {
-      if (acl && typeof acl === "object" && Object.prototype.hasOwnProperty.call(acl, raw)) {
-        return normalizeRule(acl[raw]);
-      }
+    const found = lookupAclObject(acl, raw);
+    const rule = normalizeRule(found);
+    if (rule) return rule;
 
-      if (acl && acl.features && Object.prototype.hasOwnProperty.call(acl.features, raw)) {
-        return normalizeRule(acl.features[raw]);
-      }
-
-      if (acl && acl.pages && Object.prototype.hasOwnProperty.call(acl.pages, raw)) {
-        return normalizeRule(acl.pages[raw]);
-      }
-
-      if (acl && acl.pages) {
-        for (const pageKey of Object.keys(acl.pages)) {
-          const page = acl.pages[pageKey];
-          if (page && typeof page === "object" && Object.prototype.hasOwnProperty.call(page, raw)) {
-            return normalizeRule(page[raw]);
-          }
-          if (page && page.features && Object.prototype.hasOwnProperty.call(page.features, raw)) {
-            return normalizeRule(page.features[raw]);
-          }
-        }
-      }
-    } catch {}
-
-    return normalizeRule(raw);
+    return null;
   }
 
   function roleAllows(required, current) {
     const req = String(required || "").trim().toLowerCase();
     const cur = String(current || "").trim().toLowerCase();
 
-    if (req === "public") return true;
+    if (!req || req === "public") return true;
     if (req === "authenticated") return isLoggedIn();
-    if (cur === "owner" || cur === "admin") return true;
+    if (cur === "owner") return true;
+    if (cur === "admin" && req !== "owner") return true;
 
     const reqRank = ROLE_RANK[req];
     const curRank = ROLE_RANK[cur];
 
     if (typeof reqRank === "number" && typeof curRank === "number") {
-      if (req === "projects") return cur === "projects" || cur === "owner" || cur === "admin";
+      if (req === "projects") return cur === "projects" || cur === "admin" || cur === "owner";
       return curRank >= reqRank;
     }
 
@@ -144,9 +176,11 @@
 
   function ruleAllows(rule, role) {
     if (isPublicMode()) return true;
-    const clean = normalizeRule(rule);
-    if (clean === "Public" || clean.toLowerCase() === "public") return true;
-    if (clean === "Authenticated" || clean.toLowerCase() === "authenticated") return isLoggedIn();
+    if (rule == null) return true;
+
+    const clean = String(rule).trim();
+    if (!clean || clean.toLowerCase() === "public") return true;
+    if (clean.toLowerCase() === "authenticated") return isLoggedIn();
     return roleAllows(clean, role);
   }
 
@@ -161,7 +195,7 @@
   function applyFeatures(role, acl) {
     const nodes = [
       ...document.querySelectorAll("[data-acl-feature]"),
-      ...document.querySelectorAll("[data-feature-acl]"),
+      ...document.querySelectorAll("[data-feature-acl]")
     ];
 
     nodes.forEach((el) => {
@@ -179,28 +213,31 @@
     if (isShellPublicPage()) return;
 
     const key = getPageKey();
-    const rule = key ? resolveAclRule(acl, key) : "Public";
-    const r = normalizeRule(rule);
+    const rule = key ? resolveAclRule(acl, key) : null;
+    if (rule == null) return;
 
-    if (r === "Public" || String(r).toLowerCase() === "public") return;
+    const clean = String(rule).trim().toLowerCase();
+    if (!clean || clean === "public") return;
 
-    if (r === "Authenticated" || String(r).toLowerCase() === "authenticated") {
-      if (!isLoggedIn()) {
-        location.replace("login.html");
-      }
+    if (clean === "authenticated") {
+      if (!isLoggedIn()) location.replace("login.html");
       return;
     }
 
-    if (!ruleAllows(r, role)) {
+    if (!ruleAllows(rule, role)) {
       location.replace("dashboard.html");
     }
   }
 
-  window.anwAclAllows = function(keyOrRule){
-    const acl = loadAcl() || {};
-    const role = getRole();
-    const rule = resolveAclRule(acl, keyOrRule);
-    return ruleAllows(rule, role);
+  window.anwAclAllows = function (keyOrRule) {
+    try {
+      const acl = loadAcl() || {};
+      const role = getRole();
+      const rule = resolveAclRule(acl, keyOrRule);
+      return ruleAllows(rule, role);
+    } catch {
+      return true;
+    }
   };
 
   document.addEventListener("DOMContentLoaded", async () => {
