@@ -1,4 +1,3 @@
-
 /*
  Aderrig ACL Guard (fixed)
  Prevents redirect loops with the dashboard and allows public shells.
