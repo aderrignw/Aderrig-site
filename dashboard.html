@@ -1,310 +1,210 @@
 <!DOCTYPE html>
 
 <html lang="en">
-<head><style>/* Garda & Safety (Dashboard) */
-.garda-panel{
-  margin-top:.75rem;
-  border:1px solid #e4e7eb;
-  border-radius:14px;
-  background:#fff;
-  padding:.9rem;
-}
-.chip-row{
-  margin-top:.6rem;
-  overflow-x:auto;
-  white-space:nowrap;
-  -webkit-overflow-scrolling:touch;
-  padding-bottom:4px;
-}
-.chip{
-  display:inline-flex;
-  align-items:center;
-  padding:7px 12px;
-  border:1px solid #e4e7eb;
-  border-radius:999px;
-  background:#fff;
-  font-size:12px;
-  margin-right:8px;
-  cursor:pointer;
-  color:var(--ink);
-  font-weight:800;
-  line-height:1;
-  -webkit-appearance:none;
-  appearance:none;
-}
-.chip::-moz-focus-inner{ border:0; padding:0; }
-.chip.active{
-  border-color:var(--brand, #1f7a3f);
-  background:var(--brandSoft, #eaf6ee);
-  color:var(--brand, #1f7a3f);
-}
-.garda-list{ margin-top:.85rem; }
-.garda-item{
-  border:1px solid #e4e7eb;
-  border-radius:12px;
-  background:#fff;
-  padding:.9rem;
-  margin:.65rem 0;
-}
-.garda-item .row{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:12px;
-  flex-wrap:wrap;
-}
-.garda-item .title{ font-weight:800; margin:0; }
-.garda-item .date{
-  font-size:12px;
-  color:#6b7280;
-  white-space:nowrap;
-}
-.garda-item .snippet{
-  margin-top:8px;
-  font-size:13px;
-  color:#374151;
-}
-.garda-item .link{
-  margin-top:8px;
-  font-size:13px;
-  font-weight:700;
-  color:var(--brand, #1f7a3f);
-  display:inline-block;
-  text-decoration:none;
-}
-.garda-item .meta{
-  margin-top:6px;
-  font-size:12px;
-  color:#6b7280;
-  font-weight:700;
-}
-
-
-/* Profile header layout */
-.profile-header-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:1.25rem;
-}
-.profile-main{
-  flex:1 1 auto;
-  min-width:0;
-}
-.profile-side{
-  flex:0 0 260px;
-  max-width:260px;
-}
-.profile-header-row .grid-2.compact{
-  grid-template-columns:minmax(180px, 240px) minmax(180px, 240px);
-}
-
-/* Profile photo card */
-.profile-photo-card{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:.65rem;
-  margin:0;
-  padding:1rem;
-  border:1px solid var(--line);
-  border-radius:16px;
-  background:#f9fafb;
-}
-.profile-photo-preview{
-  width:112px;
-  height:112px;
-  border-radius:18px;
-  border:1px solid var(--line);
-  background:#eef3f0 center/cover no-repeat;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:2.2rem;
-  color:var(--muted);
-  overflow:hidden;
-  flex:0 0 auto;
-}
-.profile-photo-preview.has-photo{ color:transparent; }
-.profile-photo-preview img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-}
-.profile-photo-title{
-  margin:0;
-  font-size:1rem;
-  font-weight:800;
-  text-align:center;
-}
-.profile-photo-actions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  justify-content:center;
-  margin-top:0;
-}
-.profile-photo-note{
-  margin:0;
-  font-size:12px;
-  color:var(--muted);
-  text-align:center;
-}
-
-
-@media (max-width: 980px){
-  .profile-header-row{
-    flex-direction:column;
-  }
-  .profile-side{
-    width:100%;
-    max-width:none;
-  }
-  .profile-header-row .grid-2.compact{
-    grid-template-columns:1fr 1fr;
-  }
-}
-@media (max-width: 640px){
-  .profile-header-row .grid-2.compact{
-    grid-template-columns:1fr;
-  }
-}
-
-/* In-page back-to-top button */
-.garda-top-wrap{
-  display:flex;
-  justify-content:flex-end;
-  margin-top:12px;
-  padding-top:12px;
-  border-top:1px solid #eef0f2;
-}
-.garda-top-btn.tab-like{
-  border-radius:999px;
-  padding:8px 16px;
-  background:#fff;
-  color:var(--brand, #1f7a3f);
-  border:2px solid var(--brand, #1f7a3f);
-  font-weight:700;
-}
-.garda-top-btn.tab-like.is-active{
-  background:var(--brand, #1f7a3f);
-  color:#fff;
-}
-
-/* Garda category cards */
-#tabGarda .chip-row{
-  margin-top:12px;
-  overflow:visible !important;
-  white-space:normal !important;
-  padding-bottom:0 !important;
-}
-#tabGarda .garda-cat-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
-  gap:14px;
-}
-#tabGarda .garda-cat{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:12px 14px;
-  border-radius:14px;
-  border:1.5px solid #d9e7dd;
-  background:#fff;
-  cursor:pointer;
-  text-align:left;
-  transition:.15s ease;
-  -webkit-appearance:none;
-  appearance:none;
-}
-#tabGarda .garda-cat:hover{ background:var(--brandSoft, #eaf6ee); }
-#tabGarda .garda-cat .icon{
-  width:36px;
-  height:36px;
-  border-radius:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:var(--brandSoft, #eaf6ee);
-  flex:0 0 36px;
-}
-#tabGarda .garda-cat .icon svg{
-  width:20px;
-  height:20px;
-  stroke:var(--brand, #1f7a3f);
-  stroke-width:2;
-  fill:none;
-  stroke-linecap:round;
-  stroke-linejoin:round;
-}
-#tabGarda .garda-cat .label{
-  font-weight:700;
-  color:var(--ink, #1f2937);
-  line-height:1.2;
-  font-size:14px;
-}
-#tabGarda .garda-cat.is-active{
-  background:var(--brand, #1f7a3f);
-  border-color:var(--brand, #1f7a3f);
-}
-#tabGarda .garda-cat.is-active .label{ color:#fff; }
-#tabGarda .garda-cat.is-active .icon{ background:rgba(255,255,255,.18); }
-#tabGarda .garda-cat.is-active .icon svg{ stroke:#fff; }
-
-/* Footer helper */
-footer.site-footer{ position:relative; }
-footer.site-footer .page-access{
-  position:absolute;
-  left:0;
-  color:green;
-  font-weight:normal;
-}
-
-@media (max-width:720px){
-  .profile-photo-card{ flex-direction:column; }
-}
-
-.session-hero-row{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;}
-.session-hero-copy{min-width:280px;flex:1;}
-.session-clock-card{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:220px;padding:12px 16px;border:1px solid rgba(31,122,63,.18);border-radius:16px;background:linear-gradient(180deg,#ffffff 0%,#f5fbf7 100%);box-shadow:0 10px 22px rgba(16,24,40,.05);}
-.session-clock-label{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);margin-bottom:6px;}
-.session-clock-digital{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:1.55rem;font-weight:800;letter-spacing:.08em;color:#153b2a;line-height:1;}
-.session-clock-note{font-size:.75rem;color:var(--muted);margin-top:6px;white-space:nowrap;}
-.logout-btn-inline{min-width:104px;}
-@media (max-width: 860px){
-  .session-hero-row{flex-direction:column;align-items:flex-start;}
-  .session-clock-card{width:100%;max-width:260px;}
-}
-
-</style>
+<head>
 <meta charset="utf-8"/>
 <meta content="page:dashboard" name="anw-acl-key"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<!-- Dashboard access uses inline gate like the other pages -->
 <title>Dashboard — Aderrig NW</title>
 <link href="assets/style.css" rel="stylesheet"/>
-<style id="dashboard-access-style">
-  .dash-tab-content{ display:none; }
-  .dash-tabs .dash-tab{ cursor:pointer; }
-  .dash-tabs.is-locked .dash-tab{ opacity:1; }
-  #anwAccessNotice{
-    margin-top:12px;
-    display:none;
-    padding:12px 14px;
-    border:1px solid #d9e5dc;
-    border-radius:12px;
-    background:#f7fbf8;
-  }
-  #anwAccessNotice a{ font-weight:700; }
+<style>
+    /* Garda & Safety (Dashboard) */
+    .garda-panel{
+      margin-top:0.75rem;
+      border:1px solid #e4e7eb;
+      border-radius:14px;
+      background:#fff;
+      padding:0.9rem;
+    }
+    .chip-row{
+      margin-top:0.6rem;
+      overflow-x:auto;
+      white-space:nowrap;
+      -webkit-overflow-scrolling:touch;
+      padding-bottom:4px;
+    }
+    .chip{
+      display:inline-flex; align-items:center;
+      padding:7px 12px;
+      border:1px solid #e4e7eb;
+      border-radius:999px;
+      background:#fff;
+      font-size:12px;
+      margin-right:8px;
+      cursor:pointer;
+      color: var(--ink);
+      font-weight:800;
+      line-height:1;
+      -webkit-appearance:none; appearance:none;
+    }
+    .chip::-moz-focus-inner{ border:0; padding:0; }
+    .chip.active{
+      border-color: var(--brand, #1f7a3f);
+      background: var(--brandSoft, #eaf6ee);
+      color: var(--brand, #1f7a3f);
+    }
+    .garda-list{ margin-top:0.85rem; }
+    .garda-item{
+      border:1px solid #e4e7eb;
+      border-radius:12px;
+      background:#fff;
+      padding:0.9rem;
+      margin:0.65rem 0;
+    }
+    .garda-item .row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .garda-item .title{
+      font-weight:800;
+      margin:0;
+    }
+    .garda-item .date{
+      font-size:12px;
+      color: #6b7280;
+      white-space:nowrap;
+    }
+    .garda-item .snippet{
+      margin-top:8px;
+      font-size:13px;
+      color:#374151;
+    }
+    .garda-item .link{
+      margin-top:8px;
+      font-size:13px;
+      font-weight:700;
+      color: var(--brand, #1f7a3f);
+      display:inline-block;
+      text-decoration:none;
+    }
+    .garda-item .meta{
+      margin-top:6px;
+      font-size:12px;
+      color:#6b7280;
+      font-weight:700;
+    }
 </style>
-
-
-
-
-
+<style>
+    /* Garda tab: in-page TOP button (does not float) */
+    .garda-top-wrap{
+      display:flex;
+      justify-content:flex-end;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #eef0f2;
+    }
+    .garda-top-btn{
+      min-width: 88px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+    }
+  </style>
+<style>
+    /* In-page back-to-top tab-style button */
+    .garda-top-wrap{
+      display:flex;
+      justify-content:flex-end;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #eef0f2;
+    }
+    .garda-top-btn.tab-like{
+      border-radius: 999px;
+      padding: 8px 16px;
+      background: #fff;
+      color: var(--brand, #1f7a3f);
+      border: 2px solid var(--brand, #1f7a3f);
+      font-weight: 700;
+    }
+    .garda-top-btn.tab-like.is-active{
+      background: var(--brand, #1f7a3f);
+      color: #fff;
+    }
+  </style>
+<style>
+    /* Garda categories: responsive grid with SVG icons (Option A) */
+    #tabGarda .chip-row{
+      margin-top: 12px;
+      overflow: visible !important;
+      white-space: normal !important;
+      padding-bottom: 0 !important;
+    }
+    #tabGarda .garda-cat-grid{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    #tabGarda .garda-cat{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1.5px solid #d9e7dd;
+      background:#fff;
+      cursor:pointer;
+      text-align:left;
+      transition:.15s ease;
+      -webkit-appearance:none;
+      appearance:none;
+    }
+    #tabGarda .garda-cat:hover{
+      background: var(--brandSoft, #eaf6ee);
+    }
+    #tabGarda .garda-cat .icon{
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: var(--brandSoft, #eaf6ee);
+      flex: 0 0 36px;
+    }
+    #tabGarda .garda-cat .icon svg{
+      width: 20px;
+      height: 20px;
+      stroke: var(--brand, #1f7a3f);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    #tabGarda .garda-cat .label{
+      font-weight: 700;
+      color: var(--ink, #1f2937);
+      line-height: 1.2;
+      font-size: 14px;
+    }
+    #tabGarda .garda-cat.is-active{
+      background: var(--brand, #1f7a3f);
+      border-color: var(--brand, #1f7a3f);
+    }
+    #tabGarda .garda-cat.is-active .label{
+      color:#fff;
+    }
+    #tabGarda .garda-cat.is-active .icon{
+      background: rgba(255,255,255,0.18);
+    }
+    #tabGarda .garda-cat.is-active .icon svg{
+      stroke:#fff;
+    }
+  </style>
+<style id="page-access-style">
+  footer.site-footer { position: relative; }
+  footer.site-footer .page-access {
+    position: absolute;
+    left: 0;
+    color: green;
+    font-weight: normal;
+  }
+</style>
 </head>
-<body data-acl-shell-public="true">
+<body>
 <header class="site-header">
 <div class="brand">
 <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
@@ -319,7 +219,7 @@ footer.site-footer .page-access{
 <a href="report.html">Report</a>
 <a href="alerts.html">Community Alerts</a>
 <a href="projects.html">Community Projects</a>
-<a href="handbook.html">Handbook</a>
+<a href="management-requests.html">Management Requests</a>
 <a href="login.html">Login / Register</a>
 <a class="active" href="dashboard.html">Dashboard</a>
 <a href="household.html">Household</a>
@@ -328,22 +228,13 @@ footer.site-footer .page-access{
 </header>
 <main class="wrap">
 <section class="card">
-<div class="session-hero-row">
-  <div class="session-hero-copy">
-    <h2>Resident dashboard</h2>
-    <p class="muted">Manage your profile, elections and interests.</p>
-    <div class="tiny muted" id="anwAccessNotice" style="margin-top:12px; display:none;">
+<h2>Resident dashboard</h2>
+<p class="muted">Manage your profile, elections and interests.</p>
+<div class="tiny muted" id="anwAccessNotice" style="margin-top:12px; display:none;">
 <span id="anwAccessText">
         You are not logged in. Please <a href="login.html">log in</a> or
         <a href="login.html#signup">register</a> to access your dashboard.
       </span>
-    </div>
-  </div>
-  <div class="session-clock-card" id="sessionClockCard" style="display:none;">
-    <div class="session-clock-label">Session time</div>
-    <div class="session-clock-digital" id="sessionClockValue">00:00:00</div>
-    <div class="session-clock-note">Logged-in time on site</div>
-  </div>
 </div>
 <div class="actions dash-tabs" style="margin-top:0.5rem;">
 <button class="btn small dash-tab active" data-acl-feature="dashboard:tab_profile" data-tab="tabProfile" type="button">Profile</button>
@@ -362,12 +253,10 @@ footer.site-footer .page-access{
       </p>
 </div>
 <div id="dbProfileArea" style="display:none;">
-<div class="profile-header-row">
-<div class="profile-main">
 <p class="tiny muted" style="margin-top:0;">
         Email and Eircode are protected and cannot be changed.
       </p>
-<div class="grid-2 compact" style="gap:1rem;">
+<div class="grid-2" style="gap:1rem;">
 <div class="field">
 <label>Registration No</label>
 <input disabled="" id="pfRegId" type="text"/>
@@ -377,21 +266,7 @@ footer.site-footer .page-access{
 <input disabled="" id="pfStatus" type="text"/>
 </div>
 </div>
-</div>
-<div class="profile-side">
-<div class="profile-photo-card" style="margin-top:0;">
-<div aria-label="Profile photo preview" class="profile-photo-preview" id="pfPhotoPreview">👤</div>
-<p class="profile-photo-title">Profile photo</p>
-<input accept="image/*" id="pfPhotoFile" style="display:none;" type="file"/>
-<div class="profile-photo-actions">
-<button class="btn-line small" id="btnUploadPhoto" type="button">Add</button>
-<button class="btn-line small" id="btnRemovePhoto" type="button">Remove</button>
-</div>
-<p class="profile-photo-note" id="pfPhotoMsg">JPG / PNG</p>
-</div>
-</div>
-</div>
-<div class="grid-2" style="gap:1rem; margin-top:1rem;">
+<div class="grid-2" style="gap:1rem;">
 <div class="field">
 <label>Full name</label>
 <input id="pfName" type="text"/>
@@ -443,7 +318,6 @@ footer.site-footer .page-access{
 <p class="tiny muted" id="pfMsg" style="margin-top:0.5rem;"></p>
 <div class="actions" style="justify-content:flex-end;">
 <button class="btn" id="btnSaveProfile" type="button">Save</button>
-<button class="btn-line logout-btn-inline" id="btnLogoutProfile" type="button">Logout</button>
 </div>
 </div>
 </section>
@@ -535,21 +409,16 @@ footer.site-footer .page-access{
 </section>
 </main>
 <footer class="site-footer">
-<div class="footer-row">
-<div class="footer-left">
-<span class="page-status">Private Page</span>
-</div>
-<div class="footer-center">
-      © 2025 Aderrig NW · 
-      <a href="privacy.html">Privacy Policy</a>
-</div>
+<span class="page-access" id="pageAccessLabel">Private Page</span>
+<div style="text-align:center;">
+    © 2025 Aderrig NW · All rights reserved · <a href="privacy.html">Privacy Policy</a>
 </div>
 </footer>
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script><script src="assets/identity.js"></script><script src="assets/app-core.js"></script>
 <script>
 (async function(){
   'use strict';
-  try { if (typeof window.anwInitStore === 'function') await window.anwInitStore(); } catch(e) { console.warn(e); }
+  await anwInitStore();
 
   function toast(msg, type){
     try{
@@ -579,134 +448,15 @@ footer.site-footer .page-access{
     const el = document.getElementById(id);
     if(el) el.textContent = (value ?? '').toString();
   }
-  function getResidentNumericReg(v){
-    const raw = String(v == null ? '' : v).trim();
-    if(!raw) return 0;
-    const m = raw.match(/(\d+)/);
-    return m ? parseInt(m[1], 10) || 0 : 0;
-  }
-  function formatResidentRegId(v){
-    const n = getResidentNumericReg(v);
-    return n ? `ANW${String(n).padStart(4, '0')}` : '—';
-  }
-  function renderProfilePhoto(dataUrl){
-    const box = document.getElementById('pfPhotoPreview');
-    const removeBtn = document.getElementById('btnRemovePhoto');
-    if(!box) return;
-    const safe = String(dataUrl || '').trim();
-    if(safe){
-      box.classList.add('has-photo');
-      box.innerHTML = `<img alt="Profile photo" src="${safe}">`;
-      if(removeBtn) removeBtn.style.display = 'inline-flex';
-    } else {
-      box.classList.remove('has-photo');
-      box.textContent = '👤';
-      if(removeBtn) removeBtn.style.display = 'none';
-    }
-  }
-  function resizeImageToDataUrl(file){
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const size = 360;
-          const canvas = document.createElement('canvas');
-          canvas.width = size;
-          canvas.height = size;
-          const ctx = canvas.getContext('2d');
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, size, size);
-          const scale = Math.max(size / img.width, size / img.height);
-          const w = img.width * scale;
-          const h = img.height * scale;
-          const x = (size - w) / 2;
-          const y = (size - h) / 2;
-          ctx.drawImage(img, x, y, w, h);
-          resolve(canvas.toDataURL('image/jpeg', 0.86));
-        };
-        img.onerror = reject;
-        img.src = reader.result;
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
 
   const KEY_USERS     = ANW_KEYS.USERS;
   const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
 
-  async function dashboardLoadUsers(){
-    try{
-      if(typeof window.anwStoreGetKey === 'function'){
-        const data = await window.anwStoreGetKey(KEY_USERS);
-        if(Array.isArray(data)){
-          try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, data); }catch(_){ }
-          return data;
-        }
-      }
-    }catch(_){ }
-    try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, { cache:'no-store' });
-      if(!res.ok) throw new Error('store load failed');
-      const data = await res.json();
-      if(Array.isArray(data)){
-        try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, data); }catch(_){ }
-        return data;
-      }
-    }catch(_){ }
-    try{
-      const local = (typeof window.anwLoad === 'function') ? window.anwLoad(KEY_USERS, []) : [];
-      return Array.isArray(local) ? local : [];
-    }catch(_){
-      return [];
-    }
-  }
-
-  async function dashboardSaveUsers(nextUsers){
-    const payload = Array.isArray(nextUsers) ? nextUsers : [];
-    try{
-      if(typeof window.anwStoreSetKey === 'function'){
-        await window.anwStoreSetKey(KEY_USERS, payload);
-      } else {
-        const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if(!res.ok) throw new Error('store save failed');
-      }
-    }catch(err){
-      console.error(err);
-      throw err;
-    }
-    try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, payload); }catch(_){ }
-    return payload;
-  }
-
-  async function ensureIdentityUser(){
-    if(!window.netlifyIdentity) return null;
-    return await new Promise((resolve)=>{
-      let done = false;
-      const finish = (u)=>{ if(done) return; done = true; resolve(u || null); };
-      try{
-        window.netlifyIdentity.on('init', finish);
-        window.netlifyIdentity.init();
-      }catch(e){}
-      setTimeout(()=>{
-        try{
-          const u = (typeof window.netlifyIdentity.currentUser === 'function') ? window.netlifyIdentity.currentUser() : null;
-          finish(u);
-        }catch(e){ finish(null); }
-      }, 500);
-    });
-  }
-
-  const identityUser = await ensureIdentityUser();
-  const loggedEmail = String((identityUser && identityUser.email) || (typeof anwGetLoggedEmail === 'function' ? anwGetLoggedEmail() : '') || '').trim();
-  let users = await dashboardLoadUsers();
-  if(!Array.isArray(users)) users = [];
-  const me = loggedEmail ? users.find(u => anwNormEmail(u.email) === anwNormEmail(loggedEmail)) : null;
+  const loggedEmail = anwGetLoggedEmail();
+  const users = anwLoad(KEY_USERS, []);
+  const me = Array.isArray(users)
+    ? users.find(u => anwNormEmail(u.email) === anwNormEmail(loggedEmail))
+    : null;
 
   const notLoggedBox = document.getElementById('dbNotLogged');
   const profileArea = document.getElementById('dbProfileArea');
@@ -732,7 +482,7 @@ footer.site-footer .page-access{
     tabPanels.forEach(p => p.style.display = (p.id === target ? 'block' : 'none'));
   }
 
-function electedLabelFromUser(u){
+  function electedLabelFromUser(u){
     const r = String(u?.electedRole || '').toLowerCase();
     if(r === 'assistant') return 'Assistant Area Coordinator';
     if(r === 'area') return 'Area Coordinator';
@@ -740,14 +490,13 @@ function electedLabelFromUser(u){
   }
 
   if(me){
-    document.getElementById('pfRegId').value = formatResidentRegId(me.regId || me.regNo);
+    document.getElementById('pfRegId').value = me.regId || '—';
     document.getElementById('pfStatus').value = me.status || 'pending';
     document.getElementById('pfName').value = me.name || '';
     document.getElementById('pfPhone').value = me.phone || '';
     document.getElementById('pfEmail').value = me.email || '';
     document.getElementById('pfEir').value = me.eircode || '';
     document.getElementById('pfAddress').value = me.address || '';
-    renderProfilePhoto(me.profilePhoto || me.photo || '');
 
     const ac = me.alertsConsent || {};
     const cb = document.getElementById('pfAlertOptIn');
@@ -767,36 +516,20 @@ function electedLabelFromUser(u){
 
     const ul = document.getElementById('pfVolRoles');
     ul.innerHTML = '';
-    const vr = me.vol_roles || me.volunteer_roles || {};
+    const vr = me.vol_roles || {};
     const labels = {
       streetWatch:'Street watch / patrols',
       leaflets:'Distribute leaflets',
       tech:'Tech support',
-      techSupport:'Tech support',
       elderly:'Elderly checks',
-      cleanUp:'Community clean-up',
-      cleanup:'Community clean-up',
-      parkingAssistance:'Parking assistance',
-      parking:'Parking assistance',
       meetings:'Meeting organiser',
       translation:'Translation'
     };
-    const added = new Set();
     Object.keys(labels).forEach(k=>{
-      if(vr[k] && !added.has(labels[k])){
+      if(vr[k]){
         const li = document.createElement('li');
         li.textContent = labels[k];
         ul.appendChild(li);
-        added.add(labels[k]);
-      }
-    });
-    const vrList = Array.isArray(me.volunteerRoles) ? me.volunteerRoles : [];
-    vrList.forEach(label => {
-      if(label && !added.has(label)) {
-        const li = document.createElement('li');
-        li.textContent = label;
-        ul.appendChild(li);
-        added.add(label);
       }
     });
     if(!ul.children.length){
@@ -804,40 +537,12 @@ function electedLabelFromUser(u){
     }
   }
 
-
-  const pfPhotoFile = document.getElementById('pfPhotoFile');
-  document.getElementById('btnUploadPhoto')?.addEventListener('click', ()=> pfPhotoFile?.click());
-  document.getElementById('btnRemovePhoto')?.addEventListener('click', ()=>{
-    if(!me) return;
-    me.profilePhoto = '';
-    renderProfilePhoto('');
-    setText('pfPhotoMsg', 'Photo removed. Click Save to confirm.');
-  });
-  pfPhotoFile?.addEventListener('change', async (ev)=>{
-    const file = ev.target && ev.target.files && ev.target.files[0];
-    if(!file || !me) return;
-    try{
-      me.profilePhoto = await resizeImageToDataUrl(file);
-      renderProfilePhoto(me.profilePhoto);
-      setText('pfPhotoMsg', 'Photo ready. Click Save to confirm.');
-    }catch(err){
-      setText('pfPhotoMsg', 'Could not process this image.');
-      toast('Could not process this image.', 'error');
-    }
-    ev.target.value = '';
-  });
-
   document.getElementById('btnSaveProfile')?.addEventListener('click', async ()=>{
     if(!me) return;
 
     try{
       me.name = document.getElementById('pfName').value.trim();
       me.phone = document.getElementById('pfPhone').value.trim();
-      if(me.regId || me.regNo){
-        const normalizedReg = formatResidentRegId(me.regId || me.regNo);
-        me.regId = normalizedReg;
-        me.regNo = normalizedReg;
-      }
 
       const cb = document.getElementById('pfAlertOptIn');
       const nextOptIn = !!(cb && cb.checked);
@@ -864,10 +569,9 @@ function electedLabelFromUser(u){
         };
       }
 
-      await dashboardSaveUsers(users);
+      await anwSave(KEY_USERS, users);
 
       setText('pfMsg', 'Profile updated.');
-      setText('pfPhotoMsg', me.profilePhoto ? 'Profile photo saved.' : 'No profile photo saved.');
       toast('Profile updated.', 'success');
 
       const meta = document.getElementById('pfAlertMeta');
@@ -886,12 +590,8 @@ function electedLabelFromUser(u){
   const interestBlocked = document.getElementById('interestBlocked');
   const interestArea = document.getElementById('interestArea');
 
-  const allowed = !!(me && (
-    (typeof window.anwIsApproved === 'function' && window.anwIsApproved(me)) ||
-    me.approved === true ||
-    me.active === true ||
-    ['approved','active'].includes(String(me.status || me.accountStatus || me.registrationStatus || '').toLowerCase())
-  ));
+  const __demo = (location.protocol === 'file:' || (new URLSearchParams(location.search)).get('demo') === '1' || localStorage.getItem('anw_demo') === '1');
+  const allowed = __demo ? true : !!(me && anwIsApproved(me));
 
   if(!allowed){
     interestBlocked.style.display = 'block';
@@ -951,7 +651,7 @@ function electedLabelFromUser(u){
         status: existingStatus
       };
 
-      await dashboardSaveUsers(users);
+      await anwSave(KEY_USERS, users);
       renderInterest();
 
       intMeta.textContent = 'Interest saved. Awaiting admin approval if pending.';
@@ -971,7 +671,7 @@ function electedLabelFromUser(u){
 
     try{
       delete me.interest;
-      await dashboardSaveUsers(users);
+      await anwSave(KEY_USERS, users);
       renderInterest();
       intMeta.textContent = 'Interest withdrawn.';
       toast('Interest withdrawn.', 'info');
@@ -1187,7 +887,8 @@ function electedLabelFromUser(u){
     const statusEl = document.getElementById('gardaStatus');
     const chipsEl  = document.getElementById('gardaChips');
     const listEl   = document.getElementById('gardaList');
-    
+    const fallbackEl = document.getElementById('gardaFallback');
+
     const PRESET = {
       categories: ['Fraud / Economic Crime','Cyber Crime','Burglary & Theft','Drugs','Domestic Abuse','Traffic Matters','Community Policing','Other'],
       linksByCategory: {
@@ -1215,9 +916,7 @@ function electedLabelFromUser(u){
       ],
       'Community Policing': [
         { title:'Community policing', url:'https://www.garda.ie/en/crime-prevention/community-policing/community-policing.html', snippet:'How Garda community policing works and how residents can engage locally.' },
-        { title:'Community engagement', url:'https://www.garda.ie/en/crime-prevention/community-engagement/', snippet:'Neighbourhood Watch and other community engagement initiatives and resources.' },
-        { title:'Neighbourhood Watch', url:'https://www.garda.ie/en/crime-prevention/community-engagement/neighbourhood-watch.html', snippet:'Official Garda guidance on starting and supporting a local Neighbourhood Watch scheme.' },
-        { title:'Community Alert', url:'https://www.garda.ie/en/crime-prevention/community-engagement/community-alert.html', snippet:'Official Garda guidance on Community Alert for local safety and support.' }
+        { title:'Community engagement', url:'https://www.garda.ie/en/crime-prevention/community-engagement/', snippet:'Neighbourhood Watch and other community engagement initiatives and resources.' }
       ],
       'Other': [
         { title:'Crime prevention (main hub)', url:'https://www.garda.ie/en/crime-prevention/', snippet:'Main Garda crime prevention hub with practical guidance and official resources.' },
@@ -1280,37 +979,14 @@ function electedLabelFromUser(u){
     }
     function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
     function showFallback(){
+      // In tests/offline we still want content; render preset links quietly.
       renderPreset();
-      setStatus('Official Garda resources');
-    }
-
-    function bindCategoryButtons(getItemsForCategory){
-      chipsEl.querySelectorAll('.garda-cat').forEach((b) => {
-        b.addEventListener('click', () => {
-          const cat = b.dataset.cat || 'All';
-          chipsEl.querySelectorAll('.garda-cat').forEach((x) => x.classList.toggle('is-active', x.dataset.cat === cat));
-          const show = getItemsForCategory(cat);
-          listEl.innerHTML = (show || []).map(x => `
-            <div class="garda-item">
-              <div class="row">
-                <div class="title">${esc(x.title || '')}</div>
-                <div class="date">${esc(x.date || '')}</div>
-              </div>
-              ${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}
-              <a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a>
-              <div class="meta">${esc(x.category || 'Other')}</div>
-            </div>
-          `).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
-        });
-      });
-      const first = chipsEl.querySelector('.garda-cat[data-cat="All"]') || chipsEl.querySelector('.garda-cat');
-      if(first) first.click();
     }
 
     function render(items){
       if(!chipsEl || !listEl) return;
-      const safe = filterItems(items || []);
-      const cats = Array.from(new Set(safe.map(x => x.category || 'Other'))).sort((a,b)=>a.localeCompare(b));
+
+      const cats = Array.from(new Set((items||[]).map(x => x.category || 'Other'))).sort((a,b)=>a.localeCompare(b));
       const allCats = ['All', ...cats];
 
       chipsEl.innerHTML = `
@@ -1324,79 +1000,105 @@ function electedLabelFromUser(u){
         </div>
       `;
 
-      bindCategoryButtons((cat) => (cat === 'All') ? safe : safe.filter(x => (x.category || 'Other') === cat));
-    }
+      function apply(cat){
+        chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat));
+        const show = (cat === 'All') ? items : items.filter(x => (x.category||'Other') === cat);
 
-    function buildPresetItems(){
-      const items = [];
-      PRESET.categories.forEach((cc) => {
-        (PRESET.linksByCategory[cc] || []).forEach((l) => {
-          items.push({
-            category: cc,
-            title: l.title,
-            url: l.url,
-            snippet: (l.snippet || ''),
-            date: 'Official link'
-          });
-        });
-      });
-      return filterItems(items);
+        listEl.innerHTML = (show||[]).map(x => `
+          <div class="garda-item">
+            <div class="row">
+              <div class="title">${esc(x.title || '')}</div>
+              <div class="date">${esc(x.date || '')}</div>
+            </div>
+            ${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}
+            <a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a>
+            <div class="meta">${esc(x.category || 'Other')}</div>
+          </div>
+        `).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
+      }
+
+      chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat)));
+      apply('All');
     }
 
     function renderPreset(){
       if(!chipsEl || !listEl) return;
-      render(buildPresetItems());
+      const allCats = ['All', ...PRESET.categories];
+
+      chipsEl.innerHTML = `
+        <div class="garda-cat-grid">
+          ${allCats.map((c,i)=>`
+            <button type="button" class="garda-cat ${i===0?'is-active':''}" data-cat="${esc(c)}">
+              <span class="icon">${iconSvg(c)}</span>
+              <span class="label">${esc(c)}</span>
+            </button>
+          `).join('')}
+        </div>
+      `;
+
+      function apply(cat){
+        chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat));
+        const cats = (cat === 'All') ? PRESET.categories : [cat];
+        const items = [];
+        cats.forEach(cc => (PRESET.linksByCategory[cc] || []).forEach(l => items.push({ category: cc, title: l.title, url: l.url, snippet: (l.snippet || '') })));
+
+        const safeItems = filterItems(items);
+
+        listEl.innerHTML = safeItems.map(x => `
+          <div class="garda-item">
+            <div class="row">
+              <div class="title">${esc(x.title || '')}</div>
+              <div class="date">Official link</div>
+            </div>
+            ${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}
+            <a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a>
+            <div class="meta">${esc(x.category || 'Other')}</div>
+          </div>
+        `).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
+      }
+
+      chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat)));
+      apply('All');
     }
 
     async function loadGardaFeed(){
-      renderPreset();
       setStatus('Loading Garda updates…');
       try{
-        const controller = ('AbortController' in window) ? new AbortController() : null;
-        const timer = controller ? setTimeout(() => controller.abort(), 6000) : null;
-
-        const res = await fetch('/.netlify/functions/garda-feed', {
-          cache: 'no-store',
-          signal: controller ? controller.signal : undefined
-        });
-
-        if (timer) clearTimeout(timer);
+        // Browser direct fetch to garda.ie is commonly blocked by CORS; use a server-side proxy function.
+        const res = await fetch('/.netlify/functions/garda-feed', { cache: 'no-store' });
         if(!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
 
-        const recentItems = Array.isArray(data.recent)
-          ? data.recent.map(x => ({
-              title: x.title || 'Official Garda update',
-              url: x.url || '',
-              category: x.category || 'Other',
-              date: x.date || 'Latest update',
-              snippet: x.snippet || ''
-            }))
-          : [];
+        // Accept both schemas:
+        // 1) { items: [...] } (alerts-style feed)
+        // 2) { categories: [...] } (curated links feed)
+        let itemsRaw = [];
+        if (Array.isArray(data.items)) {
+          itemsRaw = data.items;
+        } else if (Array.isArray(data.categories)) {
+          itemsRaw = data.categories.map(c => ({
+            title: c.label || c.title || 'Official link',
+            url: c.url || '',
+            category: c.label || c.category || 'Other',
+            date: 'Official link',
+            snippet: c.snippet || ''
+          }));
+        }
 
-        const categoryItems = Array.isArray(data.categories)
-          ? data.categories.map(c => ({
-              title: c.title || c.label || 'Official Garda resource',
-              url: c.url || '',
-              category: c.category || c.label || 'Other',
-              date: c.date || 'Official link',
-              snippet: c.snippet || ''
-            }))
-          : [];
+        const items = filterItems(itemsRaw);
 
-        const items = filterItems([...recentItems, ...categoryItems]);
+        // Only show fallback if we truly have nothing valid to show
         if(!items.length){
+          setStatus('Official Garda resources');
           showFallback();
           return;
         }
-
-        const recentCount = recentItems.length;
-        setStatus(recentCount
-          ? `Official Garda resources + ${recentCount} latest update${recentCount === 1 ? '' : 's'}`
-          : 'Official Garda resources (source: Garda.ie)');
-        render(items.slice(0, 80));
+        setStatus('Official Garda resources (source: Garda.ie)');
+        if (fallbackEl) fallbackEl.style.display = 'none';
+        render(items.slice(0, 40));
       }catch(e){
         console.warn('garda-feed failed', e);
+        setStatus('Official Garda resources');
         showFallback();
       }
     }
@@ -1490,12 +1192,113 @@ function electedLabelFromUser(u){
     })();
   </script>
 <script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const notice = document.getElementById('anwAccessNotice');
+
+  const showNotice = (msg) => {
+    if(notice){
+      notice.style.display = 'block';
+      notice.innerHTML = msg;
+    }
+  };
+  const hideNotice = () => {
+    if(notice) notice.style.display = 'none';
+  };
+
+  const isDemo = (() => {
+    try{
+      const qs = new URLSearchParams(location.search);
+      if(qs.get('demo') === '1') return true;
+    }catch(e){}
+    try{
+      if(localStorage.getItem('anw_demo') === '1') return true;
+    }catch(e){}
+    return (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  })();
+
+  if(isDemo){
+    // Presentation mode: keep everything visible without requiring login/approval
+    hideNotice();
+    const notLogged = document.getElementById('dbNotLogged');
+    if(notLogged) notLogged.style.display = 'none';
+    const profileArea = document.getElementById('dbProfileArea');
+    if(profileArea) profileArea.style.display = 'block';
+    return;
+  }
+
+  const ensureIdentityUser = async () => {
+    if(!window.netlifyIdentity) return null;
+    return await new Promise((resolve)=>{
+      let done=false;
+      const finish=(u)=>{ if(done) return; done=true; resolve(u||null); };
+      try{
+        window.netlifyIdentity.on('init', (u)=>finish(u));
+        window.netlifyIdentity.init();
+      }catch(e){}
+      setTimeout(()=>{
+        try{
+          const u = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
+          finish(u);
+        }catch(e){ finish(null); }
+      }, 300);
+    });
+  };
+
+  const user = await ensureIdentityUser();
+  if(!user){
+    showNotice('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access your dashboard.');
+    return;
+  }
+
+  try{
+    const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
+    const email = user.email?.toLowerCase();
+    const profile = users.find(u => u.email?.toLowerCase() === email);
+
+    if(!profile || !(profile.approved || profile.active)){
+      showNotice('Your account is logged in but not yet approved. Please wait for approval.');
+      return;
+    }
+  }catch(e){}
+
+  hideNotice();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const label = document.getElementById('pageAccessLabel');
+  if(!label) return;
+
+  const normalize = (s) => String(s || '').toLowerCase().replace(/\s+/g,' ').trim();
+  const isGardaTab = (btn) => {
+    const t = normalize(btn?.textContent);
+    return t.includes('garda') && t.includes('safety');
+  };
+  const setLabelForButton = (btn) => {
+    if(isGardaTab(btn)) label.textContent = 'Public Page';
+    else label.textContent = 'Private Page';
+  };
+
+  // Collect likely tab buttons by text
+  const tabButtons = Array.from(document.querySelectorAll('button, a'))
+    .filter(el => {
+      const t = normalize(el.textContent);
+      return t === 'profile' || t === 'interest' || t === 'elections' || t === 'notices' || (t.includes('garda') && t.includes('safety'));
+    });
+
+  tabButtons.forEach(btn => btn.addEventListener('click', () => setLabelForButton(btn)));
+
+  // Initial label
+  const active = tabButtons.find(b => b.getAttribute('aria-selected') === 'true' || b.classList.contains('active'));
+  setLabelForButton(active || tabButtons.find(isGardaTab) || tabButtons[0]);
+});
+</script>
+<script>
 /* =========================
-   Dashboard access controller (final)
-   - Dashboard shell always loads
-   - Tabs stay visible
-   - Garda & Safety can be public via ACL
-   - Other tabs require login + approved resident profile
+   Dashboard access controller (v16 final)
+   - Logged-in + approved user: all dashboard tabs work
+   - Not logged in / pending / suspended user: all dashboard panels stay closed
+   - Garda keeps stable preset + filtered feed update, but only after auth
 ========================= */
 (function(){
   const notice = document.getElementById('anwAccessNotice');
@@ -1504,63 +1307,32 @@ function electedLabelFromUser(u){
   const panels = Array.from(document.querySelectorAll('.dash-tab-content'));
   let currentTab = 'tabProfile';
 
-  const showNotice = (html) => {
+  function showNotice(html){
     if(!notice) return;
     notice.style.display = 'block';
     notice.innerHTML = html || '';
-  };
+  }
 
-  const hideNotice = () => {
+  function hideNotice(){
     if(!notice) return;
     notice.style.display = 'none';
-  };
+  }
 
-  const hidePanels = () => {
+  function hidePanels(){
     panels.forEach((panel) => { panel.style.display = 'none'; });
-  };
+  }
 
-  const setActiveTab = (which) => {
+  function setActiveTab(which){
     currentTab = which || currentTab || 'tabProfile';
     tabs.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === currentTab));
-  };
+  }
 
-  const showPanel = (which) => {
+  function showPanel(which){
     const target = which || currentTab || 'tabProfile';
     setActiveTab(target);
     panels.forEach((panel) => {
       panel.style.display = (panel.id === target) ? 'block' : 'none';
     });
-  };
-
-  function readAcl(){
-    try{
-      return (typeof window.anwLoad === 'function')
-        ? window.anwLoad((window.ANW_KEYS && ANW_KEYS.ACL) ? window.ANW_KEYS.ACL : 'acl', {})
-        : {};
-    }catch(_){ return {}; }
-  }
-
-  function resolveAclRule(keyOrRule){
-    const raw = String(keyOrRule || '').trim();
-    if(!raw) return 'Public';
-    if(['Public','Authenticated','owner','admin','resident'].includes(raw)) return raw;
-    const acl = readAcl();
-    try{
-      if (acl && Object.prototype.hasOwnProperty.call(acl, raw)) return acl[raw];
-      if (acl && acl.features && Object.prototype.hasOwnProperty.call(acl.features, raw)) return acl.features[raw];
-      if (acl && acl.pages) {
-        for (const pageKey of Object.keys(acl.pages)) {
-          const page = acl.pages[pageKey];
-          if (page && Object.prototype.hasOwnProperty.call(page, raw)) return page[raw];
-          if (page && page.features && Object.prototype.hasOwnProperty.call(page.features, raw)) return page.features[raw];
-        }
-      }
-    }catch(_){}
-    return raw;
-  }
-
-  function gardaIsPublicByAcl(){
-    return String(resolveAclRule('dashboard:tab_garda')).trim() === 'Public';
   }
 
   async function ensureIdentityUser(){
@@ -1603,28 +1375,16 @@ function electedLabelFromUser(u){
 
   function isApproved(profile){
     if(!profile) return false;
+    if (typeof window.anwIsApproved === 'function') {
+      try { return !!window.anwIsApproved(profile); } catch(_){}
+    }
     const status = String(profile.status || profile.accountStatus || profile.registrationStatus || '').toLowerCase();
     return profile.approved === true || profile.active === true || status === 'active' || status === 'approved';
   }
 
   async function evaluate(which){
     const target = which || currentTab || 'tabProfile';
-    const isGarda = target === 'tabGarda';
-    const gardaPublic = gardaIsPublicByAcl();
-
     setActiveTab(target);
-
-    if(window.ANW_PUBLIC_MODE){
-      hideNotice();
-      showPanel(target);
-      return;
-    }
-
-    if(isGarda && gardaPublic){
-      hideNotice();
-      showPanel('tabGarda');
-      return;
-    }
 
     const user = await ensureIdentityUser();
     const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function'
@@ -1632,36 +1392,16 @@ function electedLabelFromUser(u){
       : '').toLowerCase().trim();
 
     if(!user && !fallbackEmail){
-      if(gardaPublic){
-        setActiveTab('tabGarda');
-        showPanel('tabGarda');
-        if(!isGarda){
-          showNotice('Only Garda &amp; Safety is public right now. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to open the other dashboard tabs.');
-        }else{
-          hideNotice();
-        }
-        return;
-      }
       hidePanels();
-      showNotice('The dashboard is available to registered residents only. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to continue.');
+      showNotice('Please <a href="login.html">log in</a> to access the dashboard.');
       return;
     }
 
     const profile = await getRegistryProfile(user || { email: fallbackEmail });
 
     if(!profile || !isApproved(profile)){
-      if(gardaPublic){
-        setActiveTab('tabGarda');
-        showPanel('tabGarda');
-        if(!isGarda){
-          showNotice('Your account is logged in, but it is still waiting for approval. Garda &amp; Safety remains available while the other dashboard tabs stay locked.');
-        }else{
-          hideNotice();
-        }
-        return;
-      }
       hidePanels();
-      showNotice('Your account is logged in, but it is still waiting for approval. Please wait for confirmation.');
+      showNotice('Your dashboard is currently unavailable. Please log in with an approved account.');
       return;
     }
 
@@ -1679,145 +1419,14 @@ function electedLabelFromUser(u){
       btn.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopImmediatePropagation();
-        evaluate(btn.dataset.tab || (gardaIsPublicByAcl() ? 'tabGarda' : 'tabProfile'));
+        evaluate(btn.dataset.tab || 'tabProfile');
       }, true);
     });
 
-    evaluate(gardaIsPublicByAcl() ? 'tabGarda' : 'tabProfile');
+    evaluate('tabProfile');
   }, { once:true });
 })();
 </script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const label = document.getElementById('pageAccessLabel');
-  if(!label) return;
-
-  const normalize = (s) => String(s || '').toLowerCase().replace(/\s+/g,' ').trim();
-  const isGardaTab = (btn) => {
-    const t = normalize(btn?.textContent);
-    return t.includes('garda') && t.includes('safety');
-  };
-  const setLabelForButton = (btn) => {
-    if(isGardaTab(btn)) label.textContent = 'Public Page';
-    else label.textContent = 'Private Page';
-  };
-
-  // Collect likely tab buttons by text
-  const tabButtons = Array.from(document.querySelectorAll('button, a'))
-    .filter(el => {
-      const t = normalize(el.textContent);
-      return t === 'profile' || t === 'interest' || t === 'elections' || t === 'notices' || (t.includes('garda') && t.includes('safety'));
-    });
-
-  tabButtons.forEach(btn => btn.addEventListener('click', () => setLabelForButton(btn)));
-
-  // Initial label
-  const active = tabButtons.find(b => b.getAttribute('aria-selected') === 'true' || b.classList.contains('active'));
-  setLabelForButton(active || tabButtons.find(isGardaTab) || tabButtons[0]);
-});
-</script>
 <script src="assets/acl-guard.js"></script>
-
-<script>
-(function(){
-  const INACTIVITY_LIMIT_MS = 10 * 60 * 1000;
-  const SESSION_START_KEY = 'anwSessionStart';
-  let logoutTimer = null;
-  let clockTimer = null;
-
-  function fmtElapsed(ms){
-    const total = Math.max(0, Math.floor(ms / 1000));
-    const h = String(Math.floor(total / 3600)).padStart(2,'0');
-    const m = String(Math.floor((total % 3600) / 60)).padStart(2,'0');
-    const s = String(total % 60).padStart(2,'0');
-    return `${h}:${m}:${s}`;
-  }
-
-  function getCurrentUser(){
-    return window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function'
-      ? window.netlifyIdentity.currentUser()
-      : null;
-  }
-
-  function getSessionStart(){
-    const stored = Number(sessionStorage.getItem(SESSION_START_KEY) || 0);
-    if(stored && Number.isFinite(stored) && stored > 0) return stored;
-    const now = Date.now();
-    sessionStorage.setItem(SESSION_START_KEY, String(now));
-    return now;
-  }
-
-  async function doLogout(){
-    try{ sessionStorage.removeItem(SESSION_START_KEY); }catch(_){}
-    try{
-      if(typeof window.anwLogout === 'function'){
-        await window.anwLogout();
-        return;
-      }
-      if(window.netlifyIdentity && typeof window.netlifyIdentity.logout === 'function'){
-        await window.netlifyIdentity.logout();
-      }
-    }catch(_){}
-    try{ if(typeof window.anwClearSession === 'function') window.anwClearSession(); }catch(_){}
-    window.location.href = 'login.html';
-  }
-
-  function tick(){
-    const card = document.getElementById('sessionClockCard');
-    const value = document.getElementById('sessionClockValue');
-    if(!card || !value) return;
-    const user = getCurrentUser();
-    if(!user){
-      card.style.display = 'none';
-      return;
-    }
-    card.style.display = 'flex';
-    value.textContent = fmtElapsed(Date.now() - getSessionStart());
-  }
-
-  function resetInactivity(){
-    tick();
-    if(logoutTimer) clearTimeout(logoutTimer);
-    logoutTimer = setTimeout(doLogout, INACTIVITY_LIMIT_MS);
-  }
-
-  function bindActivity(){
-    ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach((evt)=>{
-      window.addEventListener(evt, resetInactivity, { passive:true });
-    });
-  }
-
-  function handleAuthLogoutSync(){
-    try{ sessionStorage.removeItem(SESSION_START_KEY); }catch(_){}
-    const card = document.getElementById('sessionClockCard');
-    if(card) card.style.display = 'none';
-    window.location.replace('login.html');
-  }
-
-  try{ window.addEventListener('anw:auth-logout', handleAuthLogoutSync); }catch(_){ }
-  try{
-    if(window.netlifyIdentity && typeof window.netlifyIdentity.on === 'function'){
-      window.netlifyIdentity.on('logout', handleAuthLogoutSync);
-    }
-  }catch(_){ }
-
-
-  function initSessionUi(){
-    document.getElementById('btnLogoutProfile')?.addEventListener('click', doLogout);
-    bindActivity();
-    resetInactivity();
-    if(clockTimer) clearInterval(clockTimer);
-    clockTimer = setInterval(tick, 1000);
-    tick();
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', initSessionUi, { once:true });
-  }else{
-    initSessionUi();
-  }
-})();
-</script>
-
 </body>
 </html>
