@@ -1,31 +1,24 @@
 /**
  * netlify/functions/garda-feed.js
- * Fast Garda & Safety feed with server-side cache.
- * - Keeps Garda as the official source
- * - Stores only lightweight metadata (category, title, snippet, official URL)
- * - Removes broken/not-found links automatically
- * - Falls back to the last valid cached version if Garda is slow
+ * Stable Garda & Safety feed for dashboard.
+ * Returns one official curated resource per category + recent official updates.
+ * This avoids duplicated or incorrect category links from broad sitemap parsing.
  */
 
 import { getStore } from "@netlify/blobs";
 
 const HOMEPAGE_URL = "https://www.garda.ie/en/";
-const SITEMAP_URLS = [
-  "https://www.garda.ie/sitemap.aspx",
-  "https://www.garda.ie/en/sitemap.aspx"
-];
-
 const CACHE_STORE = "anw-garda-cache";
-const CACHE_KEY = "feed-v2";
+const CACHE_KEY = "feed-v3";
 const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6 hours
 
-const FALLBACK_CATEGORIES = [
+const CURATED_CATEGORIES = [
   { label: "Fraud / Economic Crime", title: "Fraud", category: "Fraud / Economic Crime", url: "https://www.garda.ie/en/crime/fraud/", snippet: "Official Garda guidance on fraud, scams and economic crime." },
   { label: "Cyber Crime", title: "Cyber Crime", category: "Cyber Crime", url: "https://www.garda.ie/en/crime/cyber-crime/", snippet: "Official Garda guidance on staying safe online and reporting cyber incidents." },
-  { label: "Burglary & Theft", title: "Burglary & Theft", category: "Burglary & Theft", url: "https://www.garda.ie/en/crime/burglary-theft/", snippet: "Burglary and theft prevention advice and reporting guidance." },
+  { label: "Burglary & Theft", title: "Securing your home", category: "Burglary & Theft", url: "https://www.garda.ie/en/crime-prevention/securing-your-home/", snippet: "Official Garda guidance on securing your home and preventing burglary." },
   { label: "Drugs", title: "Drugs", category: "Drugs", url: "https://www.garda.ie/en/crime/drugs/", snippet: "Official Garda guidance on drugs and related crime prevention." },
   { label: "Domestic Abuse", title: "Domestic abuse", category: "Domestic Abuse", url: "https://www.garda.ie/en/crime/domestic-abuse/domestic-abuse.html", snippet: "Official Garda support and reporting information for domestic abuse." },
-  { label: "Traffic Matters", title: "Roads Policing", category: "Traffic Matters", url: "https://www.garda.ie/en/roads-policing/", snippet: "Road safety and roads policing resources from Garda." },
+  { label: "Traffic Matters", title: "Road safety", category: "Traffic Matters", url: "https://www.garda.ie/en/roads-policing/road-safety/", snippet: "Road safety and roads policing resources from Garda." },
   { label: "Community Policing", title: "Neighbourhood Watch", category: "Community Policing", url: "https://www.garda.ie/en/crime-prevention/community-engagement/neighbourhood-watch.html", snippet: "Neighbourhood Watch and community safety information for residents." },
   { label: "Useful Contacts", title: "Useful contact numbers", category: "Useful Contacts", url: "https://www.garda.ie/en/contact-us/useful-contact-numbers/", snippet: "Emergency and useful Garda contact numbers." }
 ];
@@ -134,31 +127,6 @@ async function urlExists(url, timeoutMs = 1200) {
   }
 }
 
-function parseSitemap(html = "") {
-  const text = String(html);
-  const items = [];
-  const re = /<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
-  let match;
-  while ((match = re.exec(text)) !== null) {
-    const url = absoluteUrl(match[1]);
-    const title = stripTags(match[2]);
-    if (!validGardaUrl(url) || !title) continue;
-    if (title.length < 4 || /^(home|back|top)$/i.test(title)) continue;
-    const category = classifyCategory(title, url);
-    if (category === "Other") continue;
-    items.push({
-      id: `cat-${slugify(title)}`,
-      label: category,
-      title,
-      category,
-      url,
-      date: "Official link",
-      snippet: "Official Garda resource"
-    });
-  }
-  return dedupeByUrl(items);
-}
-
 function parseHomepage(html = "") {
   const items = [];
   const text = String(html);
@@ -180,10 +148,10 @@ function parseHomepage(html = "") {
       type: "update"
     });
   }
-  return dedupeByUrl(items).slice(0, 10);
+  return dedupeByUrl(items).slice(0, 8);
 }
 
-async function validateItems(items = [], limit = 20) {
+async function validateItems(items = [], limit = 12) {
   const input = dedupeByUrl(items).filter((item) => validGardaUrl(item.url));
   const toCheck = input.slice(0, limit);
   const rest = input.slice(limit);
@@ -194,20 +162,10 @@ async function validateItems(items = [], limit = 20) {
   return [...valid, ...rest];
 }
 
-async function fetchDynamicCategories() {
-  const results = await Promise.allSettled(SITEMAP_URLS.map((url) => fetchText(url, 1600)));
-  const categories = [];
-  for (const result of results) {
-    if (result.status === "fulfilled") categories.push(...parseSitemap(result.value));
-  }
-  const combined = dedupeByUrl([...categories, ...FALLBACK_CATEGORIES.map((item) => ({ ...item, date: "Official link" }))]);
-  return validateItems(combined, 18);
-}
-
 async function fetchHomepageUpdates() {
   try {
     const html = await fetchText(HOMEPAGE_URL, 1800);
-    return await validateItems(parseHomepage(html), 10);
+    return await validateItems(parseHomepage(html), 8);
   } catch {
     return [];
   }
@@ -257,12 +215,10 @@ async function writeCache(payload) {
 
 async function buildFreshPayload() {
   const [categories, recent] = await Promise.all([
-    fetchDynamicCategories(),
+    validateItems(CURATED_CATEGORIES.map((item) => ({ ...item, date: "Official link" })), 8),
     fetchHomepageUpdates()
   ]);
-
-  const safeCategories = categories.length ? categories : await validateItems(FALLBACK_CATEGORIES.map((item) => ({ ...item, date: "Official link" })), 8);
-  return buildPayload({ categories: safeCategories, recent, stale: false });
+  return buildPayload({ categories: categories.length ? categories : CURATED_CATEGORIES, recent, stale: false });
 }
 
 function jsonResponse(body, status = 200, extraHeaders = {}) {
@@ -291,14 +247,14 @@ export default async function handler() {
     ]);
     await writeCache(payload);
     return jsonResponse(payload, 200, { "x-garda-cache": "MISS" });
-  } catch (error) {
+  } catch {
     if (cached?.payload) {
       const stalePayload = { ...cached.payload, stale: true, updated: cached.payload.updated || new Date(cached.cachedAt).toISOString() };
       return jsonResponse(stalePayload, 200, { "x-garda-cache": "STALE" });
     }
 
     const fallbackPayload = buildPayload({
-      categories: FALLBACK_CATEGORIES.map((item) => ({ ...item, date: "Official link" })),
+      categories: CURATED_CATEGORIES.map((item) => ({ ...item, date: "Official link" })),
       recent: [],
       stale: true
     });
