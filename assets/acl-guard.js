@@ -1,6 +1,5 @@
 // assets/acl-guard.js
-// ACL guard (pages + features), with shell-public support for pages like dashboard
-// where the page can load but internal tabs/features are controlled individually.
+// ACL guard (pages + features), with shell-public support and hierarchical custom roles.
 
 (function () {
   function isPublicMode(){
@@ -17,9 +16,23 @@
   }
 
   function getRole() {
-    try { return (typeof anwGetLoggedRole === "function" ? anwGetLoggedRole() : "resident") || "resident"; }
-    catch { return "resident"; }
+    try {
+      const raw = (typeof anwGetLoggedRole === "function" ? anwGetLoggedRole() : "resident") || "resident";
+      return String(raw).trim().toLowerCase();
+    } catch {
+      return "resident";
+    }
   }
+
+  const ROLE_RANK = {
+    public: 0,
+    resident: 1,
+    street_coordinator: 2,
+    assistant_area_coordinator: 3,
+    area_coordinator: 4,
+    projects: 4,
+    owner: 5
+  };
 
   function getPageKey() {
     const m1 = document.querySelector('meta[name="anw-acl-key"]');
@@ -53,14 +66,14 @@
 
   function classify(rule) {
     if (!rule) return "Public";
-    return rule;
+    return String(rule).trim();
   }
 
   function resolveAclRule(acl, keyOrRule) {
     const raw = String(keyOrRule || "").trim();
     if (!raw) return "Public";
 
-    if (raw === "Public" || raw === "Authenticated" || raw === "owner" || raw === "admin" || raw === "resident") {
+    if (["Public","Authenticated","public","resident","street_coordinator","assistant_area_coordinator","area_coordinator","projects","owner"].includes(raw)) {
       return raw;
     }
 
@@ -87,13 +100,30 @@
     return raw;
   }
 
+  function roleAllows(required, current) {
+    const req = String(required || "").trim().toLowerCase();
+    const cur = String(current || "").trim().toLowerCase();
+    if (req === "public") return true;
+    if (req === "authenticated") return isLoggedIn();
+    if (cur === "owner") return true;
+
+    const reqRank = ROLE_RANK[req];
+    const curRank = ROLE_RANK[cur];
+
+    if (typeof reqRank === "number" && typeof curRank === "number") {
+      if (req === "projects") return cur === "projects" || cur === "owner";
+      return curRank >= reqRank;
+    }
+
+    return cur === req;
+  }
+
   function ruleAllows(rule, role) {
     if (isPublicMode()) return true;
-    rule = classify(rule);
-    if (rule === "Public") return true;
-    if (rule === "Authenticated") return isLoggedIn();
-    if (role === "owner") return true;
-    return role === rule;
+    const clean = classify(rule);
+    if (clean === "Public") return true;
+    if (clean === "Authenticated") return isLoggedIn();
+    return roleAllows(clean, role);
   }
 
   function applyNav(role, acl) {
@@ -136,7 +166,7 @@
     }
 
     if (r !== "Public" && r !== "Authenticated") {
-      if (role !== "owner" && role !== r) {
+      if (!ruleAllows(r, role)) {
         location.replace("dashboard.html");
       }
     }
