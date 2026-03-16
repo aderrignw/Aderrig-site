@@ -1145,7 +1145,7 @@
       <div>
         <h3 style="margin:0;">Access Control</h3>
         <p class="tiny muted" style="margin:6px 0 0;">
-          Control which pages, tabs and sub-tabs are public or require login. Garda & Safety can stay public while the other dashboard tabs remain protected.
+          Control which pages, tabs and sub-tabs are public or require a specific site role. Roles follow the site hierarchy: resident, street coordinator, assistant area coordinator, area coordinator, projects and owner.
         </p>
       </div>
       <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -1156,7 +1156,7 @@
     </div>
 
     <p id="acMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
-    <p class="ac-note">Tip: use <strong>Public</strong> to open something for visitors. For the dashboard, keep <code>page:dashboard</code> public and control each dashboard sub-tab below.</p>
+    <p class="ac-note">Tip: use <strong>Public</strong> to open something for visitors. Everything else stays private by default. You can also give access to a single sub-tab without opening the whole section.</p>
 
     <div class="ac-wrap" style="margin-top:0.75rem;">
       <table class="ac-table">
@@ -1932,29 +1932,49 @@
   }
 
   
-  const ACL_ROLES = ['public','resident','street_admin','volunteer','area_coordinator','aux_coordinator','platform_support','admin'];
+  
+  const ACL_ROLES = ['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'];
 
   const ACL_ITEMS = [
     { key:'page:index', label:'Home', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:about', label:'About', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:report', label:'Report Incident', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:alerts', label:'Community Alerts', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:projects', label:'Community Projects', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:projects', label:'Community Projects page', group:'Projects', indent:0, defaults:{ projects:true, area_coordinator:true, owner:true } },
+    { key:'projects:tab_monitoring', label:'Projects · Monitoring', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
+    { key:'projects:tab_tasks', label:'Projects · Tasks', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
+    { key:'projects:tab_reports', label:'Projects · Reports', group:'Projects', indent:1, defaults:{ area_coordinator:true, owner:true } },
     { key:'page:handbook', label:'Handbook', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:privacy', label:'Privacy Policy', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:login', label:'Login / Register', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:dashboard', label:'Dashboard shell', group:'Dashboard', indent:0, defaults:{ public:true } },
-    { key:'dashboard:tab_profile', label:'Profile tab', group:'Dashboard', indent:1, defaults:{ resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true } },
-    { key:'dashboard:tab_interest', label:'Interest tab', group:'Dashboard', indent:1, defaults:{ resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true } },
-    { key:'dashboard:tab_elections', label:'Elections tab', group:'Dashboard', indent:1, defaults:{ resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true } },
-    { key:'dashboard:tab_notices', label:'Notices tab', group:'Dashboard', indent:1, defaults:{ resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true } },
-    { key:'dashboard:tab_garda', label:'Garda & Safety tab', group:'Dashboard', indent:1, defaults:{ public:true } },
-    { key:'page:household', label:'Household', group:'Site pages', indent:0, defaults:{ resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true } },
-    { key:'page:admin', label:'Admin shell', group:'Admin', indent:0, defaults:{ admin:true, platform_support:true, area_coordinator:true, aux_coordinator:true } },
-    { key:'page:access-control', label:'Access Control shortcut', group:'Admin', indent:1, defaults:{ admin:true, platform_support:true, area_coordinator:true, aux_coordinator:true } },
-    { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, street_admin:true, volunteer:true, area_coordinator:true, aux_coordinator:true, platform_support:true, admin:true } },
-    { key:'page:preview', label:'Preview', group:'Site pages', indent:0, defaults:{ admin:true, platform_support:true } }
+
+    { key:'page:dashboard', label:'Dashboard', group:'Dashboard', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
+    { key:'dashboard:tab_profile', label:'Dashboard · Profile', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
+    { key:'dashboard:tab_interest', label:'Dashboard · Interest', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
+    { key:'dashboard:tab_elections', label:'Dashboard · Elections', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
+    { key:'dashboard:tab_notices', label:'Dashboard · Notices', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
+    { key:'dashboard:tab_garda', label:'Dashboard · Garda & Safety', group:'Dashboard', indent:1, defaults:{ public:true } },
+
+    { key:'page:household', label:'Household', group:'Residents', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
+    { key:'page:resident-profile', label:'Resident profile data', group:'Residents', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
+    { key:'page:street-management', label:'Street management', group:'Residents', indent:1, defaults:{ street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
+    { key:'page:regional-management', label:'Regional management', group:'Residents', indent:1, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
+
+    { key:'page:admin', label:'Admin panel', group:'Owner controls', indent:0, defaults:{ owner:true } },
+    { key:'page:access-control', label:'Access Control sub-tab', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
+    { key:'page:preview', label:'Preview', group:'Owner controls', indent:0, defaults:{ owner:true } }
   ];
+
+  const ROLE_RANK = {
+    public: 0,
+    resident: 1,
+    street_coordinator: 2,
+    assistant_area_coordinator: 3,
+    area_coordinator: 4,
+    projects: 4,
+    owner: 5
+  };
 
   let ACCESS_RULES_CACHE = [];
 
@@ -1970,20 +1990,54 @@
     if(entry.public) return 'Public';
 
     const selected = ACL_ROLES.filter(role => role !== 'public' && !!entry[role]);
+    if(!selected.length) return 'owner';
 
-    if(!selected.length) return 'admin';
-    if(selected.length === 7) return 'Authenticated';
+    if(selected.length === ACL_ROLES.length - 1) return 'Authenticated';
 
-    const onlyAdmin = selected.every(role => ['admin','platform_support','area_coordinator','aux_coordinator'].includes(role));
-    if(onlyAdmin) return 'admin';
+    const rankMap = selected.map(role => ROLE_RANK[role] ?? 999);
+    const minRank = Math.min(...rankMap);
+    const rankMatchedRoles = selected.filter(role => (ROLE_RANK[role] ?? 999) === minRank);
 
-    if(selected.length === 1){
-      const only = selected[0];
-      if(only === 'resident') return 'resident';
-      if(only === 'admin') return 'admin';
+    if(rankMatchedRoles.length === 1){
+      return rankMatchedRoles[0];
+    }
+
+    if(rankMatchedRoles.includes('projects') && rankMatchedRoles.length === 1){
+      return 'projects';
     }
 
     return 'Authenticated';
+  }
+
+  function applyRuleToRow(row, rule){
+    const clean = String(rule == null ? '' : rule).trim();
+    ACL_ROLES.forEach(role => { row[role] = false; });
+
+    if(clean === 'Public'){
+      row.public = true;
+      return;
+    }
+
+    if(clean === 'Authenticated'){
+      ACL_ROLES.filter(role => role !== 'public').forEach(role => { row[role] = true; });
+      return;
+    }
+
+    if(clean === 'projects'){
+      row.projects = true;
+      row.owner = true;
+      return;
+    }
+
+    const rank = ROLE_RANK[clean];
+    if(typeof rank === 'number'){
+      ACL_ROLES.filter(role => role !== 'public').forEach(role => {
+        const roleRank = ROLE_RANK[role];
+        if(typeof roleRank === 'number' && roleRank >= rank){
+          row[role] = true;
+        }
+      });
+    }
   }
 
   function mapSavedAclToMatrix(saved){
@@ -2007,34 +2061,30 @@
         null
       );
 
-      const rule = String(direct == null ? '' : direct).trim();
-
-      if(rule === 'Public'){
-        row.public = true;
-      } else if(rule === 'Authenticated'){
-        ACL_ROLES.filter(role => role !== 'public').forEach(role => row[role] = true);
-      } else if(rule === 'resident'){
-        row.resident = true;
-      } else if(rule === 'admin'){
-        row.admin = true;
-        row.platform_support = true;
-        row.area_coordinator = true;
-        row.aux_coordinator = true;
-      }
+      applyRuleToRow(row, direct);
     });
 
     return matrix;
   }
 
   function matrixToAclPayload(matrix){
-    const payload = { features:{}, pages:{}, publicFeatures:[], __matrix:{} };
+    const payload = {
+      features:{},
+      pages:{},
+      publicFeatures:[],
+      __matrix:{},
+      rolesMeta:{
+        order:['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'],
+        rank: ROLE_RANK
+      }
+    };
 
     matrix.forEach((row) => {
       const rule = classifyMatrixToRule(row);
       payload[row.key] = rule;
       payload.__matrix[row.key] = Object.fromEntries(ACL_ROLES.map(role => [role, !!row[role]]));
 
-      if(row.key.startsWith('dashboard:')){
+      if(row.key.startsWith('dashboard:') || row.key.startsWith('projects:')){
         payload.features[row.key] = rule;
         if(row.public) payload.publicFeatures.push(row.key);
       }
@@ -2045,8 +2095,18 @@
       }
 
       if(row.key.startsWith('dashboard:tab_')){
-        payload.pages['page:dashboard'] = payload.pages['page:dashboard'] || { shell:'Public', features:{} };
+        payload.pages['page:dashboard'] = payload.pages['page:dashboard'] || { shell:'resident', features:{} };
         payload.pages['page:dashboard'].features[row.key] = rule;
+      }
+
+      if(row.key === 'page:projects'){
+        payload.pages['page:projects'] = payload.pages['page:projects'] || { shell: rule, features:{} };
+        payload.pages['page:projects'].shell = rule;
+      }
+
+      if(row.key.startsWith('projects:tab_')){
+        payload.pages['page:projects'] = payload.pages['page:projects'] || { shell:'projects', features:{} };
+        payload.pages['page:projects'].features[row.key] = rule;
       }
     });
 
@@ -2060,7 +2120,7 @@
     let lastGroup = '';
     body.innerHTML = rules.map((r, idx) => {
       const groupHeader = (r.group && r.group !== lastGroup)
-        ? `<tr class="ac-group"><td colspan="9"><strong>${esc(r.group)}</strong></td></tr>`
+        ? `<tr class="ac-group"><td colspan="8"><strong>${esc(r.group)}</strong></td></tr>`
         : '';
       lastGroup = r.group || lastGroup;
 
@@ -2081,7 +2141,7 @@
               class="ac-toggle ${r[role] ? 'allowed' : 'denied'}"
               data-role="${role}"
               data-row="${idx}"
-              title="${role === 'public' ? 'Visible without login' : role}"
+              title="${role === 'public' ? 'Visible without login' : role.replaceAll('_',' ')}"
             >${r[role] ? '✓' : '—'}</button>
           </td>
         `).join('')}
@@ -2114,7 +2174,7 @@
       try{
         if(typeof window.anwSave === 'function') window.anwSave(KEY_ACCESS, payload);
       }catch(_){}
-      byId('acMsg').textContent = 'Access rules saved and synchronized with pages, tabs and sub-tabs.';
+      byId('acMsg').textContent = 'Access rules saved. Pages and sub-tabs are now linked to the new role-based ACL.';
     };
 
     byId('btnAcPrint').onclick = () => {
@@ -2131,6 +2191,7 @@
     ACCESS_RULES_CACHE = mapSavedAclToMatrix(saved);
     renderAccessControlFromData(ACCESS_RULES_CACHE);
   }
+
 
 
   async function loadDiagnostics(){
