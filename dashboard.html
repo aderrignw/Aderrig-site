@@ -1192,79 +1192,6 @@
     })();
   </script>
 <script>
-document.addEventListener('DOMContentLoaded', async () => {
-  const notice = document.getElementById('anwAccessNotice');
-
-  const showNotice = (msg) => {
-    if(notice){
-      notice.style.display = 'block';
-      notice.innerHTML = msg;
-    }
-  };
-  const hideNotice = () => {
-    if(notice) notice.style.display = 'none';
-  };
-
-  const isDemo = (() => {
-    try{
-      const qs = new URLSearchParams(location.search);
-      if(qs.get('demo') === '1') return true;
-    }catch(e){}
-    try{
-      if(localStorage.getItem('anw_demo') === '1') return true;
-    }catch(e){}
-    return (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
-  })();
-
-  if(isDemo){
-    // Presentation mode: keep everything visible without requiring login/approval
-    hideNotice();
-    const notLogged = document.getElementById('dbNotLogged');
-    if(notLogged) notLogged.style.display = 'none';
-    const profileArea = document.getElementById('dbProfileArea');
-    if(profileArea) profileArea.style.display = 'block';
-    return;
-  }
-
-  const ensureIdentityUser = async () => {
-    if(!window.netlifyIdentity) return null;
-    return await new Promise((resolve)=>{
-      let done=false;
-      const finish=(u)=>{ if(done) return; done=true; resolve(u||null); };
-      try{
-        window.netlifyIdentity.on('init', (u)=>finish(u));
-        window.netlifyIdentity.init();
-      }catch(e){}
-      setTimeout(()=>{
-        try{
-          const u = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
-          finish(u);
-        }catch(e){ finish(null); }
-      }, 300);
-    });
-  };
-
-  const user = await ensureIdentityUser();
-  if(!user){
-    showNotice('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access your dashboard.');
-    return;
-  }
-
-  try{
-    const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
-    const email = user.email?.toLowerCase();
-    const profile = users.find(u => u.email?.toLowerCase() === email);
-
-    if(!profile || !(profile.approved || profile.active)){
-      showNotice('Your account is logged in but not yet approved. Please wait for approval.');
-      return;
-    }
-  }catch(e){}
-
-  hideNotice();
-});
-</script>
-<script>
 document.addEventListener('DOMContentLoaded', () => {
   const label = document.getElementById('pageAccessLabel');
   if(!label) return;
@@ -1295,10 +1222,10 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 <script>
 /* =========================
-   Dashboard access controller (v16 final)
+   Dashboard access controller (v17 clean)
    - Logged-in + approved user: all dashboard tabs work
    - Not logged in / pending / suspended user: all dashboard panels stay closed
-   - Garda keeps stable preset + filtered feed update, but only after auth
+   - No clash / no double-gate / no flash
 ========================= */
 (function(){
   const notice = document.getElementById('anwAccessNotice');
