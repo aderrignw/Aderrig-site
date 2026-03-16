@@ -204,7 +204,7 @@
   }
 </style>
 </head>
-<body>
+<body data-acl-shell-public="true">
 <header class="site-header">
 <div class="brand">
 <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
@@ -1309,9 +1309,55 @@ document.addEventListener('DOMContentLoaded', () => {
     return profile.approved === true || profile.active === true || status === 'active' || status === 'approved';
   }
 
+  function loadAclSafe(){
+    try{
+      return (window.anwLoad && window.ANW_KEYS) ? (window.anwLoad(window.ANW_KEYS.ACL, {}) || {}) : {};
+    }catch(_){
+      return {};
+    }
+  }
+
+  function resolveAclRule(acl, keyOrRule){
+    const raw = String(keyOrRule || '').trim();
+    if(!raw) return 'Public';
+    if(['Public','Authenticated','public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'].includes(raw)){
+      return raw;
+    }
+    try{
+      if(acl && typeof acl === 'object' && Object.prototype.hasOwnProperty.call(acl, raw)) return acl[raw];
+      if(acl && acl.features && Object.prototype.hasOwnProperty.call(acl.features, raw)) return acl.features[raw];
+      if(acl && acl.pages){
+        for(const pageKey of Object.keys(acl.pages)){
+          const page = acl.pages[pageKey];
+          if(page && typeof page === 'object' && Object.prototype.hasOwnProperty.call(page, raw)) return page[raw];
+          if(page && page.features && Object.prototype.hasOwnProperty.call(page.features, raw)) return page.features[raw];
+        }
+      }
+    }catch(_){ }
+    return raw;
+  }
+
+  function isPublicDashboardTab(which){
+    const target = which || currentTab || 'tabProfile';
+    const tabBtn = tabs.find((btn) => btn.dataset.tab === target);
+    const panel = panels.find((node) => node.id === target);
+    const keyOrRule = tabBtn?.getAttribute('data-acl-feature')
+      || panel?.getAttribute('data-acl-feature')
+      || '';
+    const acl = loadAclSafe();
+    const rule = String(resolveAclRule(acl, keyOrRule) || '').trim().toLowerCase();
+    return rule === 'public';
+  }
+
   async function evaluate(which){
     const target = which || currentTab || 'tabProfile';
     setActiveTab(target);
+
+    if(isPublicDashboardTab(target)){
+      hideNotice();
+      showPanel(target);
+      return;
+    }
 
     const user = await ensureIdentityUser();
     const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function'
