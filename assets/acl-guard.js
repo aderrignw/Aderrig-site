@@ -16,6 +16,7 @@
   function getRole() {
     try {
       const raw = (typeof anwGetLoggedRole === "function" ? anwGetLoggedRole() : "resident") || "resident";
+      if (typeof window.anwNormalizeRoleName === "function") return window.anwNormalizeRoleName(raw);
       return String(raw).trim().toLowerCase();
     } catch {
       return "resident";
@@ -136,13 +137,22 @@
       return BUILTIN_PAGE_RULES[raw];
     }
 
-    // Safer fallback: unknown page/feature keys require login.
     return "Authenticated";
   }
 
   function roleAllows(required, current) {
-    const req = String(required || "").trim().toLowerCase();
-    const cur = String(current || "").trim().toLowerCase();
+    const normalize = (v) => {
+      try {
+        return typeof window.anwNormalizeRoleName === "function"
+          ? window.anwNormalizeRoleName(v)
+          : String(v || "").trim().toLowerCase();
+      } catch {
+        return String(v || "").trim().toLowerCase();
+      }
+    };
+
+    const req = normalize(required);
+    const cur = normalize(current);
 
     if (req === "public") return true;
     if (req === "authenticated") return isLoggedIn();
@@ -180,7 +190,6 @@
     ];
 
     nodes.forEach((el) => {
-      // Let dashboard tabs be controlled only by dashboard.js/html logic.
       if (isShellPublicPage() && (el.classList.contains("dash-tab") || el.classList.contains("dash-tab-content"))) {
         return;
       }
@@ -220,16 +229,22 @@
   };
 
   document.addEventListener("DOMContentLoaded", async () => {
-    if (isPublicMode()) {
-      try { document.body.removeAttribute("data-acl-loading"); } catch(e){}
-      return;
+    try {
+      if (isPublicMode()) return;
+      await ensureFresh();
+      const acl = loadAcl() || {};
+      const role = getRole();
+      applyNav(role, acl);
+      applyFeatures(role, acl);
+      enforcePage(role, acl);
+    } catch (e) {
+      console.warn("[acl-guard] fallback after error:", e);
+    } finally {
+      try { document.body.removeAttribute("data-acl-loading"); } catch (e) {}
     }
-    await ensureFresh();
-    const acl = loadAcl() || {};
-    const role = getRole();
-    applyNav(role, acl);
-    applyFeatures(role, acl);
-    enforcePage(role, acl);
-    try { document.body.removeAttribute("data-acl-loading"); } catch(e){}
+  });
+
+  window.addEventListener("load", () => {
+    try { document.body.removeAttribute("data-acl-loading"); } catch (e) {}
   });
 })();
