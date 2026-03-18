@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="anw-acl-key" content="page:handbook" />
+  <meta content="page:handbook" name="anw-acl-key"/>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 <!-- Auth pre-check disabled (temporary public mode) -->
 <script>
@@ -45,26 +45,30 @@
     .hb-attach:hover{ background: rgba(17,24,39,.03); text-decoration:none; }
   </style>
 </head>
-<body class="page-handbook">
+<body data-acl-shell-public="true" data-acl-loading="true" class="page-handbook">
 
 <header class="site-header">
-  <div class="brand">
-    <a class="site-logo" href="index.html">
-      <img class="logo-img" src="assets/logo/logo.png" alt="Aderrig Neighbourhood Watch" />
-    </a>
-  </div>
-  <nav class="nav">
-    <a href="index.html">Home</a>
-    <a href="about.html">About</a>
-    <a href="report.html">Report</a>
-    <a href="alerts.html">Community Alerts</a>
-    <a href="projects.html">Community Projects</a>
-    <a href="handbook.html" class="active">Handbook</a>
-    <a href="login.html">Login / Register</a>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="household.html">Household</a>
-    <a href="admin.html">Admin</a>
-  </nav>
+<div class="brand">
+<a class="site-logo" href="index.html">
+<img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/>
+</a>
+<div class="brand-text">
+<h1>Aderrig NW</h1>
+<p class="muted">Adamstown</p>
+</div>
+</div>
+<nav class="nav">
+<a href="index.html">Home</a>
+<a href="about.html">About</a>
+<a class="active" href="handbook.html">Handbook</a>
+<a href="report.html">Report</a>
+<a href="alerts.html">Community Alerts</a>
+<a href="projects.html">Community Projects</a>
+<a class="nav-login" href="login.html">Login / Register</a>
+<a href="dashboard.html">Dashboard</a>
+<a href="household.html">Household</a>
+<a href="admin.html">Admin</a>
+</nav>
 </header>
 
 <main class="container">
