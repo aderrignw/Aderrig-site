@@ -1,3 +1,87 @@
+
+/* Unified site header */
+.site-header{
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255,255,255,.94);
+  backdrop-filter: saturate(180%) blur(10px);
+  border-bottom: 1px solid rgba(17,24,39,.08);
+  width: min(var(--container), calc(100% - 24px));
+  margin: 0 auto;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex:0 0 auto;
+  min-width:0;
+}
+.site-logo{
+  display:flex;
+  align-items:center;
+  text-decoration:none;
+  flex:0 0 auto;
+}
+.logo-img{
+  height:40px;
+  width:auto;
+  max-width:260px;
+  display:block;
+  object-fit:contain;
+}
+.brand-text{
+  display:none !important;
+}
+.nav{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:8px;
+  margin-left:12px;
+  flex:1 1 auto;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.nav::-webkit-scrollbar{
+  display:none;
+}
+.nav a{
+  text-decoration:none;
+  color:var(--brand);
+  padding:6px 10px;
+  border-radius:999px;
+  font-weight:650;
+  font-size:.90rem;
+  white-space:nowrap;
+  flex:0 0 auto;
+}
+.nav a:hover,
+.nav a.active{
+  background:var(--brand-soft);
+  text-decoration:none;
+}
+.nav a.nav-login{
+  border:1px solid rgba(31,111,74,.18);
+}
+@media (max-width: 768px){
+  .logo-img{ height:32px; }
+  .site-header{ gap:10px; }
+}
+
+
+/* Prevent flash of unauthorized content */
+body[data-acl-loading="true"]{
+  visibility:hidden;
+}
+
 /* =========================================================
    ADERRIG NEIGHBOURHOOD WATCH — GLOBAL STYLES (Ireland)
    Focus:
