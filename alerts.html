@@ -1,2526 +1,660 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta content="page:admin" name="anw-acl-key"/>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Admin Panel — Aderrig NW</title>
-
-<script>
-  (function(){
-    try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
-  })();
-</script>
-
-<link rel="stylesheet" href="assets/style.css" />
-
-<script>document.documentElement.classList.add('admin-js');</script>
-
-<style id="admin-first-paint-fix">
-  .admin-tab-content{display:none;}
-  #tabResidents{display:block;}
-  .elect-subtab{display:none;}
-  #subManage{display:block;}
-
-.logout-btn-inline{min-width:104px;}
-
-</style>
-
-<style>
-  .tag { display:inline-block; padding:4px 10px; border-radius:999px; font-size:.85rem; border:1px solid rgba(0,0,0,.10); background:rgba(0,0,0,.04); }
-  .tag.ok { background: rgba(47,125,91,.10); border-color: rgba(47,125,91,.25); color: var(--brand); }
-  .tag.gray { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.10); color: inherit; }
-
-  #backupEnabled{ display:none !important; }
-  label[for="backupEnabled"]{ display:none !important; }
-
-  .anw-acc .acc-body > .card { margin-top: 12px; }
-  #tabTools details.anw-acc .acc-body .grid { align-items: start; }
-
-  #tabAccessControl .ac-wrap{ overflow:auto; border:1px solid var(--line); border-radius:14px; background:#fff; }
-  #tabAccessControl table.ac-table{ width:100%; min-width:920px; border-collapse:collapse; }
-  #tabAccessControl .ac-table th, #tabAccessControl .ac-table td{ padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; }
-  #tabAccessControl .ac-table thead th{ position:sticky; top:0; background:#fff; z-index:2; }
-  #tabAccessControl .ac-item{ display:flex; align-items:flex-start; gap:10px; }
-  #tabAccessControl .ac-badge{ font-size:.70rem; padding:2px 8px; border-radius:999px; border:1px solid rgba(0,0,0,.10); background:rgba(0,0,0,.03); }
-  #tabAccessControl .ac-key{
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-size:.72rem; color: rgba(0,0,0,.55); margin-top:2px;
-  }
-  #tabAccessControl .ac-indent-0{ font-weight:700; }
-  #tabAccessControl .ac-indent-1{ padding-left:18px; }
-  #tabAccessControl .ac-indent-2{ padding-left:36px; }
-  #tabAccessControl .ac-indent-3{ padding-left:54px; }
-
-  #tabAccessControl .ac-toggle{
-    width:36px; height:30px;
-    border-radius:10px;
-    border:1px solid var(--line);
-    background:#fff;
-    cursor:pointer;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:900;
-    user-select:none;
-  }
-  #tabAccessControl .ac-toggle.allowed{
-    color: var(--brand);
-    background: rgba(47,125,91,.12);
-    border-color: rgba(47,125,91,.28);
-  }
-  #tabAccessControl .ac-toggle.denied{
-    color: rgba(0,0,0,.35);
-    background: rgba(0,0,0,.03);
-    border-color: rgba(0,0,0,.10);
-  }
-  #tabAccessControl .ac-toggle:focus{ outline:2px solid rgba(47,125,91,.28); outline-offset:2px; }
-
-  .resident-action-cell{
-    display:flex;
-    gap:8px;
-    align-items:center;
-    justify-content:center;
-    flex-wrap:wrap;
-    width:100%;
-    min-height:44px;
-  }
-  .resident-actions-col{
-    width:220px;
-    min-width:220px;
-    text-align:center;
-  }
-  #tabResidents table{ width:100%; table-layout:fixed; }
-  #tabResidents th.resident-actions-col,
-  #tabResidents td.resident-actions-col{ text-align:center; vertical-align:middle; }
-  #tabResidents td.resident-actions-col .btn-line{ margin:0 auto; }
-
-  #tabResidents .resident-table-wrap{ margin-top:0.75rem; overflow-x:visible; }
-  #tabResidents table{ width:100%; table-layout:fixed; border-collapse:collapse; }
-  #tabResidents th, #tabResidents td{ vertical-align:middle; }
-  #tabResidents td{ word-break:normal; overflow-wrap:anywhere; }
-  #tabResidents th:nth-child(1), #tabResidents td:nth-child(1){ width:10%; }
-  #tabResidents th:nth-child(2), #tabResidents td:nth-child(2){ width:16%; }
-  #tabResidents th:nth-child(3), #tabResidents td:nth-child(3){ width:24%; }
-  #tabResidents th:nth-child(4), #tabResidents td:nth-child(4){ width:10%; }
-  #tabResidents th:nth-child(5), #tabResidents td:nth-child(5){ width:10%; }
-  #tabResidents th:nth-child(6), #tabResidents td:nth-child(6){ width:20%; }
-  #tabResidents th:nth-child(7), #tabResidents td:nth-child(7){ width:10%; }
-  #tabResidents td:nth-child(3){ line-height:1.35; }
-  .resident-modal-top{ display:flex; gap:1rem; align-items:flex-start; justify-content:space-between; }
-  .resident-modal-top .resident-id-grid{ flex:1; min-width:0; }
-  .resident-photo-box{ width:108px; flex:0 0 108px; text-align:center; }
-  .resident-photo-preview{ width:88px; height:88px; border-radius:16px; border:1px solid var(--line); background:#eef3f0 center/cover no-repeat; margin:0 auto 8px; overflow:hidden; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.8rem; }
-  .resident-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .resident-photo-preview.has-photo{ color:transparent; }
-  @media (max-width: 900px){
-    .resident-modal-top{ flex-direction:column; }
-    .resident-photo-box{ width:100%; flex:0 0 auto; text-align:left; }
-    .resident-photo-preview{ margin:0 0 8px; }
-  }
-
-  .notice-actions{
-    display:flex;
-    gap:8px;
-    justify-content:flex-end;
-    flex-wrap:wrap;
-    margin-top:10px;
-  }
-
-  .notice-card-meta{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    margin-top:6px;
-  }
-
-  .notice-chip{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    padding:4px 10px;
-    border-radius:999px;
-    background:#f4f7f5;
-    border:1px solid rgba(17,24,39,.08);
-    font-size:.82rem;
-  }
-
-  @media print {
-    body.print-access-control header,
-    body.print-access-control nav,
-    body.print-access-control .admin-tabs,
-    body.print-access-control #tabResidents,
-    body.print-access-control #tabTasks,
-    body.print-access-control #tabElections,
-    body.print-access-control #tabReports,
-    body.print-access-control #tabProjects,
-    body.print-access-control #tabTools,
-    body.print-access-control footer {
-      display: none !important;
+  <meta charset="UTF-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Community Alerts · Aderrig NW</title>
+  <meta name="anw-page" content="page:alerts"/>
+  <link href="assets/style.css" rel="stylesheet"/>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script src="assets/app-core.js"></script>
+  <style>
+    .alerts-page{
+      max-width:1100px;
+      margin:24px auto 56px;
+      padding:0 16px;
     }
-    body.print-access-control #tabAccessControl {
-      display: block !important;
+    .alerts-shell{
+      background:#fff;
+      border:1px solid #e5e7eb;
+      border-radius:24px;
+      box-shadow:0 14px 40px rgba(15,23,42,.08);
+      padding:24px;
     }
-    body.print-access-control main.wrap { max-width: 100% !important; padding: 0 !important; }
-  }
-#tabAccessControl .ac-note{
-    margin-top:8px;
-    font-size:.82rem;
-    color:var(--muted);
-  }
-  #tabAccessControl .ac-group{
-    background:#fafcfb;
-  }
-  #tabAccessControl .ac-group td{
-    background:#fafcfb;
-  }
-</style>
-
-<style id="page-access-style">
-  footer.site-footer { position: relative; text-align: center; margin-top: 60px; }
-  footer.site-footer .page-access { position: absolute; left: 0; color: green; font-weight: normal; }
-</style>
-
-<script>
-  window.ANW_PUBLIC_MODE = false;
-
-  window.KEY_NOTICES = window.KEY_NOTICES || ((window.ANW_KEYS && (window.ANW_KEYS.NOTICES || window.ANW_KEYS.KEY_NOTICES)) || 'anw_notices');
-  window.getNoticesKey = window.getNoticesKey || function(){
-    try{
-      var keys = window.ANW_KEYS || {};
-      return keys.NOTICES || keys.KEY_NOTICES || window.KEY_NOTICES || 'anw_notices';
-    }catch(_){
-      return 'anw_notices';
+    .alert-tabs{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin:18px 0 20px;
     }
-  };
-
-  window.showToast = window.showToast || function(title, message){
-    try{
-      if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){
-        ANW.ui.toast(String(message || title || ''), 'info');
-        return;
-      }
-    }catch(_){}
-    try{ console.log(String(title||''), String(message||'')); }catch(_){}
-  };
-
-  window.toast = window.toast || function(message, type){
-    try{
-      if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){
-        ANW.ui.toast(String(message||''), type || 'info');
-        return;
-      }
-    }catch(_){}
-    try{ console.log(String(message||'')); }catch(_){}
-  };
-
-  function getResidentNumericReg(v){
-    const raw = String(v == null ? '' : v).trim();
-    if(!raw) return 0;
-    const m = raw.match(/(\d+)/);
-    return m ? parseInt(m[1], 10) || 0 : 0;
-  }
-
-  function formatResidentRegId(v){
-    const n = getResidentNumericReg(v);
-    return n ? `ANW${String(n).padStart(4, '0')}` : '';
-  }
-
-  function anwNextRegId(list){
-    const users = Array.isArray(list) ? list : [];
-    let max = 0;
-    users.forEach(u => {
-      const n = getResidentNumericReg(u && (u.regId || u.regNo));
-      if(n > max) max = n;
-    });
-    return formatResidentRegId(max + 1);
-  }
-
-  function assignMissingResidentNumbers(list){
-    const users = Array.isArray(list) ? list : [];
-    let max = 0;
-
-    users.forEach(u => {
-      const n = getResidentNumericReg(u && (u.regId || u.regNo));
-      if(n > max) max = n;
-    });
-
-    let changed = false;
-    users.forEach(u => {
-      const status = String((u && u.status) || '').toLowerCase();
-      const approved = ['active','approved'].includes(status);
-      const currentRaw = u && (u.regId || u.regNo);
-      const normalized = formatResidentRegId(currentRaw);
-
-      if(approved && !currentRaw){
-        max += 1;
-        const id = formatResidentRegId(max);
-        u.regId = id;
-        u.regNo = id;
-        changed = true;
-      } else if(normalized && ((u.regId !== normalized) || (u.regNo !== normalized))){
-        u.regId = normalized;
-        u.regNo = normalized;
-        changed = true;
-      }
-    });
-
-    return changed;
-  }
-
-  function updateAdminLoginNavLabel(){
-    try{
-      const u = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
-        ? window.netlifyIdentity.currentUser()
-        : null;
-      document.querySelectorAll('nav.nav a[href="login.html"]').forEach(a => {
-        a.textContent = u ? 'My Account' : 'Login / Register';
-      });
-    }catch(_){}
-  }
-  window.addEventListener('DOMContentLoaded', updateAdminLoginNavLabel);
-</script>
-
-<script>
-  (function loadAssets(){
-    var prefix = (location.protocol === 'file:') ? '' : '/';
-    function addJs(src, defer){
-      var s = document.createElement('script');
-      s.src = src;
-      if(defer) s.defer = true;
-      document.head.appendChild(s);
+    .alert-tab.active{
+      background:#167c53;
+      color:#fff;
+      border-color:#167c53;
     }
-    addJs('https://identity.netlify.com/v1/netlify-identity-widget.js', true);
-    addJs(prefix + 'assets/identity.js', true);
-    addJs(prefix + 'assets/app-core.js', true);
-    addJs(prefix + 'assets/acl-guard.js', true);
-  })();
-</script>
+    .alert-panel{
+      display:none;
+      margin-top:12px;
+    }
+    .alert-panel.active{
+      display:block;
+    }
+    .grid-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+    .stack{
+      display:grid;
+      gap:14px;
+    }
+    .card-lite{
+      border:1px solid #e5e7eb;
+      border-radius:18px;
+      padding:16px;
+      background:#fff;
+    }
+    .muted{
+      color:#6b7280;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#f3f4f6;
+      font-weight:700;
+      font-size:.92rem;
+    }
+    .notice{
+      display:none;
+      margin:12px 0 14px;
+      padding:14px 16px;
+      border-radius:14px;
+      background:#fff7ed;
+      border:1px solid #fdba74;
+      color:#9a3412;
+      font-weight:600;
+    }
+    .form-row{
+      display:grid;
+      gap:6px;
+    }
+    .form-row label{
+      font-weight:700;
+    }
+    .form-row input,
+    .form-row select,
+    .form-row textarea{
+      width:100%;
+      border:1px solid #d1d5db;
+      border-radius:12px;
+      padding:12px 14px;
+      font:inherit;
+      background:#fff;
+    }
+    .form-row textarea{
+      min-height:140px;
+      resize:vertical;
+    }
+    .actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .list{
+      display:grid;
+      gap:12px;
+      margin-top:12px;
+    }
+    .list-item{
+      border:1px solid #e5e7eb;
+      border-radius:16px;
+      padding:14px;
+      background:#fafafa;
+    }
+    .list-item h4{
+      margin:0 0 6px;
+    }
+    .alert-preview{
+      white-space:pre-wrap;
+      background:#0f172a;
+      color:#e2e8f0;
+      border-radius:16px;
+      padding:14px;
+      min-height:110px;
+    }
+    .hidden{
+      display:none !important;
+    }
+    @media (max-width: 820px){
+      .grid-2{ grid-template-columns:1fr; }
+    }
+  </style>
 </head>
-
-<body data-acl-loading="true" data-acl-shell-public="true">
-
-<header class="site-header">
-<div class="brand">
-<a class="site-logo" href="index.html">
-<img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/>
-</a>
-<div class="brand-text">
-<h1>Aderrig NW</h1>
-<p class="muted">Adamstown</p>
-</div>
-</div>
-<nav class="nav">
-<a href="index.html">Home</a>
-<a href="about.html">About</a>
-<a href="handbook.html">Handbook</a>
-<a href="report.html">Report</a>
-<a href="alerts.html">Community Alerts</a>
-<a href="projects.html">Community Projects</a>
-<a class="nav-login" href="login.html">Login / Register</a>
-<a href="dashboard.html">Dashboard</a>
-<a href="household.html">Household</a>
-<a class="active" href="admin.html">Admin</a>
-</nav>
-</header>
-
-<main class="wrap">
-  <section class="card">
-    <h2>Admin panel</h2>
-    <p class="muted">Manage resident registrations, elections and volunteer tasks.</p>
-    <p id="adminGateMsg" class="tiny muted" style="margin-top:0.5rem; display:none;"></p>
-
-    <div class="actions admin-tabs" style="margin-top:0.5rem;">
-      <button type="button" class="btn small admin-tab active" data-tab="tabResidents">Residents</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabTasks">Volunteer tasks</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabElections">Elections</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabReports">Reports</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabNotices">Notices</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabHandbook">Handbook</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabProjects">Projects Monitoring</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabAccessControl">Access Control</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabTools">Tools</button>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html">
+        <img alt="Aderrig NW" src="assets/logo_web_hd.png"/>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html" data-acl="Public">Home</a>
+        <a href="about.html" data-acl="Public">About</a>
+        <a href="handbook.html" data-acl="Public">Handbook</a>
+        <a href="report.html" data-acl="Authenticated">Report</a>
+        <a class="active" href="alerts.html" data-acl="Authenticated">Community Alerts</a>
+        <a href="projects.html" data-acl="Authenticated">Community Projects</a>
+        <a href="login.html" data-acl="Public">Login / Register</a>
+        <a href="dashboard.html" data-acl="Authenticated">Dashboard</a>
+        <a href="household.html" data-acl="Authenticated">Household</a>
+        <a href="admin.html" data-acl="owner">Admin</a>
+      </nav>
     </div>
-  </section>
+  </header>
 
-  <!-- ================= RESIDENTS ================= -->
-  <section class="card admin-tab-content" id="tabResidents">
-    <h3>Residents</h3>
-
-    <div class="actions resident-tabs" style="margin-top:0.25rem;">
-      <button type="button" class="btn small resident-tab active" data-subtab="subPending">Pending</button>
-      <button type="button" class="btn small resident-tab" data-subtab="subApproved">Approved</button>
-      <button type="button" class="btn small resident-tab" data-subtab="subAll">All</button>
-    </div>
-
-    <div id="resSummary" class="tiny muted" style="margin-top:0.5rem;"></div>
-
-    <div class="resident-table-wrap">
-      <table style="width:100%;">
-        <thead>
-          <tr>
-            <th>Reg No</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Eircode</th>
-            <th>Status</th>
-            <th>Roles</th>
-            <th class="resident-actions-col">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="resBody"></tbody>
-      </table>
-    </div>
-
-    <p id="resEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No residents found.</p>
-  </section>
-
-  <div id="modalResident" class="modal" style="display:none;">
-    <div class="modal-content card">
-      <div class="modal-header">
-        <div>
-          <h3 style="margin:0;">Resident details</h3>
-          <p class="sub" style="margin-top:0.25rem;">Email, Eircode and Registration No are protected and cannot be changed.</p>
-        </div>
-        <button type="button" class="btn-line small" id="btnCloseResident">Close</button>
-      </div>
-
-      <div class="modal-body">
-        <div class="resident-modal-top">
-          <div class="resident-id-grid">
-            <div class="grid-2" style="gap:1rem;">
-              <div class="field">
-                <label>Registration No</label>
-                <input id="mRegId" type="text" disabled>
-              </div>
-              <div class="field">
-                <label>Status</label>
-                <input id="mStatus" type="text" disabled>
-              </div>
-            </div>
-          </div>
-          <div class="resident-photo-box">
-            <div class="resident-photo-preview" id="mPhotoPreview">👤</div>
-            <div class="tiny muted">Profile photo</div>
-          </div>
-        </div>
-
-        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
-          <div class="field">
-            <label>Email</label>
-            <input id="mEmail" type="email" disabled>
-          </div>
-          <div class="field">
-            <label>Eircode</label>
-            <input id="mEir" type="text" disabled>
-          </div>
-        </div>
-
-        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
-          <div class="field">
-            <label>Full name</label>
-            <input id="mName" type="text">
-          </div>
-          <div class="field">
-            <label>Phone</label>
-            <input id="mPhone" type="text">
-          </div>
-        </div>
-
-        <div class="field" style="margin-top:1rem;">
-          <label>Address</label>
-          <input id="mAddress" type="text" disabled>
-        </div>
-
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Resident type</label>
-            <select id="mType">
-              <option value="">Select…</option>
-              <option value="owner">Owner</option>
-              <option value="tenant">Tenant</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Management company</label>
-            <input id="mMgmt" type="text">
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Roles</label>
-          <label class="chk"><input id="mCoord" type="checkbox"> <span>Street Coordinator</span></label>
-          <label class="chk"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
-          <label class="chk"><input id="mAlertAdmin" type="checkbox" disabled> <span>Community Alerts admin (set after approval)</span></label>
-
-          <div id="mVolunteerRolesWrap" style="margin:0.5rem 0 0 1.25rem;">
-            <p class="tiny muted" style="margin:0 0 0.25rem;">Volunteer roles (8): select one or more extra functions for this resident.</p>
-            <div style="display:grid; grid-template-columns:repeat(2, minmax(180px, 1fr)); column-gap:18px; row-gap:4px;">
-              <label class="chk"><input id="mVStreet" type="checkbox"> <span>Street watch / patrols</span></label>
-              <label class="chk"><input id="mVLeaf" type="checkbox"> <span>Distribute leaflets</span></label>
-              <label class="chk"><input id="mVTech" type="checkbox"> <span>Tech support</span></label>
-              <label class="chk"><input id="mVEld" type="checkbox"> <span>Elderly checks</span></label>
-              <label class="chk"><input id="mVClean" type="checkbox"> <span>Community clean-up</span></label>
-              <label class="chk"><input id="mVPark" type="checkbox"> <span>Parking assistance</span></label>
-              <label class="chk"><input id="mVMeet" type="checkbox"> <span>Meeting organiser</span></label>
-              <label class="chk"><input id="mVTrans" type="checkbox"> <span>Translation</span></label>
-            </div>
-          </div>
-        </div>
-
-        <p class="tiny muted" id="mMsg" style="margin-top:0.5rem;"></p>
-
-        <div class="actions" id="residentModalActions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn-line small" id="btnReject">Reject</button>
-          <button type="button" class="btn-line small" id="btnSuspendResident">Suspend</button>
-          <button type="button" class="btn-line small" id="btnRemoveResident">Remove</button>
-          <button type="button" class="btn small" id="btnSaveResident">Save</button>
-          <button type="button" class="btn-line small logout-btn-inline" id="btnLogoutAdmin">Logout</button>
-          <button type="button" class="btn small" id="btnApprove">Approve</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="modalInterest" class="modal" style="display:none;">
-    <div class="modal-content card">
-      <div class="actions" style="justify-content:space-between; align-items:center;">
-        <h3 style="margin:0;">Candidate interest</h3>
-        <button type="button" class="btn-line small" id="btnCloseInterest">Close</button>
-      </div>
-
-      <div class="grid-2" style="gap:1rem; margin-top:0.5rem;">
-        <div class="field">
-          <label>Candidate</label>
-          <input id="iName" type="text" disabled>
-        </div>
-        <div class="field">
-          <label>Email</label>
-          <input id="iEmail" type="text" disabled>
-        </div>
-      </div>
-
-      <div class="grid-2" style="gap:1rem;">
-        <div class="field">
-          <label>Role</label>
-          <input id="iRole" type="text" disabled>
-        </div>
-        <div class="field">
-          <label>Status</label>
-          <input id="iStatus" type="text" disabled>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Submitted</label>
-        <input id="iDate" type="text" disabled>
-      </div>
-
-      <div class="field">
-        <label>Motivation / experience</label>
-        <textarea id="iText" rows="8" readonly></textarea>
-      </div>
-
-      <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-        <button class="btn-line" type="button" id="btnInterestReject">Reject</button>
-        <button class="btn" type="button" id="btnInterestApprove">Approve</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= TASKS ================= -->
-  <section class="card admin-tab-content" id="tabTasks" style="display:none;">
-    <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-      <div>
-        <h3 style="margin:0;">Volunteer tasks</h3>
-        <p class="tiny muted" style="margin:6px 0 0;">
-          Create and manage volunteer tasks for the community. Households can accept open tasks in the Household page.
-        </p>
-      </div>
-      <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button type="button" class="btn small btn-line" id="btnTaskRefresh">Refresh</button>
-        <button type="button" class="btn small" id="btnTaskNew">New task</button>
-      </div>
-    </div>
-
-    <div class="grid" style="grid-template-columns: 1fr 1fr; gap:14px; margin-top:12px;">
-      <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
-        <h4 style="margin:0;">Task builder</h4>
-        <p class="tiny muted" style="margin:6px 0 10px;">
-          Use targeting to limit tasks to specific Eircodes or streets, and set suitable volunteer roles.
-        </p>
-
-        <div class="grid-2" style="gap:12px;">
-          <div class="field">
-            <label>Task code</label>
-            <input id="admTaskCode" type="text" disabled>
-          </div>
-          <div class="field">
-            <label>Status</label>
-            <select id="admTaskStatus">
-              <option value="open">Open</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Title</label>
-          <input id="admTaskTitle" type="text" placeholder="e.g., Leaflet drop on Street A">
-        </div>
-
-        <div class="field">
-          <label>Description</label>
-          <textarea id="admTaskDesc" rows="4" placeholder="What needs to be done, any instructions, and who to contact."></textarea>
-        </div>
-
-        <div class="grid-2" style="gap:12px;">
-          <div class="field">
-            <label>Targeting</label>
-            <select id="admTaskType">
-              <option value="general">General (all volunteers)</option>
-              <option value="eircode">Eircode(s)</option>
-              <option value="street">Street(s)</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Preferred completion date</label>
-            <input id="admTaskDue" type="date">
-          </div>
-        </div>
-
-        <div class="grid-2" style="gap:12px;">
-          <div class="field">
-            <label>Eircode(s) (semicolon separated)</label>
-            <input id="admTaskEircodes" type="text" placeholder="e.g., K78XXXX; K78YYYY">
-          </div>
-          <div class="field">
-            <label>Street(s) (semicolon separated)</label>
-            <input id="admTaskStreets" type="text" placeholder="e.g., The Avenue; Main Street">
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Suitable volunteer roles (semicolon separated)</label>
-          <input id="admTaskRoles" type="text" placeholder="e.g., Distribute leaflets; Street watch / patrols">
-          <p class="tiny muted" style="margin:6px 0 0;">Leave blank to show the task to any volunteer household.</p>
-        </div>
-
-        <p class="tiny muted" id="admTaskMsg" style="margin-top:10px;"></p>
-
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
-          <button type="button" class="btn-line small" id="btnTaskDelete" style="display:none;">Delete</button>
-          <button type="button" class="btn-line small" id="btnTaskClear">Clear</button>
-          <button type="button" class="btn small" id="btnTaskSave">Save task</button>
-        </div>
-      </div>
-
-      <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-          <h4 style="margin:0;">Tasks</h4>
-          <div class="tiny muted" id="admTasksSummary"></div>
-        </div>
-
-        <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
-          <div class="field" style="min-width:220px; margin:0;">
-            <label class="tiny muted" for="admTasksFilter">Status filter</label>
-            <select id="admTasksFilter" class="input" style="width:100%;">
-              <option value="all">All</option>
-              <option value="open">Open</option>
-              <option value="assigned">Assigned</option>
-              <option value="completed">Completed</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-
-          <div class="field" style="min-width:280px; margin:0;">
-            <label class="tiny muted" for="admTasksSearch">Search</label>
-            <input id="admTasksSearch" type="text" placeholder="Code, title, eircode, street, volunteer email...">
-          </div>
-        </div>
-
-        <div style="overflow-x:auto; margin-top:10px;">
-          <table style="width:100%; min-width:920px;">
-            <thead>
-              <tr>
-                <th style="text-align:left;">Code</th>
-                <th style="text-align:left;">Title</th>
-                <th style="text-align:left;">Target</th>
-                <th style="text-align:left;">Due</th>
-                <th style="text-align:left;">Status</th>
-                <th style="text-align:left;">Assigned to</th>
-                <th style="text-align:left;">Updated</th>
-                <th style="text-align:left;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="admTasksTbody"></tbody>
-          </table>
-        </div>
-        <p id="admTasksEmpty" class="tiny muted" style="display:none; margin-top:0.75rem;">No tasks found.</p>
-      </div>
-    </div>
-  </section>
-  <!-- ================= ELECTIONS ================= -->
-  <section class="card admin-tab-content" id="tabElections" style="display:none;">
-    <h3>Elections</h3>
-
-    <div class="actions resident-tabs" style="margin-top:0.25rem;">
-      <button type="button" class="btn small elect-tab active" data-subtab="subManage">Manage</button>
-      <button type="button" class="btn small elect-tab" data-subtab="subCandidates">Candidates</button>
-      <button type="button" class="btn small elect-tab" data-subtab="subResults">Results</button>
-    </div>
-
-    <div id="subManage" class="elect-subtab" style="margin-top:0.75rem;">
-      <div class="grid-2" style="gap:1rem;">
-        <div class="field">
-          <label>Role</label>
-          <select id="elRole">
-            <option value="">Select…</option>
-            <option value="area">Area Coordinator</option>
-            <option value="assistant">Assistant Area Coordinator</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Status</label>
-          <select id="elStatus">
-            <option value="open">Open</option>
-            <option value="closed">Closed</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="grid-2" style="gap:1rem;">
-        <div class="field">
-          <label>Start date</label>
-          <input id="elStart" type="date">
-        </div>
-        <div class="field">
-          <label>End date</label>
-          <input id="elEnd" type="date">
-        </div>
-      </div>
-
-      <p class="tiny muted" id="elMsg" style="margin-top:0.5rem;"></p>
-
-      <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-        <button class="btn" type="button" id="btnCreateElection">Create / Update</button>
-      </div>
-
-      <div class="resident-table-wrap">
-        <table style="width:100%;">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Role</th>
-              <th>Period</th>
-              <th>Status</th>
-              <th>Winner</th>
-              <th style="width:200px;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="elBody"></tbody>
-        </table>
-      </div>
-      <p id="elEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No elections configured.</p>
-    </div>
-
-    <div id="subCandidates" class="elect-subtab" style="display:none; margin-top:0.75rem;">
-      <p class="tiny muted" style="margin-top:0;">
-        Candidates come from residents who submitted Interest in their dashboard and were approved here.
+  <main class="alerts-page">
+    <section class="alerts-shell">
+      <h1>Community alerts</h1>
+      <p class="muted">
+        This area is used to share important security and community information with Aderrig residents.
+        In this demo version, any visitor can create alerts and contact entries.
+        In a live system, permissions will be restricted to authorised Garda liaison and ANW admins.
       </p>
 
-      <div class="resident-table-wrap">
-        <table style="width:100%;">
-          <thead>
-            <tr>
-              <th>Role</th>
-              <th>Reg No</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Interest status</th>
-              <th style="width:160px;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="candBody"></tbody>
-        </table>
-      </div>
-      <p id="candEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No interests submitted.</p>
-    </div>
+      <div id="anwAccessNotice" class="notice"></div>
 
-    <div id="subResults" class="elect-subtab" style="display:none; margin-top:0.75rem;">
-      <p class="tiny muted" style="margin-top:0;">
-        Results are calculated from votes stored as 1 vote per household (Reg No) per role.
-        A winner is declared only if the leading candidate reaches at least <strong>60%</strong> of total approved households.
+      <div class="alert-tabs">
+        <button class="btn btn-line alert-tab active" data-acl-feature="action:alerts_send" data-requires-auth="1" data-tab="send" type="button">Send alert</button>
+        <button class="btn btn-line alert-tab" data-acl-feature="alerts:tab_contacts" data-requires-auth="1" data-tab="contacts" type="button">Authorised contacts</button>
+      </div>
+
+      <p class="muted">
+        In this demo, alerts are stored locally in this browser (access is still restricted by login/roles).
       </p>
-      <div id="resultsBox"></div>
-    </div>
-  </section>
 
-  <!-- ================= REPORTS ================= -->
-  <section class="card admin-tab-content" id="tabReports" style="display:none;">
-    <h3>Reports</h3>
-    <p class="tiny muted" style="margin-top:0;">
-      View and manage incident reports submitted via the <a href="report.html">Report</a> page.
-    </p>
-
-    <div class="actions" style="justify-content:flex-start; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem;">
-      <div class="field" style="min-width:220px; margin:0;">
-        <label class="tiny muted" for="repStatusFilter">Status</label>
-        <select id="repStatusFilter" class="input" style="width:100%;">
-          <option value="all">All</option>
-          <option value="submitted">Submitted</option>
-          <option value="in_review">In review</option>
-          <option value="sent_to_garda">Sent to Gardaí</option>
-          <option value="closed">Closed</option>
-        </select>
-      </div>
-
-      <div class="field" style="min-width:280px; margin:0;">
-        <label class="tiny muted" for="repSearch">Search (ID / email / location)</label>
-        <input id="repSearch" type="text" placeholder="e.g., RPT-0003 or someone@email.com" />
-      </div>
-
-      <div style="display:flex; gap:0.5rem; align-items:flex-end;">
-        <button type="button" class="btn" id="btnRepRefresh">Refresh</button>
-        <button type="button" class="btn btn-line" id="btnRepExport">Export file</button>
-      </div>
-    </div>
-
-    <p id="repMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
-
-    <div class="resident-table-wrap">
-      <table style="width:100%;">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Created</th>
-            <th>Category</th>
-            <th>Location</th>
-            <th>Reporter email</th>
-            <th>Status</th>
-            <th style="width:260px;">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="repBody"></tbody>
-      </table>
-    </div>
-
-    <p id="repEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No reports found.</p>
-  </section>
-
-  <!-- ================= NOTICES ================= -->
-  <section class="card admin-tab-content" id="tabNotices" style="display:none;">
-    <h3>Notices</h3>
-    <p class="tiny muted" style="margin-top:0;">Create official notices that appear on member dashboards. Messages are read-only for residents.</p>
-
-    <div class="grid-2" style="gap:1rem; align-items:flex-start;">
-      <div>
-        <h4 style="margin-top:0;">Create / Update notice</h4>
-        <div class="field">
-          <label>Title</label>
-          <input id="ntTitle" type="text" maxlength="120" placeholder="e.g., Visits to elderly residents" />
-        </div>
-        <div class="field">
-          <label>Message</label>
-          <textarea id="ntMessage" rows="5" maxlength="600" placeholder="Short reminder for members..."></textarea>
-        </div>
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Category (optional)</label>
-            <select id="ntCategory">
-              <option value="General">General</option>
-              <option value="Volunteer">Volunteer</option>
-              <option value="Safety">Safety</option>
-              <option value="Meeting">Meeting</option>
-              <option value="Garda">Garda</option>
-              <option value="Bins">Bins</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Expiry (optional)</label>
-            <input id="ntExpires" type="date" />
-          </div>
-        </div>
-
-        <h4 style="margin:0.75rem 0 0.25rem;">Home carousel</h4>
-        <p class="tiny muted" style="margin-top:0;">Optional. If enabled, this notice can appear as a compact carousel banner on the Home page.</p>
-        <div class="grid-2" style="gap:1rem; align-items:flex-end;">
-          <div class="field" style="margin:0;">
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
-              <input id="ntHomeEnabled" type="checkbox">
-              <span>Show on Home</span>
-            </label>
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Home visibility</label>
-            <select id="ntHomeVisibility">
-              <option value="private" selected>Private (members only)</option>
-              <option value="public">Public (everyone)</option>
-            </select>
-          </div>
-        </div>
-
-        <h4 style="margin:0.75rem 0 0.25rem;">Send to</h4>
-        <p class="tiny muted" style="margin-top:0;">Choose one or more targeting options. If you select nothing, the notice will be visible to all logged-in members.</p>
-
-        <div class="field" style="margin:0.25rem 0 0.5rem;">
-          <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
-            <input id="ntAllLogged" type="checkbox" checked>
-            <span>All logged-in members</span>
-          </label>
-        </div>
-
-        <div class="field" style="margin:0.25rem 0 0.5rem;">
-          <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
-            <input id="ntNonAdminOnly" type="checkbox">
-            <span>Residents only (exclude admins/owners)</span>
-          </label>
-        </div>
-
-        <div class="field">
-          <label>By role (optional)</label>
-          <div class="grid-2" style="gap:0.5rem;">
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="resident"> <span>Residents</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="street_admin"> <span>Street Coordinators</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="area_coordinator"> <span>Area Coordinators</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="aux_coordinator"> <span>Assistant Area Coordinators</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="volunteer"> <span>Project Volunteers</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="platform_support"> <span>Platform/Admin Support</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="admin"> <span>Admins</span></label>
-          </div>
-        </div>
-
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Eircode prefix (optional)</label>
-            <input id="ntEirPrefixes" type="text" placeholder="e.g., K78 (comma separated)" />
-          </div>
-          <div class="field">
-            <label>Street name(s) (optional)</label>
-            <input id="ntStreets" type="text" placeholder="e.g., Aderrig Park, Castlegate Way" />
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Specific Eircodes (optional, one per line)</label>
-          <textarea id="ntEircodes" rows="3" placeholder="K78XXXX&#10;K78YYYY"></textarea>
-        </div>
-
-        <div class="field">
-          <label>Specific member emails (optional, one per line)</label>
-          <textarea id="ntEmails" rows="3" placeholder="person@email.com"></textarea>
-        </div>
-
-        <p id="ntMsg" class="tiny muted"></p>
-
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnNtClear">Clear</button>
-          <button type="button" class="btn" id="btnNtPublish">Publish notice</button>
-        </div>
-      </div>
-
-      <div class="card" style="padding:1rem; margin-top:1rem;">
-        <h4 style="margin-top:0;">Bin collection import</h4>
-        <p class="tiny muted" style="margin-top:0;">
-          Use only the CSV file. Imported bin notices are saved automatically as public Home notices and will be shown for <strong>this week and next week</strong>.
-        </p>
-
-        <div class="field" style="display:none;">
-          <label>Schedule lines</label>
-          <textarea id="binCsv" rows="6"></textarea>
-        </div>
-
-        <div class="field">
-          <label>Collection CSV file</label>
-          <input id="binCsvFile" type="file" accept=".csv,text/csv" />
-          <p class="tiny muted" style="margin-top:6px;">Select the collection CSV and click <strong>Import collection CSV</strong>.</p>
-        </div>
-
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnClearBinNotices">Clear imported bin notices</button>
-          <button type="button" class="btn" id="btnBinImport">Import collection CSV</button>
-        </div>
-
-        <p id="binMsg" class="tiny muted"></p>
-      </div>
-
-      <div>
-        <h4 style="margin-top:0;">Existing notices</h4>
-        <p class="tiny muted" id="ntListMsg" style="margin-top:0.5rem;"></p>
-        <div id="ntList"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= HANDBOOK ================= -->
-  <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
-    <h3>Handbook</h3>
-    <p class="tiny muted" style="margin-top:0;">Create categories and items for the resident Handbook. Residents can view published items only. Prefer external links for large PDFs.</p>
-
-    <div class="grid-2" style="gap:1rem; align-items:flex-start;">
-      <div>
-        <h4 style="margin-top:0;">Categories</h4>
-        <div class="field">
-          <label>Category title</label>
-          <input id="hbCatTitle" type="text" maxlength="80" placeholder="e.g., Waste & Recycling" />
-        </div>
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Icon (emoji)</label>
-            <input id="hbCatIcon" type="text" maxlength="8" placeholder="🗑️" />
-          </div>
-          <div class="field">
-            <label>Order</label>
-            <input id="hbCatOrder" type="number" min="1" step="1" placeholder="1" />
-          </div>
-        </div>
-        <div class="field">
-          <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
-            <input id="hbCatActive" type="checkbox" checked>
-            <span>Active</span>
-          </label>
-        </div>
-        <p id="hbCatMsg" class="tiny muted"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnHbCatClear">Clear</button>
-          <button type="button" class="btn" id="btnHbCatSave">Save category</button>
-        </div>
-
-        <div class="resident-table-wrap">
-          <table style="width:100%;">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th style="width:90px;">Order</th>
-                <th style="width:90px;">Status</th>
-                <th style="width:160px;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="hbCatBody"></tbody>
-          </table>
-        </div>
-        <p id="hbCatEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No categories yet.</p>
-      </div>
-
-      <div>
-        <h4 style="margin-top:0;">Items</h4>
-        <div class="field">
-          <label>Category</label>
-          <select id="hbItemCategory"></select>
-        </div>
-        <div class="field">
-          <label>Item title</label>
-          <input id="hbItemTitle" type="text" maxlength="120" placeholder="e.g., Visitor Parking Locations" />
-        </div>
-        <div class="field">
-          <label>Summary (optional)</label>
-          <input id="hbItemSummary" type="text" maxlength="160" placeholder="Short description shown in the list" />
-        </div>
-
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Type</label>
-            <select id="hbItemType">
-              <option value="page" selected>Page (content on site)</option>
-              <option value="link">External link</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Status</label>
-            <select id="hbItemStatus">
-              <option value="published" selected>Published</option>
-              <option value="draft">Draft</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>External URL (for Link type)</label>
-          <input id="hbItemUrl" type="url" placeholder="https://..." />
-        </div>
-
-        <div class="field">
-          <label>Hero image (optional)</label>
-          <input id="hbItemHeroUrl" type="url" placeholder="https://... (recommended)" />
-          <div class="tiny muted" style="margin-top:6px;">Tip: prefer a link (Netlify Large Media/Drive) to avoid storing large files in the KV store.</div>
-        </div>
-
-        <div class="field">
-          <label>Content (HTML allowed)</label>
-          <textarea id="hbItemContent" rows="7" placeholder="Write the page content here..."></textarea>
-        </div>
-
-        <div class="field">
-          <label>Attachments (one per line: Label | URL)</label>
-          <textarea id="hbItemAttachments" rows="4" placeholder="Map PDF | https://...&#10;Bin schedule | https://..."></textarea>
-        </div>
-
-        <p id="hbItemMsg" class="tiny muted"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnHbItemClear">Clear</button>
-          <button type="button" class="btn" id="btnHbItemSave">Save item</button>
-        </div>
-
-        <div class="card" style="padding:1rem; margin-top:1rem;">
-          <h4 style="margin-top:0;">Items in selected category</h4>
-          <div id="hbItemList" class="grid" style="gap:10px;"></div>
-          <p id="hbItemEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No items in this category.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-  <!-- ================= PROJECTS ================= -->
-  <section class="card admin-tab-content" id="tabProjects" style="display:none;">
-    <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-      <div>
-        <h3 style="margin:0;">Projects Monitoring</h3>
-        <p class="tiny muted" style="margin:6px 0 0;">
-          Review projects and recipient-tracking entries saved in the central store.
-        </p>
-        <div id="pmStoreNote" class="tiny" style="margin-top:8px;"></div>
-      </div>
-      <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button type="button" class="btn small btn-line" id="btnPmRefresh">Refresh</button>
-        <button type="button" class="btn small" id="btnPmExport">Export</button>
-      </div>
-    </div>
-
-    <div class="grid-2" style="gap:1rem; margin-top:1rem;">
-      <div class="field">
-        <label>Filter by status</label>
-        <select id="pmStatusFilter">
-          <option value="all">All</option>
-          <option value="planned">Planned</option>
-          <option value="active">Active</option>
-          <option value="on_hold">On hold</option>
-          <option value="completed">Completed</option>
-          <option value="archived">Archived</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Search</label>
-        <input id="pmSearch" type="text" placeholder="Project title, owner, street, recipient...">
-      </div>
-    </div>
-
-    <div class="resident-table-wrap">
-      <table style="width:100%;">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Project</th>
-            <th>Status</th>
-            <th>Owner</th>
-            <th>Updated</th>
-            <th style="width:160px;">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="pmBody"></tbody>
-      </table>
-    </div>
-    <p id="pmEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No projects found.</p>
-
-    <div class="card" style="padding:1rem; margin-top:1rem;">
-      <h4 style="margin-top:0;">Recipient tracking</h4>
-      <div style="overflow-x:auto;">
-        <table style="width:100%;">
-          <thead>
-            <tr>
-              <th>Project</th>
-              <th>Recipient</th>
-              <th>Address / Eircode</th>
-              <th>Status</th>
-              <th>Updated</th>
-            </tr>
-          </thead>
-          <tbody id="pmRecipientsBody"></tbody>
-        </table>
-      </div>
-      <p id="pmRecipientsEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No recipient records found.</p>
-    </div>
-  </section>
-
-  <!-- ================= ACCESS CONTROL ================= -->
-  <section class="card admin-tab-content" id="tabAccessControl" style="display:none;">
-    <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-      <div>
-        <h3 style="margin:0;">Access Control</h3>
-        <p class="tiny muted" style="margin:6px 0 0;">
-          Control which pages, tabs and sub-tabs are public or require a specific site role. Roles follow the site hierarchy: resident, street coordinator, assistant area coordinator, area coordinator, projects and owner.
-        </p>
-      </div>
-      <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button type="button" class="btn small btn-line" id="btnAcRefresh">Refresh</button>
-        <button type="button" class="btn small btn-line" id="btnAcPrint">Print</button>
-        <button type="button" class="btn small" id="btnAcSave">Save access rules</button>
-      </div>
-    </div>
-
-    <p id="acMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
-    <p class="ac-note">Tip: use <strong>Public</strong> to open something for visitors. Everything else stays private by default. You can also give access to a single sub-tab without opening the whole section.</p>
-
-    <div class="ac-wrap" style="margin-top:0.75rem;">
-      <table class="ac-table">
-        <thead>
-          <tr>
-            <th style="min-width:320px;">Page / feature</th>
-            <th>Public</th>
-            <th>Resident</th>
-            <th>Street Coord.</th>
-            <th>Volunteer</th>
-            <th>Area Coord.</th>
-            <th>Assistant</th>
-            <th>Platform</th>
-            <th>Admin</th>
-          </tr>
-        </thead>
-        <tbody id="acBody"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- ================= TOOLS ================= -->
-  <section class="card admin-tab-content" id="tabTools" style="display:none;">
-    <h3>Tools</h3>
-    <p class="tiny muted" style="margin-top:0;">
-      Maintenance tools for backups, restore, exports and diagnostics.
-    </p>
-
-    <details class="anw-acc" open>
-      <summary><strong>Backups</strong></summary>
-      <div class="acc-body">
-        <div class="card" style="padding:1rem;">
-          <div class="grid" style="grid-template-columns: 1fr 1fr; gap:14px;">
-            <div>
-              <h4 style="margin-top:0;">Backup status</h4>
-              <p class="tiny muted" id="backupStatusText">Checking backup status…</p>
-              <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
-                <span id="backupStatusBadge" class="tag gray">Unknown</span>
-                <span id="backupLastRun" class="tag gray">Last run: —</span>
+      <section id="tab-send" class="alert-panel active">
+        <div class="grid-2">
+          <div class="stack">
+            <div class="card-lite stack">
+              <div class="form-row">
+                <label for="alertTitle">Alert title</label>
+                <input id="alertTitle" type="text" placeholder="Example: Suspicious activity near entrance"/>
               </div>
+              <div class="form-row">
+                <label for="alertCategory">Category</label>
+                <select id="alertCategory">
+                  <option value="Security">Security</option>
+                  <option value="Community">Community</option>
+                  <option value="Traffic">Traffic</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="Weather">Weather</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label for="alertPriority">Priority</label>
+                <select id="alertPriority">
+                  <option value="Normal">Normal</option>
+                  <option value="Important">Important</option>
+                  <option value="Urgent">Urgent</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label for="alertBody">Message</label>
+                <textarea id="alertBody" placeholder="Describe the alert in plain language..."></textarea>
+              </div>
+              <div class="form-row">
+                <label>Channels</label>
+                <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                  <label style="display:flex; gap:0.5rem; align-items:center;"><input checked id="mEmail" type="checkbox"/> Email</label>
+                  <label style="display:flex; gap:0.5rem; align-items:center;"><input id="mSms" type="checkbox"/> SMS</label>
+                  <label style="display:flex; gap:0.5rem; align-items:center;"><input id="mPush" type="checkbox"/> Push / App</label>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="btn btn-line" id="btnPreview" type="button">Preview</button>
+                <button class="btn" data-acl-feature="action:alerts_send" id="btnSendAlert" type="button">Send alert (local log)</button>
+              </div>
+              <div id="sendMsg" class="muted"></div>
             </div>
+          </div>
 
-            <div>
-              <h4 style="margin-top:0;">Actions</h4>
-              <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-                <button type="button" class="btn small" id="btnBackupNow">Run backup now</button>
-                <button type="button" class="btn small btn-line" id="btnBackupRefresh">Refresh status</button>
-              </div>
-
-              <div class="field" style="margin-top:1rem;">
-                <label for="restoreBackupFile">Restore backup file</label>
-                <input id="restoreBackupFile" type="file" accept=".json,application/json" />
-              </div>
-
-              <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-                <button type="button" class="btn small btn-line" id="btnRestoreBackup">Restore backup</button>
-              </div>
-
-              <p id="backupMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
+          <div class="stack">
+            <div class="card-lite">
+              <div class="pill">Preview</div>
+              <div id="previewBox" class="alert-preview" style="margin-top:12px;"></div>
+            </div>
+            <div class="card-lite">
+              <div class="pill">Recent local alerts</div>
+              <div id="alertsLog" class="list"></div>
             </div>
           </div>
         </div>
-      </div>
-    </details>
+      </section>
 
-    <details class="anw-acc" style="margin-top:12px;">
-      <summary><strong>Exports</strong></summary>
-      <div class="acc-body">
-        <div class="card" style="padding:1rem;">
-          <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-            <button type="button" class="btn small btn-line" id="btnExportUsers">Export residents</button>
-            <button type="button" class="btn small btn-line" id="btnExportNotices">Export notices</button>
-            <button type="button" class="btn small btn-line" id="btnExportReports">Export reports</button>
-            <button type="button" class="btn small btn-line" id="btnExportProjects">Export projects</button>
+      <section id="tab-contacts" class="alert-panel">
+        <div class="grid-2">
+          <div class="card-lite stack">
+            <p class="muted">
+              These contacts are the only approved senders in a live system. In this demo they are stored locally in this browser.
+            </p>
+
+            <div class="form-row">
+              <label for="cName">Full name</label>
+              <input id="cName" type="text" placeholder="Contact full name"/>
+            </div>
+
+            <div class="form-row">
+              <label for="cRole">Role</label>
+              <select id="cRole">
+                <option value="Garda liaison">Garda liaison</option>
+                <option value="Area coordinator">Area coordinator</option>
+                <option value="Assistant coordinator">Assistant coordinator</option>
+                <option value="Owner">Owner</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="cEmail">Email</label>
+              <input id="cEmail" type="email" placeholder="email@example.com"/>
+            </div>
+
+            <div class="form-row">
+              <label for="cPhone">Phone</label>
+              <input id="cPhone" type="text" placeholder="+353..."/>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-line" id="btnAddCoordinator" type="button">Add admin</button>
+              <button class="btn" id="btnSaveContacts" type="button">Save contacts (local)</button>
+            </div>
+            <div id="contactsMsg" class="muted"></div>
           </div>
-          <p id="exportMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
-        </div>
-      </div>
-    </details>
 
-    <details class="anw-acc" style="margin-top:12px;">
-      <summary><strong>Diagnostics</strong></summary>
-      <div class="acc-body">
-        <div class="card" style="padding:1rem;">
-          <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-            <button type="button" class="btn small btn-line" id="btnDiagRun">Run diagnostics</button>
+          <div class="card-lite">
+            <div class="pill">Authorised contacts</div>
+            <div id="contactsList" class="list" style="margin-top:12px;"></div>
           </div>
-          <pre id="diagOut" style="white-space:pre-wrap; overflow:auto; margin-top:10px; background:#f8faf8; border:1px solid var(--line); border-radius:12px; padding:12px; min-height:120px;"></pre>
         </div>
-      </div>
-    </details>
-  </section>
-</main>
+      </section>
+    </section>
+  </main>
 
-<footer class="site-footer">
-  <div class="footer-row">
-    <div class="footer-left">
-      <span class="page-access">Admin Page</span>
-    </div>
-    <div class="footer-center">
-      © 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a>
+  <div id="anwGateModal" class="hidden" style="position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:99; align-items:center; justify-content:center; padding:20px;">
+    <div style="max-width:560px; width:100%; background:#fff; border-radius:18px; padding:18px; box-shadow:0 30px 70px rgba(2,6,23,.25);">
+      <h3 style="margin-top:0;">Access</h3>
+      <div id="anwGateText" class="muted" style="margin-bottom:14px;"></div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-ghost" id="anwGateClose" style="border:0; background:#eee; color:#111; padding:10px 12px; border-radius:10px; cursor:pointer;" type="button">Close</button>
+        <a class="btn" href="login.html" id="anwGateLogin" style="text-decoration:none;">Login / Register</a>
+      </div>
     </div>
   </div>
-</footer>
 
-<script>
-(function(){
-  'use strict';
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <span>Private Page</span>
+      <span>© 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a></span>
+    </div>
+  </footer>
 
-  const KEYS = window.ANW_KEYS || {};
-  const KEY_USERS = KEYS.USERS || 'anw_users';
-  const KEY_ELECTIONS = KEYS.ELECTIONS || 'anw_elections';
-  const KEY_ELECTION_INTEREST = KEYS.ELECTION_INTEREST || 'anw_election_interest';
-  const KEY_REPORTS = KEYS.REPORTS || 'anw_reports';
-  const KEY_PROJECTS = KEYS.PROJECTS || 'anw_projects';
-  const KEY_PROJECT_RECIPIENTS = KEYS.PROJECT_RECIPIENTS || 'anw_project_recipients';
-  const KEY_HANDBOOK_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
-  const KEY_HANDBOOK_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
-  const KEY_ACCESS = KEYS.ACL || KEYS.ACCESS || 'acl';
-  const KEY_TASKS = KEYS.TASKS || 'anw_tasks';
-  const KEY_NOTICES = window.getNoticesKey();
+  <script>
+    const ALERTS_KEY = "anw_alerts_log";
+    const CONTACTS_KEY = "anw_alerts_contacts";
 
-  const $ = (sel, root=document) => root.querySelector(sel);
-  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-  const byId = id => document.getElementById(id);
-
-  const ADMIN_ALLOWED_ROLES = ['admin','owner','platform_support','area_coordinator','aux_coordinator'];
-
-  function hasAllowedAdminRole(roles){
-    const list = Array.isArray(roles) ? roles : [roles];
-    return list.map(v => String(v||'').toLowerCase()).some(v => ADMIN_ALLOWED_ROLES.includes(v));
-  }
-
-  async function anwLoadSafe(key, fallback){
-    try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, { cache:'no-store' });
-      if(!res.ok) throw new Error('store load failed');
-      const data = await res.json();
-      try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){ }
-      return data;
-    }catch(_){
+    function readJSON(key, fallback){
       try{
-        if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback);
         const raw = localStorage.getItem(key);
         return raw ? JSON.parse(raw) : fallback;
-      }catch(__){
+      }catch(e){
         return fallback;
       }
     }
-  }
 
-  async function anwSaveSafe(key, value){
-    try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify(value)
-      });
-      if(!res.ok) throw new Error('store save failed');
-      try{ if(typeof window.anwSave === 'function') window.anwSave(key, value); }catch(_){ }
-      return true;
-    }catch(err){
-      try{ localStorage.setItem(key, JSON.stringify(value)); }catch(_){ }
-      console.error(err);
-      throw err;
-    }
-  }
-
-  function downloadText(filename, text, type='application/json'){
-    const blob = new Blob([text], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 500);
-  }
-
-  function esc(s){
-    return String(s == null ? '' : s)
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'",'&#39;');
-  }
-
-  function fmtDate(v){
-    if(!v) return '—';
-    const d = new Date(v);
-    if(Number.isNaN(d.getTime())) return String(v);
-    return d.toLocaleString();
-  }
-
-  function fmtDateShort(v){
-    if(!v) return '—';
-    const d = new Date(v + 'T12:00:00');
-    if(Number.isNaN(d.getTime())) return String(v);
-    return d.toLocaleDateString();
-  }
-
-  function normList(v){
-    if(Array.isArray(v)) return v.filter(Boolean);
-    if(v == null || v === '') return [];
-    return String(v).split(/[;,|]/).map(s => s.trim()).filter(Boolean);
-  }
-
-  function uniqueBy(arr, getKey){
-    const seen = new Set();
-    return arr.filter(item => {
-      const k = getKey(item);
-      if(seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-  }
-
-  function slugify(v){
-    return String(v||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-  }
-
-  function parseCsvLine(line){
-    const out = [];
-    let cur = '';
-    let quote = false;
-    for(let i=0;i<line.length;i++){
-      const ch = line[i];
-      if(ch === '"'){
-        if(quote && line[i+1] === '"'){ cur += '"'; i++; }
-        else quote = !quote;
-      } else if(!quote && (ch === ',' || ch === ';' || ch === '\t')){
-        out.push(cur.trim());
-        cur = '';
-      } else {
-        cur += ch;
-      }
-    }
-    out.push(cur.trim());
-    return out;
-  }
-
-  function parseFlexibleDate(v){
-    const s = String(v||'').trim();
-    if(!s) return '';
-    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-    const m1 = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if(m1) return `${m1[3]}-${m1[2]}-${m1[1]}`;
-    const m2 = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-    if(m2) return `${m2[3]}-${m2[2]}-${m2[1]}`;
-    const d = new Date(s);
-    if(!Number.isNaN(d.getTime())){
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    }
-    return s;
-  }
-
-  function startOfWeekMonday(dateStr){
-    const d = new Date(dateStr + 'T12:00:00');
-    if(Number.isNaN(d.getTime())) return dateStr;
-    const day = d.getDay();
-    const offset = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + offset);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-
-  function endOfNextWeekSunday(dateStr){
-    const d = new Date(dateStr + 'T12:00:00');
-    if(Number.isNaN(d.getTime())) return dateStr;
-    const day = d.getDay();
-    const offsetToMonday = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + offsetToMonday + 13);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-
-  function getCurrentAdminTabId(){
-    const active = document.querySelector('.admin-tab.active');
-    return active ? active.getAttribute('data-tab') : 'tabResidents';
-  }
-
-  function showAdminTab(tabId){
-    $$('.admin-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId));
-    $$('.admin-tab-content').forEach(p => { p.style.display = (p.id === tabId) ? 'block' : 'none'; });
-  }
-
-  function showResidentSubtab(id){
-    $$('.resident-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-subtab') === id));
-    const mode = id === 'subPending' ? 'pending' : id === 'subApproved' ? 'approved' : 'all';
-    renderResidents(mode);
-  }
-
-  function showElectionSubtab(id){
-    $$('.elect-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-subtab') === id));
-    $$('.elect-subtab').forEach(p => p.style.display = (p.id === id ? 'block' : 'none'));
-  }
-
-  function adminApplyRoleVisibility(role){
-    const normalized = String(role||'').toLowerCase();
-    const allowAll = hasAllowedAdminRole(normalized);
-    document.body.classList.toggle('admin-allowed', allowAll);
-  }
-
-  function adminMarkReady(){
-    document.documentElement.classList.remove('admin-booting');
-    document.body.classList.remove('admin-booting');
-  }
-
-  async function runAdminGate(){
-    const msg = byId('adminGateMsg');
-    try{
-      let allowed = false;
-      let role = '';
-      const currentUser = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
-        ? window.netlifyIdentity.currentUser()
-        : null;
-
-      if(currentUser && currentUser.email){
-        const users = await anwLoadSafe(KEY_USERS, []);
-        const email = String(currentUser.email || '').trim().toLowerCase();
-        const row = users.find(u => String((u && u.email) || '').trim().toLowerCase() === email);
-        if(row){
-          const roles = []
-            .concat(normList(row.role))
-            .concat(normList(row.roles))
-            .concat(normList(row.userRole))
-            .concat(normList(row.userRoles));
-          allowed = hasAllowedAdminRole(roles);
-          role = roles[0] || '';
-        }
-      }
-
-      adminApplyRoleVisibility(role);
-
-      if(msg){
-        if(allowed){
-          msg.style.display = 'none';
-          msg.textContent = '';
-        }else{
-          msg.style.display = 'block';
-          msg.textContent = 'Admin access is restricted to approved admin roles. Some sections may be hidden until your role is confirmed.';
-        }
-      }
-    }catch(err){
-      console.error(err);
-      if(msg){
-        msg.style.display = 'block';
-        msg.textContent = 'Unable to fully verify admin access right now. Local admin tools are still available.';
-      }
-    }finally{
-      showAdminTab(getCurrentAdminTabId());
-      showElectionSubtab('subManage');
-      adminMarkReady();
-    }
-  }
-  // ---------- Residents ----------
-  let RESIDENTS_CACHE = [];
-  let CURRENT_RESIDENT = null;
-
-  async function loadResidents(){
-    RESIDENTS_CACHE = await anwLoadSafe(KEY_USERS, []);
-    if(assignMissingResidentNumbers(RESIDENTS_CACHE)){
-      await anwSaveSafe(KEY_USERS, RESIDENTS_CACHE);
-    }
-    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
-      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
-      : 'pending');
-  }
-
-  function getResidentRolesLabel(u){
-    const roles = [];
-    if(u.streetCoordinator || u.isStreetCoordinator || normList(u.roles).includes('street_admin') || normList(u.role).includes('street_admin')) roles.push('Street Coordinator');
-    if(u.volunteer || normList(u.roles).includes('volunteer') || normList(u.role).includes('volunteer')) roles.push('Volunteer');
-    if(normList(u.roles).includes('admin') || normList(u.role).includes('admin')) roles.push('Admin');
-    return roles.length ? roles.join(', ') : '—';
-  }
-
-  function renderResidents(mode){
-    const body = byId('resBody');
-    const empty = byId('resEmpty');
-    const summary = byId('resSummary');
-    if(!body) return;
-
-    const rows = (RESIDENTS_CACHE || []).filter(u => {
-      const status = String((u && u.status) || '').toLowerCase();
-      if(mode === 'pending') return !['approved','active'].includes(status);
-      if(mode === 'approved') return ['approved','active'].includes(status);
-      return true;
-    });
-
-    body.innerHTML = rows.map((u, idx) => `
-      <tr>
-        <td>${esc(formatResidentRegId(u.regId || u.regNo) || '—')}</td>
-        <td>${esc(u.name || '—')}</td>
-        <td>${esc(u.email || '—')}</td>
-        <td>${esc(u.eircode || '—')}</td>
-        <td>${esc(u.status || 'pending')}</td>
-        <td>${esc(getResidentRolesLabel(u))}</td>
-        <td class="resident-actions-col">
-          <div class="resident-action-cell">
-            <button type="button" class="btn-line small" data-res-index="${idx}" data-act="openResident">
-              ${String((u.status||'')).toLowerCase() === 'approved' || String((u.status||'')).toLowerCase() === 'active' ? 'Edit' : 'Open'}
-            </button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-
-    summary.textContent = `${rows.length} resident(s) shown`;
-    empty.style.display = rows.length ? 'none' : 'block';
-
-    $$('[data-act="openResident"]', body).forEach(btn => {
-      btn.addEventListener('click', () => {
-        const u = rows[Number(btn.getAttribute('data-res-index'))];
-        openResidentModal(u);
-      });
-    });
-  }
-
-  function openResidentModal(user){
-    CURRENT_RESIDENT = user || null;
-    if(!CURRENT_RESIDENT) return;
-
-    byId('modalResident').style.display = 'block';
-    byId('mRegId').value = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
-    byId('mStatus').value = CURRENT_RESIDENT.status || 'pending';
-    byId('mEmail').value = CURRENT_RESIDENT.email || '';
-    byId('mEir').value = CURRENT_RESIDENT.eircode || '';
-    byId('mName').value = CURRENT_RESIDENT.name || '';
-    byId('mPhone').value = CURRENT_RESIDENT.phone || '';
-    byId('mAddress').value = CURRENT_RESIDENT.address || '';
-    byId('mType').value = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '';
-    byId('mMgmt').value = CURRENT_RESIDENT.managementCompany || CURRENT_RESIDENT.mgmt || '';
-
-    const roles = normList(CURRENT_RESIDENT.roles).concat(normList(CURRENT_RESIDENT.role));
-    byId('mCoord').checked = roles.includes('street_admin') || !!CURRENT_RESIDENT.streetCoordinator;
-    byId('mVol').checked = roles.includes('volunteer') || !!CURRENT_RESIDENT.volunteer;
-
-    const vrList = normList(CURRENT_RESIDENT.volunteerRoles);
-    const vrObj = CURRENT_RESIDENT.vol_roles || CURRENT_RESIDENT.volunteer_roles || {};
-    byId('mVStreet').checked = vrList.includes('Street watch / patrols') || !!vrObj.streetWatch;
-    byId('mVLeaf').checked = vrList.includes('Distribute leaflets') || !!vrObj.leaflets;
-    byId('mVTech').checked = vrList.includes('Tech support') || !!vrObj.tech || !!vrObj.techSupport;
-    byId('mVEld').checked = vrList.includes('Elderly checks') || !!vrObj.elderly;
-    byId('mVClean').checked = vrList.includes('Community clean-up') || !!vrObj.cleanUp || !!vrObj.cleanup;
-    byId('mVPark').checked = vrList.includes('Parking assistance') || !!vrObj.parkingAssistance || !!vrObj.parking;
-    byId('mVMeet').checked = vrList.includes('Meeting organiser') || !!vrObj.meetings;
-    byId('mVTrans').checked = vrList.includes('Translation') || !!vrObj.translation;
-
-    const photoUrl = CURRENT_RESIDENT.profilePhoto || CURRENT_RESIDENT.photo || CURRENT_RESIDENT.photoURL || '';
-    const photoBox = byId('mPhotoPreview');
-    if(photoBox){
-      if(photoUrl){
-        photoBox.classList.add('has-photo');
-        photoBox.innerHTML = `<img src="${esc(photoUrl)}" alt="Resident profile photo">`;
-      }else{
-        photoBox.classList.remove('has-photo');
-        photoBox.textContent = '👤';
-      }
+    function saveJSON(key, value){
+      localStorage.setItem(key, JSON.stringify(value));
     }
 
-    byId('mMsg').textContent = '';
-
-    const status = String(CURRENT_RESIDENT.status || '').toLowerCase();
-    const alreadyApproved = ['approved','active'].includes(status);
-    if(byId('btnApprove')){
-      byId('btnApprove').style.display = alreadyApproved ? 'none' : 'inline-flex';
-    }
-    if(byId('btnReject')){
-      byId('btnReject').style.display = alreadyApproved ? 'none' : 'inline-flex';
-    }
-  }
-
-  function closeResidentModal(){
-    byId('modalResident').style.display = 'none';
-    CURRENT_RESIDENT = null;
-  }
-
-  async function saveCurrentResident(nextStatus){
-    if(!CURRENT_RESIDENT) return;
-    const users = await anwLoadSafe(KEY_USERS, []);
-    const idx = users.findIndex(u => String(u.email||'').toLowerCase() === String(CURRENT_RESIDENT.email||'').toLowerCase());
-    if(idx < 0) return;
-
-    const roles = [];
-    if(byId('mCoord').checked) roles.push('street_admin');
-    if(byId('mVol').checked) roles.push('volunteer');
-    if(normList(users[idx].roles).includes('admin')) roles.push('admin');
-
-    const volunteerRoles = [
-      byId('mVStreet').checked ? 'Street watch / patrols' : '',
-      byId('mVLeaf').checked ? 'Distribute leaflets' : '',
-      byId('mVTech').checked ? 'Tech support' : '',
-      byId('mVEld').checked ? 'Elderly checks' : '',
-      byId('mVClean').checked ? 'Community clean-up' : '',
-      byId('mVPark').checked ? 'Parking assistance' : '',
-      byId('mVMeet').checked ? 'Meeting organiser' : '',
-      byId('mVTrans').checked ? 'Translation' : ''
-    ].filter(Boolean);
-    const volunteerRoleFlags = {
-      streetWatch: byId('mVStreet').checked,
-      leaflets: byId('mVLeaf').checked,
-      tech: byId('mVTech').checked,
-      elderly: byId('mVEld').checked,
-      cleanUp: byId('mVClean').checked,
-      parkingAssistance: byId('mVPark').checked,
-      meetings: byId('mVMeet').checked,
-      translation: byId('mVTrans').checked
-    };
-
-    users[idx].name = byId('mName').value.trim();
-    users[idx].phone = byId('mPhone').value.trim();
-    users[idx].residentType = byId('mType').value;
-    users[idx].type = byId('mType').value;
-    users[idx].managementCompany = byId('mMgmt').value.trim();
-    users[idx].roles = uniqueBy(roles, x => x);
-    users[idx].role = users[idx].roles[0] || '';
-    users[idx].volunteerRoles = volunteerRoles;
-    users[idx].vol_roles = volunteerRoleFlags;
-    users[idx].volunteer_roles = volunteerRoleFlags;
-    users[idx].streetCoordinator = byId('mCoord').checked;
-    users[idx].volunteer = byId('mVol').checked;
-
-    if(nextStatus){
-      users[idx].status = nextStatus;
-      if(['approved','active'].includes(nextStatus) && !(users[idx].regId || users[idx].regNo)){
-        const nextId = anwNextRegId(users);
-        users[idx].regId = nextId;
-        users[idx].regNo = nextId;
-      }
+    function byId(id){
+      return document.getElementById(id);
     }
 
-    assignMissingResidentNumbers(users);
-    await anwSaveSafe(KEY_USERS, users);
-    RESIDENTS_CACHE = users;
-    byId('mMsg').textContent = 'Resident saved.';
-    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
-      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
-      : 'pending');
-  }
+    function renderPreview(){
+      const title = byId("alertTitle").value.trim();
+      const category = byId("alertCategory").value.trim();
+      const priority = byId("alertPriority").value.trim();
+      const body = byId("alertBody").value.trim();
 
-  // ---------- Notices ----------
-  async function loadNoticesFresh(){
-    return await anwLoadSafe(window.getNoticesKey(), []);
-  }
+      const channels = [];
+      if(byId("mEmail").checked) channels.push("Email");
+      if(byId("mSms").checked) channels.push("SMS");
+      if(byId("mPush").checked) channels.push("Push / App");
 
-  function collectNoticeForm(){
-    return {
-      title: byId('ntTitle').value.trim(),
-      message: byId('ntMessage').value.trim(),
-      category: byId('ntCategory').value || 'General',
-      expires: byId('ntExpires').value || '',
-      targets: {
-        allLogged: !!byId('ntAllLogged').checked,
-        nonAdminOnly: !!byId('ntNonAdminOnly').checked,
-        roles: $$('.ntRole').filter(x => x.checked).map(x => x.value),
-        eirPrefixes: normList(byId('ntEirPrefixes').value),
-        streets: normList(byId('ntStreets').value),
-        eircodes: byId('ntEircodes').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean),
-        emails: byId('ntEmails').value.split(/\r?\n/).map(s => s.trim().toLowerCase()).filter(Boolean)
-      },
-      home: {
-        enabled: !!byId('ntHomeEnabled').checked,
-        visibility: byId('ntHomeVisibility').value || 'private'
-      }
-    };
-  }
-
-  async function publishNotice(){
-    const msg = byId('ntMsg');
-    const form = collectNoticeForm();
-    if(!form.title || !form.message){
-      msg.textContent = 'Title and message are required.';
-      return;
+      byId("previewBox").textContent =
+`Title: ${title || "-"}
+Category: ${category || "-"}
+Priority: ${priority || "-"}
+Channels: ${channels.join(", ") || "-"}
+Message:
+${body || "-"}`;
     }
 
-    const list = await loadNoticesFresh();
-    const next = [{
-      id: 'nt_' + Date.now(),
-      title: form.title,
-      message: form.message,
-      category: form.category,
-      createdAt: new Date().toISOString(),
-      expires: form.expires,
-      public: form.home.enabled && form.home.visibility === 'public',
-      isPublic: form.home.enabled && form.home.visibility === 'public',
-      showOnHome: !!form.home.enabled,
-      published: true,
-      status: (form.home.enabled && form.home.visibility === 'public') ? 'public' : 'private',
-      targets: form.targets,
-      home: form.home
-    }].concat(list || []);
+    function renderAlertsLog(){
+      const list = readJSON(ALERTS_KEY, []);
+      const host = byId("alertsLog");
+      host.innerHTML = "";
 
-    await anwSaveSafe(window.getNoticesKey(), next);
-    msg.textContent = 'Notice published.';
-    await renderNoticesList();
-  }
-
-  function renderNoticeRowActions(n){
-    const isBinImport = !!(n && n.meta && n.meta.type === 'bin_collection_import');
-    if(!isBinImport) return '';
-    return `
-      <div class="notice-actions">
-        <button type="button" class="btn btn-line small" data-del-notice="${esc(n.id || '')}">Delete</button>
-      </div>
-    `;
-  }
-
-  async function deleteNoticeById(id){
-    const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => String((n && n.id) || '') !== String(id || ''));
-    await anwSaveSafe(window.getNoticesKey(), next);
-    await renderNoticesList();
-  }
-
-  async function clearImportedBinNotices(){
-    const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
-    await anwSaveSafe(window.getNoticesKey(), next);
-    byId('binMsg').textContent = 'Imported bin notices removed.';
-    await renderNoticesList();
-  }
-
-  async function renderNoticesList(){
-    const listEl = byId('ntList');
-    const notes = await loadNoticesFresh();
-    const sorted = (notes || []).slice().sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
-
-    if(byId('ntListMsg')){
-      byId('ntListMsg').textContent = sorted.length ? `${sorted.length} notice(s) saved.` : 'No notices found.';
-    }
-
-    listEl.innerHTML = sorted.map(n => `
-      <div class="card" style="padding:12px; margin-bottom:10px;">
-        <div>
-          <strong>${esc(n.title || 'Untitled')}</strong>
-          <div class="tiny muted">${esc(n.category || 'General')} · ${esc(fmtDate(n.createdAt || n.date || ''))}</div>
-          <div style="margin-top:6px;">${esc(n.message || '')}</div>
-
-          <div class="notice-card-meta">
-            <span class="notice-chip">Home: ${(n.home && n.home.enabled) ? esc(n.home.visibility || 'private') : 'disabled'}</span>
-            ${n.date ? `<span class="notice-chip">Collection date: ${esc(fmtDateShort(n.date))}</span>` : ''}
-            ${n.startsOn ? `<span class="notice-chip">Show from: ${esc(fmtDateShort(n.startsOn))}</span>` : ''}
-            ${n.endsOn ? `<span class="notice-chip">Show until: ${esc(fmtDateShort(n.endsOn))}</span>` : ''}
-          </div>
-
-          ${renderNoticeRowActions(n)}
-        </div>
-      </div>
-    `).join('') || '<p class="tiny muted">No notices found.</p>';
-
-    $$('[data-del-notice]', listEl).forEach(btn => {
-      btn.addEventListener('click', async () => {
-        await deleteNoticeById(btn.getAttribute('data-del-notice'));
-      });
-    });
-  }
-
-  async function importPandaSchedule(){
-    const fileEl = byId('binCsvFile');
-    const msg = byId('binMsg');
-    const file = fileEl && fileEl.files && fileEl.files[0];
-    if(!file){
-      msg.textContent = 'Please select the CSV file first.';
-      return;
-    }
-
-    const text = await file.text();
-    const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-
-    const imported = [];
-    for(const line of lines){
-      const cols = parseCsvLine(line);
-      if(!cols.length) continue;
-
-      const headerLike = cols.join(' ').toLowerCase();
-      if(headerLike.includes('date') && headerLike.includes('provider')) continue;
-      if(cols.length < 3) continue;
-
-      const date = parseFlexibleDate(cols[0]);
-      if(!date) continue;
-
-      const provider = String(cols[1] || '').trim();
-      const bin = String(cols[2] || '').trim();
-      const visibility = String(cols[3] || 'public').trim().toLowerCase();
-
-      const startsOn = startOfWeekMonday(date);
-      const endsOn = endOfNextWeekSunday(date);
-
-      imported.push({
-        id: `bin_${date}_${slugify(bin)}`,
-        title: 'Bin collection update',
-        message: `${bin} bin collection scheduled for ${date}.`,
-        category: 'Bins',
-        provider,
-        bin,
-        date,
-        startsOn,
-        endsOn,
-        startDate: startsOn,
-        endDate: endsOn,
-        createdAt: new Date().toISOString(),
-        showOnHome: true,
-        public: true,
-        isPublic: true,
-        published: true,
-        status: visibility === 'private' ? 'private' : 'public',
-        home: { enabled: true, visibility: 'public' },
-        meta: { type: 'bin_collection_import' }
-      });
-    }
-
-    const current = await loadNoticesFresh();
-
-    const currentKept = (current || []).filter(n => {
-      if(!(n && n.meta && n.meta.type === 'bin_collection_import')) return true;
-      const key = `${String(n.date||'')}|${String(n.bin||'').toLowerCase()}`;
-      const incoming = imported.some(x => `${String(x.date||'')}|${String(x.bin||'').toLowerCase()}` === key);
-      return !incoming;
-    });
-
-    const merged = [...currentKept, ...imported];
-    await anwSaveSafe(window.getNoticesKey(), merged);
-
-    msg.textContent = `${imported.length} collection notice(s) imported and saved. They are public and enabled for Home automatically for this week and next week.`;
-    await renderNoticesList();
-  }
-
-  // ---------- Light stubs for remaining tabs ----------
-  async function renderSimpleTable(key, tbodyId, emptyId, mapRow){
-    const rows = await anwLoadSafe(key, []);
-    const body = byId(tbodyId);
-    const empty = byId(emptyId);
-    if(!body) return;
-    body.innerHTML = rows.map(mapRow).join('');
-    if(empty) empty.style.display = rows.length ? 'none' : 'block';
-  }
-
-  async function loadReports(){
-    await renderSimpleTable(KEY_REPORTS, 'repBody', 'repEmpty', r => `
-      <tr>
-        <td>${esc(r.id || '—')}</td>
-        <td>${esc(fmtDate(r.createdAt || r.created || ''))}</td>
-        <td>${esc(r.category || '—')}</td>
-        <td>${esc(r.location || r.address || '—')}</td>
-        <td>${esc(r.email || r.reporterEmail || '—')}</td>
-        <td>${esc(r.status || 'submitted')}</td>
-        <td><button type="button" class="btn-line small" disabled>View</button></td>
-      </tr>
-    `);
-  }
-
-  async function loadProjects(){
-    await renderSimpleTable(KEY_PROJECTS, 'pmBody', 'pmEmpty', p => `
-      <tr>
-        <td>${esc(p.id || '—')}</td>
-        <td>${esc(p.title || p.project || '—')}</td>
-        <td>${esc(p.status || '—')}</td>
-        <td>${esc(p.owner || '—')}</td>
-        <td>${esc(fmtDate(p.updatedAt || p.updated || ''))}</td>
-        <td><button type="button" class="btn-line small" disabled>View</button></td>
-      </tr>
-    `);
-    await renderSimpleTable(KEY_PROJECT_RECIPIENTS, 'pmRecipientsBody', 'pmRecipientsEmpty', p => `
-      <tr>
-        <td>${esc(p.project || p.projectTitle || '—')}</td>
-        <td>${esc(p.recipient || p.name || '—')}</td>
-        <td>${esc([p.address, p.eircode].filter(Boolean).join(' · ') || '—')}</td>
-        <td>${esc(p.status || '—')}</td>
-        <td>${esc(fmtDate(p.updatedAt || p.updated || ''))}</td>
-      </tr>
-    `);
-  }
-
-  
-  
-  const ACL_ROLES = ['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'];
-
-  const ACL_ITEMS = [
-    { key:'page:home', label:'Home', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:about', label:'About', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:report', label:'Report Incident', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'page:alerts', label:'Community Alerts', group:'Site pages', indent:0, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:projects', label:'Community Projects page', group:'Projects', indent:0, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_monitoring', label:'Projects · Monitoring', group:'Projects', indent:1, defaults:{ projects:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_builder', label:'Projects · Build project', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_published', label:'Projects · Confirm sending', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'page:handbook', label:'Handbook', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:privacy', label:'Privacy Policy', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:login', label:'Login / Register', group:'Site pages', indent:0, defaults:{ public:true } },
-
-    { key:'page:dashboard', label:'Dashboard', group:'Dashboard', indent:0, defaults:{ public:true } },
-    { key:'dashboard:tab_profile', label:'Dashboard · Profile', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_interest', label:'Dashboard · Interest', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_elections', label:'Dashboard · Elections', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_notices', label:'Dashboard · Notices', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_garda', label:'Dashboard · Garda & Safety', group:'Dashboard', indent:1, defaults:{ public:true } },
-
-    { key:'page:household', label:'Household', group:'Residents', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:resident-profile', label:'Resident profile data', group:'Residents', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:street-management', label:'Street management', group:'Residents', indent:1, defaults:{ street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:regional-management', label:'Regional management', group:'Residents', indent:1, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-
-    { key:'page:admin', label:'Admin panel', group:'Owner controls', indent:0, defaults:{ owner:true } },
-    { key:'page:access-control', label:'Access Control sub-tab', group:'Owner controls', indent:1, defaults:{ owner:true } },
-    { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-  ];
-
-  const ROLE_RANK = {
-    public: 0,
-    resident: 1,
-    street_coordinator: 2,
-    assistant_area_coordinator: 3,
-    area_coordinator: 4,
-    projects: 4,
-    owner: 5
-  };
-
-  let ACCESS_RULES_CACHE = [];
-
-  function aclEmptyRule(item){
-    const out = { key:item.key, label:item.label, group:item.group || '', indent:Number(item.indent || 0) };
-    ACL_ROLES.forEach(role => { out[role] = false; });
-    const defaults = item.defaults || {};
-    Object.keys(defaults).forEach(k => { out[k] = !!defaults[k]; });
-    return out;
-  }
-
-  function classifyMatrixToRule(entry){
-    if(entry.public) return 'Public';
-
-    const selected = ACL_ROLES.filter(role => role !== 'public' && !!entry[role]);
-    if(!selected.length) return 'owner';
-
-    if(selected.length === ACL_ROLES.length - 1) return 'Authenticated';
-
-    const rankMap = selected.map(role => ROLE_RANK[role] ?? 999);
-    const minRank = Math.min(...rankMap);
-    const rankMatchedRoles = selected.filter(role => (ROLE_RANK[role] ?? 999) === minRank);
-
-    if(rankMatchedRoles.length === 1){
-      return rankMatchedRoles[0];
-    }
-
-    if(rankMatchedRoles.includes('projects') && rankMatchedRoles.length === 1){
-      return 'projects';
-    }
-
-    return 'Authenticated';
-  }
-
-  function applyRuleToRow(row, rule){
-    const clean = String(rule == null ? '' : rule).trim();
-    ACL_ROLES.forEach(role => { row[role] = false; });
-
-    if(clean === 'Public'){
-      row.public = true;
-      return;
-    }
-
-    if(clean === 'Authenticated'){
-      ACL_ROLES.filter(role => role !== 'public').forEach(role => { row[role] = true; });
-      return;
-    }
-
-    if(clean === 'projects'){
-      row.projects = true;
-      row.owner = true;
-      return;
-    }
-
-    const rank = ROLE_RANK[clean];
-    if(typeof rank === 'number'){
-      ACL_ROLES.filter(role => role !== 'public').forEach(role => {
-        const roleRank = ROLE_RANK[role];
-        if(typeof roleRank === 'number' && roleRank >= rank){
-          row[role] = true;
-        }
-      });
-    }
-  }
-
-  function mapSavedAclToMatrix(saved){
-    const matrix = ACL_ITEMS.map(aclEmptyRule);
-
-    const source = (saved && typeof saved === 'object' && !Array.isArray(saved)) ? saved : {};
-    const matrixSource = (source.__matrix && typeof source.__matrix === 'object') ? source.__matrix : {};
-
-    matrix.forEach((row) => {
-      const fromMatrix = matrixSource[row.key];
-      if(fromMatrix && typeof fromMatrix === 'object'){
-        ACL_ROLES.forEach(role => {
-          if(role in fromMatrix) row[role] = !!fromMatrix[role];
-        });
+      if(!list.length){
+        host.innerHTML = '<div class="list-item"><h4>No alerts yet</h4><div class="muted">Local alerts will appear here.</div></div>';
         return;
       }
 
-      const direct = (
-        Object.prototype.hasOwnProperty.call(source, row.key) ? source[row.key] :
-        source.features && Object.prototype.hasOwnProperty.call(source.features, row.key) ? source.features[row.key] :
-        null
-      );
-
-      applyRuleToRow(row, direct);
-    });
-
-    return matrix;
-  }
-
-  function matrixToAclPayload(matrix){
-    const payload = {
-      features:{},
-      pages:{},
-      publicFeatures:[],
-      __matrix:{},
-      rolesMeta:{
-        order:['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'],
-        rank: ROLE_RANK
-      }
-    };
-
-    matrix.forEach((row) => {
-      const rule = classifyMatrixToRule(row);
-      payload[row.key] = rule;
-      payload.__matrix[row.key] = Object.fromEntries(ACL_ROLES.map(role => [role, !!row[role]]));
-
-      if(row.key.startsWith('dashboard:') || row.key.startsWith('projects:')){
-        payload.features[row.key] = rule;
-        if(row.public) payload.publicFeatures.push(row.key);
-      }
-
-      if(row.key === 'page:dashboard'){
-        payload.pages['page:dashboard'] = payload.pages['page:dashboard'] || { shell: rule, features:{} };
-        payload.pages['page:dashboard'].shell = rule;
-      }
-
-      if(row.key.startsWith('dashboard:tab_')){
-        payload.pages['page:dashboard'] = payload.pages['page:dashboard'] || { shell:'resident', features:{} };
-        payload.pages['page:dashboard'].features[row.key] = rule;
-      }
-
-      if(row.key === 'page:projects'){
-        payload.pages['page:projects'] = payload.pages['page:projects'] || { shell: rule, features:{} };
-        payload.pages['page:projects'].shell = rule;
-      }
-
-      if(row.key.startsWith('projects:tab_')){
-        payload.pages['page:projects'] = payload.pages['page:projects'] || { shell:'projects', features:{} };
-        payload.pages['page:projects'].features[row.key] = rule;
-      }
-    });
-
-    return payload;
-  }
-
-  function renderAccessControlFromData(rules){
-    const body = byId('acBody');
-    if(!body) return;
-
-    let lastGroup = '';
-    body.innerHTML = rules.map((r, idx) => {
-      const groupHeader = (r.group && r.group !== lastGroup)
-        ? `<tr class="ac-group"><td colspan="8"><strong>${esc(r.group)}</strong></td></tr>`
-        : '';
-      lastGroup = r.group || lastGroup;
-
-      return `${groupHeader}
-      <tr data-ac-row="${idx}">
-        <td>
-          <div class="ac-item">
-            <div>
-              <div class="ac-indent-${Math.min(Number(r.indent || 0), 3)}">${esc(r.label)}</div>
-              <div class="ac-key">${esc(r.key)}</div>
-            </div>
-          </div>
-        </td>
-        ${ACL_ROLES.map(role => `
-          <td>
-            <button
-              type="button"
-              class="ac-toggle ${r[role] ? 'allowed' : 'denied'}"
-              data-role="${role}"
-              data-row="${idx}"
-              title="${role === 'public' ? 'Visible without login' : role.replaceAll('_',' ')}"
-            >${r[role] ? '✓' : '—'}</button>
-          </td>
-        `).join('')}
-      </tr>`;
-    }).join('');
-
-    $$('.ac-toggle', body).forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const row = Number(btn.getAttribute('data-row'));
-        const role = btn.getAttribute('data-role');
-        if(!Number.isFinite(row) || !rules[row]) return;
-
-        if(role === 'public'){
-          const next = !rules[row].public;
-          ACL_ROLES.forEach(k => { rules[row][k] = false; });
-          rules[row].public = next;
-        } else {
-          rules[row][role] = !rules[row][role];
-          if(rules[row][role]) rules[row].public = false;
-        }
-
-        ACCESS_RULES_CACHE = rules;
-        renderAccessControlFromData(rules);
-      });
-    });
-
-    byId('btnAcSave').onclick = async () => {
-      const payload = matrixToAclPayload(rules);
-      await anwSaveSafe(KEY_ACCESS, payload);
-      try{
-        if(typeof window.anwSave === 'function') window.anwSave(KEY_ACCESS, payload);
-      }catch(_){}
-      byId('acMsg').textContent = 'Access rules saved. Pages and sub-tabs are now linked to the new role-based ACL.';
-    };
-
-    byId('btnAcPrint').onclick = () => {
-      document.body.classList.add('print-access-control');
-      window.print();
-      setTimeout(() => document.body.classList.remove('print-access-control'), 200);
-    };
-
-    byId('btnAcRefresh').onclick = loadAccessControl;
-  }
-
-  async function loadAccessControl(){
-    const saved = await anwLoadSafe(KEY_ACCESS, {});
-    ACCESS_RULES_CACHE = mapSavedAclToMatrix(saved);
-    renderAccessControlFromData(ACCESS_RULES_CACHE);
-  }
-
-
-
-  async function loadDiagnostics(){
-    const data = {
-      users: (await anwLoadSafe(KEY_USERS, [])).length,
-      notices: (await anwLoadSafe(window.getNoticesKey(), [])).length,
-      reports: (await anwLoadSafe(KEY_REPORTS, [])).length,
-      projects: (await anwLoadSafe(KEY_PROJECTS, [])).length
-    };
-    byId('diagOut').textContent = JSON.stringify(data, null, 2);
-  }
-
-  // ---------- Events ----------
-  document.addEventListener('click', ev => {
-    const btn = ev.target.closest('.admin-tab');
-    if(btn){ showAdminTab(btn.getAttribute('data-tab')); }
-
-    const rtab = ev.target.closest('.resident-tab');
-    if(rtab){ showResidentSubtab(rtab.getAttribute('data-subtab')); }
-
-    const etab = ev.target.closest('.elect-tab');
-    if(etab){ showElectionSubtab(etab.getAttribute('data-subtab')); }
-  });
-
-  byId('btnCloseResident')?.addEventListener('click', closeResidentModal);
-  byId('btnSaveResident')?.addEventListener('click', () => saveCurrentResident());
-  byId('btnApprove')?.addEventListener('click', async () => { await saveCurrentResident('approved'); closeResidentModal(); });
-  byId('btnReject')?.addEventListener('click', async () => { await saveCurrentResident('rejected'); closeResidentModal(); });
-  byId('btnSuspendResident')?.addEventListener('click', async () => { await saveCurrentResident('suspended'); closeResidentModal(); });
-  byId('btnRemoveResident')?.addEventListener('click', async () => {
-    if(!CURRENT_RESIDENT) return;
-    const users = await anwLoadSafe(KEY_USERS, []);
-    const next = users.filter(u => String(u.email||'').toLowerCase() !== String(CURRENT_RESIDENT.email||'').toLowerCase());
-    await anwSaveSafe(KEY_USERS, next);
-    RESIDENTS_CACHE = next;
-    closeResidentModal();
-    renderResidents('all');
-  });
-
-  byId('btnNtPublish')?.addEventListener('click', publishNotice);
-  byId('btnNtClear')?.addEventListener('click', () => {
-    ['ntTitle','ntMessage','ntExpires','ntEirPrefixes','ntStreets','ntEircodes','ntEmails'].forEach(id => { if(byId(id)) byId(id).value = ''; });
-    if(byId('ntCategory')) byId('ntCategory').value = 'General';
-    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = false;
-    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = 'private';
-    if(byId('ntAllLogged')) byId('ntAllLogged').checked = true;
-    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = false;
-    $$('.ntRole').forEach(x => x.checked = false);
-    byId('ntMsg').textContent = '';
-  });
-
-  byId('btnBinImport')?.addEventListener('click', importPandaSchedule);
-  byId('btnClearBinNotices')?.addEventListener('click', clearImportedBinNotices);
-
-  byId('btnRepRefresh')?.addEventListener('click', loadReports);
-  byId('btnPmRefresh')?.addEventListener('click', loadProjects);
-  byId('btnAcRefresh')?.addEventListener('click', loadAccessControl);
-  byId('btnDiagRun')?.addEventListener('click', loadDiagnostics);
-
-  byId('btnExportUsers')?.addEventListener('click', async () => downloadText('residents.json', JSON.stringify(await anwLoadSafe(KEY_USERS, []), null, 2)));
-  byId('btnExportNotices')?.addEventListener('click', async () => downloadText('notices.json', JSON.stringify(await loadNoticesFresh(), null, 2)));
-  byId('btnExportReports')?.addEventListener('click', async () => downloadText('reports.json', JSON.stringify(await anwLoadSafe(KEY_REPORTS, []), null, 2)));
-  byId('btnExportProjects')?.addEventListener('click', async () => downloadText('projects.json', JSON.stringify(await anwLoadSafe(KEY_PROJECTS, []), null, 2)));
-
-  
-  async function getAdminAuthHeaders(extra){
-    const headers = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
-    try{
-      const u = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
-        ? window.netlifyIdentity.currentUser()
-        : null;
-      if(u && typeof u.jwt === 'function'){
-        const token = await u.jwt();
-        if(token) headers.Authorization = 'Bearer ' + token;
-      }
-    }catch(_){}
-    return headers;
-  }
-
-  async function ensureBackupSettings(){
-    try{
-      const current = await anwLoadSafe('anw_backup_settings', null);
-      if(current && typeof current === 'object' && current.enabled === true) return current;
-      const next = Object.assign({}, current || {}, {
-        enabled: true,
-        schedule: '0 2 * * *',
-        timezone: 'UTC',
-        updatedAt: new Date().toISOString()
-      });
-      await anwSaveSafe('anw_backup_settings', next);
-      return next;
-    }catch(_){
-      return { enabled:true, schedule:'0 2 * * *', timezone:'UTC' };
-    }
-  }
-
-  async function refreshBackupStatus(){
-    const statusText = byId('backupStatusText');
-    const statusBadge = byId('backupStatusBadge');
-    const lastRun = byId('backupLastRun');
-    const msg = byId('backupMsg');
-    if(statusText) statusText.textContent = 'Checking backup status…';
-    if(statusBadge){
-      statusBadge.textContent = 'Checking';
-      statusBadge.className = 'tag gray';
-    }
-    if(lastRun) lastRun.textContent = 'Last run: —';
-
-    try{
-      const settings = await ensureBackupSettings();
-      const headers = await getAdminAuthHeaders();
-      const res = await fetch('/.netlify/functions/backup-list', {
-        method: 'GET',
-        headers,
-        cache: 'no-store'
-      });
-      const data = await res.json().catch(() => ({}));
-      if(!res.ok || data.ok === false){
-        throw new Error(data.error || 'Unable to load backup status');
-      }
-      const items = Array.isArray(data.items) ? data.items : [];
-      const latest = items[0] || null;
-      if(statusText){
-        statusText.textContent = settings.enabled
-          ? 'Automatic backup is active (daily at 02:00 UTC). You can also run a manual backup now.'
-          : 'Automatic backup is disabled.';
-      }
-      if(statusBadge){
-        statusBadge.textContent = settings.enabled ? 'Active' : 'Disabled';
-        statusBadge.className = settings.enabled ? 'tag ok' : 'tag gray';
-      }
-      if(lastRun){
-        lastRun.textContent = latest && latest.createdAt
-          ? ('Last run: ' + fmtDate(latest.createdAt))
-          : 'Last run: none yet';
-      }
-      if(msg && latest && latest.id){
-        msg.textContent = 'Latest backup ID: ' + latest.id;
-      }else if(msg){
-        msg.textContent = '';
-      }
-    }catch(err){
-      if(statusText) statusText.textContent = 'Backup status could not be loaded.';
-      if(statusBadge){
-        statusBadge.textContent = 'Error';
-        statusBadge.className = 'tag gray';
-      }
-      if(lastRun) lastRun.textContent = 'Last run: unavailable';
-      if(msg) msg.textContent = String(err && err.message ? err.message : err || 'Unknown backup error');
-    }
-  }
-
-  byId('btnBackupRefresh')?.addEventListener('click', refreshBackupStatus);
-
-  byId('btnBackupNow')?.addEventListener('click', async () => {
-    const msg = byId('backupMsg');
-    if(msg) msg.textContent = 'Running backup now…';
-    try{
-      await ensureBackupSettings();
-      const headers = await getAdminAuthHeaders();
-      const res = await fetch('/.netlify/functions/backup-now', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ source: 'admin-manual' })
-      });
-      const data = await res.json().catch(() => ({}));
-      if(!res.ok || data.ok === false){
-        throw new Error(data.error || 'Backup failed');
-      }
-      if(msg) msg.textContent = 'Backup created successfully. Backup ID: ' + (data.id || 'unknown');
-      await refreshBackupStatus();
-    }catch(err){
-      if(msg) msg.textContent = 'Backup failed: ' + String(err && err.message ? err.message : err || 'Unknown error');
-    }
-  });
-
-  byId('btnRestoreBackup')?.addEventListener('click', async () => {
-    const msg = byId('backupMsg');
-    const input = byId('restoreBackupFile');
-    const file = input && input.files && input.files[0] ? input.files[0] : null;
-    if(!file){
-      if(msg) msg.textContent = 'Select a backup JSON file first.';
-      return;
-    }
-    if(msg) msg.textContent = 'Restoring backup…';
-    try{
-      const text = await file.text();
-      const snapshot = JSON.parse(text);
-      const headers = await getAdminAuthHeaders();
-      const res = await fetch('/.netlify/functions/restore-backup', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ snapshot })
-      });
-      const data = await res.json().catch(() => ({}));
-      if(!res.ok || data.ok === false){
-        throw new Error(data.error || 'Restore failed');
-      }
-      if(msg){
-        msg.textContent = 'Restore completed successfully from backup ' +
-          String(data.id || snapshot.id || 'uploaded file') +
-          (data.safetyBackupId ? (' (safety backup: ' + data.safetyBackupId + ')') : '');
-      }
-      if(input) input.value = '';
-      await refreshBackupStatus();
-    }catch(err){
-      if(msg) msg.textContent = 'Restore failed: ' + String(err && err.message ? err.message : err || 'Unknown error');
-    }
-  });
-
-  // ---------- Init ----------
-  document.addEventListener('DOMContentLoaded', async () => {
-    try{
-      showAdminTab('tabResidents');
-      showElectionSubtab('subManage');
-      await Promise.all([
-        loadResidents(),
-        renderNoticesList(),
-        loadReports(),
-        loadProjects(),
-        loadAccessControl(),
-        loadDiagnostics()
-      ]);
-    }catch(err){
-      console.error(err);
-    }finally{
-      runAdminGate();
-    }
-  });
-
-  window.addEventListener('load', () => {
-    adminMarkReady();
-  });
-})();
-</script>
-
-<script>
-(function(){
-  const INACTIVITY_LIMIT_MS = 10 * 60 * 1000;
-  let logoutTimer = null;
-
-  async function doLogout(){
-    try{ if(window.netlifyIdentity && typeof window.netlifyIdentity.logout === 'function'){ await window.netlifyIdentity.logout(); } }catch(_){}
-    window.location.href = 'login.html';
-  }
-
-  function resetInactivity(){
-    if(logoutTimer) clearTimeout(logoutTimer);
-    logoutTimer = setTimeout(doLogout, INACTIVITY_LIMIT_MS);
-  }
-
-  function initAdminSessionUi(){
-    document.getElementById('btnLogoutAdmin')?.addEventListener('click', doLogout);
-    ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach((evt)=>{
-      window.addEventListener(evt, resetInactivity, { passive:true });
-    });
-    resetInactivity();
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', initAdminSessionUi, { once:true });
-  }else{
-    initAdminSessionUi();
-  }
-})();
-</script>
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-  try{
-    const allowed = "claudiosantos1968@gmail.com";
-    const tabsBar = document.querySelector('.admin-tabs');
-    const panels = Array.from(document.querySelectorAll('.admin-tab-content'));
-    const currentUser = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
-      ? window.netlifyIdentity.currentUser()
-      : null;
-    const email = currentUser && currentUser.email ? String(currentUser.email).toLowerCase().trim() : "";
-
-    const isOwner = email === allowed;
-
-    if(!isOwner){
-      if (tabsBar) tabsBar.style.opacity = '0.65';
-      document.querySelectorAll('.admin-tab').forEach((btn) => { btn.disabled = true; btn.setAttribute('aria-disabled','true'); });
-      panels.forEach((panel) => { panel.style.display = 'none'; });
-
-      const first = document.getElementById('tabResidents') || panels[0];
-      if(first){
-        first.style.display = 'block';
-        first.innerHTML = `
-          <h3>Admin</h3>
-          <div class="card" style="background:#f9fafb;">
-            <p class="tiny muted" style="margin:0;">Administrator access only.</p>
-            <p class="tiny muted" style="margin:8px 0 0;">Access restricted. This section is available only to authorised members.</p>
-          </div>
+      list.slice().reverse().forEach(item => {
+        const el = document.createElement("div");
+        el.className = "list-item";
+        el.innerHTML = `
+          <h4>${item.title || "Untitled alert"}</h4>
+          <div class="muted">${item.category || "-"} · ${item.priority || "-"} · ${item.createdAt || "-"}</div>
+          <p style="margin:8px 0 0;">${item.body || ""}</p>
         `;
-      }
-    }
-  }catch(e){}
-});
-</script>
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-  try{
-    const tabResidents = document.getElementById("tabResidents");
-    const subManage = document.getElementById("subManage");
-    if (tabResidents) {
-      tabResidents.style.display = "block";
-      tabResidents.hidden = false;
-    }
-    if (subManage) {
-      subManage.style.display = "block";
-      subManage.hidden = false;
-    }
-    const allTabs = document.querySelectorAll(".admin-tab-content");
-    if (allTabs.length) {
-      let anyVisible = false;
-      allTabs.forEach(el => {
-        const st = window.getComputedStyle(el);
-        if (st.display !== "none" && st.visibility !== "hidden") anyVisible = true;
+        host.appendChild(el);
       });
-      if (!anyVisible && tabResidents) tabResidents.style.display = "block";
     }
-  }catch(e){}
-});
-</script>
 
+    function renderContacts(){
+      const list = readJSON(CONTACTS_KEY, []);
+      const host = byId("contactsList");
+      host.innerHTML = "";
+
+      if(!list.length){
+        host.innerHTML = '<div class="list-item"><h4>No contacts yet</h4><div class="muted">Saved authorised contacts will appear here.</div></div>';
+        return;
+      }
+
+      list.forEach(item => {
+        const el = document.createElement("div");
+        el.className = "list-item";
+        el.innerHTML = `
+          <h4>${item.name || "-"}</h4>
+          <div class="muted">${item.role || "-"}</div>
+          <div>${item.email || "-"}</div>
+          <div>${item.phone || "-"}</div>
+        `;
+        host.appendChild(el);
+      });
+    }
+
+    function anwToast(msg, type) {
+      try {
+        if (window.ANW && ANW.ui && typeof ANW.ui.toast === "function") {
+          ANW.ui.toast(String(msg || ""), type || "info");
+          return;
+        }
+      } catch {}
+      alert(String(msg || ""));
+    }
+
+    function anwSetMsg(id, value, type) {
+      const el = byId(id);
+      if (!el) return;
+      el.textContent = value || "";
+      if (value) anwToast(value, type || "info");
+    }
+
+    byId("btnPreview").addEventListener("click", renderPreview);
+
+    byId("btnSendAlert").addEventListener("click", () => {
+      const title = byId("alertTitle").value.trim();
+      const category = byId("alertCategory").value.trim();
+      const priority = byId("alertPriority").value.trim();
+      const body = byId("alertBody").value.trim();
+
+      if(!title || !body){
+        anwSetMsg("sendMsg", "Please fill in title and message.", "warn");
+        return;
+      }
+
+      const list = readJSON(ALERTS_KEY, []);
+      list.push({
+        title,
+        category,
+        priority,
+        body,
+        createdAt: new Date().toLocaleString("en-IE")
+      });
+      saveJSON(ALERTS_KEY, list);
+
+      byId("alertTitle").value = "";
+      byId("alertBody").value = "";
+      renderPreview();
+      renderAlertsLog();
+      anwSetMsg("sendMsg", "Alert saved locally.", "success");
+    });
+
+    byId("btnAddCoordinator").addEventListener("click", () => {
+      const name = byId("cName").value.trim();
+      const role = byId("cRole").value.trim();
+      const email = byId("cEmail").value.trim();
+      const phone = byId("cPhone").value.trim();
+
+      if(!name || !email){
+        anwSetMsg("contactsMsg", "Please fill in at least name and email.", "warn");
+        return;
+      }
+
+      const list = readJSON(CONTACTS_KEY, []);
+      list.push({ name, role, email, phone });
+      saveJSON(CONTACTS_KEY, list);
+      renderContacts();
+      anwSetMsg("contactsMsg", "Contact added locally.", "success");
+    });
+
+    byId("btnSaveContacts").addEventListener("click", () => {
+      anwSetMsg("contactsMsg", "Contacts are already stored locally in this demo.", "info");
+    });
+
+    document.querySelectorAll(".alert-tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".alert-tab").forEach(x => x.classList.remove("active"));
+        btn.classList.add("active");
+
+        const which = btn.getAttribute("data-tab");
+        if (typeof window.anwAlertsRequestTab === "function") {
+          window.anwAlertsRequestTab(which);
+        } else {
+          document.querySelectorAll(".alert-panel").forEach(p => p.classList.remove("active"));
+          const target = byId("tab-" + which);
+          if (target) target.classList.add("active");
+        }
+      });
+    });
+
+    function activatePanel(which){
+      document.querySelectorAll(".alert-panel").forEach(p => p.classList.remove("active"));
+      const target = byId("tab-" + which);
+      if (target) target.classList.add("active");
+    }
+
+    renderPreview();
+    renderAlertsLog();
+    renderContacts();
+    activatePanel("send");
+  </script>
+
+  <script>
+  /* =========================
+     Access Control (updated to read the real registry fields)
+  ========================= */
+  (function(){
+    const notice = document.getElementById('anwAccessNotice');
+    const tabSend = document.getElementById('tab-send');
+    const tabContacts = document.getElementById('tab-contacts');
+
+    const showNotice = (html) => {
+      if(!notice) return;
+      notice.style.display = 'block';
+      notice.innerHTML = html;
+    };
+    const hideNotice = () => { if(notice) notice.style.display = 'none'; };
+
+    const normalize = (s) => String(s||'').toLowerCase().replace(/[\s\-_]+/g,' ').replace(/[^a-z0-9 ]/g,'').trim();
+    const collectRoles = (profile, email) => {
+      const out = [];
+      const pushAny = (v) => {
+        if(!v) return;
+        if(Array.isArray(v)) return v.forEach(pushAny);
+        out.push(normalize(v));
+      };
+      if(profile){
+        pushAny(profile.type);
+        pushAny(profile.role);
+        pushAny(profile.roles);
+        pushAny(profile.residentType);
+        pushAny(profile.position);
+        pushAny(profile.title);
+        pushAny(profile.access);
+      }
+      if(normalize(email) === 'claudiosantos1968@gmail.com') out.push('owner');
+      return Array.from(new Set(out.filter(Boolean)));
+    };
+
+    const aliases = {
+      'owner': 'owner',
+      'admin': 'admin',
+      'programmer support': 'admin',
+      'admin support': 'admin',
+      'support administrator': 'admin',
+      'street admin': 'street coordinator',
+      'street coordinator': 'street coordinator',
+      'assistant coordinator': 'assistant area coordinator',
+      'auxiliar coordinator': 'assistant area coordinator',
+      'auxiliary coordinator': 'assistant area coordinator',
+      'assistant area coordinator': 'assistant area coordinator',
+      'area coordinator': 'area coordinator'
+    };
+
+    const mapRole = (v) => aliases[normalize(v)] || normalize(v);
+
+    const hasAnyRole = (profile, email, allowed) => {
+      const mine = collectRoles(profile, email).map(mapRole);
+      const allow = (allowed||[]).map(mapRole);
+      return mine.some(r => allow.includes(r));
+    };
+
+    const allowedSend = (p, email) => hasAnyRole(p, email, [
+      'street coordinator','assistant area coordinator','area coordinator','owner','admin'
+    ]);
+
+    const allowedContacts = (p, email) => hasAnyRole(p, email, [
+      'assistant area coordinator','area coordinator','owner','admin'
+    ]);
+
+    const hidePanels = () => {
+      if(tabSend) tabSend.classList.remove('active');
+      if(tabContacts) tabContacts.classList.remove('active');
+      if(tabSend) tabSend.style.display = 'none';
+      if(tabContacts) tabContacts.style.display = 'none';
+    };
+
+    const showPanel = (which) => {
+      if(tabSend){
+        tabSend.style.display = (which === 'send') ? '' : 'none';
+        tabSend.classList.toggle('active', which === 'send');
+      }
+      if(tabContacts){
+        tabContacts.style.display = (which === 'contacts') ? '' : 'none';
+        tabContacts.classList.toggle('active', which === 'contacts');
+      }
+    };
+
+    const ensureIdentityUser = async () => {
+      if(!window.netlifyIdentity) return null;
+      return await new Promise((resolve)=>{
+        let done = false;
+        const finish = (u) => { if(done) return; done = true; resolve(u || null); };
+        try {
+          window.netlifyIdentity.on('init', (u)=>finish(u));
+          window.netlifyIdentity.init();
+        } catch(e) {}
+        setTimeout(()=>{
+          try { finish(window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser()); }
+          catch(e){ finish(null); }
+        }, 300);
+      });
+    };
+
+    const getRegistryProfile = async (email) => {
+      try { await window.anwInitStore?.(); } catch(e) {}
+      try {
+        const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
+        const lower = String(email||'').toLowerCase().trim();
+        return (users||[]).find(u => String(u.email||'').toLowerCase().trim() === lower) || null;
+      } catch(e) {
+        return null;
+      }
+    };
+
+    const isApproved = (profile, email) => {
+      if(normalize(email) === 'claudiosantos1968@gmail.com') return true;
+      if(!profile) return false;
+      const status = String(profile.status || profile.accountStatus || '').toLowerCase();
+      return (profile.approved === true) || (profile.active === true) || status === 'active' || status === 'approved';
+    };
+
+    async function evaluate(which){
+      if(window.ANW_PUBLIC_MODE){
+        hideNotice();
+        showPanel(which || 'send');
+        return;
+      }
+
+      const user = await ensureIdentityUser();
+      const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function' ? String(window.anwGetLoggedEmail()||'') : '').toLowerCase().trim();
+      const email = String(user?.email || fallbackEmail || '').toLowerCase().trim();
+
+      if(!email){
+        hidePanels();
+        showNotice('Community Alerts is available to registered members. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to continue.');
+        return;
+      }
+
+      const profile = await getRegistryProfile(email);
+      if(!profile || !isApproved(profile, email)){
+        if(email === 'claudiosantos1968@gmail.com'){
+          hideNotice();
+        } else {
+          hidePanels();
+          showNotice('Your account is logged in, but you are not registered/approved yet. Please wait for approval.');
+          return;
+        }
+      }
+
+      if(which === 'send' && !allowedSend(profile, email)){
+        hidePanels();
+        showNotice('Access restricted. You do not have permission to send alerts.');
+        return;
+      }
+
+      if(which === 'contacts' && !allowedContacts(profile, email)){
+        hidePanels();
+        showNotice('Access restricted. You do not have permission to view authorised contacts.');
+        return;
+      }
+
+      hideNotice();
+      showPanel(which || 'send');
+    }
+
+    window.anwAlertsRequestTab = function(which){
+      evaluate(which || 'send');
+    };
+
+    window.anwAlertsRequestTab('send');
+  })();
+  </script>
+
+  <script src="assets/acl-guard.js"></script>
 </body>
 </html>
