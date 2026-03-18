@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
+<meta content="page:privacy" name="anw-acl-key"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>Privacy Policy &amp; Terms — Aderrig NW</title>
 <link href="assets/style.css" rel="stylesheet"/>
@@ -62,8 +63,36 @@
   }
 }
 </style>
+
+<script>
+  (function(){
+    try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
+  })();
+</script>
+
+<script>
+  (function(){
+    try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
+    window.ANW_PUBLIC_MODE = true;
+
+    if(location.protocol === 'file:'){
+      return;
+    }
+
+    var prefix = '/';
+    function addJs(src, defer){
+      var s = document.createElement('script');
+      s.src = src;
+      if(defer) s.defer = true;
+      document.head.appendChild(s);
+    }
+    addJs(prefix + 'assets/app-core.js', true);
+    addJs(prefix + 'assets/acl-guard.js', true);
+  })();
+</script>
+
 </head>
-<body>
+<body data-acl-shell-public="true">
 <header class="site-header">
 <div class="brand">
 <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
