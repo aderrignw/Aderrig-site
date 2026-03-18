@@ -128,10 +128,12 @@
   main { flex: 1 0 auto; }
 </style>
 </head>
-<body class="page-projects">
+<body data-acl-loading="true" class="page-projects">
 <header class="site-header">
 <div class="brand">
-<a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
+<a class="site-logo" href="index.html">
+<img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/>
+</a>
 <div class="brand-text">
 <h1>Aderrig NW</h1>
 <p class="muted">Adamstown</p>
@@ -140,11 +142,11 @@
 <nav class="nav">
 <a href="index.html">Home</a>
 <a href="about.html">About</a>
+<a href="handbook.html">Handbook</a>
 <a href="report.html">Report</a>
 <a href="alerts.html">Community Alerts</a>
 <a class="active" href="projects.html">Community Projects</a>
-<a href="handbook.html">Handbook</a>
-<a href="login.html">Login / Register</a>
+<a class="nav-login" href="login.html">Login / Register</a>
 <a href="dashboard.html">Dashboard</a>
 <a href="household.html">Household</a>
 <a href="admin.html">Admin</a>
@@ -291,7 +293,7 @@
 </section>
 </section>
 <!-- ============================ SEND (CONFIRM) ============================ -->
-<section <div="" class="inline-confirm" hidden="" id="deleteConfirm">
+<div class="inline-confirm" hidden="" id="deleteConfirm">
 <div class="inline-confirm__card">
 <div class="inline-confirm__title">Delete this project?</div>
 <div class="inline-confirm__body">This will remove the project and all monitoring records. This can’t be undone.</div>
@@ -301,7 +303,7 @@
 </div>
 </div>
 
-<div class="proj-pane" id="paneSend">
+<section class="proj-pane" id="paneSend">
 <section class="card">
 <div class="row">
 <div>
@@ -1342,140 +1344,7 @@ async function loadStore(){
 </div>
 </div>
 </div>
-<script>
-/* Access control: Community Projects (EXCLUSIVE)
-   Allowed: Project Volunteers, Build Project, Confirm sending, Monitoring, Admin Support, Owner
-*/
-(function(){
-  const mainEl = document.getElementById('projectsMain');
-  const gate = document.getElementById('anwGateModal');
-  const gateLogin = document.getElementById('anwGateLogin');
-  const gateSignup = document.getElementById('anwGateSignup');
-  const gateClose = document.getElementById('anwGateClose');
 
-  const showGate = (title, msg, mode) => {
-    // Dashboard-style: keep page visible, show inline notice under header, do not open modal
-    const n = document.getElementById('anwAccessNotice');
-    if(n){
-      n.style.display = 'block';
-      n.innerHTML = String(msg || '')
-        .replace(/log in/ig, '<a href="login.html">log in</a>')
-        .replace(/register/ig, '<a href="login.html#signup">register</a>');
-    }
-    if(gate) gate.style.display = 'none';
-  };
-
-  const allowContent = () => {
-    const n = document.getElementById('anwAccessNotice');
-    if(n) n.style.display = 'none';
-    if(gate) gate.style.display = 'none';
-  };
-
-  gateClose?.addEventListener('click', ()=>{ if(gate) gate.style.display='none'; });
-
-  const normalize = (s)=> String(s||'').toLowerCase().replace(/[\s\-_]+/g,' ').replace(/[^a-z0-9 ]/g,'').trim();
-
-  const extractRoles = (profile) => {
-    const out = [];
-    if(!profile) return out;
-    const pushAny = (v)=>{ if(!v) return; if(Array.isArray(v)) v.forEach(pushAny); else out.push(String(v)); };
-    pushAny(profile.role); pushAny(profile.roles); pushAny(profile.position); pushAny(profile.title); pushAny(profile.access);
-    return out.map(normalize).filter(Boolean);
-  };
-
-  const hasAnyRole = (profile, allow) => {
-    const mine = extractRoles(profile);
-    const allowN = allow.map(normalize);
-    return mine.some(r => allowN.some(a => r === a || r.includes(a) || a.includes(r)));
-  };
-
-  const ensureIdentityUser = async () => {
-    if(!window.netlifyIdentity) return null;
-    return await new Promise((resolve)=>{
-      let done=false;
-      const finish=(u)=>{ if(done) return; done=true; resolve(u||null); };
-      try{
-        window.netlifyIdentity.on('init', finish);
-        window.netlifyIdentity.init();
-      }catch(e){}
-      setTimeout(()=>{
-        try{
-          const u = (typeof window.netlifyIdentity.currentUser === 'function') ? window.netlifyIdentity.currentUser() : null;
-          finish(u);
-        }catch(e){ finish(null); }
-      }, 350);
-    });
-  };
-
-  const getLoggedEmail = () => {
-    try { if(window.anwGetLoggedEmail) return String(window.anwGetLoggedEmail()||''); } catch(e) {}
-    try {
-      const u = window.netlifyIdentity && window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
-      if(u && u.email) return String(u.email);
-    } catch(e) {}
-    return '';
-  };
-
-  const loadProfile = async () => {
-    try { await window.anwInitStore?.(); } catch(e) {}
-    try{
-      const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
-      const email = getLoggedEmail();
-      const norm = (e)=> String(e||'').trim().toLowerCase();
-      return Array.isArray(users) ? (users.find(u=> norm(u.email) === norm(email)) || null) : null;
-    }catch(e){ return null; }
-  };
-
-  (async ()=>{
-    // hide by default until authorized
-    if(mainEl){
-      mainEl
-      mainEl
-      if(!mainEl.style.minHeight) mainEl.style.minHeight = '60vh';
-    }
-
-    if(window.ANW_PUBLIC_MODE){
-      allowContent();
-      return;
-    }
-
-    const user = await ensureIdentityUser();
-    if(!user){
-      showGate('Login required', 'This is an . Please log in or register to continue.', 'login+signup');
-      return;
-    }
-
-    const profile = await loadProfile();
-    if(!profile){
-      showGate('Approval required', 'Your account is logged in, but you are not registered/approved yet. Please wait for approval.', 'none');
-      return;
-    }
-
-    const status = String(profile.status || profile.accountStatus || '').toLowerCase();
-    const approved = (profile.approved === true) || (profile.active === true) || status === 'active' || status === 'approved';
-    if(!approved){
-      showGate('Approval required', 'Your account is not approved yet. Please wait for approval to access Community Projects.', 'none');
-      return;
-    }
-
-    const allowedRoles = [
-      'project volunteers','project volunteer','volunteer',
-      'build project',
-      'confirm sending',
-      'monitoring',
-      'admin support',
-      'support administrator','support admin',
-      'owner'
-    ];
-    if(!hasAnyRole(profile, allowedRoles)){
-      showGate('Access restricted', 'This is an  available only to authorised project roles.', 'none');
-      return;
-    }
-
-    allowContent();
-  })();
-})();
-</script>
 <script>
 // --- Community Projects tabs + ACL gating (tabs visible; blocked tabs show notice and do not open) ---
 document.addEventListener('DOMContentLoaded', async () => {
