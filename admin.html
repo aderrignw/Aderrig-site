@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="anw-acl-key" content="page:admin" />
+<meta content="page:admin" name="anw-acl-key"/>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Admin Panel — Aderrig NW</title>
 
@@ -298,28 +298,30 @@
 </script>
 </head>
 
-<body>
+<body data-acl-loading="true" data-acl-shell-public="true">
 
 <header class="site-header">
-  <div class="brand">
-    <a href="index.html" class="site-logo"><img src="/assets/logo/logo.png" alt="Aderrig Neighbourhood Watch" class="logo-img"></a>
-    <div class="brand-text">
-      <h1>Aderrig NW</h1>
-      <p class="muted">Adamstown</p>
-    </div>
-  </div>
-  <nav class="nav">
-    <a href="index.html">Home</a>
-    <a href="about.html">About</a>
-    <a href="report.html">Report</a>
-    <a href="alerts.html">Community Alerts</a>
-    <a href="projects.html">Community Projects</a>
-    <a href="handbook.html">Handbook</a>
-    <a href="login.html">Login / Register</a>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="household.html">Household</a>
-    <a href="admin.html" class="active">Admin</a>
-  </nav>
+<div class="brand">
+<a class="site-logo" href="index.html">
+<img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/>
+</a>
+<div class="brand-text">
+<h1>Aderrig NW</h1>
+<p class="muted">Adamstown</p>
+</div>
+</div>
+<nav class="nav">
+<a href="index.html">Home</a>
+<a href="about.html">About</a>
+<a href="handbook.html">Handbook</a>
+<a href="report.html">Report</a>
+<a href="alerts.html">Community Alerts</a>
+<a href="projects.html">Community Projects</a>
+<a class="nav-login" href="login.html">Login / Register</a>
+<a href="dashboard.html">Dashboard</a>
+<a href="household.html">Household</a>
+<a class="active" href="admin.html">Admin</a>
+</nav>
 </header>
 
 <main class="wrap">
@@ -1936,19 +1938,19 @@
   const ACL_ROLES = ['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'];
 
   const ACL_ITEMS = [
-    { key:'page:index', label:'Home', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:home', label:'Home', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:about', label:'About', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:report', label:'Report Incident', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:alerts', label:'Community Alerts', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:report', label:'Report Incident', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
+    { key:'page:alerts', label:'Community Alerts', group:'Site pages', indent:0, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
     { key:'page:projects', label:'Community Projects page', group:'Projects', indent:0, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_monitoring', label:'Projects · Monitoring', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_tasks', label:'Projects · Tasks', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_reports', label:'Projects · Reports', group:'Projects', indent:1, defaults:{ area_coordinator:true, owner:true } },
+    { key:'projects:tab_monitoring', label:'Projects · Monitoring', group:'Projects', indent:1, defaults:{ projects:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
+    { key:'projects:tab_builder', label:'Projects · Build project', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
+    { key:'projects:tab_published', label:'Projects · Confirm sending', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
     { key:'page:handbook', label:'Handbook', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:privacy', label:'Privacy Policy', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:login', label:'Login / Register', group:'Site pages', indent:0, defaults:{ public:true } },
 
-    { key:'page:dashboard', label:'Dashboard', group:'Dashboard', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
+    { key:'page:dashboard', label:'Dashboard', group:'Dashboard', indent:0, defaults:{ public:true } },
     { key:'dashboard:tab_profile', label:'Dashboard · Profile', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
     { key:'dashboard:tab_interest', label:'Dashboard · Interest', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
     { key:'dashboard:tab_elections', label:'Dashboard · Elections', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
@@ -1963,7 +1965,6 @@
     { key:'page:admin', label:'Admin panel', group:'Owner controls', indent:0, defaults:{ owner:true } },
     { key:'page:access-control', label:'Access Control sub-tab', group:'Owner controls', indent:1, defaults:{ owner:true } },
     { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:preview', label:'Preview', group:'Owner controls', indent:0, defaults:{ owner:true } }
   ];
 
   const ROLE_RANK = {
@@ -2256,19 +2257,150 @@
   byId('btnExportReports')?.addEventListener('click', async () => downloadText('reports.json', JSON.stringify(await anwLoadSafe(KEY_REPORTS, []), null, 2)));
   byId('btnExportProjects')?.addEventListener('click', async () => downloadText('projects.json', JSON.stringify(await anwLoadSafe(KEY_PROJECTS, []), null, 2)));
 
-  byId('btnBackupRefresh')?.addEventListener('click', async () => {
-    byId('backupStatusText').textContent = 'Backups are available through Netlify Functions.';
-    byId('backupStatusBadge').textContent = 'Ready';
-    byId('backupStatusBadge').className = 'tag ok';
-    byId('backupLastRun').textContent = 'Last run: check server log';
-  });
+  
+  async function getAdminAuthHeaders(extra){
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+    try{
+      const u = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
+        ? window.netlifyIdentity.currentUser()
+        : null;
+      if(u && typeof u.jwt === 'function'){
+        const token = await u.jwt();
+        if(token) headers.Authorization = 'Bearer ' + token;
+      }
+    }catch(_){}
+    return headers;
+  }
+
+  async function ensureBackupSettings(){
+    try{
+      const current = await anwLoadSafe('anw_backup_settings', null);
+      if(current && typeof current === 'object' && current.enabled === true) return current;
+      const next = Object.assign({}, current || {}, {
+        enabled: true,
+        schedule: '0 2 * * *',
+        timezone: 'UTC',
+        updatedAt: new Date().toISOString()
+      });
+      await anwSaveSafe('anw_backup_settings', next);
+      return next;
+    }catch(_){
+      return { enabled:true, schedule:'0 2 * * *', timezone:'UTC' };
+    }
+  }
+
+  async function refreshBackupStatus(){
+    const statusText = byId('backupStatusText');
+    const statusBadge = byId('backupStatusBadge');
+    const lastRun = byId('backupLastRun');
+    const msg = byId('backupMsg');
+    if(statusText) statusText.textContent = 'Checking backup status…';
+    if(statusBadge){
+      statusBadge.textContent = 'Checking';
+      statusBadge.className = 'tag gray';
+    }
+    if(lastRun) lastRun.textContent = 'Last run: —';
+
+    try{
+      const settings = await ensureBackupSettings();
+      const headers = await getAdminAuthHeaders();
+      const res = await fetch('/.netlify/functions/backup-list', {
+        method: 'GET',
+        headers,
+        cache: 'no-store'
+      });
+      const data = await res.json().catch(() => ({}));
+      if(!res.ok || data.ok === false){
+        throw new Error(data.error || 'Unable to load backup status');
+      }
+      const items = Array.isArray(data.items) ? data.items : [];
+      const latest = items[0] || null;
+      if(statusText){
+        statusText.textContent = settings.enabled
+          ? 'Automatic backup is active (daily at 02:00 UTC). You can also run a manual backup now.'
+          : 'Automatic backup is disabled.';
+      }
+      if(statusBadge){
+        statusBadge.textContent = settings.enabled ? 'Active' : 'Disabled';
+        statusBadge.className = settings.enabled ? 'tag ok' : 'tag gray';
+      }
+      if(lastRun){
+        lastRun.textContent = latest && latest.createdAt
+          ? ('Last run: ' + fmtDate(latest.createdAt))
+          : 'Last run: none yet';
+      }
+      if(msg && latest && latest.id){
+        msg.textContent = 'Latest backup ID: ' + latest.id;
+      }else if(msg){
+        msg.textContent = '';
+      }
+    }catch(err){
+      if(statusText) statusText.textContent = 'Backup status could not be loaded.';
+      if(statusBadge){
+        statusBadge.textContent = 'Error';
+        statusBadge.className = 'tag gray';
+      }
+      if(lastRun) lastRun.textContent = 'Last run: unavailable';
+      if(msg) msg.textContent = String(err && err.message ? err.message : err || 'Unknown backup error');
+    }
+  }
+
+  byId('btnBackupRefresh')?.addEventListener('click', refreshBackupStatus);
 
   byId('btnBackupNow')?.addEventListener('click', async () => {
-    byId('backupMsg').textContent = 'Trigger backup from the connected function endpoint.';
+    const msg = byId('backupMsg');
+    if(msg) msg.textContent = 'Running backup now…';
+    try{
+      await ensureBackupSettings();
+      const headers = await getAdminAuthHeaders();
+      const res = await fetch('/.netlify/functions/backup-now', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ source: 'admin-manual' })
+      });
+      const data = await res.json().catch(() => ({}));
+      if(!res.ok || data.ok === false){
+        throw new Error(data.error || 'Backup failed');
+      }
+      if(msg) msg.textContent = 'Backup created successfully. Backup ID: ' + (data.id || 'unknown');
+      await refreshBackupStatus();
+    }catch(err){
+      if(msg) msg.textContent = 'Backup failed: ' + String(err && err.message ? err.message : err || 'Unknown error');
+    }
   });
 
   byId('btnRestoreBackup')?.addEventListener('click', async () => {
-    byId('backupMsg').textContent = 'Restore uses the selected backup file with the restore function.';
+    const msg = byId('backupMsg');
+    const input = byId('restoreBackupFile');
+    const file = input && input.files && input.files[0] ? input.files[0] : null;
+    if(!file){
+      if(msg) msg.textContent = 'Select a backup JSON file first.';
+      return;
+    }
+    if(msg) msg.textContent = 'Restoring backup…';
+    try{
+      const text = await file.text();
+      const snapshot = JSON.parse(text);
+      const headers = await getAdminAuthHeaders();
+      const res = await fetch('/.netlify/functions/restore-backup', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ snapshot })
+      });
+      const data = await res.json().catch(() => ({}));
+      if(!res.ok || data.ok === false){
+        throw new Error(data.error || 'Restore failed');
+      }
+      if(msg){
+        msg.textContent = 'Restore completed successfully from backup ' +
+          String(data.id || snapshot.id || 'uploaded file') +
+          (data.safetyBackupId ? (' (safety backup: ' + data.safetyBackupId + ')') : '');
+      }
+      if(input) input.value = '';
+      await refreshBackupStatus();
+    }catch(err){
+      if(msg) msg.textContent = 'Restore failed: ' + String(err && err.message ? err.message : err || 'Unknown error');
+    }
   });
 
   // ---------- Init ----------
@@ -2326,6 +2458,68 @@
     initAdminSessionUi();
   }
 })();
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  try{
+    const allowed = "claudiosantos1968@gmail.com";
+    const tabsBar = document.querySelector('.admin-tabs');
+    const panels = Array.from(document.querySelectorAll('.admin-tab-content'));
+    const currentUser = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
+      ? window.netlifyIdentity.currentUser()
+      : null;
+    const email = currentUser && currentUser.email ? String(currentUser.email).toLowerCase().trim() : "";
+
+    const isOwner = email === allowed;
+
+    if(!isOwner){
+      if (tabsBar) tabsBar.style.opacity = '0.65';
+      document.querySelectorAll('.admin-tab').forEach((btn) => { btn.disabled = true; btn.setAttribute('aria-disabled','true'); });
+      panels.forEach((panel) => { panel.style.display = 'none'; });
+
+      const first = document.getElementById('tabResidents') || panels[0];
+      if(first){
+        first.style.display = 'block';
+        first.innerHTML = `
+          <h3>Admin</h3>
+          <div class="card" style="background:#f9fafb;">
+            <p class="tiny muted" style="margin:0;">Administrator access only.</p>
+            <p class="tiny muted" style="margin:8px 0 0;">Access restricted. This section is available only to authorised members.</p>
+          </div>
+        `;
+      }
+    }
+  }catch(e){}
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  try{
+    const tabResidents = document.getElementById("tabResidents");
+    const subManage = document.getElementById("subManage");
+    if (tabResidents) {
+      tabResidents.style.display = "block";
+      tabResidents.hidden = false;
+    }
+    if (subManage) {
+      subManage.style.display = "block";
+      subManage.hidden = false;
+    }
+    const allTabs = document.querySelectorAll(".admin-tab-content");
+    if (allTabs.length) {
+      let anyVisible = false;
+      allTabs.forEach(el => {
+        const st = window.getComputedStyle(el);
+        if (st.display !== "none" && st.visibility !== "hidden") anyVisible = true;
+      });
+      if (!anyVisible && tabResidents) tabResidents.style.display = "block";
+    }
+  }catch(e){}
+});
 </script>
 
 </body>
