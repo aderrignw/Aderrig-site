@@ -11,7 +11,7 @@
   node_bundler = "esbuild"
 
 [functions."backup-scheduled"]
-  schedule = "0 */6 * * *"
+  schedule = "0 2 * * *"
 
 [[redirects]]
   from = "/login"
