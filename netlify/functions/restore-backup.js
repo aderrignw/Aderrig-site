@@ -97,15 +97,25 @@ export default async (req, context) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const id = String(body?.id || '').trim();
-    if (!id) {
-      return new Response(JSON.stringify({ ok:false, error:"Missing backup id" }), { status: 400, headers: { "content-type":"application/json; charset=utf-8" } });
-    }
+    const uploaded = body?.snapshot;
+    const requestedId = String(body?.id || uploaded?.id || '').trim();
 
     const store = getCentralStore(context);
-    const snap = await store.get(`anw_backup_${id}`, { type: "json" });
+    let snap = null;
+    let id = requestedId;
+
+    if (uploaded && typeof uploaded === 'object') {
+      snap = uploaded;
+    } else if (requestedId) {
+      snap = await store.get(`anw_backup_${requestedId}`, { type: "json" });
+    }
+
     if (!snap || typeof snap !== 'object' || !snap.data || typeof snap.data !== 'object') {
       return new Response(JSON.stringify({ ok:false, error:"Backup not found or invalid" }), { status: 404, headers: { "content-type":"application/json; charset=utf-8" } });
+    }
+
+    if (!id) {
+      id = String(snap.id || 'uploaded-file');
     }
 
     const safetyBackupId = await createSafetyBackup(store, `Before restore of ${id}`);
