@@ -112,7 +112,12 @@ export default async (req, context) => {
   try {
     const store = getCentralStore(context);
 
-    const settings = (await store.get("anw_backup_settings", { type: "json" })) ?? { enabled: false };
+    const settings = (await store.get("anw_backup_settings", { type: "json" })) ?? { enabled: true, schedule: "0 2 * * *", timezone: "UTC" };
+    if (!(await store.get("anw_backup_settings", { type: "json" }))) {
+      await store.set("anw_backup_settings", Object.assign({}, settings, { updatedAt: new Date().toISOString() }), {
+        metadata: { updatedAt: new Date().toISOString(), reason: "initial-enable-automatic-backup" }
+      });
+    }
     if (!settings.enabled) {
       return new Response(JSON.stringify({ ok: true, skipped: true, reason: "disabled" }), {
         status: 200,
