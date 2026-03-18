@@ -53,7 +53,6 @@ function anwIsMasterEmail(email) {
   }
 }
 
-
 function anwIsApproved(user) {
   try {
     if (!user || typeof user !== "object") return false;
@@ -144,12 +143,78 @@ async function anwLogout() {
 // ---------------------------
 // Role resolution
 // ---------------------------
+function anwCollectProfileRoles(user) {
+  try {
+    const out = [];
+    const pushAny = (v) => {
+      if (v == null || v === "") return;
+      if (Array.isArray(v)) return v.forEach(pushAny);
+      out.push(String(v));
+    };
+    if (!user || typeof user !== "object") return out;
+    pushAny(user.type);
+    pushAny(user.role);
+    pushAny(user.roles);
+    pushAny(user.residentType);
+    pushAny(user.position);
+    pushAny(user.title);
+    pushAny(user.access);
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+function anwNormalizeRoleName(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (!raw) return "resident";
+  const clean = raw.replace(/[\s\-]+/g, "_");
+
+  const aliasMap = {
+    owner: "owner",
+    admin: "admin",
+    resident: "resident",
+    member: "resident",
+    homeowner: "resident",
+    householder: "resident",
+    street_admin: "street_coordinator",
+    street_admins: "street_coordinator",
+    street_coordinator: "street_coordinator",
+    street_coordinators: "street_coordinator",
+    street_coordinator_role: "street_coordinator",
+    coordinator: "street_coordinator",
+    area_coordinator: "area_coordinator",
+    area_coordinator_role: "area_coordinator",
+    auxiliar_coordinator: "assistant_area_coordinator",
+    auxiliary_coordinator: "assistant_area_coordinator",
+    assistant_coordinator: "assistant_area_coordinator",
+    assistant_area_coordinator: "assistant_area_coordinator",
+    assistant_area_coordinator_role: "assistant_area_coordinator",
+    projects: "projects",
+    programmer_support: "admin",
+    admin_support: "admin",
+    support_administrator: "admin"
+  };
+
+  if (aliasMap[clean]) return aliasMap[clean];
+  return clean;
+}
+
+function anwProfileHasRole(user, roleName) {
+  try {
+    const want = anwNormalizeRoleName(roleName);
+    const mine = anwCollectProfileRoles(user).map(anwNormalizeRoleName);
+    return mine.includes(want);
+  } catch {
+    return false;
+  }
+}
+
 function anwGetLoggedRole() {
   try {
     const email = anwNormEmail(anwGetLoggedEmail());
     if (!email) return "resident";
 
-    // Master email is always owner.
     if (anwIsMasterEmail(email)) return "owner";
 
     const users = anwLoad(ANW_KEYS.USERS, []);
@@ -158,9 +223,14 @@ function anwGetLoggedRole() {
     const me = users.find(u => anwNormEmail(u && u.email) === email);
     if (!me) return "resident";
 
-    const role = String(me.role || "resident").toLowerCase();
-    if (role === "owner") return "owner";
-    return role;
+    const normalized = anwCollectProfileRoles(me).map(anwNormalizeRoleName);
+    if (normalized.includes("owner")) return "owner";
+    if (normalized.includes("admin")) return "admin";
+    if (normalized.includes("area_coordinator")) return "area_coordinator";
+    if (normalized.includes("assistant_area_coordinator")) return "assistant_area_coordinator";
+    if (normalized.includes("street_coordinator")) return "street_coordinator";
+    if (normalized.includes("projects")) return "projects";
+    return "resident";
   } catch (e) {
     console.warn("Erro ao obter role do usuário:", e);
     return "resident";
@@ -250,7 +320,6 @@ async function anwInitStore() {
   }
 }
 
-
 function anwBindIdentitySync() {
   if (window.__anwIdentitySyncBound) return;
   window.__anwIdentitySyncBound = true;
@@ -261,18 +330,15 @@ function anwBindIdentitySync() {
       anwHandleRemoteLogout();
       return;
     }
-    if (type === "login") {
-      try { window.dispatchEvent(new CustomEvent("anw:auth-login", { detail: payload || {} })); } catch {}
+    if (type === "login" || type === "signup" || type === "refresh" || type === "sync") {
+      try { window.location.reload(); } catch {}
     }
   };
 
   try {
-    window.addEventListener("storage", (event) => {
-      if (event.key === ANW_AUTH_EVENT_KEY && event.newValue) {
-        try { onAuthEvent(JSON.parse(event.newValue)); } catch {}
-      }
-      if (event.key === ANW_KEYS.SESSION && !event.newValue) {
-        onAuthEvent({ type: "logout", at: Date.now(), source: "storage" });
+    window.addEventListener("storage", (ev) => {
+      if (ev.key === ANW_AUTH_EVENT_KEY && ev.newValue) {
+        try { onAuthEvent(JSON.parse(ev.newValue)); } catch {}
       }
     });
   } catch {}
@@ -280,122 +346,111 @@ function anwBindIdentitySync() {
   try {
     if (window.BroadcastChannel) {
       if (!window.__anwAuthChannel) window.__anwAuthChannel = new BroadcastChannel(ANW_AUTH_CHANNEL_NAME);
-      window.__anwAuthChannel.onmessage = (event) => onAuthEvent(event && event.data ? event.data : {});
+      window.__anwAuthChannel.onmessage = (ev) => onAuthEvent(ev.data || {});
     }
   } catch {}
 
   try {
-    if (window.netlifyIdentity && typeof window.netlifyIdentity.on === "function") {
-      window.netlifyIdentity.on("login", (user) => {
-        const email = user && user.email ? String(user.email).toLowerCase() : "";
-        if (email) {
-          const current = anwGetSession() || {};
-          anwSave(ANW_KEYS.SESSION, Object.assign({}, current, { email, loginAt: new Date().toISOString() }));
-        }
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.on("login", async (user) => {
+        const email = anwNormEmail(user && user.email);
+        if (email) anwSave(ANW_KEYS.SESSION, { email });
         anwBroadcastAuthEvent("login", { email });
+        try { await anwInitStore(); } catch {}
       });
+
       window.netlifyIdentity.on("logout", () => {
         anwClearSession();
-        try { window.dispatchEvent(new CustomEvent("anw:auth-logout", { detail: { at: Date.now(), source: "identity" } })); } catch {}
         anwBroadcastAuthEvent("logout");
       });
-      window.netlifyIdentity.on("init", (user) => {
-        if (!user) {
-          anwClearSession();
-          return;
-        }
-        const email = user && user.email ? String(user.email).toLowerCase() : "";
+
+      window.netlifyIdentity.on("init", async (user) => {
+        const email = anwNormEmail(user && user.email);
         if (email) {
-          const current = anwGetSession() || {};
-          anwSave(ANW_KEYS.SESSION, Object.assign({}, current, { email }));
+          anwSave(ANW_KEYS.SESSION, { email });
+          try { await anwInitStore(); } catch {}
         }
       });
     }
-  } catch {}
-}
-
-// ---------------------------
-// UI helper
-// ---------------------------
-function anwDisplayLoggedUser() {
-  const el = document.getElementById("anw-logged-user");
-  if (!el) return;
-  const email = anwGetLoggedEmail();
-  el.textContent = email || "";
-}
-
-document.addEventListener("DOMContentLoaded", async () => {
-  anwBindIdentitySync();
-  // Do not force sync for anonymous visitors
-  if (anwIsLoggedIn()) {
-    await anwInitStore();
+  } catch (e) {
+    console.warn("Erro ao bindar Netlify Identity:", e);
   }
-  anwDisplayLoggedUser();
-});
+}
 
-
-// Export globals (some pages expect these on window)
-window.anwSave = anwSave;
-window.anwLoad = anwLoad;
-window.anwInitStore = anwInitStore;
-window.anwIsLoggedIn = anwIsLoggedIn;
-window.anwIsApproved = anwIsApproved;
-window.anwGetLoggedEmail = anwGetLoggedEmail;
-window.anwGetLoggedRole = anwGetLoggedRole;
-window.anwLogout = anwLogout;
-
-// Lightweight client-side store facade for legacy calls
-window.anwStore = window.anwStore || {
-  init: anwInitStore,
-  load: anwLoad,
-  save: anwSave
+// ---------------------------
+// Simple app shell
+// ---------------------------
+window.ANW = window.ANW || {};
+window.ANW.ui = window.ANW.ui || {
+  toast(message, type) {
+    try { console.log(`[${type || "info"}] ${message}`); } catch {}
+    alert(String(message || ""));
+  },
+  alert(title, message) {
+    const text = [title, message].filter(Boolean).join("\n\n");
+    alert(text);
+  }
 };
-// Backward-compat typo seen in some builds
-window.anwlntStore = window.anwlntStore || window.anwStore;
 
-async function anwFetchStorePost(key, payload){
-  const token = await anwGetIdentityToken();
-  if (!token) throw new Error("Not authenticated (missing token)");
-  const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-    body: JSON.stringify(payload || {})
-  });
-  if (!res.ok){
-    let t = "";
-    try { t = await res.text(); } catch {}
-    throw new Error(`Store POST failed ${res.status} for ${key}${t ? ": " + t : ""}`);
+// ---------------------------
+// User helpers for pages
+// ---------------------------
+window.anwGetCurrentUserProfile = function () {
+  try {
+    const email = anwNormEmail(anwGetLoggedEmail());
+    if (!email) return null;
+    const users = anwLoad(ANW_KEYS.USERS, []);
+    if (!Array.isArray(users)) return null;
+    return users.find(u => anwNormEmail(u && u.email) === email) || null;
+  } catch {
+    return null;
   }
-  return await res.json();
-}
-window.anwStoreAppendMe = async function(profile){
+};
+
+window.anwUpsertMyProfile = async function (profile) {
   return await anwFetchStorePost(ANW_KEYS.USERS, { action: "append_me", profile: profile || {} });
 };
-window.anwStoreAdminSaveUsers = async function(usersArray){
+
+window.anwAdminSaveUsers = async function (usersArray) {
   return await anwFetchStorePost(ANW_KEYS.USERS, { action: "admin_save_users", users: usersArray || [] });
 };
 
-window.anwGetIdentityToken = anwGetIdentityToken;
-window.anwStoreGetKey = async function(key){
-  return await anwFetchStoreKey(key);
-};
-window.anwStoreSetKey = async function(key, payload){
+async function anwFetchStorePost(key, payload) {
   const token = await anwGetIdentityToken();
   if (!token) throw new Error("Not authenticated (missing token)");
-  const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+
+  const res = await fetch("/.netlify/functions/store", {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-    body: JSON.stringify(payload)
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ key, value: payload })
   });
-  if (!res.ok){
+
+  if (!res.ok) {
     let t = "";
     try { t = await res.text(); } catch {}
     throw new Error(`Store POST failed ${res.status} for ${key}${t ? ": " + t : ""}`);
   }
   return await res.json();
-};
-window.anwBroadcastAuthEvent = anwBroadcastAuthEvent;
-window.anwClearSession = anwClearSession;
-window.anwHandleRemoteLogout = anwHandleRemoteLogout;
+}
 
+// ---------------------------
+// Boot
+// ---------------------------
+(function bootAnwCore() {
+  try {
+    anwBindIdentitySync();
+  } catch {}
 
+  try {
+    if (window.netlifyIdentity && typeof window.netlifyIdentity.init === "function") {
+      window.netlifyIdentity.init();
+    }
+  } catch {}
+})();
+
+window.anwNormalizeRoleName = anwNormalizeRoleName;
+window.anwCollectProfileRoles = anwCollectProfileRoles;
+window.anwProfileHasRole = anwProfileHasRole;
