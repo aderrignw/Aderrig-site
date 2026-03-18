@@ -53,6 +53,26 @@ function anwIsMasterEmail(email) {
   }
 }
 
+
+function anwIsApproved(user) {
+  try {
+    if (!user || typeof user !== "object") return false;
+    if (user.approved === true) return true;
+    if (user.active === true) return true;
+
+    const status = String(
+      user.status ??
+      user.accountStatus ??
+      user.registrationStatus ??
+      ""
+    ).trim().toLowerCase();
+
+    return status === "approved" || status === "active";
+  } catch {
+    return false;
+  }
+}
+
 // ---------------------------
 // Auth session
 // ---------------------------
@@ -319,6 +339,7 @@ window.anwSave = anwSave;
 window.anwLoad = anwLoad;
 window.anwInitStore = anwInitStore;
 window.anwIsLoggedIn = anwIsLoggedIn;
+window.anwIsApproved = anwIsApproved;
 window.anwGetLoggedEmail = anwGetLoggedEmail;
 window.anwGetLoggedRole = anwGetLoggedRole;
 window.anwLogout = anwLogout;
