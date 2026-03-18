@@ -204,7 +204,7 @@
   }
 </style>
 </head>
-<body data-acl-shell-public="true">
+<body data-acl-loading="true" data-acl-shell-public="true">
 <header class="site-header">
 <div class="brand">
 <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
@@ -219,7 +219,7 @@
 <a href="report.html">Report</a>
 <a href="alerts.html">Community Alerts</a>
 <a href="projects.html">Community Projects</a>
-<a href="management-requests.html">Management Requests</a>
+
 <a href="login.html">Login / Register</a>
 <a class="active" href="dashboard.html">Dashboard</a>
 <a href="household.html">Household</a>
@@ -407,6 +407,14 @@
 </div>
 </div>
 </section>
+
+<div class="card dash-tab-content" id="dashBlockedMessage" style="display:none;">
+  <h3>Dashboard</h3>
+  <div class="card" style="background:#f9fafb;">
+    <p class="tiny muted" style="margin:0;">Please log in to access this section.</p>
+  </div>
+</div>
+
 </main>
 <footer class="site-footer">
 <span class="page-access" id="pageAccessLabel">Private Page</span>
@@ -887,27 +895,53 @@
     const statusEl = document.getElementById('gardaStatus');
     const chipsEl  = document.getElementById('gardaChips');
     const listEl   = document.getElementById('gardaList');
+    const fallbackEl = document.getElementById('gardaFallback');
 
-    const CURATED = [
-      { category:'Fraud / Economic Crime', title:'Fraud', url:'https://www.garda.ie/en/crime/fraud/', snippet:'Official Garda guidance on fraud, scams and economic crime.' },
-      { category:'Cyber Crime', title:'Cyber Crime', url:'https://www.garda.ie/en/crime/cyber-crime/', snippet:'Official Garda guidance on staying safe online and reporting cyber incidents.' },
-      { category:'Burglary & Theft', title:'Securing your home', url:'https://www.garda.ie/en/crime-prevention/securing-your-home/', snippet:'Official burglary prevention guidance for securing your home.' },
-      { category:'Drugs', title:'Drugs', url:'https://www.garda.ie/en/crime/drugs/', snippet:'Official Garda information on drugs and related crime prevention.' },
-      { category:'Domestic Abuse', title:'Domestic abuse', url:'https://www.garda.ie/en/crime/domestic-abuse/domestic-abuse.html', snippet:'Official Garda support and reporting information for domestic abuse.' },
-      { category:'Traffic Matters', title:'Road safety', url:'https://www.garda.ie/en/roads-policing/road-safety/', snippet:'Road safety and roads policing resources from Garda.' },
-      { category:'Community Policing', title:'Neighbourhood Watch', url:'https://www.garda.ie/en/crime-prevention/community-engagement/neighbourhood-watch.html', snippet:'Neighbourhood Watch and community safety information for residents.' },
-      { category:'Useful Contacts', title:'Useful contact numbers', url:'https://www.garda.ie/en/contact-us/useful-contact-numbers/', snippet:'Emergency and useful Garda contact numbers.' }
-    ];
+    const PRESET = {
+      categories: ['Fraud / Economic Crime','Cyber Crime','Burglary & Theft','Drugs','Domestic Abuse','Traffic Matters','Community Policing','Other'],
+      linksByCategory: {
+      'Fraud / Economic Crime': [
+        { title:'Fraud (information hub)', url:'https://www.garda.ie/en/crime/fraud/', snippet:'Practical advice on avoiding scams, spotting fraud attempts, and reporting economic crime.' }
+      ],
+      'Cyber Crime': [
+        { title:'Cyber crime (information hub)', url:'https://www.garda.ie/en/crime/cyber-crime/', snippet:'Guidance on staying safe online, common cyber threats, and how to report incidents.' },
+        { title:'Cyber crime awareness', url:'https://www.garda.ie/en/crime/cyber-crime/cyber-crime-awareness.html', snippet:'Tips and campaigns to help residents recognise phishing, hacking and online fraud.' }
+      ],
+      'Burglary & Theft': [
+        { title:'Securing your home (burglary prevention)', url:'https://www.garda.ie/en/crime-prevention/securing-your-home/', snippet:'Steps to protect your home: locks, lighting, alarms and everyday habits that deter burglary.' },
+        { title:'Burglary & theft (hub)', url:'https://www.garda.ie/en/crime/burglary-theft/', snippet:'Information and guidance related to burglary and theft, including prevention and reporting.' },
+        { title:'Burglary & theft FAQs', url:'https://www.garda.ie/en/crime/burglary-theft/burglary-and-theft-faqs.html', snippet:'Frequently asked questions about burglary and theft: what to do and how to prevent it.' }
+      ],
+      'Drugs': [
+        { title:'Drugs (information hub)', url:'https://www.garda.ie/en/crime/drugs/', snippet:'Information on drug-related crime, community safety guidance and how to share information.' }
+      ],
+      'Domestic Abuse': [
+        { title:'Domestic abuse (information hub)', url:'https://www.garda.ie/en/crime/domestic-abuse/domestic-abuse.html', snippet:'Support and reporting information for domestic abuse, including emergency contacts and resources.' }
+      ],
+      'Traffic Matters': [
+        { title:'Road safety (Roads Policing)', url:'https://www.garda.ie/en/roads-policing/road-safety/', snippet:'Road safety information, campaigns and advice to help keep drivers, cyclists and pedestrians safe.' },
+        { title:'Traffic matters (crime hub)', url:'https://www.garda.ie/en/crime/traffic-matters/', snippet:'Guidance on traffic-related offences and how to report dangerous driving or incidents.' }
+      ],
+      'Community Policing': [
+        { title:'Community policing', url:'https://www.garda.ie/en/crime-prevention/community-policing/community-policing.html', snippet:'How Garda community policing works and how residents can engage locally.' },
+        { title:'Community engagement', url:'https://www.garda.ie/en/crime-prevention/community-engagement/', snippet:'Neighbourhood Watch and other community engagement initiatives and resources.' }
+      ],
+      'Other': [
+        { title:'Crime prevention (main hub)', url:'https://www.garda.ie/en/crime-prevention/', snippet:'Main Garda crime prevention hub with practical guidance and official resources.' },
+        { title:'Garda press releases', url:'https://www.garda.ie/en/about-us/our-departments/office-of-corporate-communications/press-releases/', snippet:'Official press releases and updates published by An Garda Síochána.' }
+      ]
+    }
+    };
 
     function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-    function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
 
-    function normalizeCategory(cat){
-      return String(cat || 'Other').replace(/\s+/g, ' ').trim() || 'Other';
+    function normCat(cat){
+      return String(cat || '').toLowerCase().replace(/\s+/g,' ').trim();
     }
 
     function iconSvg(cat){
-      const c = normalizeCategory(cat).toLowerCase();
+      const c = normCat(cat);
+
       const svgs = {
         all: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V7l8-4z"/></svg>`,
         fraud: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M17 7h-6a3 3 0 0 0 0 6h2a3 3 0 0 1 0 6H7"/></svg>`,
@@ -917,9 +951,9 @@
         domestic: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z"/></svg>`,
         traffic: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17h10"/><path d="M6 17l-1-6 2-5h10l2 5-1 6"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/></svg>`,
         community: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M12 15c-4 0-7 2-7 5h14c0-3-3-5-7-5z"/><path d="M12 3v2"/></svg>`,
-        contacts: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07A19.5 19.5 0 0 1 5.15 12.8 19.8 19.8 0 0 1 2.08 4.09 2 2 0 0 1 4.06 1.9h3a2 2 0 0 1 2 1.72l.45 3a2 2 0 0 1-.57 1.73l-1.3 1.3a16 16 0 0 0 6.07 6.07l1.3-1.3a2 2 0 0 1 1.73-.57l3 .45A2 2 0 0 1 22 16.92z"/></svg>`,
         other: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="10"/></svg>`
       };
+
       if (c === 'all') return svgs.all;
       if (c.includes('fraud') || c.includes('economic')) return svgs.fraud;
       if (c.includes('cyber')) return svgs.cyber;
@@ -928,42 +962,44 @@
       if (c.includes('domestic')) return svgs.domestic;
       if (c.includes('traffic') || c.includes('road')) return svgs.traffic;
       if (c.includes('community') || c.includes('policing')) return svgs.community;
-      if (c.includes('contact')) return svgs.contacts;
       return svgs.other;
     }
 
-    function dedupeItems(items){
-      const seen = new Set();
-      return (items || []).filter((item) => {
-        const url = String(item?.url || '').trim().toLowerCase();
-        const title = String(item?.title || '').trim().toLowerCase();
-        const key = url || `${normalizeCategory(item?.category)}|${title}`;
-        if (!key || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
+    function isBadUrl(url){
+      const u = String(url || '');
+      if(!u) return true;
+      // Common Garda 'not found' redirect patterns
+      if(u.includes('/403/?404') || u.includes('/404/') || u.includes('404%3b') || u.includes('page-not-found')) return true;
+      // Only allow Garda domain links
+      if(!/^https:\/\/(www\.)?garda\.ie\//i.test(u)) return true;
+      return false;
     }
 
-    function sanitizeItems(items){
-      return dedupeItems(items)
-        .filter(item => /^https:\/\/(www\.)?garda\.ie\//i.test(String(item?.url || '').trim()))
-        .map(item => ({
-          category: normalizeCategory(item.category),
-          title: String(item.title || 'Official Garda resource').trim(),
-          url: String(item.url || '').trim(),
-          snippet: String(item.snippet || '').trim(),
-          date: String(item.date || 'Official link').trim()
-        }));
+    function looksLikeNotFound(item){
+      const t = (item && item.title) ? String(item.title) : '';
+      const s = (item && item.snippet) ? String(item.snippet) : '';
+      const joined = (t + ' ' + s).toLowerCase();
+      return joined.includes('page not found') || joined.includes(' 404') || joined.startsWith('404');
+    }
+
+    function filterItems(items){
+      return (items || []).filter(it => it && !isBadUrl(it.url) && !looksLikeNotFound(it));
+    }
+    function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
+    function showFallback(){
+      // In tests/offline we still want content; render preset links quietly.
+      renderPreset();
     }
 
     function render(items){
       if(!chipsEl || !listEl) return;
-      const safeItems = sanitizeItems(items);
-      const cats = ['All', ...Array.from(new Set(safeItems.map(x => x.category))).sort((a,b)=>a.localeCompare(b))];
+
+      const cats = Array.from(new Set((items||[]).map(x => x.category || 'Other'))).sort((a,b)=>a.localeCompare(b));
+      const allCats = ['All', ...cats];
 
       chipsEl.innerHTML = `
         <div class="garda-cat-grid">
-          ${cats.map((c,i)=>`
+          ${allCats.map((c,i)=>`
             <button type="button" class="garda-cat ${i===0?'is-active':''}" data-cat="${esc(c)}">
               <span class="icon">${iconSvg(c)}</span>
               <span class="label">${esc(c)}</span>
@@ -973,54 +1009,136 @@
       `;
 
       function apply(cat){
-        chipsEl.querySelectorAll('.garda-cat').forEach(btn => btn.classList.toggle('is-active', btn.dataset.cat === cat));
-        const visible = (cat === 'All') ? safeItems : safeItems.filter(x => x.category === cat);
-        listEl.innerHTML = visible.map(x => `
+        chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat));
+        const show = (cat === 'All') ? items : items.filter(x => (x.category||'Other') === cat);
+
+        listEl.innerHTML = (show||[]).map(x => `
           <div class="garda-item">
             <div class="row">
-              <div class="title">${esc(x.title)}</div>
-              <div class="date">${esc(x.date || 'Official link')}</div>
+              <div class="title">${esc(x.title || '')}</div>
+              <div class="date">${esc(x.date || '')}</div>
             </div>
             ${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}
-            <a class="link" href="${esc(x.url)}" target="_blank" rel="noopener">Open official Garda page</a>
-            <div class="meta">${esc(x.category)}</div>
+            <a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a>
+            <div class="meta">${esc(x.category || 'Other')}</div>
           </div>
-        `).join('') || `<div class="tiny muted">No official Garda resources found for this category.</div>`;
+        `).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
       }
 
-      chipsEl.querySelectorAll('.garda-cat').forEach(btn => btn.addEventListener('click', () => apply(btn.dataset.cat)));
+      chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat)));
+      apply('All');
+    }
+
+    function renderPreset(){
+      if(!chipsEl || !listEl) return;
+      const allCats = ['All', ...PRESET.categories];
+
+      chipsEl.innerHTML = `
+        <div class="garda-cat-grid">
+          ${allCats.map((c,i)=>`
+            <button type="button" class="garda-cat ${i===0?'is-active':''}" data-cat="${esc(c)}">
+              <span class="icon">${iconSvg(c)}</span>
+              <span class="label">${esc(c)}</span>
+            </button>
+          `).join('')}
+        </div>
+      `;
+
+      function apply(cat){
+        chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat));
+        const cats = (cat === 'All') ? PRESET.categories : [cat];
+        const items = [];
+        cats.forEach(cc => (PRESET.linksByCategory[cc] || []).forEach(l => items.push({ category: cc, title: l.title, url: l.url, snippet: (l.snippet || '') })));
+
+        const safeItems = filterItems(items);
+
+        listEl.innerHTML = safeItems.map(x => `
+          <div class="garda-item">
+            <div class="row">
+              <div class="title">${esc(x.title || '')}</div>
+              <div class="date">Official link</div>
+            </div>
+            ${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}
+            <a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a>
+            <div class="meta">${esc(x.category || 'Other')}</div>
+          </div>
+        `).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
+      }
+
+      chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat)));
       apply('All');
     }
 
     async function loadGardaFeed(){
-      setStatus('Loading official Garda resources…');
+      setStatus('Loading Garda updates…');
       try{
+        // Browser direct fetch to garda.ie is commonly blocked by CORS; use a server-side proxy function.
         const res = await fetch('/.netlify/functions/garda-feed', { cache: 'no-store' });
         if(!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
-        const items = Array.isArray(data?.categories) && data.categories.length ? data.categories : CURATED;
-        render(items);
-        setStatus(data?.stale ? 'Official Garda resources (cached)' : 'Official Garda resources');
-      }catch(err){
-        console.warn('garda-feed failed', err);
-        render(CURATED);
+
+        // Accept both schemas:
+        // 1) { items: [...] } (alerts-style feed)
+        // 2) { categories: [...] } (curated links feed)
+        let itemsRaw = [];
+        if (Array.isArray(data.items)) {
+          itemsRaw = data.items;
+        } else if (Array.isArray(data.categories)) {
+          itemsRaw = data.categories.map(c => ({
+            title: c.label || c.title || 'Official link',
+            url: c.url || '',
+            category: c.label || c.category || 'Other',
+            date: 'Official link',
+            snippet: c.snippet || ''
+          }));
+        }
+
+        const items = filterItems(itemsRaw);
+
+        // Only show fallback if we truly have nothing valid to show
+        if(!items.length){
+          setStatus('Official Garda resources');
+          showFallback();
+          return;
+        }
+        setStatus('Official Garda resources (source: Garda.ie)');
+        if (fallbackEl) fallbackEl.style.display = 'none';
+        render(items.slice(0, 40));
+      }catch(e){
+        console.warn('garda-feed failed', e);
         setStatus('Official Garda resources');
+        showFallback();
       }
     }
 
     let loaded = false;
+    let started = false;
+
     function ensureGardaLoaded(){
       if(loaded) return;
       loaded = true;
       loadGardaFeed();
     }
 
-    document.addEventListener('DOMContentLoaded', ensureGardaLoaded, { once:true });
-    document.querySelectorAll('.dash-tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if(btn.dataset.tab === 'tabGarda') ensureGardaLoaded();
+    function primeGardaPanel(){
+      if(started) return;
+      started = true;
+      renderPreset();
+      setStatus('Official Garda resources');
+      setTimeout(ensureGardaLoaded, 0);
+    }
+
+    document.addEventListener('DOMContentLoaded', primeGardaPanel, { once:true });
+
+    document.querySelectorAll('.dash-tab').forEach(b => {
+      b.addEventListener('click', () => {
+        if(b.dataset.tab !== 'tabGarda') return;
+        primeGardaPanel();
       });
     });
+
+    const activeTab = document.querySelector('.dash-tab.active[data-tab="tabGarda"]');
+    if(activeTab) primeGardaPanel();
   })();
 
 })();
@@ -1234,12 +1352,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const keyOrRule = tabBtn?.getAttribute('data-acl-feature')
       || panel?.getAttribute('data-acl-feature')
       || '';
-    if (keyOrRule === 'dashboard:tab_garda') return true;
-    if (typeof window.anwAclAllows === 'function') {
-      try {
-        return !!window.anwAclAllows(keyOrRule);
-      } catch(_){}
-    }
     const acl = loadAclSafe();
     const rule = String(resolveAclRule(acl, keyOrRule) || '').trim().toLowerCase();
     return rule === 'public';
@@ -1256,21 +1368,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const user = await ensureIdentityUser();
-    const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function'
-      ? String(window.anwGetLoggedEmail() || '')
-      : '').toLowerCase().trim();
 
-    if(!user && !fallbackEmail){
+    if(!user){
       hidePanels();
-      showNotice('Please <a href="login.html">log in</a> to access the dashboard.');
+      showNotice('Please log in to access this section.');
       return;
     }
 
-    const profile = await getRegistryProfile(user || { email: fallbackEmail });
+    const profile = await getRegistryProfile(user);
 
     if(!profile || !isApproved(profile)){
       hidePanels();
-      showNotice('Your dashboard is currently unavailable. Please log in with an approved account.');
+      showNotice('Your account is pending approval. Access will be available once approved.');
       return;
     }
 
@@ -1297,5 +1406,88 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 </script>
 <script src="assets/acl-guard.js"></script>
+
+<script>
+(function(){
+  function normEmail(v){ return String(v || "").trim().toLowerCase(); }
+
+  function getCurrentUser(){
+    try{
+      return window.netlifyIdentity && window.netlifyIdentity.currentUser
+        ? window.netlifyIdentity.currentUser()
+        : null;
+    }catch(e){ return null; }
+  }
+
+  function isLoggedIn(){
+    return !!getCurrentUser();
+  }
+
+  function isApproved(){
+    try{
+      const u = getCurrentUser();
+      if(!u) return false;
+      const email = normEmail(u.email);
+      let users = [];
+      try{
+        users = (typeof anwLoad === "function" && window.ANW_KEYS && ANW_KEYS.USERS)
+          ? (anwLoad(ANW_KEYS.USERS, []) || [])
+          : [];
+      }catch(e){}
+      const me = Array.isArray(users) ? users.find(x => normEmail(x && x.email) === email) : null;
+      return !!(me && (String(me.status || "").toLowerCase() === "approved" || me.approved === true));
+    }catch(e){
+      return false;
+    }
+  }
+
+  function hideAllPanels(){
+    document.querySelectorAll(".dash-tab-content").forEach(el => el.style.display = "none");
+  }
+
+  function setActive(tabId){
+    document.querySelectorAll(".dash-tab").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.tab === tabId);
+    });
+  }
+
+  function openDashboardTab(tabId){
+    const privateTabs = ["tabProfile","tabInterest","tabElections","tabNotices"];
+    const blockedEl = document.getElementById("dashBlockedMessage");
+    hideAllPanels();
+
+    if(privateTabs.includes(tabId) && !(isLoggedIn() && isApproved())){
+      if(blockedEl) blockedEl.style.display = "block";
+      setActive(tabId);
+      return;
+    }
+
+    const target = document.getElementById(tabId);
+    if(target) target.style.display = "block";
+    if(blockedEl) blockedEl.style.display = "none";
+    setActive(tabId);
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    document.querySelectorAll(".dash-tab").forEach(btn => {
+      btn.addEventListener("click", function(){
+        openDashboardTab(btn.dataset.tab);
+      });
+    });
+
+    // Garda is public. Approved users land on Profile; everyone else lands on Garda.
+    if(isLoggedIn() && isApproved()){
+      openDashboardTab("tabProfile");
+    } else {
+      openDashboardTab("tabGarda");
+    }
+
+    try{ document.body.removeAttribute("data-acl-loading"); }catch(e){}
+  });
+
+  window.openDashboardTab = openDashboardTab;
+})();
+</script>
+
 </body>
 </html>
