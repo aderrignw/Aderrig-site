@@ -500,13 +500,36 @@ function setActive(which) {
     return mine.some(r => allow.some(a => r===a || r.includes(a) || a.includes(r)));
   };
 
+  const ALERTS_LIAISON_EMAILS = Array.isArray(window.ANW_ALERTS_LIAISON_EMAILS)
+    ? window.ANW_ALERTS_LIAISON_EMAILS.map(v => String(v||'').toLowerCase().trim()).filter(Boolean)
+    : [];
+
+  const profileEmail = (profile) => String(
+    profile?.email || profile?.userEmail || profile?.login || profile?.username || ''
+  ).toLowerCase().trim();
+
+  const isLiaisonEmailAllowed = (profile) => {
+    const email = profileEmail(profile);
+    return !!email && ALERTS_LIAISON_EMAILS.includes(email);
+  };
+
   const allowedSend = (p) => hasAnyRole(p, [
-    'street coordinator','auxiliar coordinator','assistant coordinator',
-    'owner','programmer support','admin support','support administrator'
-  ]);
+    'owner',
+    'area coordinator','area_coordinator',
+    'assistant area coordinator','assistant_area_coordinator',
+    'auxiliar coordinator','auxiliary coordinator','assistant coordinator',
+    'street coordinator','street_coordinator',
+    'garda liaison','liaison',
+    'programmer support','admin support','support administrator'
+  ]) || isLiaisonEmailAllowed(p);
   const allowedContacts = (p) => hasAnyRole(p, [
-    'owner','support administrator','admin support'
-  ]);
+    'owner',
+    'area coordinator','area_coordinator',
+    'assistant area coordinator','assistant_area_coordinator',
+    'auxiliar coordinator','auxiliary coordinator','assistant coordinator',
+    'garda liaison','liaison',
+    'support administrator','admin support'
+  ]) || isLiaisonEmailAllowed(p);
 
   const hidePanels = () => {
     if(tabSend) tabSend.style.display = 'none';
