@@ -194,6 +194,48 @@
       stroke:#fff;
     }
   </style>
+<style>
+    /* Dashboard profile avatar */
+    .profile-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:20px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .profile-avatar-panel{
+      min-width:140px;
+      text-align:center;
+    }
+    .profile-avatar-box{
+      width:120px;
+      height:120px;
+      border-radius:12px;
+      overflow:hidden;
+      border:1px solid #e4e7eb;
+      background:#f3f4f6;
+      margin:0 auto 6px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+    }
+    .profile-avatar-box img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .profile-avatar-meta{
+      margin-top:4px;
+      font-size:12px;
+      color:#6b7280;
+    }
+    .profile-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+  </style>
 <style id="page-access-style">
   footer.site-footer { position: relative; }
   footer.site-footer .page-access {
@@ -204,7 +246,7 @@
   }
 </style>
 </head>
-<body data-acl-loading="true" data-acl-shell-public="true">
+<body data-acl-shell-public="true" class="page-dashboard">
 <header class="site-header">
 <div class="brand">
 <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
@@ -216,11 +258,11 @@
 <nav class="nav">
 <a href="index.html">Home</a>
 <a href="about.html">About</a>
+<a href="handbook.html">Handbook</a>
 <a href="report.html">Report</a>
 <a href="alerts.html">Community Alerts</a>
 <a href="projects.html">Community Projects</a>
-
-<a href="login.html">Login / Register</a>
+<a class="nav-login" href="login.html">Login / Register</a>
 <a class="active" href="dashboard.html">Dashboard</a>
 <a href="household.html">Household</a>
 <a href="admin.html">Admin</a>
@@ -246,7 +288,20 @@
 </section>
 <!-- ================= PROFILE TAB ================= -->
 <section class="card dash-tab-content" data-acl-feature="dashboard:tab_profile" id="tabProfile">
-<h3>Profile</h3>
+<div class="profile-head">
+<div>
+<h3 style="margin-bottom:4px;">Profile</h3>
+<p class="tiny muted" style="margin:0;">Manage your personal details.</p>
+</div>
+<div class="profile-avatar-panel">
+<div class="profile-avatar-box">
+<img alt="Resident profile photo" id="pfAvatar" src="assets/default-avatar.png"/>
+</div>
+<input accept="image/png,image/jpeg" id="pfAvatarInput" style="display:none;" type="file"/>
+<button class="btn-line small" id="btnUploadAvatar" type="button">Upload</button>
+<div class="profile-avatar-meta">JPG / PNG</div>
+</div>
+</div>
 <div class="card" id="dbNotLogged" style="background:#f9fafb; display:none;">
 <p class="tiny muted" style="margin:0;">
         Please log in first to access your dashboard.
@@ -316,7 +371,8 @@
 <ul class="tiny" id="pfVolRoles" style="margin:0; padding-left:18px;"></ul>
 </div>
 <p class="tiny muted" id="pfMsg" style="margin-top:0.5rem;"></p>
-<div class="actions" style="justify-content:flex-end;">
+<div class="actions profile-actions">
+<button class="btn-line" id="btnLogout" type="button">Logout</button>
 <button class="btn" id="btnSaveProfile" type="button">Save</button>
 </div>
 </div>
@@ -595,6 +651,104 @@
     }
   });
 
+  const avatarImg = document.getElementById('pfAvatar');
+  const avatarInput = document.getElementById('pfAvatarInput');
+  const avatarBtn = document.getElementById('btnUploadAvatar');
+  const logoutBtn = document.getElementById('btnLogout');
+
+  function getStoredAvatar(){
+    const session = (typeof anwGetSession === 'function') ? anwGetSession() : null;
+    const sessionAvatar = session && (session.avatar || session.photo);
+    let metadataAvatar = '';
+    try{
+      const current = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+      metadataAvatar = current && current.user_metadata ? (current.user_metadata.avatar || current.user_metadata.photo || '') : '';
+    }catch(_){ }
+    return (me && (me.avatar || me.photo)) || sessionAvatar || metadataAvatar || 'assets/default-avatar.png';
+  }
+
+  if(avatarImg){
+    avatarImg.src = getStoredAvatar();
+  }
+
+  avatarBtn?.addEventListener('click', () => avatarInput?.click());
+
+  avatarInput?.addEventListener('change', async () => {
+    const file = avatarInput.files && avatarInput.files[0];
+    if(!file) return;
+    if(!/^image\/(jpeg|png)$/i.test(String(file.type || ''))){
+      modal('Please select a JPG or PNG image.', 'Invalid file');
+      avatarInput.value = '';
+      return;
+    }
+
+    try{
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('read_failed'));
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.readAsDataURL(file);
+      });
+
+      const processed = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('image_failed'));
+        img.onload = () => {
+          const size = 300;
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          const minSide = Math.min(img.width, img.height);
+          const sx = Math.max(0, (img.width - minSide) / 2);
+          const sy = Math.max(0, (img.height - minSide) / 2);
+          ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+          resolve(canvas.toDataURL('image/jpeg', 0.78));
+        };
+        img.src = dataUrl;
+      });
+
+      if(avatarImg) avatarImg.src = processed;
+      if(me){
+        me.avatar = processed;
+        me.photo = processed;
+      }
+      const session = (typeof anwGetSession === 'function') ? (anwGetSession() || {}) : {};
+      session.avatar = processed;
+      session.photo = processed;
+      session.email = session.email || loggedEmail || me?.email || '';
+      if(typeof anwSave === 'function' && window.ANW_KEYS) anwSave(ANW_KEYS.SESSION, session);
+      if(typeof anwSave === 'function') await anwSave(KEY_USERS, users);
+
+      try{
+        const user = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+        if(user && typeof user.update === 'function'){
+          const currentMeta = user.user_metadata || {};
+          await user.update({ user_metadata: Object.assign({}, currentMeta, { avatar: processed, photo: processed }) });
+        }
+      }catch(_){ }
+
+      setText('pfMsg', 'Profile photo updated.');
+      toast('Profile photo updated.', 'success');
+    }catch(err){
+      setText('pfMsg', 'Error updating profile photo.');
+      modal('Error updating profile photo. Please try again.', 'Error');
+      toast('Error updating profile photo.', 'error');
+    } finally {
+      avatarInput.value = '';
+    }
+  });
+
+  logoutBtn?.addEventListener('click', async () => {
+    try{
+      if(typeof window.anwLogout === 'function'){
+        await window.anwLogout();
+        return;
+      }
+    }catch(_){ }
+    window.location.href = 'login.html';
+  });
+
   const interestBlocked = document.getElementById('interestBlocked');
   const interestArea = document.getElementById('interestArea');
 
@@ -764,20 +918,52 @@
     const inc = t.include || {};
     const exc = t.exclude || {};
 
-    const role = String(user?.role || 'resident').toLowerCase();
-    const isAdmin = isAdminRole(role);
+    const collectRoles = (profile) => {
+      const raw = [];
+      const pushAny = (v) => {
+        if(v == null || v === '') return;
+        if(Array.isArray(v)) return v.forEach(pushAny);
+        raw.push(String(v));
+      };
+      pushAny(profile?.type);
+      pushAny(profile?.role);
+      pushAny(profile?.roles);
+      pushAny(profile?.residentType);
+      pushAny(profile?.position);
+      pushAny(profile?.title);
+      pushAny(profile?.access);
+      if(typeof window.anwGetLoggedRole === 'function') pushAny(window.anwGetLoggedRole());
+      return Array.from(new Set(raw.map(v => {
+        try{
+          return typeof window.anwNormalizeRoleName === 'function'
+            ? window.anwNormalizeRoleName(v)
+            : String(v || '').toLowerCase().trim();
+        }catch(_){
+          return String(v || '').toLowerCase().trim();
+        }
+      }).filter(Boolean)));
+    };
+
+    const roles = collectRoles(user);
+    const isAdmin = roles.includes('admin') || roles.includes('owner');
     const eir = String(user?.eircode || '').replace(/\s+/g,'').toUpperCase();
     const street = getStreetName(user?.address || user?.fullAddress || '');
+    const email = anwNormEmail(user?.email);
+    const hasRole = (list) => Array.isArray(list) && list.map(String).map(v => {
+      try{
+        return typeof window.anwNormalizeRoleName === 'function'
+          ? window.anwNormalizeRoleName(v)
+          : String(v || '').toLowerCase().trim();
+      }catch(_){
+        return String(v || '').toLowerCase().trim();
+      }
+    }).some(v => roles.includes(v));
 
-    // Exclude rules (hard)
-    if(Array.isArray(exc.roles) && exc.roles.map(String).map(x=>x.toLowerCase()).includes(role)) return false;
+    if(hasRole(exc.roles)) return false;
     if(Array.isArray(exc.eircodes) && exc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return false;
-    if(Array.isArray(exc.emails) && exc.emails.map(anwNormEmail).includes(anwNormEmail(user?.email))) return false;
-
-    // If nonAdminOnly and user is admin, block
+    if(Array.isArray(exc.emails) && exc.emails.map(anwNormEmail).includes(email)) return false;
     if(inc.nonAdminOnly && isAdmin) return false;
 
-    // If include is empty => visible to all logged-in
     const hasAnyInclude = !!(
       inc.allLoggedIn ||
       (Array.isArray(inc.roles) && inc.roles.length) ||
@@ -788,10 +974,9 @@
     );
 
     if(!hasAnyInclude) return true;
-
     if(inc.allLoggedIn) return true;
-    if(Array.isArray(inc.roles) && inc.roles.map(String).map(x=>x.toLowerCase()).includes(role)) return true;
-    if(Array.isArray(inc.emails) && inc.emails.map(anwNormEmail).includes(anwNormEmail(user?.email))) return true;
+    if(hasRole(inc.roles)) return true;
+    if(Array.isArray(inc.emails) && inc.emails.map(anwNormEmail).includes(email)) return true;
     if(Array.isArray(inc.eircodes) && inc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return true;
     if(Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.map(String).map(x=>x.toUpperCase()).some(p=>eir.startsWith(p))) return true;
     if(Array.isArray(inc.streets) && street){
@@ -982,9 +1167,43 @@
       return joined.includes('page not found') || joined.includes(' 404') || joined.startsWith('404');
     }
 
-    function filterItems(items){
-      return (items || []).filter(it => it && !isBadUrl(it.url) && !looksLikeNotFound(it));
+    function itemIsActive(item){
+      if(!item || typeof item !== 'object') return false;
+      if(item.active === false) return false;
+      if(item.isActive === false) return false;
+      if(item.enabled === false) return false;
+      if(item.visible === false) return false;
+      const status = String(item.status || '').trim().toLowerCase();
+      if(status && ['inactive','disabled','hidden','broken','invalid','404','not_found','page_not_found'].includes(status)) return false;
+      return true;
     }
+
+    function filterItems(items){
+      return (items || []).filter(it => it && itemIsActive(it) && !isBadUrl(it.url) && !looksLikeNotFound(it));
+    }
+
+    function getGardaTabButton(){
+      return document.querySelector('.dash-tab[data-tab="tabGarda"]');
+    }
+
+    function hideGardaTab(){
+      const btn = getGardaTabButton();
+      const pane = document.getElementById('tabGarda');
+      if(btn) btn.style.display = 'none';
+      if(pane) pane.style.display = 'none';
+
+      const active = document.querySelector('.dash-tab.active');
+      if(active && active.dataset.tab === 'tabGarda'){
+        const fallbackBtn = Array.from(document.querySelectorAll('.dash-tab')).find(el => el.dataset.tab !== 'tabGarda' && el.style.display !== 'none' && !el.hidden);
+        if(fallbackBtn) fallbackBtn.click();
+      }
+    }
+
+    function showGardaTab(){
+      const btn = getGardaTabButton();
+      if(btn) btn.style.display = '';
+    }
+
     function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
     function showFallback(){
       // In tests/offline we still want content; render preset links quietly.
@@ -1051,6 +1270,11 @@
         cats.forEach(cc => (PRESET.linksByCategory[cc] || []).forEach(l => items.push({ category: cc, title: l.title, url: l.url, snippet: (l.snippet || '') })));
 
         const safeItems = filterItems(items);
+        if(!safeItems.length){
+          hideGardaTab();
+        } else {
+          showGardaTab();
+        }
 
         listEl.innerHTML = safeItems.map(x => `
           <div class="garda-item">
@@ -1101,6 +1325,7 @@
           showFallback();
           return;
         }
+        showGardaTab();
         setStatus('Official Garda resources (source: Garda.ie)');
         if (fallbackEl) fallbackEl.style.display = 'none';
         render(items.slice(0, 40));
@@ -1204,43 +1429,91 @@ document.addEventListener('DOMContentLoaded', () => {
   const label = document.getElementById('pageAccessLabel');
   if(!label) return;
 
-  const normalize = (s) => String(s || '').toLowerCase().replace(/\s+/g,' ').trim();
-  const isGardaTab = (btn) => {
-    const t = normalize(btn?.textContent);
-    return t.includes('garda') && t.includes('safety');
-  };
-  const setLabelForButton = (btn) => {
-    if(isGardaTab(btn)) label.textContent = 'Public Page';
-    else label.textContent = 'Private Page';
+  const setLabel = (tabId) => {
+    label.textContent = tabId === 'tabGarda' ? 'Public Page' : 'Private Page';
   };
 
-  // Collect likely tab buttons by text
-  const tabButtons = Array.from(document.querySelectorAll('button, a'))
-    .filter(el => {
-      const t = normalize(el.textContent);
-      return t === 'profile' || t === 'interest' || t === 'elections' || t === 'notices' || (t.includes('garda') && t.includes('safety'));
-    });
+  document.querySelectorAll('.dash-tab').forEach((btn) => {
+    btn.addEventListener('click', () => setLabel(btn.dataset.tab || 'tabProfile'));
+  });
 
-  tabButtons.forEach(btn => btn.addEventListener('click', () => setLabelForButton(btn)));
-
-  // Initial label
-  const active = tabButtons.find(b => b.getAttribute('aria-selected') === 'true' || b.classList.contains('active'));
-  setLabelForButton(active || tabButtons.find(isGardaTab) || tabButtons[0]);
+  setLabel(document.querySelector('.dash-tab.active')?.dataset.tab || 'tabProfile');
+  window.anwDashboardSetAccessLabel = setLabel;
 });
 </script>
 <script>
-/* =========================
-   Dashboard access controller (v17 clean)
-   - Logged-in + approved user: all dashboard tabs work
-   - Not logged in / pending / suspended user: all dashboard panels stay closed
-   - No clash / no double-gate / no flash
-========================= */
 (function(){
+  const OWNER_EMAIL = 'claudiosantos1968@gmail.com';
   const notice = document.getElementById('anwAccessNotice');
-  const tabsWrap = document.querySelector('.dash-tabs');
   const tabs = Array.from(document.querySelectorAll('.dash-tab'));
   const panels = Array.from(document.querySelectorAll('.dash-tab-content'));
-  let currentTab = 'tabProfile';
+  const publicTabs = new Set(['tabGarda']);
+
+  const norm = (s) => String(s || '').toLowerCase().trim();
+  const sameEmail = (a, b) => norm(a) === norm(b);
+
+  const getSessionEmail = () => {
+    try{
+      return typeof window.anwGetLoggedEmail === 'function' ? String(window.anwGetLoggedEmail() || '') : '';
+    }catch(_){
+      return '';
+    }
+  };
+
+  const getIdentityUser = async () => {
+    if(!window.netlifyIdentity) return null;
+    return await new Promise((resolve) => {
+      let done = false;
+      const finish = (u) => {
+        if(done) return;
+        done = true;
+        resolve(u || null);
+      };
+      try{
+        window.netlifyIdentity.on?.('init', finish);
+        window.netlifyIdentity.init?.();
+      }catch(_){ }
+      setTimeout(() => {
+        try{ finish(window.netlifyIdentity.currentUser?.() || null); }
+        catch(_){ finish(null); }
+      }, 320);
+    });
+  };
+
+  const getProfile = async (email) => {
+    try{ await window.anwInitStore?.(); }catch(_){ }
+    try{
+      const users = (window.anwLoad && window.ANW_KEYS) ? (window.anwLoad(window.ANW_KEYS.USERS, []) || []) : [];
+      const target = norm(email);
+      return Array.isArray(users) ? users.find((u) => norm(u?.email) === target) || null : null;
+    }catch(_){
+      return null;
+    }
+  };
+
+  const isApprovedProfile = (profile, email) => {
+    if(sameEmail(email, OWNER_EMAIL)) return true;
+    try{
+      if(typeof window.anwIsApproved === 'function') return !!window.anwIsApproved(profile);
+    }catch(_){ }
+    const status = String(profile?.status || profile?.accountStatus || profile?.registrationStatus || '').toLowerCase().trim();
+    return !!(profile && (profile.approved === true || profile.active === true || status === 'active' || status === 'approved'));
+  };
+
+  function hidePanels(){
+    panels.forEach((panel) => { panel.style.display = 'none'; });
+  }
+
+  function setActive(tabId){
+    tabs.forEach((btn) => {
+      const on = btn.dataset.tab === tabId;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    if(typeof window.anwDashboardSetAccessLabel === 'function'){
+      window.anwDashboardSetAccessLabel(tabId);
+    }
+  }
 
   function showNotice(html){
     if(!notice) return;
@@ -1251,243 +1524,73 @@ document.addEventListener('DOMContentLoaded', () => {
   function hideNotice(){
     if(!notice) return;
     notice.style.display = 'none';
+    notice.innerHTML = '';
   }
 
-  function hidePanels(){
-    panels.forEach((panel) => { panel.style.display = 'none'; });
+  function openPanel(tabId){
+    const target = tabId || 'tabProfile';
+    hidePanels();
+    const panel = document.getElementById(target);
+    if(panel) panel.style.display = 'block';
+    const blocked = document.getElementById('dashBlockedMessage');
+    if(blocked) blocked.style.display = 'none';
+    setActive(target);
   }
 
-  function setActiveTab(which){
-    currentTab = which || currentTab || 'tabProfile';
-    tabs.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === currentTab));
-  }
-
-  function showPanel(which){
-    const target = which || currentTab || 'tabProfile';
-    setActiveTab(target);
-    panels.forEach((panel) => {
-      panel.style.display = (panel.id === target) ? 'block' : 'none';
-    });
-  }
-
-  async function ensureIdentityUser(){
-    if(!window.netlifyIdentity) return null;
-    return await new Promise((resolve) => {
-      let done = false;
-      const finish = (u) => {
-        if(done) return;
-        done = true;
-        resolve(u || null);
-      };
-      try{
-        if(typeof window.netlifyIdentity.on === 'function'){
-          window.netlifyIdentity.on('init', finish);
-        }
-        if(typeof window.netlifyIdentity.init === 'function'){
-          window.netlifyIdentity.init();
-        }
-      }catch(_){}
-      setTimeout(() => {
-        try{
-          finish(window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null);
-        }catch(_){
-          finish(null);
-        }
-      }, 350);
-    });
-  }
-
-  async function getRegistryProfile(user){
-    try { await window.anwInitStore?.(); } catch(_){}
-    try{
-      const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
-      const email = String(user?.email || '').toLowerCase().trim();
-      return (users || []).find((u) => String(u.email || '').toLowerCase().trim() === email) || null;
-    }catch(_){
-      return null;
-    }
-  }
-
-  function isApproved(profile){
-    if(!profile) return false;
-    if (typeof window.anwIsApproved === 'function') {
-      try { return !!window.anwIsApproved(profile); } catch(_){}
-    }
-    const status = String(profile.status || profile.accountStatus || profile.registrationStatus || '').toLowerCase();
-    return profile.approved === true || profile.active === true || status === 'active' || status === 'approved';
-  }
-
-  function loadAclSafe(){
-    try{
-      return (window.anwLoad && window.ANW_KEYS) ? (window.anwLoad(window.ANW_KEYS.ACL, {}) || {}) : {};
-    }catch(_){
-      return {};
-    }
-  }
-
-  function resolveAclRule(acl, keyOrRule){
-    const raw = String(keyOrRule || '').trim();
-    if(!raw) return 'Public';
-    if(['Public','Authenticated','public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'].includes(raw)){
-      return raw;
-    }
-    try{
-      if(acl && typeof acl === 'object' && Object.prototype.hasOwnProperty.call(acl, raw)) return acl[raw];
-      if(acl && acl.features && Object.prototype.hasOwnProperty.call(acl.features, raw)) return acl.features[raw];
-      if(acl && acl.pages){
-        for(const pageKey of Object.keys(acl.pages)){
-          const page = acl.pages[pageKey];
-          if(page && typeof page === 'object' && Object.prototype.hasOwnProperty.call(page, raw)) return page[raw];
-          if(page && page.features && Object.prototype.hasOwnProperty.call(page.features, raw)) return page.features[raw];
-        }
-      }
-    }catch(_){ }
-    return raw;
-  }
-
-  function isPublicDashboardTab(which){
-    const target = which || currentTab || 'tabProfile';
-    const tabBtn = tabs.find((btn) => btn.dataset.tab === target);
-    const panel = panels.find((node) => node.id === target);
-    const keyOrRule = tabBtn?.getAttribute('data-acl-feature')
-      || panel?.getAttribute('data-acl-feature')
-      || '';
-    const acl = loadAclSafe();
-    const rule = String(resolveAclRule(acl, keyOrRule) || '').trim().toLowerCase();
-    return rule === 'public';
-  }
-
-  async function evaluate(which){
-    const target = which || currentTab || 'tabProfile';
-    setActiveTab(target);
-
-    if(isPublicDashboardTab(target)){
+  async function requestTab(tabId){
+    const target = tabId || 'tabProfile';
+    const email = getSessionEmail();
+    if(publicTabs.has(target)){
       hideNotice();
-      showPanel(target);
+      openPanel(target);
       return;
     }
 
-    const user = await ensureIdentityUser();
+    const identityUser = await getIdentityUser();
+    const effectiveEmail = norm(identityUser?.email || email || '');
+    const profile = effectiveEmail ? await getProfile(effectiveEmail) : null;
 
-    if(!user){
-      hidePanels();
+    if(!effectiveEmail){
       showNotice('Please log in to access this section.');
+      openPanel('tabGarda');
       return;
     }
 
-    const profile = await getRegistryProfile(user);
-
-    if(!profile || !isApproved(profile)){
-      hidePanels();
-      showNotice('Your account is pending approval. Access will be available once approved.');
+    if(!isApprovedProfile(profile, effectiveEmail)){
+      showNotice('Your account is pending approval. Garda & Safety remains available while private tabs stay locked.');
+      openPanel('tabGarda');
       return;
     }
 
     hideNotice();
-    showPanel(target);
+    openPanel(target);
   }
 
-  window.anwDashboardRequestTab = evaluate;
-
-  document.addEventListener('DOMContentLoaded', () => {
-    hidePanels();
-    if(tabsWrap) tabsWrap.classList.add('is-locked');
-
-    tabs.forEach((btn) => {
-      btn.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        evaluate(btn.dataset.tab || 'tabProfile');
-      }, true);
+  tabs.forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      requestTab(btn.dataset.tab || 'tabProfile');
     });
+  });
 
-    evaluate('tabProfile');
+  window.anwDashboardRequestTab = requestTab;
+  window.openDashboardTab = requestTab;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const email = getSessionEmail();
+    const identityUser = await getIdentityUser();
+    const effectiveEmail = norm(identityUser?.email || email || '');
+    const profile = effectiveEmail ? await getProfile(effectiveEmail) : null;
+    if(effectiveEmail && isApprovedProfile(profile, effectiveEmail)){
+      await requestTab('tabProfile');
+    } else {
+      await requestTab('tabGarda');
+    }
+    try{ document.body.removeAttribute('data-acl-loading'); }catch(_){ }
   }, { once:true });
 })();
 </script>
 <script src="assets/acl-guard.js"></script>
-
-<script>
-(function(){
-  function normEmail(v){ return String(v || "").trim().toLowerCase(); }
-
-  function getCurrentUser(){
-    try{
-      return window.netlifyIdentity && window.netlifyIdentity.currentUser
-        ? window.netlifyIdentity.currentUser()
-        : null;
-    }catch(e){ return null; }
-  }
-
-  function isLoggedIn(){
-    return !!getCurrentUser();
-  }
-
-  function isApproved(){
-    try{
-      const u = getCurrentUser();
-      if(!u) return false;
-      const email = normEmail(u.email);
-      let users = [];
-      try{
-        users = (typeof anwLoad === "function" && window.ANW_KEYS && ANW_KEYS.USERS)
-          ? (anwLoad(ANW_KEYS.USERS, []) || [])
-          : [];
-      }catch(e){}
-      const me = Array.isArray(users) ? users.find(x => normEmail(x && x.email) === email) : null;
-      return !!(me && (String(me.status || "").toLowerCase() === "approved" || me.approved === true));
-    }catch(e){
-      return false;
-    }
-  }
-
-  function hideAllPanels(){
-    document.querySelectorAll(".dash-tab-content").forEach(el => el.style.display = "none");
-  }
-
-  function setActive(tabId){
-    document.querySelectorAll(".dash-tab").forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.tab === tabId);
-    });
-  }
-
-  function openDashboardTab(tabId){
-    const privateTabs = ["tabProfile","tabInterest","tabElections","tabNotices"];
-    const blockedEl = document.getElementById("dashBlockedMessage");
-    hideAllPanels();
-
-    if(privateTabs.includes(tabId) && !(isLoggedIn() && isApproved())){
-      if(blockedEl) blockedEl.style.display = "block";
-      setActive(tabId);
-      return;
-    }
-
-    const target = document.getElementById(tabId);
-    if(target) target.style.display = "block";
-    if(blockedEl) blockedEl.style.display = "none";
-    setActive(tabId);
-  }
-
-  document.addEventListener("DOMContentLoaded", function(){
-    document.querySelectorAll(".dash-tab").forEach(btn => {
-      btn.addEventListener("click", function(){
-        openDashboardTab(btn.dataset.tab);
-      });
-    });
-
-    // Garda is public. Approved users land on Profile; everyone else lands on Garda.
-    if(isLoggedIn() && isApproved()){
-      openDashboardTab("tabProfile");
-    } else {
-      openDashboardTab("tabGarda");
-    }
-
-    try{ document.body.removeAttribute("data-acl-loading"); }catch(e){}
-  });
-
-  window.openDashboardTab = openDashboardTab;
-})();
-</script>
 
 </body>
 </html>
