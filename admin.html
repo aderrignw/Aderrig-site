@@ -204,7 +204,9 @@
     try{ console.log(String(title||''), String(message||'')); }catch(_){}
   };
 
-  window.toast = window.toast || function(message, type){
+  window.KEY_BIN_IMPORTS = window.KEY_BIN_IMPORTS || 'anw_bin_collection_imports';
+
+    window.toast = window.toast || function(message, type){
     try{
       if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){
         ANW.ui.toast(String(message||''), type || 'info');
@@ -923,7 +925,7 @@
       <div class="card" style="padding:1rem; margin-top:1rem;">
         <h4 style="margin-top:0;">Bin collection import</h4>
         <p class="tiny muted" style="margin-top:0;">
-          Use only the CSV file. Imported bin notices are saved automatically as public Home notices and will be shown for <strong>this week and next week</strong>.
+          Use only the CSV file. Imported collection rows are stored separately for admin reference. They are <strong>not</strong> saved as dashboard notices.
         </p>
 
         <div class="field" style="display:none;">
@@ -1285,11 +1287,14 @@
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
   const byId = id => document.getElementById(id);
 
-  const ADMIN_ALLOWED_ROLES = ['admin','owner','platform_support','area_coordinator','aux_coordinator'];
+  const ADMIN_ALLOWED_ROLES = ['admin','owner','platform_support','area_coordinator','aux_coordinator','assistant_area_coordinator'];
 
   function hasAllowedAdminRole(roles){
     const list = Array.isArray(roles) ? roles : [roles];
-    return list.map(v => String(v||'').toLowerCase()).some(v => ADMIN_ALLOWED_ROLES.includes(v));
+    const normalized = list
+      .map(v => (typeof window.anwGetCanonicalRole === 'function') ? window.anwGetCanonicalRole({ role:v }, '') : String(v||'').toLowerCase())
+      .filter(Boolean);
+    return normalized.some(v => ADMIN_ALLOWED_ROLES.includes(v));
   }
 
   async function anwLoadSafe(key, fallback){
@@ -1482,12 +1487,14 @@
         const row = users.find(u => String((u && u.email) || '').trim().toLowerCase() === email);
         if(row){
           const roles = []
+            .concat(normList(row.type))
             .concat(normList(row.role))
             .concat(normList(row.roles))
             .concat(normList(row.userRole))
-            .concat(normList(row.userRoles));
+            .concat(normList(row.userRoles))
+            .concat(normList(row.residentType));
           allowed = hasAllowedAdminRole(roles);
-          role = roles[0] || '';
+          role = (typeof window.anwGetCanonicalRole === 'function') ? window.anwGetCanonicalRole(row, email) : (roles[0] || '');
         }
       }
 
@@ -1701,8 +1708,82 @@
   }
 
   // ---------- Notices ----------
+  function cleanNoticeTextValue(value){
+    return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+  }
+
+  function cleanNoticeTitleValue(value){
+    let title = cleanNoticeTextValue(value).replace(/^#+\s*/, '').replace(/^[\W_]+|[\W_]+$/g, '').trim();
+    if(!title) return '';
+    if(/^\d+$/.test(title)) return '';
+    if(/^(null|undefined|notice|untitled)$/i.test(title)) return '';
+    if(title.length < 3) return '';
+    return title;
+  }
+
+  function sanitizeNoticeRecord(input){
+    const base = input && typeof input === 'object' ? input : {};
+    const isBinImport = !!(base.meta && base.meta.type === 'bin_collection_import');
+    const title = cleanNoticeTitleValue(base.title);
+    const message = cleanNoticeTextValue(base.message || base.body || base.content || '');
+    return Object.assign({}, base, {
+      title: title || (isBinImport ? 'Bin collection update' : 'Notice'),
+      message,
+      body: undefined,
+      content: undefined,
+      target: base.target || base.targets || {},
+      targets: base.targets || base.target || {},
+      dashboardHidden: base.dashboardHidden === true || isBinImport
+    });
+  }
+
+  function canonicalNoticeKey(n){
+    const metaType = String(n?.meta?.type || '').toLowerCase();
+    if(metaType === 'bin_collection_import'){
+      return ['bin', String(n?.date || ''), String(n?.bin || '').trim().toLowerCase()].join('|');
+    }
+    return [
+      cleanNoticeTitleValue(n?.title).toLowerCase(),
+      cleanNoticeTextValue(n?.message || n?.body || n?.content || '').toLowerCase(),
+      cleanNoticeTextValue(n?.category || '').toLowerCase(),
+      JSON.stringify((n?.target || n?.targets || {}) || {})
+    ].join('|');
+  }
+
+  function noticeIsExpiredForStorage(n, nowTs){
+    const endRaw = n?.endsOn || n?.endDate || n?.expiresAt || n?.expires || '';
+    const endTs = endRaw ? Date.parse(endRaw) : NaN;
+    if(isNaN(endTs)) return false;
+    return endTs < nowTs;
+  }
+
+  function normalizeNoticeCollection(list){
+    const nowTs = Date.now();
+    const out = [];
+    const seen = new Set();
+    for(const raw of (Array.isArray(list) ? list : [])){
+      const item = sanitizeNoticeRecord(raw);
+      const isBinImport = !!(item.meta && item.meta.type === 'bin_collection_import');
+      if(isBinImport) continue;
+      if(!item.message && !item.title) continue;
+      if(noticeIsExpiredForStorage(item, nowTs)) continue;
+      const key = canonicalNoticeKey(item);
+      if(!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(item);
+    }
+    return out.sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
+  }
+
   async function loadNoticesFresh(){
-    return await anwLoadSafe(window.getNoticesKey(), []);
+    const raw = await anwLoadSafe(window.getNoticesKey(), []);
+    const clean = normalizeNoticeCollection(raw);
+    try{
+      if(JSON.stringify(raw || []) !== JSON.stringify(clean)){
+        await anwSaveSafe(window.getNoticesKey(), clean);
+      }
+    }catch(_){}
+    return clean;
   }
 
   function collectNoticeForm(){
@@ -1730,27 +1811,49 @@
   async function publishNotice(){
     const msg = byId('ntMsg');
     const form = collectNoticeForm();
-    if(!form.title || !form.message){
+    const cleanTitle = cleanNoticeTitleValue(form.title);
+    const cleanMessage = cleanNoticeTextValue(form.message);
+    if(!cleanTitle || !cleanMessage){
       msg.textContent = 'Title and message are required.';
       return;
     }
 
+    const target = {
+      include: {
+        allLoggedIn: !!form.targets.allLogged,
+        nonAdminOnly: !!form.targets.nonAdminOnly,
+        roles: form.targets.roles || [],
+        eircodePrefixes: form.targets.eirPrefixes || [],
+        streets: form.targets.streets || [],
+        eircodes: form.targets.eircodes || [],
+        emails: form.targets.emails || []
+      },
+      exclude: {}
+    };
+
     const list = await loadNoticesFresh();
-    const next = [{
+    const next = normalizeNoticeCollection([sanitizeNoticeRecord({
       id: 'nt_' + Date.now(),
-      title: form.title,
-      message: form.message,
+      title: cleanTitle,
+      message: cleanMessage,
       category: form.category,
       createdAt: new Date().toISOString(),
-      expires: form.expires,
+      expiresAt: form.expires || '',
+      expires: form.expires || '',
       public: form.home.enabled && form.home.visibility === 'public',
       isPublic: form.home.enabled && form.home.visibility === 'public',
       showOnHome: !!form.home.enabled,
       published: true,
+      isPublished: true,
+      enabled: true,
+      visible: true,
+      active: true,
       status: (form.home.enabled && form.home.visibility === 'public') ? 'public' : 'private',
-      targets: form.targets,
-      home: form.home
-    }].concat(list || []);
+      target,
+      targets: target,
+      home: form.home,
+      dashboardHidden: false
+    })].concat(list || []));
 
     await anwSaveSafe(window.getNoticesKey(), next);
     msg.textContent = 'Notice published.';
@@ -1775,20 +1878,22 @@
   }
 
   async function clearImportedBinNotices(){
-    const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
-    await anwSaveSafe(window.getNoticesKey(), next);
-    byId('binMsg').textContent = 'Imported bin notices removed.';
+    const raw = await anwLoadSafe(window.getNoticesKey(), []);
+    const rawArr = Array.isArray(raw) ? raw : [];
+    const next = rawArr.filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
+    await anwSaveSafe(window.getNoticesKey(), normalizeNoticeCollection(next));
+    byId('binMsg').textContent = 'Imported bin notices permanently removed from storage.';
     await renderNoticesList();
   }
 
   async function renderNoticesList(){
     const listEl = byId('ntList');
     const notes = await loadNoticesFresh();
-    const sorted = (notes || []).slice().sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
+    const sorted = (notes || []).map(sanitizeNoticeRecord).slice().sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
+    const dashboardVisibleCount = sorted.filter(n => !(n && n.dashboardHidden === true) && !(n && n.meta && n.meta.type === 'bin_collection_import')).length;
 
     if(byId('ntListMsg')){
-      byId('ntListMsg').textContent = sorted.length ? `${sorted.length} notice(s) saved.` : 'No notices found.';
+      byId('ntListMsg').textContent = sorted.length ? `${sorted.length} notice(s) saved · ${dashboardVisibleCount} visible on dashboard.` : 'No notices found.';
     }
 
     listEl.innerHTML = sorted.map(n => `
@@ -1865,26 +1970,30 @@
         public: true,
         isPublic: true,
         published: true,
+        isPublished: true,
+        enabled: true,
+        visible: true,
+        active: true,
         status: visibility === 'private' ? 'private' : 'public',
         home: { enabled: true, visibility: 'public' },
+        dashboardHidden: true,
         meta: { type: 'bin_collection_import' }
       });
     }
 
-    const current = await loadNoticesFresh();
-
-    const currentKept = (current || []).filter(n => {
-      if(!(n && n.meta && n.meta.type === 'bin_collection_import')) return true;
+    const currentImports = await anwLoadSafe(window.KEY_BIN_IMPORTS, []);
+    const mergedImports = [...(Array.isArray(currentImports) ? currentImports : []), ...imported];
+    const seenImports = new Set();
+    const cleanImports = mergedImports.filter(n => {
       const key = `${String(n.date||'')}|${String(n.bin||'').toLowerCase()}`;
-      const incoming = imported.some(x => `${String(x.date||'')}|${String(x.bin||'').toLowerCase()}` === key);
-      return !incoming;
+      if(!key || seenImports.has(key)) return false;
+      seenImports.add(key);
+      return true;
     });
+    await anwSaveSafe(window.KEY_BIN_IMPORTS, cleanImports);
 
-    const merged = [...currentKept, ...imported];
-    await anwSaveSafe(window.getNoticesKey(), merged);
-
-    msg.textContent = `${imported.length} collection notice(s) imported and saved. They are public and enabled for Home automatically for this week and next week.`;
-    await renderNoticesList();
+    await clearImportedBinNotices();
+    msg.textContent = `${imported.length} collection row(s) imported into dedicated bin storage. They are no longer saved as dashboard notices.`;
   }
 
   // ---------- Light stubs for remaining tabs ----------
@@ -2246,6 +2355,7 @@
 
   byId('btnBinImport')?.addEventListener('click', importPandaSchedule);
   byId('btnClearBinNotices')?.addEventListener('click', clearImportedBinNotices);
+  clearImportedBinNotices().catch(() => {});
 
   byId('btnRepRefresh')?.addEventListener('click', loadReports);
   byId('btnPmRefresh')?.addEventListener('click', loadProjects);
