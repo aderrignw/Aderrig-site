@@ -76,6 +76,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 <div class="card" id="dbNotLogged" style="background:#f9fafb; display:none;"><p class="tiny muted" style="margin:0;">Please log in first to access your dashboard.</p></div>
 <div id="dbProfileArea" style="display:none;">
 <p class="tiny muted" style="margin-top:0;">Email and Eircode are protected and cannot be changed.</p>
+<div class="grid-2" style="gap:1rem;"><div class="field"><label>Registration No</label><input disabled="" id="pfRegId" type="text"/></div><div class="field"><label>Status</label><input disabled="" id="pfStatus" type="text"/></div></div>
 <div class="grid-2" style="gap:1rem;"><div class="field"><label>Full name</label><input id="pfName" type="text"/></div><div class="field"><label>Phone</label><input id="pfPhone" type="text"/></div></div>
 <div class="grid-2" style="gap:1rem;"><div class="field"><label>Email</label><input disabled="" id="pfEmail" type="email"/></div><div class="field"><label>Eircode</label><input disabled="" id="pfEir" type="text"/></div></div>
 <div class="field"><label>Full address</label><input disabled="" id="pfAddress" type="text"/></div>
@@ -160,7 +161,15 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   const interestArea = document.getElementById('interestArea');
 
   function reloadUsers(){ const next = anwLoad(KEY_USERS, []); users = Array.isArray(next) ? next : []; return users; }
-  function findUserByEmail(email){ const target = anwNormEmail(email || ''); if(!target) return null; reloadUsers(); return users.find(u => anwNormEmail(u && u.email) === target) || null; }
+  function findUserByEmail(email){
+    const target = anwNormEmail(email || '');
+    if(!target) return null;
+    reloadUsers();
+    return users.find(u => {
+      const rowEmail = anwNormEmail((u && (u.email || u.userEmail || u.loginEmail)) || '');
+      return rowEmail === target;
+    }) || null;
+  }
   function prettyStatus(value){ const raw = String(value || 'pending').trim().toLowerCase(); return raw.replace(/(^|\s)\S/g, s => s.toUpperCase()); }
   function electedLabelFromUser(u){ const r = String(u?.electedRole || '').toLowerCase(); if(r === 'assistant') return 'Assistant Area Coordinator'; if(r === 'area') return 'Area Coordinator'; return '—'; }
 
@@ -175,20 +184,22 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   function applyProfileUi(){
     if(!currentEmail || !currentProfile){ if(notLoggedBox) notLoggedBox.style.display = 'block'; if(profileArea) profileArea.style.display = 'none'; clearProfileUi(); return; }
     if(notLoggedBox) notLoggedBox.style.display = 'none'; if(profileArea) profileArea.style.display = 'block';
-    document.getElementById('pfRegId').value = currentProfile.regId || '—';
-    document.getElementById('pfStatus').value = currentProfile.status || 'pending';
-    document.getElementById('pfName').value = currentProfile.name || '';
-    document.getElementById('pfPhone').value = currentProfile.phone || '';
-    document.getElementById('pfEmail').value = currentProfile.email || '';
-    document.getElementById('pfEir').value = currentProfile.eircode || '';
-    document.getElementById('pfAddress').value = currentProfile.address || '';
-    setText('pfNameHero', currentProfile.name || 'Resident');
-    setText('pfStatusHero', prettyStatus(currentProfile.status || 'pending'));
-    setText('pfRegHero', currentProfile.regId || '—');
+    const regValue = currentProfile.regId || currentProfile.regNo || '—';
+    const statusValue = currentProfile.status || currentProfile.accountStatus || currentProfile.registrationStatus || (currentProfile.active ? 'active' : (currentProfile.approved ? 'approved' : 'pending'));
+    document.getElementById('pfRegId').value = regValue;
+    document.getElementById('pfStatus').value = statusValue;
+    document.getElementById('pfName').value = currentProfile.name || currentProfile.fullName || '';
+    document.getElementById('pfPhone').value = currentProfile.phone || currentProfile.mobile || '';
+    document.getElementById('pfEmail').value = currentProfile.email || currentProfile.userEmail || '';
+    document.getElementById('pfEir').value = currentProfile.eircode || currentProfile.eir || '';
+    document.getElementById('pfAddress').value = currentProfile.address || currentProfile.fullAddress || '';
+    setText('pfNameHero', currentProfile.name || currentProfile.fullName || 'Resident');
+    setText('pfStatusHero', prettyStatus(statusValue));
+    setText('pfRegHero', regValue);
     const ac = currentProfile.alertsConsent || {};
     const cb = document.getElementById('pfAlertOptIn'); if(cb) cb.checked = !!ac.optIn || !!ac.email || !!ac.sms;
     setText('pfAlertMeta', ac.updatedAt ? ('Last updated: ' + new Date(ac.updatedAt).toLocaleString()) : 'No alert preference recorded yet (Email/SMS/WhatsApp).');
-    document.getElementById('pfType').value = currentProfile.type || '';
+    document.getElementById('pfType').value = currentProfile.type || currentProfile.residentType || '';
     document.getElementById('pfMgmt').value = currentProfile.managementCompany || '';
     document.getElementById('pfElected').value = electedLabelFromUser(currentProfile);
     const ul = document.getElementById('pfVolRoles');
@@ -201,11 +212,51 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     }
   }
 
+  async function getIdentityEmail(){
+    try{
+      const current = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function'
+        ? window.netlifyIdentity.currentUser()
+        : null;
+      if(current && current.email) return String(current.email || '');
+    }catch(_){}
+    if(window.netlifyIdentity && typeof window.netlifyIdentity.on === 'function'){
+      try{
+        return await new Promise((resolve) => {
+          let done = false;
+          const finish = (u) => {
+            if(done) return;
+            done = true;
+            resolve(String((u && u.email) || ''));
+          };
+          try{
+            window.netlifyIdentity.on('init', finish);
+            window.netlifyIdentity.init && window.netlifyIdentity.init();
+          }catch(_){}
+          setTimeout(() => {
+            try{
+              const user = window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+              finish(user || null);
+            }catch(_){
+              finish(null);
+            }
+          }, 450);
+        });
+      }catch(_){}
+    }
+    return '';
+  }
+
   async function resolveDashboardContext(){
     try{ await anwInitStore(); }catch(_){ }
     let email = '';
-    try{ const identityUser = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null; email = String(identityUser?.email || ''); }catch(_){ }
+    try{ email = String(await getIdentityEmail() || ''); }catch(_){ }
     if(!email){ try{ email = String(anwGetLoggedEmail() || ''); }catch(_){ } }
+    if(!email){
+      try{
+        const session = (typeof anwGetSession === 'function') ? (anwGetSession() || {}) : {};
+        email = String(session.email || '');
+      }catch(_){}
+    }
     currentEmail = email;
     currentProfile = email ? findUserByEmail(email) : null;
     applyProfileUi();
@@ -240,7 +291,9 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     if(!currentProfile) return;
     try{
       currentProfile.name = document.getElementById('pfName').value.trim();
+      currentProfile.fullName = currentProfile.name;
       currentProfile.phone = document.getElementById('pfPhone').value.trim();
+      currentProfile.mobile = currentProfile.phone;
       setText('pfNameHero', currentProfile.name || 'Resident');
       const cb = document.getElementById('pfAlertOptIn');
       const nextOptIn = !!(cb && cb.checked);
@@ -272,7 +325,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const sessionAvatar = session && (session.avatar || session.photo);
     let metadataAvatar = '';
     try{ const current = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null; metadataAvatar = current && current.user_metadata ? (current.user_metadata.avatar || current.user_metadata.photo || '') : ''; }catch(_){ }
-    return (currentProfile && (currentProfile.avatar || currentProfile.photo)) || sessionAvatar || metadataAvatar || 'assets/default-avatar.png';
+    return (currentProfile && (currentProfile.profilePhoto || currentProfile.avatar || currentProfile.photo || currentProfile.photoURL)) || sessionAvatar || metadataAvatar || 'assets/default-avatar.png';
   }
   if(avatarImg) avatarImg.src = getStoredAvatar();
   avatarBtn?.addEventListener('click', () => avatarInput?.click());
@@ -293,7 +346,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         img.src = dataUrl;
       });
       if(avatarImg) avatarImg.src = processed;
-      if(currentProfile){ currentProfile.avatar = processed; currentProfile.photo = processed; }
+      if(currentProfile){ currentProfile.avatar = processed; currentProfile.photo = processed; currentProfile.profilePhoto = processed; currentProfile.photoURL = processed; }
       const session = (typeof anwGetSession === 'function') ? (anwGetSession() || {}) : {};
       session.avatar = processed; session.photo = processed; session.email = session.email || currentEmail || currentProfile?.email || '';
       if(typeof anwSave === 'function' && window.ANW_KEYS) anwSave(ANW_KEYS.SESSION, session);
@@ -369,15 +422,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   function cleanNoticeTitle(value){ let title = cleanText(value); if(!title) return ''; if(/^\d+$/.test(title)) return ''; if(/^(null|undefined|notice|untitled)$/i.test(title)) return ''; title = title.replace(/^#+\s*/, '').replace(/^[\W_]+|[\W_]+$/g, '').trim(); if(title.length < 3) return ''; return title; }
   function isLiveNotice(item){ if(!item || typeof item !== 'object') return false; if(item.deleted === true || item.hidden === true || item.archived === true) return false; if(item.isPublished === false || item.published === false || item.enabled === false || item.visible === false || item.active === false) return false; const status = cleanText(item.status).toLowerCase(); if(status && ['deleted','hidden','inactive','draft','archived','trash'].includes(status)) return false; return true; }
   function dedupeNotices(items){ const seen = new Set(); const out = []; for(const raw of (items || [])){ if(!isLiveNotice(raw)) continue; const title = cleanNoticeTitle(raw?.title); const message = cleanText(raw?.message || raw?.body || raw?.content || ''); if(!title && !message) continue; const key = [String(raw?.id || ''), title.toLowerCase(), message.toLowerCase(), cleanText(raw?.createdAt)].join('|'); if(seen.has(key)) continue; seen.add(key); out.push(Object.assign({}, raw, { title: title || 'Notice', message })); } return out; }
-  async function cleanNoticesAtSource(){
-    const raw = anwLoad(KEY_NOTICES, []);
-    const arr = Array.isArray(raw) ? raw : [];
-    const cleaned = dedupeNotices(arr).filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import') && n.dashboardHidden !== true);
-    try{
-      if(JSON.stringify(arr) !== JSON.stringify(cleaned)) await anwSave(KEY_NOTICES, cleaned);
-    }catch(_){ }
-    return cleaned;
-  }
   function getStreetName(address){ const a = String(address||'').trim(); if(!a) return ''; let s = a.replace(/[A-Z]\d{2}\s?[A-Z0-9]{4}\b/gi, '').replace(/\s{2,}/g,' ').trim(); s = s.split(',')[0] || s; s = s.replace(/^\s*\d+[A-Za-z]?\s+/, '').trim(); return s; }
   function noticeMatchesUser(n, user){ const t = n?.target || n?.targets || {}; const inc = t.include || t; const exc = t.exclude || {}; const collectRoles = (profile) => { const raw = []; const pushAny = (v) => { if(v == null || v === '') return; if(Array.isArray(v)) return v.forEach(pushAny); raw.push(String(v)); }; pushAny(profile?.type); pushAny(profile?.role); pushAny(profile?.roles); pushAny(profile?.residentType); pushAny(profile?.position); pushAny(profile?.title); pushAny(profile?.access); if(typeof window.anwGetLoggedRole === 'function') pushAny(window.anwGetLoggedRole()); return Array.from(new Set(raw.map(v => { try{ return typeof window.anwNormalizeRoleName === 'function' ? window.anwNormalizeRoleName(v) : String(v || '').toLowerCase().trim(); }catch(_){ return String(v || '').toLowerCase().trim(); } }).filter(Boolean))); };
     const roles = collectRoles(user), isAdmin = roles.includes('admin') || roles.includes('owner'), eir = String(user?.eircode || '').replace(/\s+/g,'').toUpperCase(), street = getStreetName(user?.address || user?.fullAddress || ''), email = anwNormEmail(user?.email);
@@ -385,33 +429,18 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     if(hasRole(exc.roles)) return false; if(Array.isArray(exc.eircodes) && exc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return false; if(Array.isArray(exc.emails) && exc.emails.map(anwNormEmail).includes(email)) return false; if(inc.nonAdminOnly && isAdmin) return false;
     const hasAnyInclude = !!(inc.allLoggedIn || (Array.isArray(inc.roles) && inc.roles.length) || (Array.isArray(inc.eircodes) && inc.eircodes.length) || (Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.length) || (Array.isArray(inc.streets) && inc.streets.length) || (Array.isArray(inc.emails) && inc.emails.length));
     if(!hasAnyInclude) return true; if(inc.allLoggedIn) return true; if(hasRole(inc.roles)) return true; if(Array.isArray(inc.emails) && inc.emails.map(anwNormEmail).includes(email)) return true; if(Array.isArray(inc.eircodes) && inc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return true; if(Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.map(String).map(x=>x.toUpperCase()).some(p=>eir.startsWith(p))) return true; if(Array.isArray(inc.streets) && street){ const stList = inc.streets.map(String).map(x=>x.trim().toLowerCase()).filter(Boolean); if(stList.includes(street.toLowerCase())) return true; } return false; }
-  
-function setBadge(count){ const show = Number(count||0) > 0; if(noticesBadge){ noticesBadge.textContent = String(count||0); noticesBadge.style.display = show ? 'inline-flex' : 'none'; } if(noticesBadgeTop){ noticesBadgeTop.textContent = String(count||0); noticesBadgeTop.style.display = show ? 'inline-flex' : 'none'; } }
-  function isDashboardNoticeVisible(n, now){
-    if(!n || typeof n !== 'object') return false;
-    if(n.dashboardHidden === true) return false;
-    if(n.meta && n.meta.type === 'bin_collection_import') return false;
-    const startRaw = n.startsOn || n.startDate || n.showFrom || n.visibleFrom || '';
-    const endRaw = n.endsOn || n.endDate || n.expiresAt || n.expires || '';
-    const startTs = startRaw ? Date.parse(startRaw) : NaN;
-    const endTs = endRaw ? Date.parse(endRaw) : NaN;
-    if(!isNaN(startTs) && startTs > now) return false;
-    if(!isNaN(endTs) && endTs < now) return false;
-    return true;
-  }
+  function setBadge(count){ const show = Number(count||0) > 0; if(noticesBadge){ noticesBadge.textContent = String(count||0); noticesBadge.style.display = show ? 'inline-flex' : 'none'; } if(noticesBadgeTop){ noticesBadgeTop.textContent = String(count||0); noticesBadgeTop.style.display = show ? 'inline-flex' : 'none'; } }
   function renderNotices(){
     if(!noticesList || !noticesEmpty) return;
     if(!currentEmail || !currentProfile){ setBadge(0); noticesEmpty.style.display = 'block'; noticesList.style.display = 'none'; return; }
-    const now = Date.now();
-    const raw = anwLoad(KEY_NOTICES, []); const arr = Array.isArray(raw) ? raw : [];
-    const filtered = dedupeNotices(arr).filter(n => isDashboardNoticeVisible(n, now) && noticeMatchesUser(n, currentProfile)).sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
+    const all = anwLoad(KEY_NOTICES, []); const arr = Array.isArray(all) ? all : []; const now = Date.now();
+    const filtered = dedupeNotices(arr).filter(n => { const exp = n?.expiresAt ? Date.parse(n.expiresAt) : NaN; if(!isNaN(exp) && exp < now) return false; return noticeMatchesUser(n, currentProfile); }).sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
     const read = getReadSet(); const unread = filtered.filter(n => n?.id && !read.has(n.id)).length; setBadge(unread);
     if(!filtered.length){ noticesEmpty.style.display = 'block'; noticesList.style.display = 'none'; return; }
     noticesEmpty.style.display = 'none'; noticesList.style.display = 'block'; noticesList.innerHTML = '';
     filtered.forEach(n => { const isUnread = n?.id && !read.has(n.id); const card = document.createElement('div'); card.className = 'card'; card.style.margin = '0.75rem 0'; card.style.cursor = 'pointer'; card.innerHTML = `<div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;"><div><div style="font-weight:${isUnread ? '800' : '700'};">${String(cleanNoticeTitle(n?.title) || 'Notice').replace(/</g,'&lt;').replace(/>/g,'&gt;')}${isUnread ? '<span class="badge" style="margin-left:8px;">NEW</span>' : ''}</div><div class="tiny muted" style="margin-top:4px; font-weight:${isUnread ? '700' : '400'};">${String(n?.message || n?.body || n?.content || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div></div><div class="tiny muted">${n?.createdAt ? new Date(n.createdAt).toLocaleDateString() : ''}</div></div>`; card.addEventListener('click', async ()=>{ if(n?.id){ read.add(n.id); saveReadSet(read); renderNotices(); } }); noticesList.appendChild(card); });
   }
-  cleanNoticesAtSource().finally(renderNotices);
- document.querySelectorAll('.dash-tab').forEach(b => { b.addEventListener('click', () => { if(b.dataset.tab === 'tabNotices') renderNotices(); }); });
+  renderNotices(); document.querySelectorAll('.dash-tab').forEach(b => { b.addEventListener('click', () => { if(b.dataset.tab === 'tabNotices') renderNotices(); }); });
 
   (function(){
     const statusEl = document.getElementById('gardaStatus'); const chipsEl = document.getElementById('gardaChips'); const listEl = document.getElementById('gardaList');
@@ -432,20 +461,7 @@ function setBadge(count){ const show = Number(count||0) > 0; if(noticesBadge){ n
     function normCat(cat){ return String(cat || '').toLowerCase().replace(/\s+/g,' ').trim(); }
     function iconSvg(cat){ const c = normCat(cat); const svgs = { all:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V7l8-4z"/></svg>`, fraud:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M17 7h-6a3 3 0 0 0 0 6h2a3 3 0 0 1 0 6H7"/></svg>`, cyber:`<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="11" rx="2"/><path d="M8 21h8"/><path d="M12 16v5"/></svg>`, burglary:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 10v11h14V10"/><path d="M10 21v-6h4v6"/></svg>`, drugs:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 7l7 7"/><path d="M14 6l4 4a4 4 0 0 1-6 6l-4-4a4 4 0 0 1 6-6z"/><path d="M7 17l-1 1"/></svg>`, domestic:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z"/></svg>`, traffic:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17h10"/><path d="M6 17l-1-6 2-5h10l2 5-1 6"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/></svg>`, community:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M12 15c-4 0-7 2-7 5h14c0-3-3-5-7-5z"/><path d="M12 3v2"/></svg>`, other:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="10"/></svg>`}; if(c==='all') return svgs.all; if(c.includes('fraud')||c.includes('economic')) return svgs.fraud; if(c.includes('cyber')) return svgs.cyber; if(c.includes('burglary')||c.includes('theft')) return svgs.burglary; if(c.includes('drug')) return svgs.drugs; if(c.includes('domestic')) return svgs.domestic; if(c.includes('traffic')||c.includes('road')) return svgs.traffic; if(c.includes('community')||c.includes('policing')) return svgs.community; return svgs.other; }
     function canonicalGardaUrl(u){ try{ const url = new URL(u); url.hash = ''; url.search = ''; return url.toString().replace(/\/+$/, '').toLowerCase(); }catch(e){ return (u || '').toLowerCase(); } }
-    function dedupeGarda(items){
-      const seen = new Set();
-      return (items || []).filter(it => {
-        const urlKey = canonicalGardaUrl(it && it.url || '');
-        const titleKey = String(it && it.title || '').trim().toLowerCase();
-        const catKey = String(it && it.category || '').trim().toLowerCase();
-        const fallbackKey = [titleKey, catKey, String(it && it.snippet || '').trim().toLowerCase()].join('|');
-        const key = urlKey || fallbackKey;
-        if(!key) return false;
-        if(seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    }
+    function dedupeGarda(items){ const seen = new Set(); return (items || []).filter(it => { const urlKey = canonicalGardaUrl(it && it.url || ''); const fallbackKey = [String(it && it.title || '').trim().toLowerCase(), String(it && it.snippet || '').trim().toLowerCase()].join('|'); const key = urlKey || fallbackKey; if(!key) return false; if(seen.has(key)) return false; seen.add(key); return true; }); }
     function isBadUrl(url){ const u = String(url || ''); if(!u) return true; if(u.includes('/403/?404') || u.includes('/404/') || u.includes('404%3b') || u.includes('page-not-found')) return true; if(!/^https:\/\/(www\.)?garda\.ie\//i.test(u)) return true; return false; }
     function looksLikeNotFound(item){ const t = String(item?.title || ''); const s = String(item?.snippet || ''); const joined = (t + ' ' + s).toLowerCase(); return joined.includes('page not found') || joined.includes(' 404') || joined.startsWith('404'); }
     function itemIsActive(item){ if(!item || typeof item !== 'object') return false; if(item.active === false || item.isActive === false || item.enabled === false || item.visible === false) return false; const status = String(item.status || '').trim().toLowerCase(); if(status && ['inactive','disabled','hidden','broken','invalid','404','not_found','page_not_found'].includes(status)) return false; return true; }
@@ -453,30 +469,7 @@ function setBadge(count){ const show = Number(count||0) > 0; if(noticesBadge){ n
     function getGardaTabButton(){ return document.querySelector('.dash-tab[data-tab="tabGarda"]'); }
     function showGardaTab(){ const btn = getGardaTabButton(); if(btn) btn.style.display = ''; }
     function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
-    function render(items){
-      if(!chipsEl || !listEl) return;
-      const cats = Array.from(new Set((items||[]).map(x => x.category || 'Other'))).sort((a,b)=>a.localeCompare(b));
-      const allCats = ['All', ...cats];
-      chipsEl.innerHTML = `<div class="garda-cat-grid">${allCats.map((c,i)=>`<button type="button" class="garda-cat ${i===0?'is-active':''}" data-cat="${esc(c)}"><span class="icon">${iconSvg(c)}</span><span class="label">${esc(c)}</span></button>`).join('')}</div>`;
-      function summarizeAll(list){
-        const picked = [];
-        const seenCats = new Set();
-        (list || []).forEach(item => {
-          const cat = String(item && item.category || 'Other').trim();
-          if(seenCats.has(cat)) return;
-          seenCats.add(cat);
-          picked.push(item);
-        });
-        return picked;
-      }
-      function apply(cat){
-        chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat));
-        const scoped = (cat === 'All') ? summarizeAll(items) : items.filter(x => (x.category||'Other') === cat);
-        listEl.innerHTML = (scoped||[]).map(x => `<div class="garda-item"><div class="row"><div class="title">${esc(x.title || '')}</div><div class="date">${esc(x.date || '')}</div></div>${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}<a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a><div class="meta">${esc(x.category || 'Other')}</div></div>`).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
-      }
-      chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat)));
-      apply('All');
-    }
+    function render(items){ if(!chipsEl || !listEl) return; const cats = Array.from(new Set((items||[]).map(x => x.category || 'Other'))).sort((a,b)=>a.localeCompare(b)); const allCats = ['All', ...cats]; chipsEl.innerHTML = `<div class="garda-cat-grid">${allCats.map((c,i)=>`<button type="button" class="garda-cat ${i===0?'is-active':''}" data-cat="${esc(c)}"><span class="icon">${iconSvg(c)}</span><span class="label">${esc(c)}</span></button>`).join('')}</div>`; function apply(cat){ chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat)); const show = (cat === 'All') ? items : items.filter(x => (x.category||'Other') === cat); listEl.innerHTML = (show||[]).map(x => `<div class="garda-item"><div class="row"><div class="title">${esc(x.title || '')}</div><div class="date">${esc(x.date || '')}</div></div>${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}<a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a><div class="meta">${esc(x.category || 'Other')}</div></div>`).join('') || `<div class="tiny muted">No valid items found for this category.</div>`; } chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat))); apply('All'); }
     function renderPreset(){ if(!chipsEl || !listEl) return; const items = []; PRESET.categories.forEach(cc => (PRESET.linksByCategory[cc] || []).forEach(l => items.push({ category: cc, title: l.title, url: l.url, snippet: l.snippet || '', date: 'Official link' }))); showGardaTab(); setStatus('Official Garda resources'); render(filterItems(items)); }
     async function loadGardaFeed(){ setStatus('Loading Garda updates…'); try{ const res = await fetch('/.netlify/functions/garda-feed', { cache: 'no-store' }); if(!res.ok) throw new Error('HTTP ' + res.status); const data = await res.json(); let itemsRaw = []; if(Array.isArray(data.items)) itemsRaw = data.items; else if(Array.isArray(data.categories)) itemsRaw = data.categories.map(c => ({ title: c.label || c.title || 'Official link', url: c.url || '', category: c.label || c.category || 'Other', date: 'Official link', snippet: c.snippet || '' })); const items = filterItems(itemsRaw); if(!items.length){ renderPreset(); return; } showGardaTab(); setStatus('Official Garda resources (source: Garda.ie)'); render(items.slice(0, 40)); }catch(e){ console.warn('garda-feed failed', e); renderPreset(); } }
     let loaded = false, started = false; function ensureGardaLoaded(){ if(loaded) return; loaded = true; loadGardaFeed(); } function primeGardaPanel(){ if(started) return; started = true; renderPreset(); setTimeout(ensureGardaLoaded, 0); }
