@@ -1286,6 +1286,7 @@
   const byId = id => document.getElementById(id);
 
   const ADMIN_ALLOWED_ROLES = ['admin','owner','platform_support','area_coordinator','aux_coordinator','assistant_area_coordinator'];
+  const OWNER_EMAIL = 'claudiosantos1968@gmail.com';
 
   function hasAllowedAdminRole(roles){
     const list = Array.isArray(roles) ? roles : [roles];
@@ -1480,19 +1481,24 @@
         : null;
 
       if(currentUser && currentUser.email){
-        const users = await anwLoadSafe(KEY_USERS, []);
         const email = String(currentUser.email || '').trim().toLowerCase();
-        const row = users.find(u => String((u && u.email) || '').trim().toLowerCase() === email);
-        if(row){
-          const roles = []
-            .concat(normList(row.type))
-            .concat(normList(row.role))
-            .concat(normList(row.roles))
-            .concat(normList(row.userRole))
-            .concat(normList(row.userRoles))
-            .concat(normList(row.residentType));
-          allowed = hasAllowedAdminRole(roles);
-          role = (typeof window.anwGetCanonicalRole === 'function') ? window.anwGetCanonicalRole(row, email) : (roles[0] || '');
+        if(email === OWNER_EMAIL.toLowerCase()){
+          allowed = true;
+          role = 'owner';
+        }else{
+          const users = await anwLoadSafe(KEY_USERS, []);
+          const row = users.find(u => String((u && (u.email || u.userEmail || '')) || '').trim().toLowerCase() === email);
+          if(row){
+            const roles = []
+              .concat(normList(row.type))
+              .concat(normList(row.role))
+              .concat(normList(row.roles))
+              .concat(normList(row.userRole))
+              .concat(normList(row.userRoles))
+              .concat(normList(row.residentType));
+            allowed = hasAllowedAdminRole(roles);
+            role = (typeof window.anwGetCanonicalRole === 'function') ? window.anwGetCanonicalRole(row, email) : (roles[0] || '');
+          }
         }
       }
 
@@ -1706,8 +1712,38 @@
   }
 
   // ---------- Notices ----------
+  function sanitizeNoticeCollection(list){
+    const now = Date.now();
+    const seen = new Set();
+    return (Array.isArray(list) ? list : []).filter(n => {
+      if(!n || typeof n !== 'object') return false;
+      const title = String(n.title || '').trim();
+      const message = String(n.message || '').trim();
+      const isBinImport = !!(n.meta && n.meta.type === 'bin_collection_import');
+      if(isBinImport) return false;
+      if(!title && !message) return false;
+      if(/^\d+$/.test(title)) return false;
+      if(/^(null|undefined|untitled)$/i.test(title)) return false;
+      const exp = n.expires || n.expiresAt || n.endsOn || n.endDate;
+      if(exp){
+        const t = Date.parse(exp);
+        if(!Number.isNaN(t) && t < now) return false;
+      }
+      const key = [String(n.id || ''), title.toLowerCase(), message.toLowerCase()].join('|');
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   async function loadNoticesFresh(){
-    return await anwLoadSafe(window.getNoticesKey(), []);
+    const key = window.getNoticesKey();
+    const raw = await anwLoadSafe(key, []);
+    const cleaned = sanitizeNoticeCollection(raw);
+    if(JSON.stringify(cleaned) !== JSON.stringify(Array.isArray(raw) ? raw : [])){
+      try{ await anwSaveSafe(key, cleaned); }catch(_){}
+    }
+    return cleaned;
   }
 
   function collectNoticeForm(){
@@ -1783,7 +1819,7 @@
     const list = await loadNoticesFresh();
     const next = (list || []).filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
     await anwSaveSafe(window.getNoticesKey(), next);
-    byId('binMsg').textContent = 'Imported bin notices removed.';
+    byId('binMsg').textContent = 'Imported bin notices removed from dashboard notices.';
     await renderNoticesList();
   }
 
@@ -1876,19 +1912,7 @@
       });
     }
 
-    const current = await loadNoticesFresh();
-
-    const currentKept = (current || []).filter(n => {
-      if(!(n && n.meta && n.meta.type === 'bin_collection_import')) return true;
-      const key = `${String(n.date||'')}|${String(n.bin||'').toLowerCase()}`;
-      const incoming = imported.some(x => `${String(x.date||'')}|${String(x.bin||'').toLowerCase()}` === key);
-      return !incoming;
-    });
-
-    const merged = [...currentKept, ...imported];
-    await anwSaveSafe(window.getNoticesKey(), merged);
-
-    msg.textContent = `${imported.length} collection notice(s) imported and saved. They are public and enabled for Home automatically for this week and next week.`;
+    msg.textContent = `${imported.length} collection row(s) processed. Bin collection imports are no longer saved into dashboard notices.`;
     await renderNoticesList();
   }
 
@@ -2465,40 +2489,6 @@
 })();
 </script>
 
-
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-  try{
-    const allowed = "claudiosantos1968@gmail.com";
-    const tabsBar = document.querySelector('.admin-tabs');
-    const panels = Array.from(document.querySelectorAll('.admin-tab-content'));
-    const currentUser = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
-      ? window.netlifyIdentity.currentUser()
-      : null;
-    const email = currentUser && currentUser.email ? String(currentUser.email).toLowerCase().trim() : "";
-
-    const isOwner = email === allowed;
-
-    if(!isOwner){
-      if (tabsBar) tabsBar.style.opacity = '0.65';
-      document.querySelectorAll('.admin-tab').forEach((btn) => { btn.disabled = true; btn.setAttribute('aria-disabled','true'); });
-      panels.forEach((panel) => { panel.style.display = 'none'; });
-
-      const first = document.getElementById('tabResidents') || panels[0];
-      if(first){
-        first.style.display = 'block';
-        first.innerHTML = `
-          <h3>Admin</h3>
-          <div class="card" style="background:#f9fafb;">
-            <p class="tiny muted" style="margin:0;">Administrator access only.</p>
-            <p class="tiny muted" style="margin:8px 0 0;">Access restricted. This section is available only to authorised members.</p>
-          </div>
-        `;
-      }
-    }
-  }catch(e){}
-});
-</script>
 
 
 <script>
