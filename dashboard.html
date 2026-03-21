@@ -215,6 +215,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   let currentEmail = '';
   let currentProfile = null;
   let currentProfileIndexes = [];
+  let lastLocalUsersWriteAt = 0;
 
   const notLoggedBox = document.getElementById('dbNotLogged');
   const profileArea = document.getElementById('dbProfileArea');
@@ -222,6 +223,23 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   const interestArea = document.getElementById('interestArea');
 
   function loadUsers(){ const next = anwLoad(KEY_USERS, []); users = Array.isArray(next) ? next : []; return users; }
+  async function saveUsersAndSync(){
+    lastLocalUsersWriteAt = Date.now();
+    await anwSave(KEY_USERS, users);
+    try{
+      if(typeof window.anwSyncToServer === 'function'){
+        await window.anwSyncToServer([KEY_USERS]);
+      }else if(typeof window.anwSyncKeyToServer === 'function'){
+        await window.anwSyncKeyToServer(KEY_USERS);
+      }else if(typeof window.anwPushToServer === 'function'){
+        await window.anwPushToServer([KEY_USERS]);
+      }else if(typeof window.anwPublishStoreKey === 'function'){
+        await window.anwPublishStoreKey(KEY_USERS);
+      }
+    }catch(syncErr){
+      console.warn('users sync failed', syncErr);
+    }
+  }
   function normEmail(v){ try{ return anwNormEmail(v || ''); }catch(_){ return String(v || '').trim().toLowerCase(); } }
   function emailCandidates(email){
     const norm = normEmail(email);
@@ -390,6 +408,16 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     return String(u?.name || u?.fullName || '').trim() || 'Resident';
   }
 
+  function hideLegacyEircodeField(){
+    const legacyInput = document.getElementById('pfEir');
+    if(legacyInput){
+      const field = legacyInput.closest('.field') || legacyInput.parentElement;
+      if(field) field.style.display = 'none';
+      legacyInput.setAttribute('hidden', 'hidden');
+      legacyInput.style.display = 'none';
+    }
+  }
+
   function clearProfileUi(){
     ['pfPhone','pfEmail','pfMgmt','pfElected'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     const cb = document.getElementById('pfAlertOptIn'); if(cb) cb.checked = false;
@@ -405,6 +433,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const volHero = document.getElementById('pfVolHero');
     if(volHero) volHero.innerHTML = '<span class="profile-empty-note">No volunteer positions selected</span>';
     setText('pfMsg', '');
+    hideLegacyEircodeField();
   }
 
   function applyProfileUi(){
@@ -462,6 +491,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         volHero.innerHTML = '<span class="profile-empty-note">No volunteer positions selected</span>';
       }
     }
+    hideLegacyEircodeField();
   }
 
   async function getIdentityEmail(){
@@ -498,7 +528,11 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   async function resolveDashboardContext(){
     try{ await anwInitStore(); }catch(_){}
-    try{ if(typeof window.anwSyncFromServer === 'function'){ await window.anwSyncFromServer([KEY_USERS], 0); } }catch(_){}
+    try{
+      if(typeof window.anwSyncFromServer === 'function' && (Date.now() - lastLocalUsersWriteAt > 2500)){
+        await window.anwSyncFromServer([KEY_USERS], 0);
+      }
+    }catch(_){}
     loadUsers();
     let email = '';
     try{ email = String(await getIdentityEmail() || ''); }catch(_){}
@@ -546,6 +580,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   }
 
   await resolveDashboardContext();
+  hideLegacyEircodeField();
   syncInterestAccess();
 
   const avatarImg = document.getElementById('pfAvatar');
@@ -611,7 +646,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       currentProfile.vol_roles = nextVolRoles;
       ensureOwnerFlags(currentProfile);
       persistCurrentProfileToUsers();
-      await anwSave(KEY_USERS, users);
+      applyProfileUi();
+      await saveUsersAndSync();
       const resolved = await resolveDashboardContext();
       setText('pfMsg', 'Profile updated.');
       toast('Profile updated.', 'success');
@@ -750,7 +786,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       };
       ensureOwnerFlags(currentProfile);
       persistCurrentProfileToUsers();
-      await anwSave(KEY_USERS, users);
+      await saveUsersAndSync();
       renderInterest();
       intMeta.textContent = 'Interest saved. Awaiting admin approval if pending.';
       toast('Interest saved.', 'success');
@@ -769,7 +805,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       delete currentProfile.interest;
       ensureOwnerFlags(currentProfile);
       persistCurrentProfileToUsers();
-      await anwSave(KEY_USERS, users);
+      await saveUsersAndSync();
       renderInterest();
       intMeta.textContent = 'Interest withdrawn.';
       toast('Interest withdrawn.', 'info');
