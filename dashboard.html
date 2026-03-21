@@ -2,857 +2,99 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta content="page:dashboard" name="anw-acl-key"/>
-<meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>Dashboard — Aderrig NW</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dashboard — Clean Profile</title>
 <link href="assets/style.css" rel="stylesheet"/>
 <style>
-.garda-panel{margin-top:.75rem;border:1px solid #e4e7eb;border-radius:14px;background:#fff;padding:.9rem}
-.chip-row{margin-top:.6rem;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:4px}
-.garda-list{margin-top:.85rem}.garda-item{border:1px solid #e4e7eb;border-radius:12px;background:#fff;padding:.9rem;margin:.65rem 0}
-.garda-item .row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.garda-item .title{font-weight:800;margin:0}.garda-item .date{font-size:12px;color:#6b7280;white-space:nowrap}.garda-item .snippet{margin-top:8px;font-size:13px;color:#374151}
-.garda-item .link{margin-top:8px;font-size:13px;font-weight:700;color:var(--brand,#1f7a3f);display:inline-block;text-decoration:none}.garda-item .meta{margin-top:6px;font-size:12px;color:#6b7280;font-weight:700}
-.garda-top-wrap{display:flex;justify-content:flex-end;margin-top:12px;padding-top:12px;border-top:1px solid #eef0f2}.garda-top-btn.tab-like{border-radius:999px;padding:8px 16px;background:#fff;color:var(--brand,#1f7a3f);border:2px solid var(--brand,#1f7a3f);font-weight:700}.garda-top-btn.tab-like.is-active{background:var(--brand,#1f7a3f);color:#fff}
-#tabGarda .chip-row{margin-top:12px;overflow:visible!important;white-space:normal!important;padding-bottom:0!important}
-#tabGarda .garda-cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-#tabGarda .garda-cat{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:1.5px solid #d9e7dd;background:#fff;cursor:pointer;text-align:left;transition:.15s ease;-webkit-appearance:none;appearance:none}
-#tabGarda .garda-cat:hover{background:var(--brandSoft,#eaf6ee)}
-#tabGarda .garda-cat .icon{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--brandSoft,#eaf6ee);flex:0 0 36px}
-#tabGarda .garda-cat .icon svg{width:20px;height:20px;stroke:var(--brand,#1f7a3f);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
-#tabGarda .garda-cat .label{font-weight:700;color:var(--ink,#1f2937);line-height:1.2;font-size:14px}
-#tabGarda .garda-cat.is-active{background:var(--brand,#1f7a3f);border-color:var(--brand,#1f7a3f)}
-#tabGarda .garda-cat.is-active .label{color:#fff}#tabGarda .garda-cat.is-active .icon{background:rgba(255,255,255,.18)}#tabGarda .garda-cat.is-active .icon svg{stroke:#fff}
-
-.profile-head{display:grid;grid-template-columns:minmax(0,1fr) 160px;align-items:start;gap:24px;margin-bottom:18px}
-.profile-overview{min-width:0}
-.profile-title{margin:0 0 4px}
-.profile-subtitle{margin:0 0 16px}
-.profile-topline{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}
-.profile-reg-chip,.profile-meta-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#f8fafc;border:1px solid #dbe4ee;color:#475569;font-size:13px;font-weight:700}
-.profile-reg-chip strong,.profile-meta-chip strong{color:#334155;font-weight:800}
-.profile-name-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
-.profile-name-hero{margin:0;font-size:32px;line-height:1.08;font-weight:800;color:#1f2937}
-.profile-status-badge{display:inline-flex;align-items:center;padding:7px 13px;border-radius:999px;background:#eaf6ee;border:1px solid #cfe8d7;color:#1f7a3f;font-size:14px;font-weight:800}
-.profile-summary-card{margin-top:14px;border:1px solid #e6edf3;background:linear-gradient(180deg,#ffffff 0%,#fbfcfe 100%);border-radius:18px;padding:16px 18px}
-.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
-.profile-meta-block{min-width:0}
-.profile-meta-label{display:block;margin-bottom:6px;font-size:12px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:#64748b}
-.profile-meta-value{font-size:15px;font-weight:700;color:#1f2937;line-height:1.35;word-break:break-word}
-.profile-volunteer-row{display:flex;flex-wrap:wrap;gap:8px}
-.profile-volunteer-chip{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:#f8fbf9;border:1px solid #d7e7dc;color:#285f3f;font-size:12px;font-weight:700}
-.profile-empty-note{font-size:13px;color:#6b7280}
-.profile-avatar-panel{width:160px;justify-self:end;text-align:center}
-.profile-avatar-box{width:160px;height:160px;border-radius:18px;overflow:hidden;border:1px solid #e4e7eb;background:#f3f4f6;margin:0 auto 8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
-.profile-avatar-box img{width:100%;height:100%;object-fit:cover;display:block}
-.profile-avatar-meta{margin-top:6px;font-size:12px;color:#6b7280}
-.profile-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
-@media (max-width:820px){.profile-grid{grid-template-columns:1fr}.profile-head{grid-template-columns:minmax(0,1fr) 132px}.profile-avatar-panel{width:132px}.profile-avatar-box{width:132px;height:132px}}
-@media (max-width:640px){.profile-head{grid-template-columns:minmax(0,1fr) 108px;gap:16px}.profile-avatar-panel{width:108px}.profile-avatar-box{width:108px;height:108px;border-radius:14px}.profile-name-hero{font-size:24px}.profile-summary-card{padding:14px}}
-
-body.page-dashboard{min-height:100vh}
-body.page-dashboard .site-footer{width:min(var(--container,1100px),calc(100% - 32px));margin:18px auto 0;padding:18px 0 26px}
-body.page-dashboard .footer-row{width:100%;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
-body.page-dashboard .footer-left,body.page-dashboard .footer-center{width:100%}
-body.page-dashboard .footer-center{text-align:left}
-@media (min-width:768px){body.page-dashboard .footer-row{flex-direction:row;justify-content:space-between;align-items:center}body.page-dashboard .footer-left,body.page-dashboard .footer-center{width:auto}body.page-dashboard .footer-center{flex:1 1 auto;text-align:center;padding-right:120px}}
-footer.site-footer{position:relative}footer.site-footer .page-access{position:static;color:green}
+.profile-card{border:1px solid #e5e7eb;border-radius:16px;padding:16px;background:#fff;margin-top:10px}
+.profile-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.profile-name{font-size:28px;font-weight:800;margin:0}
+.profile-badge{padding:6px 12px;border-radius:999px;background:#e6f4ea;color:#1f7a3f;font-weight:700}
+.profile-chip{display:inline-block;padding:6px 10px;border-radius:999px;background:#f1f5f9;margin:4px;font-size:12px}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.avatar{width:120px;height:120px;border-radius:16px;object-fit:cover}
 </style>
 </head>
-<body data-acl-shell-public="true" class="page-dashboard">
-<header class="site-header">
-<div class="brand">
-<a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
-<div class="brand-text"><h1>Aderrig NW</h1><p class="muted">Adamstown</p></div>
-</div>
-<nav class="nav">
-<a href="index.html">Home</a><a href="about.html">About</a><a href="handbook.html">Handbook</a><a href="report.html">Report</a><a href="alerts.html">Community Alerts</a><a href="projects.html">Community Projects</a><a class="nav-login" href="login.html">Login / Register</a><a class="active" href="dashboard.html">Dashboard</a><a href="household.html">Household</a><a href="admin.html">Admin</a>
-</nav>
-</header>
+<body>
 <main class="wrap">
 <section class="card">
-<h2>Resident dashboard</h2>
-<p class="muted">Manage your profile, elections and interests.</p>
-<div class="tiny muted" id="anwAccessNotice" style="margin-top:12px; display:none;"><span id="anwAccessText">You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access your dashboard.</span></div>
-<div class="actions dash-tabs" style="margin-top:0.5rem;">
-<button class="btn small dash-tab active" data-acl-feature="dashboard:tab_profile" data-tab="tabProfile" type="button">Profile</button>
-<button class="btn small dash-tab" data-acl-feature="dashboard:tab_interest" data-tab="tabInterest" type="button">Interest</button>
-<button class="btn small dash-tab" data-acl-feature="dashboard:tab_elections" data-tab="tabElections" type="button">Elections</button>
-<button class="btn small dash-tab" data-acl-feature="dashboard:tab_notices" data-tab="tabNotices" type="button">Notices <span class="badge" id="noticesBadge" style="display:none; margin-left:6px;">0</span></button>
-<button class="btn small dash-tab" data-acl-feature="dashboard:tab_garda" data-tab="tabGarda" type="button">Garda &amp; Safety</button>
-</div>
-</section>
+<h2>Profile</h2>
 
-<section class="card dash-tab-content" data-acl-feature="dashboard:tab_profile" id="tabProfile">
+<div class="profile-card">
 <div class="profile-head">
-<div class="profile-overview">
-<h3 class="profile-title">Profile</h3>
-<p class="tiny muted profile-subtitle">Manage your personal details.</p>
-<div class="profile-topline">
-  <div class="profile-reg-chip">Registration No <strong id="pfRegHero">—</strong></div>
-  <div class="profile-meta-chip">Status <strong id="pfStatusHero">Pending</strong></div>
+<div>
+<div>Registration No <strong id="pfReg">—</strong></div>
+<h3 class="profile-name" id="pfName">Resident</h3>
+<span class="profile-badge" id="pfStatus">Pending</span>
 </div>
-<div class="profile-name-row">
-  <h4 class="profile-name-hero" id="pfNameHero">Resident</h4>
+<div>
+<img id="pfAvatar" class="avatar" src="assets/default-avatar.png"/>
+</div>
 </div>
 
-<div class="profile-summary-card">
-  <div class="profile-grid">
-    <div class="profile-meta-block">
-      <span class="profile-meta-label">Primary role</span>
-      <div class="profile-meta-value" id="pfPrimaryRoleHero">Resident</div>
-    </div>
-    <div class="profile-meta-block">
-      <span class="profile-meta-label">Volunteer positions</span>
-      <div class="profile-volunteer-row" id="pfVolHero"><span class="profile-empty-note">No volunteer positions selected</span></div>
-    </div>
-    <div class="profile-meta-block">
-      <span class="profile-meta-label">Registered address</span>
-      <div class="profile-meta-value" id="pfAddressHero">—</div>
-    </div>
-    <div class="profile-meta-block">
-      <span class="profile-meta-label">Resident type</span>
-      <div class="profile-meta-value" id="pfTypeHero">—</div>
-    </div>
-  </div>
+<div class="profile-grid">
+<div><strong>Primary role:</strong> <span id="pfRole">Resident</span></div>
+<div><strong>Resident type:</strong> <span id="pfType">—</span></div>
+<div><strong>Address:</strong> <span id="pfAddress">—</span></div>
+<div><strong>Eircode:</strong> <span id="pfEir">—</span></div>
+</div>
+
+<div>
+<strong>Volunteer positions:</strong>
+<div id="pfVol"></div>
 </div>
 </div>
-<div class="profile-avatar-panel">
-<div class="profile-avatar-box"><img alt="Resident profile photo" id="pfAvatar" src="assets/default-avatar.png"/></div>
-<input accept="image/png,image/jpeg" id="pfAvatarInput" style="display:none;" type="file"/>
-<button class="btn-line small" id="btnUploadAvatar" type="button">Upload</button>
-<div class="profile-avatar-meta">JPG / PNG</div>
+
+<div class="card">
+<label>Phone</label>
+<input id="pfPhone"/>
+
+<label>Email</label>
+<input id="pfEmail" disabled/>
+
+<label>Management company</label>
+<input id="pfMgmt"/>
+
+<button onclick="save()">Save</button>
 </div>
-</div>
-<div class="card" id="dbNotLogged" style="background:#f9fafb; display:none;"><p class="tiny muted" style="margin:0;">Please log in first to access your dashboard.</p></div>
-<div id="dbProfileArea" style="display:none;">
-<p class="tiny muted" style="margin-top:0;">Email and Eircode are protected and cannot be changed.</p>
-<div class="grid-2" style="gap:1rem;"><div class="field"><label>Phone</label><input id="pfPhone" type="text"/></div><div class="field"><label>Email</label><input disabled="" id="pfEmail" type="email"/></div></div>
-<div class="grid-2" style="gap:1rem;"><div class="field"><label>Eircode</label><input disabled="" id="pfEir" type="text"/></div><div class="field"><label>Management company</label><input disabled="" id="pfMgmt" type="text"/></div></div>
-<div class="field"><label>Full address</label><input disabled="" id="pfAddress" type="text"/></div>
-<div class="field"><label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input id="pfAlertOptIn" type="checkbox"/><span>I agree to receive Aderrig NW alerts via Email, SMS or WhatsApp (optional).</span></label><p class="tiny muted" id="pfAlertMeta" style="margin:6px 0 0;">No alert preference recorded yet (Email/SMS/WhatsApp).</p></div>
-<div class="grid-2" style="gap:1rem;"><div class="field"><label>Resident type</label><input disabled="" id="pfType" type="text"/></div><div class="field"><label>Elected position</label><input disabled="" id="pfElected" type="text"/></div></div>
-<div class="field"><label>Volunteer roles</label><ul class="tiny" id="pfVolRoles" style="margin:0; padding-left:18px;"></ul></div>
-<p class="tiny muted" id="pfMsg" style="margin-top:0.5rem;"></p>
-<div class="actions profile-actions"><button class="btn-line" id="btnLogout" type="button">Logout</button><button class="btn" id="btnSaveProfile" type="button">Save</button></div>
-</div>
+
 </section>
-
-<section class="card dash-tab-content" data-acl-feature="dashboard:tab_interest" id="tabInterest" style="display:none;">
-<h3>Expression of Interest (Elections)</h3>
-<p class="tiny muted" style="margin-top:0;">Submit your interest for an elected role. Admin approval is required before your name appears for resident voting.</p>
-<div class="card" id="interestBlocked" style="background:#f9fafb; display:none;"><p class="tiny muted" style="margin:0;">Your registration must be approved before submitting interest.</p></div>
-<div id="interestArea" style="display:none;">
-<div class="field"><label>Role</label><select id="intRole"><option value="">Select…</option><option value="area">Area Coordinator</option><option value="assistant">Assistant Area Coordinator</option></select></div>
-<div class="field"><label>Motivation / experience (visible to residents)</label><textarea id="intText" rows="6"></textarea></div>
-<p class="tiny muted" id="intMeta"></p>
-<div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button class="btn-line" id="btnWithdrawInterest" style="display:none;" type="button">Withdraw</button><button class="btn" id="btnSubmitInterest" type="button">Submit</button></div>
-</div>
-</section>
-
-<section class="card dash-tab-content" data-acl-feature="dashboard:tab_elections" id="tabElections" style="display:none;">
-<h3>Elections</h3>
-<p class="tiny muted" style="margin-top:0;">View current election periods and your eligibility.</p>
-<div class="card" id="electionsArea" style="background:#f9fafb;"><p class="tiny muted" style="margin:0;">Election information will appear here when elections are created by an admin.</p></div>
-<div style="overflow-x:auto; margin-top:0.75rem;"><table style="width:100%;"><thead><tr><th>Role</th><th>Period</th><th>Status</th><th>Winner</th></tr></thead><tbody id="electionsBody"></tbody></table></div>
-<p class="tiny muted" id="electionsEmpty" style="display:none; margin-top:0.5rem;">No elections configured.</p>
-</section>
-
-<section class="card dash-tab-content" data-acl-feature="dashboard:tab_notices" id="tabNotices" style="display:none;">
-<h3 style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Notices</span><span class="badge" id="noticesBadgeTop" style="display:none;">0</span></h3>
-<p class="tiny muted" style="margin-top:0;">Official community notices published by Aderrig NW administrators.</p>
-<div class="card" id="noticesEmpty" style="background:#f9fafb; display:none;"><p class="tiny muted" style="margin:0;">No notices available.</p></div>
-<div id="noticesList" style="display:none;"></div>
-</section>
-
-<section class="card dash-tab-content" data-acl-feature="dashboard:tab_garda" id="tabGarda" style="display:none;">
-<h3>Garda &amp; Safety</h3>
-<p class="tiny muted" style="margin-top:0;">Official safety information and Garda updates for residents.</p>
-<div class="garda-panel">
-<div class="tiny muted" id="gardaStatus">Loading Garda updates…</div>
-<div class="chip-row" id="gardaChips"></div>
-<div class="garda-list" id="gardaList"></div>
-<div class="garda-top-wrap"><button class="btn garda-top-btn tab-like" id="scrollTopBtn" type="button">Back to top</button></div>
-</div>
-</section>
-
-<div class="card dash-tab-content" id="dashBlockedMessage" style="display:none;"><h3>Dashboard</h3><div class="card" style="background:#f9fafb;"><p class="tiny muted" style="margin:0;">Please log in to access this section.</p></div></div>
 </main>
 
-<footer class="site-footer">
-<div class="footer-row"><div class="footer-left"><span class="page-access" id="pageAccessLabel">Private Page</span></div><div class="footer-center">© 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a></div></div>
-</footer>
-
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script src="assets/identity.js"></script>
-<script src="assets/app-core.js"></script>
 <script>
-(async function(){
-  'use strict';
-  await anwInitStore();
+const user = JSON.parse(localStorage.getItem('anw_user')||'{}');
 
-  function toast(msg, type){ try{ if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){ ANW.ui.toast(String(msg || ''), type || 'info'); } }catch{} }
-  function modal(msg, title){ try{ if(window.ANW && ANW.ui && typeof ANW.ui.alert === 'function'){ ANW.ui.alert(String(msg || ''), { title: title || 'Message' }); return; } }catch{} alert(msg); }
-  async function confirmModal(msg, title){ try{ if(typeof window.anwConfirm === 'function'){ return await window.anwConfirm(String(msg || ''), { title: title || 'Confirm' }); } }catch{} return confirm(msg); }
-  function setText(id, value){ const el = document.getElementById(id); if(el) el.textContent = (value ?? '').toString(); }
+function load(){
+document.getElementById('pfReg').textContent=user.regId||'—';
+document.getElementById('pfName').textContent=user.name||'Resident';
+document.getElementById('pfStatus').textContent=(user.active?'Active':'Pending');
+document.getElementById('pfRole').textContent=user.role||'Resident';
+document.getElementById('pfType').textContent=user.type||'—';
+document.getElementById('pfAddress').textContent=user.address||'—';
+document.getElementById('pfEir').textContent=user.eircode||'—';
+document.getElementById('pfPhone').value=user.phone||'';
+document.getElementById('pfEmail').value=user.email||'';
+document.getElementById('pfMgmt').value=user.mgmt||'';
+document.getElementById('pfAvatar').src=user.avatar||'assets/default-avatar.png';
 
-  const KEY_USERS = ANW_KEYS.USERS;
-  const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
-  const KEY_NOTICES = ANW_KEYS.NOTICES || 'anw_notices';
+const vol = document.getElementById('pfVol');
+vol.innerHTML='';
+(user.vol||[]).forEach(v=>{
+const el=document.createElement('span');
+el.className='profile-chip';
+el.textContent=v;
+vol.appendChild(el);
+});
+}
 
-  let users = [];
-  let currentEmail = '';
-  let currentProfile = null;
+function save(){
+user.phone=document.getElementById('pfPhone').value;
+user.mgmt=document.getElementById('pfMgmt').value;
+localStorage.setItem('anw_user',JSON.stringify(user));
+alert('Saved');
+}
 
-  const notLoggedBox = document.getElementById('dbNotLogged');
-  const profileArea = document.getElementById('dbProfileArea');
-  const interestBlocked = document.getElementById('interestBlocked');
-  const interestArea = document.getElementById('interestArea');
-
-  function loadUsers(){ const next = anwLoad(KEY_USERS, []); users = Array.isArray(next) ? next : []; return users; }
-  function normEmail(v){ try{ return anwNormEmail(v || ''); }catch(_){ return String(v || '').trim().toLowerCase(); } }
-  function emailCandidates(email){
-    const norm = normEmail(email);
-    const local = norm.split('@')[0] || '';
-    return Array.from(new Set([norm, local].filter(Boolean)));
-  }
-  function rowEmails(u){
-    return Array.from(new Set([
-      normEmail(u && u.email),
-      normEmail(u && u.userEmail),
-      normEmail(u && u.loginEmail),
-      normEmail(u && u.netlifyEmail)
-    ].filter(Boolean)));
-  }
-  function findUserByEmail(email){
-    const candidates = emailCandidates(email);
-    if(!candidates.length) return null;
-    loadUsers();
-    const exact = users.find(u => rowEmails(u).some(e => candidates.includes(e)));
-    if(exact) return exact;
-    const localPart = candidates[0].split('@')[0];
-    return users.find(u => rowEmails(u).some(e => e.split('@')[0] === localPart)) || null;
-  }
-
-  function prettyStatus(value){
-    const raw = String(value || '').trim().toLowerCase();
-    if(['active','approved'].includes(raw)) return 'Active';
-    if(raw) return raw.replace(/(^|\s)\S/g, s => s.toUpperCase());
-    return 'Pending';
-  }
-  function electedLabelFromUser(u){
-    const r = String(u?.electedRole || '').toLowerCase();
-    if(r === 'assistant') return 'Assistant Area Coordinator';
-    if(r === 'area') return 'Area Coordinator';
-    return '—';
-  }
-  function primaryRoleFromUser(u){
-    const elected = String(u?.electedRole || '').toLowerCase();
-    if(elected === 'area') return 'Street Coordinator';
-    if(elected === 'assistant') return 'Assistant Street Coordinator';
-    const raw = u?.role || u?.type || u?.residentType || '';
-    if(!raw) return 'Resident';
-    return String(raw).replace(/(^|\s)\S/g, s => s.toUpperCase());
-  }
-  function addressFromUser(u){
-    return String(u?.address || u?.fullAddress || '').trim() || '—';
-  }
-  function statusFromUser(u){
-    if(!u) return 'pending';
-    const raw = String(u.status || u.accountStatus || u.registrationStatus || '').trim().toLowerCase();
-    if(raw) return raw;
-    if(u.active === true || u.approved === true) return 'active';
-    return 'pending';
-  }
-  function fullNameFromUser(u){
-    return String(u?.name || u?.fullName || '').trim() || 'Resident';
-  }
-
-  function clearProfileUi(){
-    ['pfPhone','pfEmail','pfEir','pfAddress','pfType','pfMgmt','pfElected'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
-    const cb = document.getElementById('pfAlertOptIn'); if(cb) cb.checked = false;
-    setText('pfAlertMeta', 'No alert preference recorded yet (Email/SMS/WhatsApp).');
-    const ul = document.getElementById('pfVolRoles'); if(ul) ul.innerHTML = '<li class="muted">No volunteer roles selected</li>';
-    setText('pfNameHero', 'Resident');
-    setText('pfStatusHero', 'Pending');
-    setText('pfRegHero', '—');
-    setText('pfPrimaryRoleHero', 'Resident');
-    setText('pfAddressHero', '—');
-    setText('pfTypeHero', '—');
-    const volHero = document.getElementById('pfVolHero');
-    if(volHero) volHero.innerHTML = '<span class="profile-empty-note">No volunteer positions selected</span>';
-    setText('pfMsg', '');
-  }
-
-  function applyProfileUi(){
-    if(!currentEmail || !currentProfile){
-      if(notLoggedBox) notLoggedBox.style.display = 'block';
-      if(profileArea) profileArea.style.display = 'none';
-      clearProfileUi();
-      return;
-    }
-    if(notLoggedBox) notLoggedBox.style.display = 'none';
-    if(profileArea) profileArea.style.display = 'block';
-
-    const regValue = currentProfile.regId || currentProfile.regNo || currentProfile.registrationNo || '—';
-    const statusValue = statusFromUser(currentProfile);
-    document.getElementById('pfPhone').value = currentProfile.phone || currentProfile.mobile || '';
-    document.getElementById('pfEmail').value = currentProfile.email || currentProfile.userEmail || currentEmail || '';
-    document.getElementById('pfEir').value = currentProfile.eircode || currentProfile.eir || '';
-    document.getElementById('pfAddress').value = addressFromUser(currentProfile) === '—' ? '' : addressFromUser(currentProfile);
-    document.getElementById('pfType').value = currentProfile.type || currentProfile.residentType || '';
-    document.getElementById('pfMgmt').value = currentProfile.managementCompany || '';
-    document.getElementById('pfElected').value = electedLabelFromUser(currentProfile);
-
-    setText('pfNameHero', fullNameFromUser(currentProfile));
-    setText('pfStatusHero', prettyStatus(statusValue));
-    setText('pfRegHero', regValue);
-    setText('pfPrimaryRoleHero', primaryRoleFromUser(currentProfile));
-    setText('pfAddressHero', addressFromUser(currentProfile));
-    setText('pfTypeHero', currentProfile.type || currentProfile.residentType || '—');
-
-    const ac = currentProfile.alertsConsent || {};
-    const cb = document.getElementById('pfAlertOptIn'); if(cb) cb.checked = !!ac.optIn || !!ac.email || !!ac.sms;
-    setText('pfAlertMeta', ac.updatedAt ? ('Last updated: ' + new Date(ac.updatedAt).toLocaleString()) : 'No alert preference recorded yet (Email/SMS/WhatsApp).');
-
-    const ul = document.getElementById('pfVolRoles');
-    const volHero = document.getElementById('pfVolHero');
-    if(ul){
-      ul.innerHTML = '';
-      if(volHero) volHero.innerHTML = '';
-      const vr = currentProfile.vol_roles || {};
-      const labels = {
-        streetWatch:'Street watch / patrols',
-        leaflets:'Distribute leaflets',
-        tech:'Tech support',
-        elderly:'Elderly checks',
-        meetings:'Meeting organiser',
-        translation:'Translation'
-      };
-      Object.keys(labels).forEach(k=>{
-        if(vr[k]){
-          const li = document.createElement('li');
-          li.textContent = labels[k];
-          ul.appendChild(li);
-          if(volHero){
-            const chip = document.createElement('span');
-            chip.className = 'profile-volunteer-chip';
-            chip.textContent = labels[k];
-            volHero.appendChild(chip);
-          }
-        }
-      });
-      if(!ul.children.length){
-        ul.innerHTML = '<li class="muted">No volunteer roles selected</li>';
-        if(volHero) volHero.innerHTML = '<span class="profile-empty-note">No volunteer positions selected</span>';
-      }
-    }
-  }
-
-  async function getIdentityEmail(){
-    try{
-      const current = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function' ? window.netlifyIdentity.currentUser() : null;
-      if(current && current.email) return String(current.email || '');
-    }catch(_){}
-    if(window.netlifyIdentity && typeof window.netlifyIdentity.on === 'function'){
-      try{
-        return await new Promise((resolve) => {
-          let done = false;
-          const finish = (u) => {
-            if(done) return;
-            done = true;
-            resolve(String((u && u.email) || ''));
-          };
-          try{
-            window.netlifyIdentity.on('init', finish);
-            window.netlifyIdentity.init && window.netlifyIdentity.init();
-          }catch(_){}
-          setTimeout(() => {
-            try{
-              const user = window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-              finish(user || null);
-            }catch(_){
-              finish(null);
-            }
-          }, 600);
-        });
-      }catch(_){}
-    }
-    return '';
-  }
-
-  async function resolveDashboardContext(){
-    try{ await anwInitStore(); }catch(_){}
-    loadUsers();
-    let email = '';
-    try{ email = String(await getIdentityEmail() || ''); }catch(_){}
-    if(!email){ try{ email = String(anwGetLoggedEmail() || ''); }catch(_){ } }
-    if(!email){
-      try{
-        const session = (typeof anwGetSession === 'function') ? (anwGetSession() || {}) : {};
-        email = String(session.email || '');
-      }catch(_){}
-    }
-    currentEmail = email;
-    currentProfile = email ? findUserByEmail(email) : null;
-
-    if(!currentProfile && users.length === 1){
-      const only = users[0];
-      if(statusFromUser(only) === 'active') currentProfile = only;
-    }
-
-    applyProfileUi();
-    return { email: currentEmail, profile: currentProfile };
-  }
-
-  function isApprovedResident(profile){
-    const status = statusFromUser(profile);
-    return !!(profile && (profile.approved === true || profile.active === true || status === 'active' || status === 'approved'));
-  }
-
-  function syncInterestAccess(){
-    const __demo = (location.protocol === 'file:' || (new URLSearchParams(location.search)).get('demo') === '1' || localStorage.getItem('anw_demo') === '1');
-    const allowed = __demo ? true : !!(currentProfile && isApprovedResident(currentProfile));
-    if(!interestBlocked || !interestArea) return allowed;
-    interestBlocked.style.display = allowed ? 'none' : 'block';
-    interestArea.style.display = allowed ? 'block' : 'none';
-    return allowed;
-  }
-
-  await resolveDashboardContext();
-  syncInterestAccess();
-
-  document.getElementById('btnSaveProfile')?.addEventListener('click', async ()=>{
-    if(!currentProfile) return;
-    try{
-      currentProfile.phone = document.getElementById('pfPhone').value.trim();
-      currentProfile.mobile = currentProfile.phone;
-      const cb = document.getElementById('pfAlertOptIn');
-      const nextOptIn = !!(cb && cb.checked);
-      const now = new Date().toISOString();
-      currentProfile.termsAccepted = true;
-      if(!currentProfile.termsAcceptedAt) currentProfile.termsAcceptedAt = currentProfile.createdAt || now;
-      const prev = currentProfile.alertsConsent || { email:false, sms:false, history:[] };
-      const prevOptIn = !!(prev.optIn || prev.email || prev.sms);
-      if(prevOptIn !== nextOptIn){
-        const hist = Array.isArray(prev.history) ? prev.history.slice() : [];
-        hist.push({ at: now, email: nextOptIn, sms: nextOptIn, source: 'profile' });
-        currentProfile.alertsConsent = { optIn: nextOptIn, email: nextOptIn, sms: nextOptIn, updatedAt: now, history: hist };
-      } else {
-        currentProfile.alertsConsent = { optIn: prevOptIn, email: !!prev.email, sms: !!prev.sms, updatedAt: prev.updatedAt || now, history: Array.isArray(prev.history) ? prev.history : [] };
-      }
-      await anwSave(KEY_USERS, users);
-      applyProfileUi();
-      setText('pfMsg', 'Profile updated.');
-      toast('Profile updated.', 'success');
-    }catch(err){
-      setText('pfMsg', 'Error updating profile.');
-      modal('Error updating profile. Please try again.', 'Error');
-      toast('Error updating profile.', 'error');
-    }
-  });
-
-  const avatarImg = document.getElementById('pfAvatar');
-  const avatarInput = document.getElementById('pfAvatarInput');
-  const avatarBtn = document.getElementById('btnUploadAvatar');
-  const logoutBtn = document.getElementById('btnLogout');
-  function getStoredAvatar(){
-    const session = (typeof anwGetSession === 'function') ? anwGetSession() : null;
-    const sessionAvatar = session && (session.avatar || session.photo);
-    let metadataAvatar = '';
-    try{
-      const current = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-      metadataAvatar = current && current.user_metadata ? (current.user_metadata.avatar || current.user_metadata.photo || '') : '';
-    }catch(_){}
-    return (currentProfile && (currentProfile.profilePhoto || currentProfile.avatar || currentProfile.photo || currentProfile.photoURL)) || sessionAvatar || metadataAvatar || 'assets/default-avatar.png';
-  }
-  if(avatarImg) avatarImg.src = getStoredAvatar();
-
-  avatarBtn?.addEventListener('click', () => avatarInput?.click());
-  avatarInput?.addEventListener('change', async () => {
-    const file = avatarInput.files && avatarInput.files[0];
-    if(!file) return;
-    if(!/^image\/(jpeg|png)$/i.test(String(file.type || ''))){
-      modal('Please select a JPG or PNG image.', 'Invalid file');
-      avatarInput.value = '';
-      return;
-    }
-    try{
-      const dataUrl = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onerror = () => reject(new Error('read_failed'));
-        reader.onload = () => resolve(String(reader.result || ''));
-        reader.readAsDataURL(file);
-      });
-      const processed = await new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onerror = () => reject(new Error('image_failed'));
-        img.onload = () => {
-          const size = 300, canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
-          const ctx = canvas.getContext('2d');
-          const minSide = Math.min(img.width, img.height);
-          const sx = Math.max(0, (img.width - minSide) / 2);
-          const sy = Math.max(0, (img.height - minSide) / 2);
-          ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
-          resolve(canvas.toDataURL('image/jpeg', 0.78));
-        };
-        img.src = dataUrl;
-      });
-      if(avatarImg) avatarImg.src = processed;
-      if(currentProfile){
-        currentProfile.avatar = processed;
-        currentProfile.photo = processed;
-        currentProfile.profilePhoto = processed;
-        currentProfile.photoURL = processed;
-      }
-      const session = (typeof anwGetSession === 'function') ? (anwGetSession() || {}) : {};
-      session.avatar = processed; session.photo = processed; session.email = session.email || currentEmail || currentProfile?.email || '';
-      if(typeof anwSave === 'function' && window.ANW_KEYS) anwSave(ANW_KEYS.SESSION, session);
-      if(typeof anwSave === 'function') await anwSave(KEY_USERS, users);
-      try{
-        const user = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-        if(user && typeof user.update === 'function'){
-          const currentMeta = user.user_metadata || {};
-          await user.update({ user_metadata: Object.assign({}, currentMeta, { avatar: processed, photo: processed }) });
-        }
-      }catch(_){}
-      setText('pfMsg', 'Profile photo updated.');
-      toast('Profile photo updated.', 'success');
-    }catch(err){
-      setText('pfMsg', 'Error updating profile photo.');
-      modal('Error updating profile photo. Please try again.', 'Error');
-      toast('Error updating profile photo.', 'error');
-    } finally {
-      avatarInput.value = '';
-    }
-  });
-
-  logoutBtn?.addEventListener('click', async ()=>{ try{ if(typeof window.anwLogout === 'function'){ await window.anwLogout(); return; } }catch(_){ } window.location.href = 'login.html'; });
-
-  const intRole = document.getElementById('intRole');
-  const intText = document.getElementById('intText');
-  const intMeta = document.getElementById('intMeta');
-  const btnSubmitInterest = document.getElementById('btnSubmitInterest');
-  const btnWithdrawInterest = document.getElementById('btnWithdrawInterest');
-  function renderInterest(){
-    if(!currentProfile){
-      if(intRole) intRole.value = '';
-      if(intText) intText.value = '';
-      if(intMeta) intMeta.textContent = '';
-      if(btnWithdrawInterest) btnWithdrawInterest.style.display = 'none';
-      if(btnSubmitInterest) btnSubmitInterest.textContent = 'Submit';
-      return;
-    }
-    if(currentProfile.interest){
-      intRole.value = currentProfile.interest.role || '';
-      intText.value = currentProfile.interest.text || '';
-      intMeta.textContent = 'Submitted on ' + (currentProfile.interest.date || '—') + ' · Status: ' + (currentProfile.interest.status || 'pending');
-      btnWithdrawInterest.style.display = 'inline-block';
-      btnSubmitInterest.textContent = 'Update';
-    } else {
-      intRole.value = '';
-      intText.value = '';
-      intMeta.textContent = '';
-      btnWithdrawInterest.style.display = 'none';
-      btnSubmitInterest.textContent = 'Submit';
-    }
-  }
-  renderInterest();
-
-  window.anwRefreshDashboardProfile = async function(){
-    await resolveDashboardContext();
-    syncInterestAccess();
-    if(avatarImg) avatarImg.src = getStoredAvatar();
-    renderInterest();
-    renderNotices();
-  };
-
-  btnSubmitInterest?.addEventListener('click', async ()=>{
-    if(!currentProfile) return;
-    const roleVal = (intRole.value || '').trim();
-    const textVal = (intText.value || '').trim();
-    if(!roleVal || !textVal){
-      intMeta.textContent = 'Please complete all fields.';
-      toast('Please complete all fields.', 'warn');
-      modal('Please complete all fields before submitting.', 'Missing information');
-      return;
-    }
-    try{
-      const existingStatus = currentProfile.interest?.status || 'pending';
-      currentProfile.interest = {
-        role: roleVal,
-        text: textVal,
-        date: new Date().toISOString().slice(0,10),
-        status: existingStatus,
-        residentEmail: currentProfile.email || currentProfile.userEmail || currentEmail || '',
-        residentName: fullNameFromUser(currentProfile),
-        residentRegId: currentProfile.regId || currentProfile.regNo || ''
-      };
-      await anwSave(KEY_USERS, users);
-      renderInterest();
-      intMeta.textContent = 'Interest saved. Awaiting admin approval if pending.';
-      toast('Interest saved.', 'success');
-    } catch(err){
-      intMeta.textContent = 'Error saving interest.';
-      toast('Error saving interest.', 'error');
-      modal('Error saving your interest. Please try again.', 'Error');
-    }
-  });
-
-  btnWithdrawInterest?.addEventListener('click', async ()=>{
-    if(!currentProfile || !currentProfile.interest) return;
-    const ok = await confirmModal('Withdraw your submitted interest?', 'Confirm');
-    if(!ok) return;
-    try{
-      delete currentProfile.interest;
-      await anwSave(KEY_USERS, users);
-      renderInterest();
-      intMeta.textContent = 'Interest withdrawn.';
-      toast('Interest withdrawn.', 'info');
-    }catch(err){
-      intMeta.textContent = 'Error withdrawing interest.';
-      toast('Error withdrawing interest.', 'error');
-      modal('Error withdrawing interest. Please try again.', 'Error');
-    }
-  });
-
-  const electionsBody = document.getElementById('electionsBody');
-  const electionsEmpty = document.getElementById('electionsEmpty');
-  const elections = anwLoad(KEY_ELECTIONS, []);
-  electionsBody.innerHTML = '';
-  if(!Array.isArray(elections) || !elections.length) electionsEmpty.style.display = 'block';
-  else {
-    electionsEmpty.style.display = 'none';
-    elections.forEach(e=>{
-      const tr = document.createElement('tr');
-      const roleLabel = (String(e.role||'').toLowerCase()==='assistant') ? 'Assistant Area Coordinator' : 'Area Coordinator';
-      const winner = e.electedName || e.winnerName || e.electedEmail || '—';
-      tr.innerHTML = `<td>${roleLabel}</td><td>${e.start || '—'} → ${e.end || '—'}</td><td>${e.status || '—'}</td><td>${winner}</td>`;
-      electionsBody.appendChild(tr);
-    });
-  }
-
-  const noticesBadge = document.getElementById('noticesBadge');
-  const noticesBadgeTop = document.getElementById('noticesBadgeTop');
-  const noticesEmpty = document.getElementById('noticesEmpty');
-  const noticesList = document.getElementById('noticesList');
-  function getReadSet(){ try{ const key = `anw_notices_read_${normEmail(currentEmail)}`; const raw = localStorage.getItem(key); const arr = raw ? JSON.parse(raw) : []; return new Set(Array.isArray(arr) ? arr : []); }catch{ return new Set(); } }
-  function saveReadSet(set){ try{ const key = `anw_notices_read_${normEmail(currentEmail)}`; localStorage.setItem(key, JSON.stringify(Array.from(set))); }catch{} }
-  function cleanText(value){ return String(value || '').replace(/\s+/g, ' ').trim(); }
-  function cleanNoticeTitle(value){ let title = cleanText(value); if(!title) return ''; if(/^\d+$/.test(title)) return ''; if(/^(null|undefined|notice|untitled)$/i.test(title)) return ''; title = title.replace(/^#+\s*/, '').replace(/^[\W_]+|[\W_]+$/g, '').trim(); if(title.length < 3) return ''; return title; }
-  function isLiveNotice(item){ if(!item || typeof item !== 'object') return false; if(item.deleted === true || item.hidden === true || item.archived === true) return false; if(item.isPublished === false || item.published === false || item.enabled === false || item.visible === false || item.active === false) return false; const status = cleanText(item.status).toLowerCase(); if(status && ['deleted','hidden','inactive','draft','archived','trash'].includes(status)) return false; return true; }
-  function dedupeNotices(items){ const seen = new Set(); const out = []; for(const raw of (items || [])){ if(!isLiveNotice(raw)) continue; const title = cleanNoticeTitle(raw?.title); const message = cleanText(raw?.message || raw?.body || raw?.content || ''); if(!title && !message) continue; const key = [String(raw?.id || ''), title.toLowerCase(), message.toLowerCase(), cleanText(raw?.createdAt)].join('|'); if(seen.has(key)) continue; seen.add(key); out.push(Object.assign({}, raw, { title: title || 'Notice', message })); } return out; }
-  function getStreetName(address){ const a = String(address||'').trim(); if(!a) return ''; let s = a.replace(/[A-Z]\d{2}\s?[A-Z0-9]{4}\b/gi, '').replace(/\s{2,}/g,' ').trim(); s = s.split(',')[0] || s; s = s.replace(/^\s*\d+[A-Za-z]?\s+/, '').trim(); return s; }
-  function noticeMatchesUser(n, user){
-    const t = n?.target || n?.targets || {};
-    const inc = t.include || t;
-    const exc = t.exclude || {};
-    const collectRoles = (profile) => {
-      const raw = [];
-      const pushAny = (v) => { if(v == null || v === '') return; if(Array.isArray(v)) return v.forEach(pushAny); raw.push(String(v)); };
-      pushAny(profile?.type); pushAny(profile?.role); pushAny(profile?.roles); pushAny(profile?.residentType); pushAny(profile?.position); pushAny(profile?.title); pushAny(profile?.access);
-      if(typeof window.anwGetLoggedRole === 'function') pushAny(window.anwGetLoggedRole());
-      return Array.from(new Set(raw.map(v => { try{ return typeof window.anwNormalizeRoleName === 'function' ? window.anwNormalizeRoleName(v) : String(v || '').toLowerCase().trim(); }catch(_){ return String(v || '').toLowerCase().trim(); } }).filter(Boolean)));
-    };
-    const roles = collectRoles(user), isAdmin = roles.includes('admin') || roles.includes('owner'), eir = String(user?.eircode || '').replace(/\s+/g,'').toUpperCase(), street = getStreetName(user?.address || user?.fullAddress || ''), email = normEmail(user?.email || user?.userEmail);
-    const hasRole = (list) => Array.isArray(list) && list.map(String).map(v => { try{ return typeof window.anwNormalizeRoleName === 'function' ? window.anwNormalizeRoleName(v) : String(v || '').toLowerCase().trim(); }catch(_){ return String(v || '').toLowerCase().trim(); } }).some(v => roles.includes(v));
-    if(hasRole(exc.roles)) return false;
-    if(Array.isArray(exc.eircodes) && exc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return false;
-    if(Array.isArray(exc.emails) && exc.emails.map(normEmail).includes(email)) return false;
-    if(inc.nonAdminOnly && isAdmin) return false;
-    const hasAnyInclude = !!(inc.allLoggedIn || (Array.isArray(inc.roles) && inc.roles.length) || (Array.isArray(inc.eircodes) && inc.eircodes.length) || (Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.length) || (Array.isArray(inc.streets) && inc.streets.length) || (Array.isArray(inc.emails) && inc.emails.length));
-    if(!hasAnyInclude) return true;
-    if(inc.allLoggedIn) return true;
-    if(hasRole(inc.roles)) return true;
-    if(Array.isArray(inc.emails) && inc.emails.map(normEmail).includes(email)) return true;
-    if(Array.isArray(inc.eircodes) && inc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return true;
-    if(Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.map(String).map(x=>x.toUpperCase()).some(p=>eir.startsWith(p))) return true;
-    if(Array.isArray(inc.streets) && street){ const stList = inc.streets.map(String).map(x=>x.trim().toLowerCase()).filter(Boolean); if(stList.includes(street.toLowerCase())) return true; }
-    return false;
-  }
-  function setBadge(count){ const show = Number(count||0) > 0; if(noticesBadge){ noticesBadge.textContent = String(count||0); noticesBadge.style.display = show ? 'inline-flex' : 'none'; } if(noticesBadgeTop){ noticesBadgeTop.textContent = String(count||0); noticesBadgeTop.style.display = show ? 'inline-flex' : 'none'; } }
-  function renderNotices(){
-    if(!noticesList || !noticesEmpty) return;
-    if(!currentEmail || !currentProfile){ setBadge(0); noticesEmpty.style.display = 'block'; noticesList.style.display = 'none'; return; }
-    const all = anwLoad(KEY_NOTICES, []); const arr = Array.isArray(all) ? all : []; const now = Date.now();
-    const filtered = dedupeNotices(arr).filter(n => { const exp = n?.expiresAt ? Date.parse(n.expiresAt) : NaN; if(!isNaN(exp) && exp < now) return false; return noticeMatchesUser(n, currentProfile); }).sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
-    const read = getReadSet(); const unread = filtered.filter(n => n?.id && !read.has(n.id)).length; setBadge(unread);
-    if(!filtered.length){ noticesEmpty.style.display = 'block'; noticesList.style.display = 'none'; return; }
-    noticesEmpty.style.display = 'none'; noticesList.style.display = 'block'; noticesList.innerHTML = '';
-    filtered.forEach(n => {
-      const isUnread = n?.id && !read.has(n.id);
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.style.margin = '0.75rem 0';
-      card.style.cursor = 'pointer';
-      card.innerHTML = `<div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;"><div><div style="font-weight:${isUnread ? '800' : '700'};">${String(cleanNoticeTitle(n?.title) || 'Notice').replace(/</g,'&lt;').replace(/>/g,'&gt;')}${isUnread ? '<span class="badge" style="margin-left:8px;">NEW</span>' : ''}</div><div class="tiny muted" style="margin-top:4px; font-weight:${isUnread ? '700' : '400'};">${String(n?.message || n?.body || n?.content || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div></div><div class="tiny muted">${n?.createdAt ? new Date(n.createdAt).toLocaleDateString() : ''}</div></div>`;
-      card.addEventListener('click', async ()=>{ if(n?.id){ read.add(n.id); saveReadSet(read); renderNotices(); } });
-      noticesList.appendChild(card);
-    });
-  }
-  renderNotices();
-  document.querySelectorAll('.dash-tab').forEach(b => { b.addEventListener('click', () => { if(b.dataset.tab === 'tabNotices') renderNotices(); }); });
-
-  (function(){
-    const statusEl = document.getElementById('gardaStatus');
-    const chipsEl = document.getElementById('gardaChips');
-    const listEl = document.getElementById('gardaList');
-    const PRESET = {
-      categories: ['Fraud / Economic Crime','Cyber Crime','Burglary & Theft','Drugs','Domestic Abuse','Traffic Matters','Community Policing','Other'],
-      linksByCategory: {
-        'Fraud / Economic Crime': [{ title:'Fraud (information hub)', url:'https://www.garda.ie/en/crime/fraud/', snippet:'Practical advice on avoiding scams, spotting fraud attempts, and reporting economic crime.' }],
-        'Cyber Crime': [{ title:'Cyber crime (information hub)', url:'https://www.garda.ie/en/crime/cyber-crime/', snippet:'Guidance on staying safe online, common cyber threats, and how to report incidents.' }, { title:'Cyber crime awareness', url:'https://www.garda.ie/en/crime/cyber-crime/cyber-crime-awareness.html', snippet:'Tips and campaigns to help residents recognise phishing, hacking and online fraud.' }],
-        'Burglary & Theft': [{ title:'Securing your home (burglary prevention)', url:'https://www.garda.ie/en/crime-prevention/securing-your-home/', snippet:'Steps to protect your home: locks, lighting, alarms and everyday habits that deter burglary.' }, { title:'Burglary & theft (hub)', url:'https://www.garda.ie/en/crime/burglary-theft/', snippet:'Information and guidance related to burglary and theft, including prevention and reporting.' }, { title:'Burglary & theft FAQs', url:'https://www.garda.ie/en/crime/burglary-theft/burglary-and-theft-faqs.html', snippet:'Frequently asked questions about burglary and theft: what to do and how to prevent it.' }],
-        'Drugs': [{ title:'Drugs (information hub)', url:'https://www.garda.ie/en/crime/drugs/', snippet:'Information on drug-related crime, community safety guidance and how to share information.' }],
-        'Domestic Abuse': [{ title:'Domestic abuse (information hub)', url:'https://www.garda.ie/en/crime/domestic-abuse/domestic-abuse.html', snippet:'Support and reporting information for domestic abuse, including emergency contacts and resources.' }],
-        'Traffic Matters': [{ title:'Road safety (Roads Policing)', url:'https://www.garda.ie/en/roads-policing/road-safety/', snippet:'Road safety information, campaigns and advice to help keep drivers, cyclists and pedestrians safe.' }, { title:'Traffic matters (crime hub)', url:'https://www.garda.ie/en/crime/traffic-matters/', snippet:'Guidance on traffic-related offences and how to report dangerous driving or incidents.' }],
-        'Community Policing': [{ title:'Community policing', url:'https://www.garda.ie/en/crime-prevention/community-policing/community-policing.html', snippet:'How Garda community policing works and how residents can engage locally.' }, { title:'Community engagement', url:'https://www.garda.ie/en/crime-prevention/community-engagement/', snippet:'Neighbourhood Watch and other community engagement initiatives and resources.' }],
-        'Other': [{ title:'Crime prevention (main hub)', url:'https://www.garda.ie/en/crime-prevention/', snippet:'Main Garda crime prevention hub with practical guidance and official resources.' }, { title:'Garda press releases', url:'https://www.garda.ie/en/about-us/our-departments/office-of-corporate-communications/press-releases/', snippet:'Official press releases and updates published by An Garda Síochána.' }]
-      }
-    };
-    function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-    function normCat(cat){ return String(cat || '').toLowerCase().replace(/\s+/g,' ').trim(); }
-    function iconSvg(cat){ const c = normCat(cat); const svgs = { all:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V7l8-4z"/></svg>`, fraud:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M17 7h-6a3 3 0 0 0 0 6h2a3 3 0 0 1 0 6H7"/></svg>`, cyber:`<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="11" rx="2"/><path d="M8 21h8"/><path d="M12 16v5"/></svg>`, burglary:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 10v11h14V10"/><path d="M10 21v-6h4v6"/></svg>`, drugs:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 7l7 7"/><path d="M14 6l4 4a4 4 0 0 1-6 6l-4-4a4 4 0 0 1 6-6z"/><path d="M7 17l-1 1"/></svg>`, domestic:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z"/></svg>`, traffic:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17h10"/><path d="M6 17l-1-6 2-5h10l2 5-1 6"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/></svg>`, community:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M12 15c-4 0-7 2-7 5h14c0-3-3-5-7-5z"/><path d="M12 3v2"/></svg>`, other:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="10"/></svg>`}; if(c==='all') return svgs.all; if(c.includes('fraud')||c.includes('economic')) return svgs.fraud; if(c.includes('cyber')) return svgs.cyber; if(c.includes('burglary')||c.includes('theft')) return svgs.burglary; if(c.includes('drug')) return svgs.drugs; if(c.includes('domestic')) return svgs.domestic; if(c.includes('traffic')||c.includes('road')) return svgs.traffic; if(c.includes('community')||c.includes('policing')) return svgs.community; return svgs.other; }
-    function canonicalGardaUrl(u){ try{ const url = new URL(u); url.hash = ''; url.search = ''; return url.toString().replace(/\/+$/, '').toLowerCase(); }catch(e){ return (u || '').toLowerCase(); } }
-    function dedupeGarda(items){
-      const seen = new Set();
-      return (items || []).filter(it => {
-        const titleKey = String(it && it.title || '').trim().toLowerCase().replace(/\s+/g,' ');
-        const categoryKey = String(it && it.category || '').trim().toLowerCase().replace(/\s+/g,' ');
-        const urlKey = canonicalGardaUrl(it && it.url || '');
-        const key = [titleKey, categoryKey].join('|') || urlKey;
-        if(!key) return false;
-        if(seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    }
-    function isBadUrl(url){ const u = String(url || ''); if(!u) return true; if(u.includes('/403/?404') || u.includes('/404/') || u.includes('404%3b') || u.includes('page-not-found')) return true; if(!/^https:\/\/(www\.)?garda\.ie\//i.test(u)) return true; return false; }
-    function looksLikeNotFound(item){ const t = String(item?.title || ''); const s = String(item?.snippet || ''); const joined = (t + ' ' + s).toLowerCase(); return joined.includes('page not found') || joined.includes(' 404') || joined.startsWith('404'); }
-    function itemIsActive(item){ if(!item || typeof item !== 'object') return false; if(item.active === false || item.isActive === false || item.enabled === false || item.visible === false) return false; const status = String(item.status || '').trim().toLowerCase(); if(status && ['inactive','disabled','hidden','broken','invalid','404','not_found','page_not_found'].includes(status)) return false; return true; }
-    function filterItems(items){ const cleaned = (items || []).filter(it => it && itemIsActive(it) && !isBadUrl(it.url) && !looksLikeNotFound(it)); return dedupeGarda(cleaned); }
-    function getGardaTabButton(){ return document.querySelector('.dash-tab[data-tab="tabGarda"]'); }
-    function showGardaTab(){ const btn = getGardaTabButton(); if(btn) btn.style.display = ''; }
-    function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
-    function render(items){
-      if(!chipsEl || !listEl) return;
-      const cats = Array.from(new Set((items||[]).map(x => x.category || 'Other'))).sort((a,b)=>a.localeCompare(b));
-      const allCats = ['All', ...cats];
-      chipsEl.innerHTML = `<div class="garda-cat-grid">${allCats.map((c,i)=>`<button type="button" class="garda-cat ${i===0?'is-active':''}" data-cat="${esc(c)}"><span class="icon">${iconSvg(c)}</span><span class="label">${esc(c)}</span></button>`).join('')}</div>`;
-      function apply(cat){
-        chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat));
-        const show = (cat === 'All') ? items : items.filter(x => (x.category||'Other') === cat);
-        listEl.innerHTML = (show||[]).map(x => `<div class="garda-item"><div class="row"><div class="title">${esc(x.title || '')}</div><div class="date">${esc(x.date || '')}</div></div>${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}<a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a><div class="meta">${esc(x.category || 'Other')}</div></div>`).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
-      }
-      chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat)));
-      apply('All');
-    }
-    function renderPreset(){
-      if(!chipsEl || !listEl) return;
-      const items = [];
-      PRESET.categories.forEach(cc => (PRESET.linksByCategory[cc] || []).forEach(l => items.push({ category: cc, title: l.title, url: l.url, snippet: l.snippet || '', date: 'Official link' })));
-      showGardaTab();
-      setStatus('Official Garda resources');
-      render(filterItems(items));
-    }
-    async function loadGardaFeed(){
-      setStatus('Loading Garda updates…');
-      try{
-        const res = await fetch('/.netlify/functions/garda-feed', { cache: 'no-store' });
-        if(!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        let itemsRaw = [];
-        if(Array.isArray(data.items)) itemsRaw = data.items;
-        else if(Array.isArray(data.categories)) itemsRaw = data.categories.map(c => ({ title: c.label || c.title || 'Official link', url: c.url || '', category: c.label || c.category || 'Other', date: 'Official link', snippet: c.snippet || '' }));
-        const items = filterItems(itemsRaw);
-        if(!items.length){ renderPreset(); return; }
-        showGardaTab();
-        setStatus('Official Garda resources (source: Garda.ie)');
-        render(items.slice(0, 40));
-      }catch(e){
-        console.warn('garda-feed failed', e);
-        renderPreset();
-      }
-    }
-    let loaded = false, started = false;
-    function ensureGardaLoaded(){ if(loaded) return; loaded = true; loadGardaFeed(); }
-    function primeGardaPanel(){ if(started) return; started = true; renderPreset(); setTimeout(ensureGardaLoaded, 0); }
-    document.addEventListener('DOMContentLoaded', primeGardaPanel, { once:true });
-    document.querySelectorAll('.dash-tab').forEach(b => { b.addEventListener('click', () => { if(b.dataset.tab !== 'tabGarda') return; primeGardaPanel(); }); });
-    if(document.querySelector('.dash-tab.active[data-tab="tabGarda"]')) primeGardaPanel();
-  })();
-})();
+load();
 </script>
-<script>
-(function(){ const btn = document.getElementById('scrollTopBtn'); if(!btn) return; function isScrollable(el){ if(!el || el === document.documentElement) return false; const cs = window.getComputedStyle(el); const oy = cs.overflowY; if(!(oy === 'auto' || oy === 'scroll')) return false; return el.scrollHeight > (el.clientHeight + 5); } function scrollElementToTop(el){ try{ if(typeof el.scrollTo === 'function'){ el.scrollTo({ top: 0, behavior: 'smooth' }); } else { el.scrollTop = 0; } }catch(e){ try{ el.scrollTop = 0; }catch(_){} } } function scrollEverythingToTop(){ const docEl = document.scrollingElement || document.documentElement; scrollElementToTop(docEl); scrollElementToTop(document.documentElement); scrollElementToTop(document.body); let p = btn.parentElement; while(p){ if(isScrollable(p)) scrollElementToTop(p); p = p.parentElement; } document.querySelectorAll('*').forEach(el => { if(isScrollable(el)) scrollElementToTop(el); }); try{ window.scrollTo({ top: 0, behavior: 'smooth' }); }catch(e){ try{ window.scrollTo(0,0); }catch(_){} } } btn.addEventListener('click', () => { btn.classList.add('is-active'); scrollEverythingToTop(); setTimeout(() => btn.classList.remove('is-active'), 600); }); })();
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', () => { const label = document.getElementById('pageAccessLabel'); if(!label) return; const setLabel = (tabId) => { label.textContent = tabId === 'tabGarda' ? 'Public Page' : 'Private Page'; }; document.querySelectorAll('.dash-tab').forEach((btn) => { btn.addEventListener('click', () => setLabel(btn.dataset.tab || 'tabProfile')); }); setLabel(document.querySelector('.dash-tab.active')?.dataset.tab || 'tabProfile'); window.anwDashboardSetAccessLabel = setLabel; });
-</script>
-<script>
-(function(){
-  const OWNER_EMAIL = 'claudiosantos1968@gmail.com';
-  const notice = document.getElementById('anwAccessNotice');
-  const tabs = Array.from(document.querySelectorAll('.dash-tab'));
-  const panels = Array.from(document.querySelectorAll('.dash-tab-content'));
-  const publicTabs = new Set(['tabGarda']);
-  const norm = (s) => String(s || '').toLowerCase().trim();
-  const sameEmail = (a, b) => norm(a) === norm(b);
-  const getSessionEmail = () => { try{ return typeof window.anwGetLoggedEmail === 'function' ? String(window.anwGetLoggedEmail() || '') : ''; }catch(_){ return ''; } };
-  const getIdentityUser = async () => {
-    if(!window.netlifyIdentity) return null;
-    return await new Promise((resolve) => {
-      let done = false;
-      const finish = (u) => { if(done) return; done = true; resolve(u || null); };
-      try{ window.netlifyIdentity.on?.('init', finish); window.netlifyIdentity.init?.(); }catch(_){}
-      setTimeout(() => { try{ finish(window.netlifyIdentity.currentUser?.() || null); } catch(_){ finish(null); } }, 600);
-    });
-  };
-  const getProfile = async (email) => {
-    try{ await window.anwInitStore?.(); }catch(_){}
-    try{
-      const users = (window.anwLoad && window.ANW_KEYS) ? (window.anwLoad(window.ANW_KEYS.USERS, []) || []) : [];
-      const target = norm(email);
-      const findMatch = (u) => [u?.email, u?.userEmail, u?.loginEmail, u?.netlifyEmail].map(v => norm(v)).includes(target);
-      return Array.isArray(users) ? users.find(findMatch) || null : null;
-    }catch(_){ return null; }
-  };
-  const isApprovedProfile = (profile, email) => {
-    if(sameEmail(email, OWNER_EMAIL)) return true;
-    const status = String(profile?.status || profile?.accountStatus || profile?.registrationStatus || '').toLowerCase().trim();
-    return !!(profile && (profile.approved === true || profile.active === true || status === 'active' || status === 'approved'));
-  };
-  function hidePanels(){ panels.forEach((panel) => { panel.style.display = 'none'; }); }
-  function setActive(tabId){ tabs.forEach((btn) => { const on = btn.dataset.tab === tabId; btn.classList.toggle('active', on); btn.setAttribute('aria-selected', on ? 'true' : 'false'); }); if(typeof window.anwDashboardSetAccessLabel === 'function') window.anwDashboardSetAccessLabel(tabId); }
-  function showNotice(html){ if(!notice) return; notice.style.display = 'block'; notice.innerHTML = html || ''; }
-  function hideNotice(){ if(!notice) return; notice.style.display = 'none'; notice.innerHTML = ''; }
-  function openPanel(tabId){ const target = tabId || 'tabProfile'; hidePanels(); const panel = document.getElementById(target); if(panel) panel.style.display = 'block'; const blocked = document.getElementById('dashBlockedMessage'); if(blocked) blocked.style.display = 'none'; setActive(target); }
-  async function requestTab(tabId){
-    const target = tabId || 'tabProfile';
-    const email = getSessionEmail();
-    if(publicTabs.has(target)){ hideNotice(); openPanel(target); return; }
-    const identityUser = await getIdentityUser();
-    const effectiveEmail = norm(identityUser?.email || email || '');
-    const profile = effectiveEmail ? await getProfile(effectiveEmail) : null;
-    if(!effectiveEmail){ showNotice('Please log in to access this section.'); openPanel('tabGarda'); return; }
-    if(!isApprovedProfile(profile, effectiveEmail)){ showNotice('Your account is pending approval. Garda & Safety remains available while private tabs stay locked.'); openPanel('tabGarda'); return; }
-    hideNotice();
-    if(typeof window.anwRefreshDashboardProfile === 'function'){ try{ await window.anwRefreshDashboardProfile(); }catch(_){} }
-    openPanel(target);
-  }
-  tabs.forEach((btn) => { btn.addEventListener('click', (event) => { event.preventDefault(); requestTab(btn.dataset.tab || 'tabProfile'); }); });
-  window.anwDashboardRequestTab = requestTab; window.openDashboardTab = requestTab;
-  document.addEventListener('DOMContentLoaded', async () => {
-    const email = getSessionEmail();
-    const identityUser = await getIdentityUser();
-    const effectiveEmail = norm(identityUser?.email || email || '');
-    const profile = effectiveEmail ? await getProfile(effectiveEmail) : null;
-    if(typeof window.anwRefreshDashboardProfile === 'function'){ try{ await window.anwRefreshDashboardProfile(); }catch(_){} }
-    if(effectiveEmail && isApprovedProfile(profile, effectiveEmail)) await requestTab('tabProfile'); else await requestTab('tabGarda');
-    try{ document.body.removeAttribute('data-acl-loading'); }catch(_){}
-  }, { once:true });
-})();
-</script>
-<script src="assets/acl-guard.js"></script>
 </body>
 </html>
