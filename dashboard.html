@@ -108,7 +108,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     </div>
     <div class="profile-meta-block">
       <span class="profile-meta-label">Registered address</span>
-      <div class="profile-meta-value" id="pfAddressHero">—</div>
+      <div class="profile-meta-value"><div id="pfAddressHero">—</div><div id="pfEirHero" class="profile-empty-note" style="margin-top:6px;">Eircode: —</div></div>
     </div>
     <div class="profile-meta-block">
       <span class="profile-meta-label">Resident type</span>
@@ -131,6 +131,18 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 <div class="grid-2" style="gap:1rem;"><div class="field"><label>Eircode</label><input disabled="" id="pfEir" type="text"/></div><div class="field"><label>Management company</label><input disabled="" id="pfMgmt" type="text"/></div></div>
 <div class="field"><label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input id="pfAlertOptIn" type="checkbox"/><span>I agree to receive Aderrig NW alerts via Email, SMS or WhatsApp (optional).</span></label><p class="tiny muted" id="pfAlertMeta" style="margin:6px 0 0;">No alert preference recorded yet (Email/SMS/WhatsApp).</p></div>
 <div class="field"><label>Elected position</label><input disabled="" id="pfElected" type="text"/></div>
+<div class="field">
+<label style="display:block; margin-bottom:8px;">Volunteer roles</label>
+<p class="tiny muted" style="margin:0 0 8px;">Add or update volunteer roles if you would like to help the community. Selected roles will appear above in your profile after saving.</p>
+<div class="grid-2" style="gap:.75rem 1rem;">
+<label class="chk" style="display:flex; align-items:flex-start; gap:10px; margin:0;"><input data-vol-role="streetWatch" id="pfVolStreetWatch" type="checkbox"/><span>Street watch / patrols</span></label>
+<label class="chk" style="display:flex; align-items:flex-start; gap:10px; margin:0;"><input data-vol-role="leaflets" id="pfVolLeaflets" type="checkbox"/><span>Distribute leaflets</span></label>
+<label class="chk" style="display:flex; align-items:flex-start; gap:10px; margin:0;"><input data-vol-role="tech" id="pfVolTech" type="checkbox"/><span>Tech support</span></label>
+<label class="chk" style="display:flex; align-items:flex-start; gap:10px; margin:0;"><input data-vol-role="elderly" id="pfVolElderly" type="checkbox"/><span>Elderly checks</span></label>
+<label class="chk" style="display:flex; align-items:flex-start; gap:10px; margin:0;"><input data-vol-role="meetings" id="pfVolMeetings" type="checkbox"/><span>Meeting organiser</span></label>
+<label class="chk" style="display:flex; align-items:flex-start; gap:10px; margin:0;"><input data-vol-role="translation" id="pfVolTranslation" type="checkbox"/><span>Translation</span></label>
+</div>
+</div>
 <p class="tiny muted" id="pfMsg" style="margin-top:0.5rem;"></p>
 <div class="actions profile-actions"><button class="btn-line" id="btnLogout" type="button">Logout</button><button class="btn" id="btnSaveProfile" type="button">Save</button></div>
 </div>
@@ -324,7 +336,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     indexes.forEach((idx) => {
       if(!users[idx] || typeof users[idx] !== 'object') users[idx] = {};
       const row = users[idx];
-      const editable = ['phone','mobile','alertsConsent','termsAccepted','termsAcceptedAt','avatar','photo','profilePhoto','photoURL','interest'];
+      const editable = ['phone','mobile','alertsConsent','termsAccepted','termsAcceptedAt','avatar','photo','profilePhoto','photoURL','interest','vol_roles'];
       editable.forEach((key) => {
         if(currentProfile[key] !== undefined) row[key] = copyObject(currentProfile[key]);
       });
@@ -381,12 +393,14 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   function clearProfileUi(){
     ['pfPhone','pfEmail','pfEir','pfMgmt','pfElected'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     const cb = document.getElementById('pfAlertOptIn'); if(cb) cb.checked = false;
+    document.querySelectorAll('[data-vol-role]').forEach(el => { el.checked = false; });
     setText('pfAlertMeta', 'No alert preference recorded yet (Email/SMS/WhatsApp).');
     setText('pfNameHero', 'Resident');
     setText('pfStatusHero', 'Pending');
     setText('pfRegHero', '—');
     setText('pfPrimaryRoleHero', 'Resident');
     setText('pfAddressHero', '—');
+    setText('pfEirHero', 'Eircode: —');
     setText('pfTypeHero', '—');
     const volHero = document.getElementById('pfVolHero');
     if(volHero) volHero.innerHTML = '<span class="profile-empty-note">No volunteer positions selected</span>';
@@ -416,16 +430,19 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     setText('pfRegHero', regValue);
     setText('pfPrimaryRoleHero', primaryRoleFromUser(currentProfile));
     setText('pfAddressHero', addressFromUser(currentProfile));
+    setText('pfEirHero', 'Eircode: ' + (currentProfile.eircode || currentProfile.eir || '—'));
     setText('pfTypeHero', currentProfile.type || currentProfile.residentType || '—');
 
     const ac = currentProfile.alertsConsent || {};
     const cb = document.getElementById('pfAlertOptIn'); if(cb) cb.checked = !!ac.optIn || !!ac.email || !!ac.sms;
     setText('pfAlertMeta', ac.updatedAt ? ('Last updated: ' + new Date(ac.updatedAt).toLocaleString()) : 'No alert preference recorded yet (Email/SMS/WhatsApp).');
 
+    const vr = currentProfile.vol_roles || {};
+    document.querySelectorAll('[data-vol-role]').forEach(el => { el.checked = !!vr[el.getAttribute('data-vol-role')]; });
+
     const volHero = document.getElementById('pfVolHero');
     if(volHero){
       volHero.innerHTML = '';
-      const vr = currentProfile.vol_roles || {};
       const labels = {
         streetWatch:'Street watch / patrols',
         leaflets:'Distribute leaflets',
@@ -590,6 +607,9 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       } else {
         currentProfile.alertsConsent = { optIn: prevOptIn, email: !!prev.email, sms: !!prev.sms, updatedAt: prev.updatedAt || now, history: Array.isArray(prev.history) ? prev.history : [] };
       }
+      const nextVolRoles = {};
+      document.querySelectorAll('[data-vol-role]').forEach((el) => { nextVolRoles[el.getAttribute('data-vol-role')] = !!el.checked; });
+      currentProfile.vol_roles = nextVolRoles;
       ensureOwnerFlags(currentProfile);
       persistCurrentProfileToUsers();
       await anwSave(KEY_USERS, users);
