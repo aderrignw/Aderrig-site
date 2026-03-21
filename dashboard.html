@@ -204,6 +204,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
   const KEY_NOTICES = ANW_KEYS.NOTICES || 'anw_notices';
   const OWNER_EMAIL = String(window.ANW_MASTER_EMAIL || 'claudiosantos1968@gmail.com').trim().toLowerCase();
+  const LOCAL_WRITE_SYNC_GRACE_MS = 15000;
 
   let users = [];
   let currentEmail = '';
@@ -218,7 +219,12 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   const interestArea = document.getElementById('interestArea');
   const volunteerRolesWrap = document.getElementById('pfVolRolesWrap');
 
-  function loadUsers(){ const next = anwLoad(KEY_USERS, []); users = Array.isArray(next) ? next : []; return users; }
+  function loadUsers(){
+    const next = anwLoad(KEY_USERS, []);
+    users = Array.isArray(next) ? next : [];
+    return users;
+  }
+
   async function saveUsersAndSync(){
     lastLocalUsersWriteAt = Date.now();
     await anwSave(KEY_USERS, users);
@@ -236,12 +242,15 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       console.warn('users sync failed', syncErr);
     }
   }
+
   function normEmail(v){ try{ return anwNormEmail(v || ''); }catch(_){ return String(v || '').trim().toLowerCase(); } }
+
   function emailCandidates(email){
     const norm = normEmail(email);
     const local = norm.split('@')[0] || '';
     return Array.from(new Set([norm, local].filter(Boolean)));
   }
+
   function rowEmails(u){
     return Array.from(new Set([
       normEmail(u && u.email),
@@ -250,9 +259,11 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       normEmail(u && u.netlifyEmail)
     ].filter(Boolean)));
   }
+
   function isOwnerEmail(email){
     return normEmail(email) === OWNER_EMAIL;
   }
+
   function scoreProfileRecord(u, targetEmail){
     const normTarget = normEmail(targetEmail || '');
     const localTarget = normTarget.split('@')[0] || '';
@@ -266,16 +277,20 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const updated = Date.parse(u?.updatedAt || u?.modifiedAt || u?.createdAt || 0) || 0;
     return (exact ? 1000 : 0) + (local ? 200 : 0) + (approved ? 120 : 0) + (ownerish ? 80 : 0) + richness + Math.min(50, Math.floor(updated / 1000000000));
   }
+
   function mergeProfiles(records, targetEmail){
     const list = Array.isArray(records) ? records.filter(Boolean).slice() : [];
     if(!list.length) return null;
+
     list.sort((a,b) => scoreProfileRecord(b, targetEmail) - scoreProfileRecord(a, targetEmail));
+
     const merged = {};
     const assignIfEmpty = (key, value) => {
       if(value == null) return;
       if(typeof value === 'string' && !value.trim()) return;
       if(merged[key] == null || (typeof merged[key] === 'string' && !String(merged[key]).trim())) merged[key] = value;
     };
+
     list.forEach((rec, index) => {
       if(index === 0) Object.assign(merged, rec || {});
       Object.keys(rec || {}).forEach((key) => {
@@ -287,7 +302,9 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         }
       });
     });
+
     if(!merged.email) merged.email = normEmail(targetEmail || list[0]?.email || list[0]?.userEmail || '');
+
     if((merged.approved !== true && merged.active !== true) && list.some(rec => {
       const s = String(rec?.status || rec?.accountStatus || rec?.registrationStatus || '').trim().toLowerCase();
       return rec?.approved === true || rec?.active === true || s === 'active' || s === 'approved';
@@ -295,8 +312,10 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       merged.active = true;
       if(!String(merged.status || '').trim()) merged.status = 'active';
     }
+
     return merged;
   }
+
   function collectMatchingUserIndexes(email){
     const candidates = emailCandidates(email);
     if(!candidates.length) return [];
@@ -306,6 +325,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       return acc;
     }, []);
   }
+
   function ensureOwnerFlags(target){
     if(!target) return target;
     const ownerEmail = normEmail(target.email || target.userEmail || currentEmail || OWNER_EMAIL);
@@ -324,6 +344,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     }
     return target;
   }
+
   function findUserByEmail(email){
     loadUsers();
     const indexes = collectMatchingUserIndexes(email);
@@ -332,6 +353,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const merged = mergeProfiles(matches, email);
     return ensureOwnerFlags(merged);
   }
+
   const VOL_ROLE_LABEL_ALIASES = {
     streetwatch:'Street watch / patrols',
     streetWatch:'Street watch / patrols',
@@ -344,6 +366,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     cleanUp:'Community clean-up',
     parking:'Parking assistance'
   };
+
   function normalizeVolKey(value){
     const raw = String(value || '').trim();
     if(!raw) return '';
@@ -363,9 +386,16 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const compact = raw.replace(/[^a-zA-Z0-9]+/g,'');
     return compact ? compact.charAt(0).toLowerCase() + compact.slice(1) : '';
   }
+
   function prettifyVolLabel(key){
-    return VOL_ROLE_LABEL_ALIASES[key] || String(key || '').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim().replace(/(^|\s)\S/g, s => s.toUpperCase());
+    return VOL_ROLE_LABEL_ALIASES[key] || String(key || '')
+      .replace(/([a-z])([A-Z])/g,'$1 $2')
+      .replace(/[_-]+/g,' ')
+      .replace(/\s+/g,' ')
+      .trim()
+      .replace(/(^|\s)\S/g, s => s.toUpperCase());
   }
+
   function extractVolRolesFromRecord(record){
     const out = {};
     const add = (k, v) => {
@@ -373,42 +403,98 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       if(!key) return;
       out[key] = !!v;
     };
-    [record?.vol_roles, record?.volunteerRoles, record?.volunteer_roles, record?.volRoles].forEach((src) => {
+
+    [
+      record?.vol_roles,
+      record?.volunteerRoles,
+      record?.volunteer_roles,
+      record?.volRoles
+    ].forEach((src) => {
       if(!src) return;
-      if(Array.isArray(src)) src.forEach(v => add(v, true));
-      else if(typeof src === 'object') Object.keys(src).forEach(k => add(k, src[k]));
+      if(Array.isArray(src)){
+        src.forEach(v => add(v, true));
+      }else if(typeof src === 'object'){
+        Object.keys(src).forEach(k => add(k, src[k]));
+      }
     });
+
     return out;
   }
+
   function buildVolunteerCatalog(records, profile){
     const order = [];
     const seen = new Set();
+
     const addKey = (k) => {
       const key = normalizeVolKey(k);
       if(!key || seen.has(key)) return;
       seen.add(key);
       order.push(key);
     };
+
     Object.keys(extractVolRolesFromRecord(profile || {})).forEach(addKey);
     (records || []).forEach(rec => Object.keys(extractVolRolesFromRecord(rec || {})).forEach(addKey));
+
     return order.map(key => ({ key, label: prettifyVolLabel(key) }));
   }
+
   function renderVolunteerRoleOptions(profile){
     if(!volunteerRolesWrap) return;
+
     const records = currentProfileIndexes.map(i => users[i]).filter(Boolean);
-    volunteerCatalog = buildVolunteerCatalog(records.concat(users || []), profile);
+    volunteerCatalog = buildVolunteerCatalog(records, profile);
+
     const active = extractVolRolesFromRecord(profile || {});
+
     if(!volunteerCatalog.length){
       volunteerRolesWrap.innerHTML = '<p class="tiny muted" style="margin:0;">No volunteer roles are configured yet in your resident record.</p>';
       return;
     }
-    volunteerRolesWrap.innerHTML = '<div class="grid-2">' + volunteerCatalog.map(item => `<label class="chk" style="display:flex; align-items:flex-start; gap:10px; margin:0;"><input data-vol-role="${item.key}" type="checkbox" ${active[item.key] ? 'checked' : ''}/><span>${item.label}</span></label>`).join('') + '</div>';
+
+    volunteerRolesWrap.innerHTML =
+      '<div class="grid-2">' +
+      volunteerCatalog.map(item =>
+        `<label class="chk" style="display:flex; align-items:flex-start; gap:10px; margin:0;">
+          <input data-vol-role="${item.key}" type="checkbox" ${active[item.key] ? 'checked' : ''}/>
+          <span>${item.label}</span>
+        </label>`
+      ).join('') +
+      '</div>';
+  }
+
+  function collectVolRolesFromInputs(){
+    const nextVolRoles = {};
+    (volunteerRolesWrap || document).querySelectorAll('[data-vol-role]').forEach((el) => {
+      nextVolRoles[el.getAttribute('data-vol-role')] = !!el.checked;
+    });
+    return nextVolRoles;
+  }
+
+  function applyVolRolesToProfile(target, nextVolRoles){
+    if(!target || typeof target !== 'object') return;
+    const normalized = {};
+    Object.keys(nextVolRoles || {}).forEach((k) => {
+      const nk = normalizeVolKey(k);
+      if(!nk) return;
+      normalized[nk] = !!nextVolRoles[k];
+    });
+    const activeKeys = Object.keys(normalized).filter(k => normalized[k]);
+
+    target.vol_roles = Object.assign({}, normalized);
+    target.volunteerRoles = activeKeys.slice();
+    target.volunteer_roles = activeKeys.slice();
+    target.volRoles = Object.assign({}, normalized);
   }
 
   function persistCurrentProfileToUsers(){
     if(!currentProfile) return;
+
     loadUsers();
-    let indexes = currentProfileIndexes && currentProfileIndexes.length ? currentProfileIndexes.slice() : collectMatchingUserIndexes(currentEmail || currentProfile.email || '');
+
+    let indexes = currentProfileIndexes && currentProfileIndexes.length
+      ? currentProfileIndexes.slice()
+      : collectMatchingUserIndexes(currentEmail || currentProfile.email || '');
+
     if(!indexes.length){
       const base = ensureOwnerFlags({
         email: normEmail(currentProfile.email || currentEmail || ''),
@@ -416,28 +502,39 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         loginEmail: normEmail(currentProfile.loginEmail || currentEmail || ''),
         netlifyEmail: normEmail(currentProfile.netlifyEmail || currentEmail || '')
       });
+      applyVolRolesToProfile(base, currentProfile.vol_roles || {});
       users.push(base);
       indexes = [users.length - 1];
     }
+
     const copyObject = (value) => JSON.parse(JSON.stringify(value));
+    const activeVolRoleKeys = Object.keys(currentProfile.vol_roles || {}).filter(k => currentProfile.vol_roles[k]);
+
     indexes.forEach((idx) => {
       if(!users[idx] || typeof users[idx] !== 'object') users[idx] = {};
       const row = users[idx];
-      const editable = ['phone','mobile','alertsConsent','termsAccepted','termsAcceptedAt','avatar','photo','profilePhoto','photoURL','interest','vol_roles'];
+
+      const editable = ['phone','mobile','alertsConsent','termsAccepted','termsAcceptedAt','avatar','photo','profilePhoto','photoURL','interest'];
       editable.forEach((key) => {
         if(currentProfile[key] !== undefined) row[key] = copyObject(currentProfile[key]);
       });
-      const activeVolRoleKeys = Object.keys(currentProfile.vol_roles || {}).filter(k => currentProfile.vol_roles[k]);
+
+      row.vol_roles = copyObject(currentProfile.vol_roles || {});
       row.volunteerRoles = activeVolRoleKeys.slice();
       row.volunteer_roles = activeVolRoleKeys.slice();
+      row.volRoles = copyObject(currentProfile.vol_roles || {});
+
       ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
         if(currentProfile[key]) row[key] = currentProfile[key];
       });
+
       if(isOwnerEmail(currentEmail || currentProfile.email || row.email || row.userEmail)){
         ensureOwnerFlags(row);
       }
+
       row.updatedAt = new Date().toISOString();
     });
+
     currentProfileIndexes = indexes.slice();
   }
 
@@ -449,12 +546,14 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     if(raw) return raw.replace(/(^|\s)\S/g, s => s.toUpperCase());
     return 'Pending';
   }
+
   function electedLabelFromUser(u){
     const r = String(u?.electedRole || '').toLowerCase();
     if(r === 'assistant') return 'Assistant Area Coordinator';
     if(r === 'area') return 'Area Coordinator';
     return '—';
   }
+
   function primaryRoleFromUser(u){
     const elected = String(u?.electedRole || '').toLowerCase();
     if(elected === 'area') return 'Street Coordinator';
@@ -463,9 +562,11 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     if(!raw) return 'Resident';
     return String(raw).replace(/(^|\s)\S/g, s => s.toUpperCase());
   }
+
   function addressFromUser(u){
     return String(u?.address || u?.fullAddress || '').trim() || '—';
   }
+
   function statusFromUser(u){
     if(!u) return 'pending';
     if(isOwnerEmail(currentEmail || u.email || u.userEmail)) return 'active';
@@ -476,15 +577,19 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     if(roles.includes('owner') || roles.includes('admin')) return 'active';
     return 'pending';
   }
+
   function fullNameFromUser(u){
     return String(u?.name || u?.fullName || '').trim() || 'Resident';
   }
 
   function clearProfileUi(){
-    ['pfPhone','pfEmail','pfMgmt','pfElected'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
-    const cb = document.getElementById('pfAlertOptIn'); if(cb) cb.checked = false;
+    ['pfPhone','pfEmail','pfMgmt','pfElected'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+    const cb = document.getElementById('pfAlertOptIn');
+    if(cb) cb.checked = false;
     if(volunteerRolesWrap) volunteerRolesWrap.innerHTML = '';
-    document.querySelectorAll('[data-vol-role]').forEach(el => { el.checked = false; });
     setText('pfAlertMeta', 'No alert preference recorded yet (Email/SMS/WhatsApp).');
     setText('pfNameHero', 'Resident');
     setText('pfStatusHero', 'Pending');
@@ -505,11 +610,13 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       clearProfileUi();
       return;
     }
+
     if(notLoggedBox) notLoggedBox.style.display = 'none';
     if(profileArea) profileArea.style.display = 'block';
 
     const regValue = currentProfile.regId || currentProfile.regNo || currentProfile.registrationNo || '—';
     const statusValue = statusFromUser(currentProfile);
+
     document.getElementById('pfPhone').value = currentProfile.phone || currentProfile.mobile || '';
     document.getElementById('pfEmail').value = currentProfile.email || currentProfile.userEmail || currentEmail || '';
     document.getElementById('pfMgmt').value = currentProfile.managementCompany || '';
@@ -524,13 +631,18 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     setText('pfTypeHero', currentProfile.type || currentProfile.residentType || '—');
 
     const ac = currentProfile.alertsConsent || {};
-    const cb = document.getElementById('pfAlertOptIn'); if(cb) cb.checked = !!ac.optIn || !!ac.email || !!ac.sms;
-    setText('pfAlertMeta', ac.updatedAt ? ('Last updated: ' + new Date(ac.updatedAt).toLocaleString()) : 'No alert preference recorded yet (Email/SMS/WhatsApp).');
+    const cb = document.getElementById('pfAlertOptIn');
+    if(cb) cb.checked = !!ac.optIn || !!ac.email || !!ac.sms;
 
-    currentProfile.vol_roles = Object.assign({}, extractVolRolesFromRecord(currentProfile), currentProfile.vol_roles || {});
+    setText('pfAlertMeta', ac.updatedAt
+      ? ('Last updated: ' + new Date(ac.updatedAt).toLocaleString())
+      : 'No alert preference recorded yet (Email/SMS/WhatsApp).'
+    );
+
+    applyVolRolesToProfile(currentProfile, extractVolRolesFromRecord(currentProfile));
     renderVolunteerRoleOptions(currentProfile);
 
-    const vr = extractVolRolesFromRecord(currentProfile);
+    const vr = currentProfile.vol_roles || {};
     const volHero = document.getElementById('pfVolHero');
     if(volHero){
       volHero.innerHTML = '';
@@ -580,8 +692,15 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   async function resolveDashboardContext(){
     try{ await anwInitStore(); }catch(_){}
-    try{ if(typeof window.anwSyncFromServer === 'function' && (Date.now() - lastLocalUsersWriteAt > 2500)){ await window.anwSyncFromServer([KEY_USERS], 0); } }catch(_){}
+
+    try{
+      if(typeof window.anwSyncFromServer === 'function' && (Date.now() - lastLocalUsersWriteAt > LOCAL_WRITE_SYNC_GRACE_MS)){
+        await window.anwSyncFromServer([KEY_USERS], 0);
+      }
+    }catch(_){}
+
     loadUsers();
+
     let email = '';
     try{ email = String(await getIdentityEmail() || ''); }catch(_){}
     if(!email){ try{ email = String(anwGetLoggedEmail() || ''); }catch(_){ } }
@@ -591,8 +710,10 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         email = String(session.email || '');
       }catch(_){}
     }
+
     currentEmail = email;
     currentProfile = email ? findUserByEmail(email) : null;
+
     if(isOwnerEmail(email)){
       if(!currentProfile) currentProfile = {};
       currentProfile.email = currentProfile.email || normEmail(email);
@@ -607,16 +728,21 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       if(statusFromUser(only) === 'active') currentProfile = only;
     }
 
-    if(currentProfile) currentProfile.vol_roles = Object.assign({}, extractVolRolesFromRecord(currentProfile), currentProfile.vol_roles || {});
+    if(currentProfile){
+      applyVolRolesToProfile(currentProfile, extractVolRolesFromRecord(currentProfile));
+    }
+
     applyProfileUi();
     return { email: currentEmail, profile: currentProfile };
   }
+
   window.anwResolveDashboardContext = resolveDashboardContext;
 
   function isApprovedResident(profile){
     const status = statusFromUser(profile);
     return !!(profile && (profile.approved === true || profile.active === true || status === 'active' || status === 'approved'));
   }
+
   window.anwIsApprovedDashboardProfile = function(profile){ return isApprovedResident(profile); };
 
   function syncInterestAccess(){
@@ -646,6 +772,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     }catch(_){}
     return (currentProfile && (currentProfile.profilePhoto || currentProfile.avatar || currentProfile.photo || currentProfile.photoURL)) || sessionAvatar || metadataAvatar || 'assets/default-avatar.png';
   }
+
   if(avatarImg) avatarImg.src = getStoredAvatar();
 
   try{
@@ -656,6 +783,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         if(avatarImg) avatarImg.src = getStoredAvatar();
       }
     });
+
     document.addEventListener('visibilitychange', async () => {
       if(document.visibilityState === 'visible'){
         await resolveDashboardContext();
@@ -663,6 +791,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         if(avatarImg) avatarImg.src = getStoredAvatar();
       }
     });
+
     window.addEventListener('focus', async () => {
       await resolveDashboardContext();
       syncInterestAccess();
@@ -672,38 +801,51 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   document.getElementById('btnSaveProfile')?.addEventListener('click', async ()=>{
     if(!currentProfile) return;
+
     try{
       currentProfile.phone = document.getElementById('pfPhone').value.trim();
       currentProfile.mobile = currentProfile.phone;
+
       const cb = document.getElementById('pfAlertOptIn');
       const nextOptIn = !!(cb && cb.checked);
       const now = new Date().toISOString();
+
       currentProfile.termsAccepted = true;
       if(!currentProfile.termsAcceptedAt) currentProfile.termsAcceptedAt = currentProfile.createdAt || now;
+
       const prev = currentProfile.alertsConsent || { email:false, sms:false, history:[] };
       const prevOptIn = !!(prev.optIn || prev.email || prev.sms);
+
       if(prevOptIn !== nextOptIn){
         const hist = Array.isArray(prev.history) ? prev.history.slice() : [];
         hist.push({ at: now, email: nextOptIn, sms: nextOptIn, source: 'profile' });
         currentProfile.alertsConsent = { optIn: nextOptIn, email: nextOptIn, sms: nextOptIn, updatedAt: now, history: hist };
       } else {
-        currentProfile.alertsConsent = { optIn: prevOptIn, email: !!prev.email, sms: !!prev.sms, updatedAt: prev.updatedAt || now, history: Array.isArray(prev.history) ? prev.history : [] };
+        currentProfile.alertsConsent = {
+          optIn: prevOptIn,
+          email: !!prev.email,
+          sms: !!prev.sms,
+          updatedAt: prev.updatedAt || now,
+          history: Array.isArray(prev.history) ? prev.history : []
+        };
       }
-      const nextVolRoles = {};
-      (volunteerRolesWrap || document).querySelectorAll('[data-vol-role]').forEach((el) => { nextVolRoles[el.getAttribute('data-vol-role')] = !!el.checked; });
-      currentProfile.vol_roles = nextVolRoles;
+
+      const nextVolRoles = collectVolRolesFromInputs();
+      applyVolRolesToProfile(currentProfile, nextVolRoles);
       ensureOwnerFlags(currentProfile);
+
       persistCurrentProfileToUsers();
       applyProfileUi();
       await saveUsersAndSync();
-      const resolved = await resolveDashboardContext();
+
+      currentProfile = findUserByEmail(currentEmail) || currentProfile;
+      if(currentProfile) applyVolRolesToProfile(currentProfile, extractVolRolesFromRecord(currentProfile));
+      applyProfileUi();
+
       setText('pfMsg', 'Profile updated.');
       toast('Profile updated.', 'success');
-      if(typeof window.anwDashboardRequestTab === 'function'){
-        const nextTab = isApprovedResident((resolved && resolved.profile) || currentProfile) ? 'tabInterest' : 'tabGarda';
-        try{ await window.anwDashboardRequestTab(nextTab); }catch(_){ }
-      }
     }catch(err){
+      console.error('profile save failed', err);
       setText('pfMsg', 'Error updating profile.');
       modal('Error updating profile. Please try again.', 'Error');
       toast('Error updating profile.', 'error');
@@ -711,14 +853,17 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   });
 
   avatarBtn?.addEventListener('click', () => avatarInput?.click());
+
   avatarInput?.addEventListener('change', async () => {
     const file = avatarInput.files && avatarInput.files[0];
     if(!file) return;
+
     if(!/^image\/(jpeg|png)$/i.test(String(file.type || ''))){
       modal('Please select a JPG or PNG image.', 'Invalid file');
       avatarInput.value = '';
       return;
     }
+
     try{
       const dataUrl = await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -726,11 +871,15 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         reader.onload = () => resolve(String(reader.result || ''));
         reader.readAsDataURL(file);
       });
+
       const processed = await new Promise((resolve, reject) => {
         const img = new Image();
         img.onerror = () => reject(new Error('image_failed'));
         img.onload = () => {
-          const size = 300, canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
+          const size = 300;
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
           const ctx = canvas.getContext('2d');
           const minSide = Math.min(img.width, img.height);
           const sx = Math.max(0, (img.width - minSide) / 2);
@@ -740,19 +889,26 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         };
         img.src = dataUrl;
       });
+
       if(avatarImg) avatarImg.src = processed;
+
       if(currentProfile){
         currentProfile.avatar = processed;
         currentProfile.photo = processed;
         currentProfile.profilePhoto = processed;
         currentProfile.photoURL = processed;
       }
+
       const session = (typeof anwGetSession === 'function') ? (anwGetSession() || {}) : {};
-      session.avatar = processed; session.photo = processed; session.email = session.email || currentEmail || currentProfile?.email || '';
+      session.avatar = processed;
+      session.photo = processed;
+      session.email = session.email || currentEmail || currentProfile?.email || '';
       if(typeof anwSave === 'function' && window.ANW_KEYS) anwSave(ANW_KEYS.SESSION, session);
+
       ensureOwnerFlags(currentProfile);
       persistCurrentProfileToUsers();
-      if(typeof anwSave === 'function') await saveUsersAndSync();
+      await saveUsersAndSync();
+
       try{
         const user = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
         if(user && typeof user.update === 'function'){
@@ -760,6 +916,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
           await user.update({ user_metadata: Object.assign({}, currentMeta, { avatar: processed, photo: processed }) });
         }
       }catch(_){}
+
       setText('pfMsg', 'Profile photo updated.');
       toast('Profile photo updated.', 'success');
     }catch(err){
@@ -771,13 +928,22 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     }
   });
 
-  logoutBtn?.addEventListener('click', async ()=>{ try{ if(typeof window.anwLogout === 'function'){ await window.anwLogout(); return; } }catch(_){ } window.location.href = 'login.html'; });
+  logoutBtn?.addEventListener('click', async ()=>{
+    try{
+      if(typeof window.anwLogout === 'function'){
+        await window.anwLogout();
+        return;
+      }
+    }catch(_){ }
+    window.location.href = 'login.html';
+  });
 
   const intRole = document.getElementById('intRole');
   const intText = document.getElementById('intText');
   const intMeta = document.getElementById('intMeta');
   const btnSubmitInterest = document.getElementById('btnSubmitInterest');
   const btnWithdrawInterest = document.getElementById('btnWithdrawInterest');
+
   function renderInterest(){
     if(!currentProfile){
       if(intRole) intRole.value = '';
@@ -801,6 +967,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       btnSubmitInterest.textContent = 'Submit';
     }
   }
+
   renderInterest();
 
   window.anwRefreshDashboardProfile = async function(){
@@ -884,6 +1051,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   const noticesBadgeTop = document.getElementById('noticesBadgeTop');
   const noticesEmpty = document.getElementById('noticesEmpty');
   const noticesList = document.getElementById('noticesList');
+
   function getReadSet(){ try{ const key = `anw_notices_read_${normEmail(currentEmail)}`; const raw = localStorage.getItem(key); const arr = raw ? JSON.parse(raw) : []; return new Set(Array.isArray(arr) ? arr : []); }catch{ return new Set(); } }
   function saveReadSet(set){ try{ const key = `anw_notices_read_${normEmail(currentEmail)}`; localStorage.setItem(key, JSON.stringify(Array.from(set))); }catch{} }
   function cleanText(value){ return String(value || '').replace(/\s+/g, ' ').trim(); }
@@ -1090,12 +1258,15 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   })();
 })();
 </script>
+
 <script>
 (function(){ const btn = document.getElementById('scrollTopBtn'); if(!btn) return; function isScrollable(el){ if(!el || el === document.documentElement) return false; const cs = window.getComputedStyle(el); const oy = cs.overflowY; if(!(oy === 'auto' || oy === 'scroll')) return false; return el.scrollHeight > (el.clientHeight + 5); } function scrollElementToTop(el){ try{ if(typeof el.scrollTo === 'function'){ el.scrollTo({ top: 0, behavior: 'smooth' }); } else { el.scrollTop = 0; } }catch(e){ try{ el.scrollTop = 0; }catch(_){} } } function scrollEverythingToTop(){ const docEl = document.scrollingElement || document.documentElement; scrollElementToTop(docEl); scrollElementToTop(document.documentElement); scrollElementToTop(document.body); let p = btn.parentElement; while(p){ if(isScrollable(p)) scrollElementToTop(p); p = p.parentElement; } document.querySelectorAll('*').forEach(el => { if(isScrollable(el)) scrollElementToTop(el); }); try{ window.scrollTo({ top: 0, behavior: 'smooth' }); }catch(e){ try{ window.scrollTo(0,0); }catch(_){} } } btn.addEventListener('click', () => { btn.classList.add('is-active'); scrollEverythingToTop(); setTimeout(() => btn.classList.remove('is-active'), 600); }); })();
 </script>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => { const label = document.getElementById('pageAccessLabel'); if(!label) return; const setLabel = (tabId) => { label.textContent = tabId === 'tabGarda' ? 'Public Page' : 'Private Page'; }; document.querySelectorAll('.dash-tab').forEach((btn) => { btn.addEventListener('click', () => setLabel(btn.dataset.tab || 'tabProfile')); }); setLabel(document.querySelector('.dash-tab.active')?.dataset.tab || 'tabProfile'); window.anwDashboardSetAccessLabel = setLabel; });
 </script>
+
 <script>
 (function(){
   const OWNER_EMAIL = String(window.ANW_MASTER_EMAIL || 'claudiosantos1968@gmail.com').trim().toLowerCase();
@@ -1177,6 +1348,7 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
   }, { once:true });
 })();
 </script>
+
 <script src="assets/acl-guard.js"></script>
 </body>
 </html>
