@@ -126,9 +126,9 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 </div>
 <div class="card" id="dbNotLogged" style="background:#f9fafb; display:none;"><p class="tiny muted" style="margin:0;">Please log in first to access your dashboard.</p></div>
 <div id="dbProfileArea" style="display:none;">
-<p class="tiny muted" style="margin-top:0;">Email and Eircode are protected and cannot be changed.</p>
+<p class="tiny muted" style="margin-top:0;">Email is protected and cannot be changed.</p>
 <div class="grid-2" style="gap:1rem;"><div class="field"><label>Phone</label><input id="pfPhone" type="text"/></div><div class="field"><label>Email</label><input disabled="" id="pfEmail" type="email"/></div></div>
-<div class="grid-2" style="gap:1rem;"><div class="field"><label>Eircode</label><input disabled="" id="pfEir" type="text"/></div><div class="field"><label>Management company</label><input disabled="" id="pfMgmt" type="text"/></div></div>
+<div class="field"><label>Management company</label><input disabled="" id="pfMgmt" type="text"/></div>
 <div class="field"><label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input id="pfAlertOptIn" type="checkbox"/><span>I agree to receive Aderrig NW alerts via Email, SMS or WhatsApp (optional).</span></label><p class="tiny muted" id="pfAlertMeta" style="margin:6px 0 0;">No alert preference recorded yet (Email/SMS/WhatsApp).</p></div>
 <div class="field"><label>Elected position</label><input disabled="" id="pfElected" type="text"/></div>
 <div class="field">
@@ -391,7 +391,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   }
 
   function clearProfileUi(){
-    ['pfPhone','pfEmail','pfEir','pfMgmt','pfElected'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    ['pfPhone','pfEmail','pfMgmt','pfElected'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     const cb = document.getElementById('pfAlertOptIn'); if(cb) cb.checked = false;
     document.querySelectorAll('[data-vol-role]').forEach(el => { el.checked = false; });
     setText('pfAlertMeta', 'No alert preference recorded yet (Email/SMS/WhatsApp).');
@@ -421,7 +421,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const statusValue = statusFromUser(currentProfile);
     document.getElementById('pfPhone').value = currentProfile.phone || currentProfile.mobile || '';
     document.getElementById('pfEmail').value = currentProfile.email || currentProfile.userEmail || currentEmail || '';
-    document.getElementById('pfEir').value = currentProfile.eircode || currentProfile.eir || '';
     document.getElementById('pfMgmt').value = currentProfile.managementCompany || '';
     document.getElementById('pfElected').value = electedLabelFromUser(currentProfile);
 
@@ -807,6 +806,60 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   function cleanNoticeTitle(value){ let title = cleanText(value); if(!title) return ''; if(/^\d+$/.test(title)) return ''; if(/^(null|undefined|notice|untitled)$/i.test(title)) return ''; title = title.replace(/^#+\s*/, '').replace(/^[\W_]+|[\W_]+$/g, '').trim(); if(title.length < 3) return ''; return title; }
   function isLiveNotice(item){ if(!item || typeof item !== 'object') return false; if(item.deleted === true || item.hidden === true || item.archived === true) return false; if(item.isPublished === false || item.published === false || item.enabled === false || item.visible === false || item.active === false) return false; const status = cleanText(item.status).toLowerCase(); if(status && ['deleted','hidden','inactive','draft','archived','trash'].includes(status)) return false; return true; }
   function dedupeNotices(items){ const seen = new Set(); const out = []; for(const raw of (items || [])){ if(!isLiveNotice(raw)) continue; const title = cleanNoticeTitle(raw?.title); const message = cleanText(raw?.message || raw?.body || raw?.content || ''); if(!title && !message) continue; const key = [String(raw?.id || ''), title.toLowerCase(), message.toLowerCase(), cleanText(raw?.createdAt)].join('|'); if(seen.has(key)) continue; seen.add(key); out.push(Object.assign({}, raw, { title: title || 'Notice', message })); } return out; }
+  function isBinCollectionNotice(item){
+    if(!item || typeof item !== 'object') return false;
+
+    const scalarFields = [
+      item?.kind,
+      item?.type,
+      item?.category,
+      item?.section,
+      item?.source,
+      item?.feed,
+      item?.noticeType,
+      item?.topic
+    ].map(v => cleanText(v).toLowerCase()).filter(Boolean);
+
+    const tags = Array.isArray(item?.tags)
+      ? item.tags.map(v => cleanText(v).toLowerCase()).filter(Boolean)
+      : [];
+
+    const explicitMarkers = scalarFields.concat(tags);
+    if(explicitMarkers.some(v => [
+      'bin',
+      'bins',
+      'bin collection',
+      'waste',
+      'waste collection',
+      'recycling',
+      'recycling collection',
+      'refuse',
+      'bin day'
+    ].includes(v))) return true;
+
+    const title = cleanText(item?.title).toLowerCase();
+    const message = cleanText(item?.message || item?.body || item?.content || '').toLowerCase();
+    const combined = `${title} ${message}`;
+
+    const phrases = [
+      'bin collection',
+      'waste collection',
+      'recycling collection',
+      'domestic waste collection',
+      'household waste collection',
+      'black bin',
+      'brown bin',
+      'green bin',
+      'general waste bin',
+      'recycling bin',
+      'organic bin',
+      'bin day',
+      'collection schedule',
+      'waste schedule'
+    ];
+
+    return phrases.some(p => combined.includes(p));
+  }
   function getStreetName(address){ const a = String(address||'').trim(); if(!a) return ''; let s = a.replace(/[A-Z]\d{2}\s?[A-Z0-9]{4}\b/gi, '').replace(/\s{2,}/g,' ').trim(); s = s.split(',')[0] || s; s = s.replace(/^\s*\d+[A-Za-z]?\s+/, '').trim(); return s; }
   function noticeMatchesUser(n, user){
     const t = n?.target || n?.targets || {};
@@ -840,7 +893,12 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     if(!noticesList || !noticesEmpty) return;
     if(!currentEmail || !currentProfile){ setBadge(0); noticesEmpty.style.display = 'block'; noticesList.style.display = 'none'; return; }
     const all = anwLoad(KEY_NOTICES, []); const arr = Array.isArray(all) ? all : []; const now = Date.now();
-    const filtered = dedupeNotices(arr).filter(n => { const exp = n?.expiresAt ? Date.parse(n.expiresAt) : NaN; if(!isNaN(exp) && exp < now) return false; return noticeMatchesUser(n, currentProfile); }).sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
+    const filtered = dedupeNotices(arr).filter(n => {
+      if(isBinCollectionNotice(n)) return false;
+      const exp = n?.expiresAt ? Date.parse(n.expiresAt) : NaN;
+      if(!isNaN(exp) && exp < now) return false;
+      return noticeMatchesUser(n, currentProfile);
+    }).sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
     const read = getReadSet(); const unread = filtered.filter(n => n?.id && !read.has(n.id)).length; setBadge(unread);
     if(!filtered.length){ noticesEmpty.style.display = 'block'; noticesList.style.display = 'none'; return; }
     noticesEmpty.style.display = 'none'; noticesList.style.display = 'block'; noticesList.innerHTML = '';
