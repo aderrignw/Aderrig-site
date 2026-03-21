@@ -23,6 +23,7 @@
 #tabGarda .garda-cat .label{font-weight:700;color:var(--ink,#1f2937);line-height:1.2;font-size:14px}
 #tabGarda .garda-cat.is-active{background:var(--brand,#1f7a3f);border-color:var(--brand,#1f7a3f)}
 #tabGarda .garda-cat.is-active .label{color:#fff}#tabGarda .garda-cat.is-active .icon{background:rgba(255,255,255,.18)}#tabGarda .garda-cat.is-active .icon svg{stroke:#fff}
+
 .profile-head{display:grid;grid-template-columns:minmax(0,1fr) 160px;align-items:start;gap:24px;margin-bottom:18px}
 .profile-overview{min-width:0}
 .profile-title{margin:0 0 4px}
@@ -49,6 +50,7 @@
 #pfVolRolesWrap .grid-2{gap:.75rem 1rem}
 @media (max-width:820px){.profile-grid{grid-template-columns:1fr}.profile-head{grid-template-columns:minmax(0,1fr) 132px}.profile-avatar-panel{width:132px}.profile-avatar-box{width:132px;height:132px}}
 @media (max-width:640px){.profile-head{grid-template-columns:minmax(0,1fr) 108px;gap:16px}.profile-avatar-panel{width:108px}.profile-avatar-box{width:108px;height:108px;border-radius:14px}.profile-name-hero{font-size:24px}.profile-summary-card{padding:14px}}
+
 body.page-dashboard{min-height:100vh}
 body.page-dashboard .site-footer{width:min(var(--container,1100px),calc(100% - 32px));margin:18px auto 0;padding:18px 0 26px}
 body.page-dashboard .footer-row{width:100%;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
@@ -59,56 +61,1122 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 </style>
 </head>
 <body data-acl-shell-public="true" class="page-dashboard">
-<header class="site-header"><div class="brand"><a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a><div class="brand-text"><h1>Aderrig NW</h1><p class="muted">Adamstown</p></div></div><nav class="nav"><a href="index.html">Home</a><a href="about.html">About</a><a href="handbook.html">Handbook</a><a href="report.html">Report</a><a href="alerts.html">Community Alerts</a><a href="projects.html">Community Projects</a><a class="nav-login" href="login.html">Login / Register</a><a class="active" href="dashboard.html">Dashboard</a><a href="household.html">Household</a><a href="admin.html">Admin</a></nav></header>
+<header class="site-header">
+<div class="brand">
+<a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
+<div class="brand-text"><h1>Aderrig NW</h1><p class="muted">Adamstown</p></div>
+</div>
+<nav class="nav">
+<a href="index.html">Home</a><a href="about.html">About</a><a href="handbook.html">Handbook</a><a href="report.html">Report</a><a href="alerts.html">Community Alerts</a><a href="projects.html">Community Projects</a><a class="nav-login" href="login.html">Login / Register</a><a class="active" href="dashboard.html">Dashboard</a><a href="household.html">Household</a><a href="admin.html">Admin</a>
+</nav>
+</header>
 <main class="wrap">
-<section class="card"><h2>Resident dashboard</h2><p class="muted">Manage your profile, elections and interests.</p><div class="tiny muted" id="anwAccessNotice" style="margin-top:12px; display:none;"><span id="anwAccessText">You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access your dashboard.</span></div><div class="actions dash-tabs" style="margin-top:0.5rem;"><button class="btn small dash-tab active" data-acl-feature="dashboard:tab_profile" data-tab="tabProfile" type="button">Profile</button><button class="btn small dash-tab" data-acl-feature="dashboard:tab_interest" data-tab="tabInterest" type="button">Interest</button><button class="btn small dash-tab" data-acl-feature="dashboard:tab_elections" data-tab="tabElections" type="button">Elections</button><button class="btn small dash-tab" data-acl-feature="dashboard:tab_notices" data-tab="tabNotices" type="button">Notices <span class="badge" id="noticesBadge" style="display:none; margin-left:6px;">0</span></button><button class="btn small dash-tab" data-acl-feature="dashboard:tab_garda" data-tab="tabGarda" type="button">Garda &amp; Safety</button></div></section>
-<section class="card dash-tab-content" data-acl-feature="dashboard:tab_profile" id="tabProfile"><div class="profile-head"><div class="profile-overview"><h3 class="profile-title">Profile</h3><p class="tiny muted profile-subtitle">Manage your personal details.</p><div class="profile-topline"><div class="profile-reg-chip">Registration No <strong id="pfRegHero">—</strong></div><div class="profile-meta-chip">Status <strong id="pfStatusHero">Pending</strong></div></div><div class="profile-name-row"><h4 class="profile-name-hero" id="pfNameHero">Resident</h4></div><div class="profile-summary-card"><div class="profile-grid"><div class="profile-meta-block"><span class="profile-meta-label">Primary role</span><div class="profile-meta-value" id="pfPrimaryRoleHero">Resident</div></div><div class="profile-meta-block"><span class="profile-meta-label">Volunteer positions</span><div class="profile-volunteer-row" id="pfVolHero"><span class="profile-empty-note">No volunteer positions selected</span></div></div><div class="profile-meta-block"><span class="profile-meta-label">Registered address</span><div class="profile-meta-value"><div id="pfAddressHero">—</div><div id="pfEirHero" class="profile-empty-note" style="margin-top:6px;">Eircode: —</div></div></div><div class="profile-meta-block"><span class="profile-meta-label">Resident type</span><div class="profile-meta-value" id="pfTypeHero">—</div></div></div></div></div><div class="profile-avatar-panel"><div class="profile-avatar-box"><img alt="Resident profile photo" id="pfAvatar" src="assets/default-avatar.png"/></div><input accept="image/png,image/jpeg" id="pfAvatarInput" style="display:none;" type="file"/><button class="btn-line small" id="btnUploadAvatar" type="button">Upload</button><div class="profile-avatar-meta">JPG / PNG</div></div></div><div class="card" id="dbNotLogged" style="background:#f9fafb; display:none;"><p class="tiny muted" style="margin:0;">Please log in first to access your dashboard.</p></div><div id="dbProfileArea" style="display:none;"><p class="tiny muted" style="margin-top:0;">Email is protected and cannot be changed.</p><div class="grid-2" style="gap:1rem;"><div class="field"><label>Phone</label><input id="pfPhone" type="text"/></div><div class="field"><label>Email</label><input disabled="" id="pfEmail" type="email"/></div></div><div class="field"><label>Management company</label><input disabled="" id="pfMgmt" type="text"/></div><div class="field"><label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input id="pfAlertOptIn" type="checkbox"/><span>I agree to receive Aderrig NW alerts via Email, SMS or WhatsApp (optional).</span></label><p class="tiny muted" id="pfAlertMeta" style="margin:6px 0 0;">No alert preference recorded yet (Email/SMS/WhatsApp).</p></div><div class="field"><label>Elected position</label><input disabled="" id="pfElected" type="text"/></div><div class="field"><label style="display:block; margin-bottom:8px;">Volunteer roles</label><p class="tiny muted" id="pfVolHelp" style="margin:0 0 8px;">Volunteer roles are loaded automatically from your approved resident record. You can add or remove them here and save.</p><div id="pfVolRolesWrap"></div></div><p class="tiny muted" id="pfMsg" style="margin-top:0.5rem;"></p><div class="actions profile-actions"><button class="btn-line" id="btnLogout" type="button">Logout</button><button class="btn" id="btnSaveProfile" type="button">Save</button></div></div></section>
-<section class="card dash-tab-content" data-acl-feature="dashboard:tab_interest" id="tabInterest" style="display:none;"><h3>Expression of Interest (Elections)</h3><p class="tiny muted" style="margin-top:0;">Submit your interest for an elected role. Admin approval is required before your name appears for resident voting.</p><div class="card" id="interestBlocked" style="background:#f9fafb; display:none;"><p class="tiny muted" style="margin:0;">Your registration must be approved before submitting interest.</p></div><div id="interestArea" style="display:none;"><div class="field"><label>Role</label><select id="intRole"><option value="">Select…</option><option value="area">Area Coordinator</option><option value="assistant">Assistant Area Coordinator</option></select></div><div class="field"><label>Motivation / experience (visible to residents)</label><textarea id="intText" rows="6"></textarea></div><p class="tiny muted" id="intMeta"></p><div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button class="btn-line" id="btnWithdrawInterest" style="display:none;" type="button">Withdraw</button><button class="btn" id="btnSubmitInterest" type="button">Submit</button></div></div></section>
-<section class="card dash-tab-content" data-acl-feature="dashboard:tab_elections" id="tabElections" style="display:none;"><h3>Elections</h3><p class="tiny muted" style="margin-top:0;">View current election periods and your eligibility.</p><div class="card" id="electionsArea" style="background:#f9fafb;"><p class="tiny muted" style="margin:0;">Election information will appear here when elections are created by an admin.</p></div><div style="overflow-x:auto; margin-top:0.75rem;"><table style="width:100%;"><thead><tr><th>Role</th><th>Period</th><th>Status</th><th>Winner</th></tr></thead><tbody id="electionsBody"></tbody></table></div><p class="tiny muted" id="electionsEmpty" style="display:none; margin-top:0.5rem;">No elections configured.</p></section>
-<section class="card dash-tab-content" data-acl-feature="dashboard:tab_notices" id="tabNotices" style="display:none;"><h3 style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Notices</span><span class="badge" id="noticesBadgeTop" style="display:none;">0</span></h3><p class="tiny muted" style="margin-top:0;">Official community notices published by Aderrig NW administrators.</p><div class="card" id="noticesEmpty" style="background:#f9fafb; display:none;"><p class="tiny muted" style="margin:0;">No notices available.</p></div><div id="noticesList" style="display:none;"></div></section>
-<section class="card dash-tab-content" data-acl-feature="dashboard:tab_garda" id="tabGarda" style="display:none;"><h3>Garda &amp; Safety</h3><p class="tiny muted" style="margin-top:0;">Official safety information and Garda updates for residents.</p><div class="garda-panel"><div class="tiny muted" id="gardaStatus">Loading Garda updates…</div><div class="chip-row" id="gardaChips"></div><div class="garda-list" id="gardaList"></div><div class="garda-top-wrap"><button class="btn garda-top-btn tab-like" id="scrollTopBtn" type="button">Back to top</button></div></div></section>
+<section class="card">
+<h2>Resident dashboard</h2>
+<p class="muted">Manage your profile, elections and interests.</p>
+<div class="tiny muted" id="anwAccessNotice" style="margin-top:12px; display:none;"><span id="anwAccessText">You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to access your dashboard.</span></div>
+<div class="actions dash-tabs" style="margin-top:0.5rem;">
+<button class="btn small dash-tab active" data-acl-feature="dashboard:tab_profile" data-tab="tabProfile" type="button">Profile</button>
+<button class="btn small dash-tab" data-acl-feature="dashboard:tab_interest" data-tab="tabInterest" type="button">Interest</button>
+<button class="btn small dash-tab" data-acl-feature="dashboard:tab_elections" data-tab="tabElections" type="button">Elections</button>
+<button class="btn small dash-tab" data-acl-feature="dashboard:tab_notices" data-tab="tabNotices" type="button">Notices <span class="badge" id="noticesBadge" style="display:none; margin-left:6px;">0</span></button>
+<button class="btn small dash-tab" data-acl-feature="dashboard:tab_garda" data-tab="tabGarda" type="button">Garda &amp; Safety</button>
+</div>
+</section>
+
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_profile" id="tabProfile">
+<div class="profile-head">
+<div class="profile-overview">
+<h3 class="profile-title">Profile</h3>
+<p class="tiny muted profile-subtitle">Manage your personal details.</p>
+<div class="profile-topline">
+  <div class="profile-reg-chip">Registration No <strong id="pfRegHero">—</strong></div>
+  <div class="profile-meta-chip">Status <strong id="pfStatusHero">Pending</strong></div>
+</div>
+<div class="profile-name-row">
+  <h4 class="profile-name-hero" id="pfNameHero">Resident</h4>
+</div>
+
+<div class="profile-summary-card">
+  <div class="profile-grid">
+    <div class="profile-meta-block">
+      <span class="profile-meta-label">Primary role</span>
+      <div class="profile-meta-value" id="pfPrimaryRoleHero">Resident</div>
+    </div>
+    <div class="profile-meta-block">
+      <span class="profile-meta-label">Volunteer positions</span>
+      <div class="profile-volunteer-row" id="pfVolHero"><span class="profile-empty-note">No volunteer positions selected</span></div>
+    </div>
+    <div class="profile-meta-block">
+      <span class="profile-meta-label">Registered address</span>
+      <div class="profile-meta-value"><div id="pfAddressHero">—</div><div id="pfEirHero" class="profile-empty-note" style="margin-top:6px;">Eircode: —</div></div>
+    </div>
+    <div class="profile-meta-block">
+      <span class="profile-meta-label">Resident type</span>
+      <div class="profile-meta-value" id="pfTypeHero">—</div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="profile-avatar-panel">
+<div class="profile-avatar-box"><img alt="Resident profile photo" id="pfAvatar" src="assets/default-avatar.png"/></div>
+<input accept="image/png,image/jpeg" id="pfAvatarInput" style="display:none;" type="file"/>
+<button class="btn-line small" id="btnUploadAvatar" type="button">Upload</button>
+<div class="profile-avatar-meta">JPG / PNG</div>
+</div>
+</div>
+<div class="card" id="dbNotLogged" style="background:#f9fafb; display:none;"><p class="tiny muted" style="margin:0;">Please log in first to access your dashboard.</p></div>
+<div id="dbProfileArea" style="display:none;">
+<p class="tiny muted" style="margin-top:0;">Email is protected and cannot be changed.</p>
+<div class="grid-2" style="gap:1rem;"><div class="field"><label>Phone</label><input id="pfPhone" type="text"/></div><div class="field"><label>Email</label><input disabled="" id="pfEmail" type="email"/></div></div>
+<div class="field"><label>Management company</label><input disabled="" id="pfMgmt" type="text"/></div>
+<div class="field"><label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input id="pfAlertOptIn" type="checkbox"/><span>I agree to receive Aderrig NW alerts via Email, SMS or WhatsApp (optional).</span></label><p class="tiny muted" id="pfAlertMeta" style="margin:6px 0 0;">No alert preference recorded yet (Email/SMS/WhatsApp).</p></div>
+<div class="field"><label>Elected position</label><input disabled="" id="pfElected" type="text"/></div>
+<div class="field" id="pfVolRolesField">
+<label style="display:block; margin-bottom:8px;">Volunteer roles</label>
+<p class="tiny muted" id="pfVolHelp" style="margin:0 0 8px;">Volunteer roles are loaded automatically from your resident record. You can add or remove them here and save.</p>
+<div id="pfVolRolesWrap"></div>
+</div>
+<p class="tiny muted" id="pfMsg" style="margin-top:0.5rem;"></p>
+<div class="actions profile-actions"><button class="btn-line" id="btnLogout" type="button">Logout</button><button class="btn" id="btnSaveProfile" type="button">Save</button></div>
+</div>
+</section>
+
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_interest" id="tabInterest" style="display:none;">
+<h3>Expression of Interest (Elections)</h3>
+<p class="tiny muted" style="margin-top:0;">Submit your interest for an elected role. Admin approval is required before your name appears for resident voting.</p>
+<div class="card" id="interestBlocked" style="background:#f9fafb; display:none;"><p class="tiny muted" style="margin:0;">Your registration must be approved before submitting interest.</p></div>
+<div id="interestArea" style="display:none;">
+<div class="field"><label>Role</label><select id="intRole"><option value="">Select…</option><option value="area">Area Coordinator</option><option value="assistant">Assistant Area Coordinator</option></select></div>
+<div class="field"><label>Motivation / experience (visible to residents)</label><textarea id="intText" rows="6"></textarea></div>
+<p class="tiny muted" id="intMeta"></p>
+<div class="actions" style="justify-content:flex-end; gap:0.5rem;"><button class="btn-line" id="btnWithdrawInterest" style="display:none;" type="button">Withdraw</button><button class="btn" id="btnSubmitInterest" type="button">Submit</button></div>
+</div>
+</section>
+
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_elections" id="tabElections" style="display:none;">
+<h3>Elections</h3>
+<p class="tiny muted" style="margin-top:0;">View current election periods and your eligibility.</p>
+<div class="card" id="electionsArea" style="background:#f9fafb;"><p class="tiny muted" style="margin:0;">Election information will appear here when elections are created by an admin.</p></div>
+<div style="overflow-x:auto; margin-top:0.75rem;"><table style="width:100%;"><thead><tr><th>Role</th><th>Period</th><th>Status</th><th>Winner</th></tr></thead><tbody id="electionsBody"></tbody></table></div>
+<p class="tiny muted" id="electionsEmpty" style="display:none; margin-top:0.5rem;">No elections configured.</p>
+</section>
+
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_notices" id="tabNotices" style="display:none;">
+<h3 style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><span>Notices</span><span class="badge" id="noticesBadgeTop" style="display:none;">0</span></h3>
+<p class="tiny muted" style="margin-top:0;">Official community notices published by Aderrig NW administrators.</p>
+<div class="card" id="noticesEmpty" style="background:#f9fafb; display:none;"><p class="tiny muted" style="margin:0;">No notices available.</p></div>
+<div id="noticesList" style="display:none;"></div>
+</section>
+
+<section class="card dash-tab-content" data-acl-feature="dashboard:tab_garda" id="tabGarda" style="display:none;">
+<h3>Garda &amp; Safety</h3>
+<p class="tiny muted" style="margin-top:0;">Official safety information and Garda updates for residents.</p>
+<div class="garda-panel">
+<div class="tiny muted" id="gardaStatus">Loading Garda updates…</div>
+<div class="chip-row" id="gardaChips"></div>
+<div class="garda-list" id="gardaList"></div>
+<div class="garda-top-wrap"><button class="btn garda-top-btn tab-like" id="scrollTopBtn" type="button">Back to top</button></div>
+</div>
+</section>
+
 <div class="card dash-tab-content" id="dashBlockedMessage" style="display:none;"><h3>Dashboard</h3><div class="card" style="background:#f9fafb;"><p class="tiny muted" style="margin:0;">Please log in to access this section.</p></div></div>
 </main>
-<footer class="site-footer"><div class="footer-row"><div class="footer-left"><span class="page-access" id="pageAccessLabel">Private Page</span></div><div class="footer-center">© 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a></div></div></footer>
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script><script src="assets/identity.js"></script><script src="assets/app-core.js"></script>
+
+<footer class="site-footer">
+<div class="footer-row"><div class="footer-left"><span class="page-access" id="pageAccessLabel">Private Page</span></div><div class="footer-center">© 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a></div></div>
+</footer>
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+<script src="assets/app-core.js"></script>
 <script>
-(async function(){'use strict';await anwInitStore();function toast(msg,type){try{if(window.ANW&&ANW.ui&&typeof ANW.ui.toast==='function'){ANW.ui.toast(String(msg||''),type||'info');}}catch{}}function modal(msg,title){try{if(window.ANW&&ANW.ui&&typeof ANW.ui.alert==='function'){ANW.ui.alert(String(msg||''),{title:title||'Message'});return;}}catch{}alert(msg);}async function confirmModal(msg,title){try{if(typeof window.anwConfirm==='function'){return await window.anwConfirm(String(msg||''),{title:title||'Confirm'});}}catch{}return confirm(msg);}function setText(id,value){const el=document.getElementById(id);if(el) el.textContent=(value??'').toString();}
-const KEY_USERS=ANW_KEYS.USERS,KEY_ELECTIONS=ANW_KEYS.ELECTIONS,KEY_NOTICES=ANW_KEYS.NOTICES||'anw_notices',OWNER_EMAIL=String(window.ANW_MASTER_EMAIL||'claudiosantos1968@gmail.com').trim().toLowerCase();
-let users=[],currentEmail='',currentProfile=null,currentProfileIndexes=[],lastLocalUsersWriteAt=0,volunteerCatalog=[];
-const notLoggedBox=document.getElementById('dbNotLogged'),profileArea=document.getElementById('dbProfileArea'),interestBlocked=document.getElementById('interestBlocked'),interestArea=document.getElementById('interestArea'),volunteerRolesWrap=document.getElementById('pfVolRolesWrap');
-const VOL_ROLE_LABEL_ALIASES={streetwatch:'Street watch / patrols',leaflets:'Distribute leaflets',tech:'Tech support',elderly:'Elderly checks',meetings:'Meeting organiser',translation:'Translation',cleanup:'Community clean-up',cleanUp:'Community clean-up',parking:'Parking assistance'};
-function loadUsers(){const next=anwLoad(KEY_USERS,[]);users=Array.isArray(next)?next:[];return users;}async function saveUsersAndSync(){lastLocalUsersWriteAt=Date.now();await anwSave(KEY_USERS,users);try{if(typeof window.anwSyncToServer==='function') await window.anwSyncToServer([KEY_USERS]);else if(typeof window.anwSyncKeyToServer==='function') await window.anwSyncKeyToServer(KEY_USERS);else if(typeof window.anwPushToServer==='function') await window.anwPushToServer([KEY_USERS]);else if(typeof window.anwPublishStoreKey==='function') await window.anwPublishStoreKey(KEY_USERS);}catch(syncErr){console.warn('users sync failed',syncErr);}}
-function normEmail(v){try{return anwNormEmail(v||'');}catch(_){return String(v||'').trim().toLowerCase();}}function emailCandidates(email){const norm=normEmail(email),local=norm.split('@')[0]||'';return Array.from(new Set([norm,local].filter(Boolean)));}function rowEmails(u){return Array.from(new Set([normEmail(u&&u.email),normEmail(u&&u.userEmail),normEmail(u&&u.loginEmail),normEmail(u&&u.netlifyEmail)].filter(Boolean)));}function isOwnerEmail(email){return normEmail(email)===OWNER_EMAIL;}
-function scoreProfileRecord(u,targetEmail){const normTarget=normEmail(targetEmail||''),localTarget=normTarget.split('@')[0]||'',emails=rowEmails(u),exact=emails.includes(normTarget),local=emails.some(e=>(e.split('@')[0]||'')===localTarget),status=String(u?.status||u?.accountStatus||u?.registrationStatus||'').trim().toLowerCase(),approved=!!(u?.approved===true||u?.active===true||status==='active'||status==='approved'),ownerish=!!(emails.includes(OWNER_EMAIL)||[u?.role,u?.type,u?.residentType,u?.access].map(v=>String(v||'').toLowerCase()).some(v=>['owner','admin'].includes(v))),richness=[u?.name,u?.fullName,u?.address,u?.fullAddress,u?.eircode,u?.eir,u?.managementCompany,u?.regId,u?.regNo,u?.registrationNo,u?.type,u?.residentType,u?.phone,u?.mobile].filter(v=>String(v||'').trim()).length,updated=Date.parse(u?.updatedAt||u?.modifiedAt||u?.createdAt||0)||0;return(exact?1000:0)+(local?200:0)+(approved?120:0)+(ownerish?80:0)+richness+Math.min(50,Math.floor(updated/1000000000));}
-function mergeProfiles(records,targetEmail){const list=Array.isArray(records)?records.filter(Boolean).slice():[];if(!list.length) return null;list.sort((a,b)=>scoreProfileRecord(b,targetEmail)-scoreProfileRecord(a,targetEmail));const merged={};const assignIfEmpty=(key,value)=>{if(value==null) return;if(typeof value==='string'&&!value.trim()) return;if(merged[key]==null||(typeof merged[key]==='string'&&!String(merged[key]).trim())) merged[key]=value;};list.forEach((rec,index)=>{if(index===0) Object.assign(merged,rec||{});Object.keys(rec||{}).forEach((key)=>{const value=rec[key];if(value&&typeof value==='object'&&!Array.isArray(value)) merged[key]=Object.assign({},value,merged[key]||{});else assignIfEmpty(key,value);});});if(!merged.email) merged.email=normEmail(targetEmail||list[0]?.email||list[0]?.userEmail||'');if((merged.approved!==true&&merged.active!==true)&&list.some(rec=>{const s=String(rec?.status||rec?.accountStatus||rec?.registrationStatus||'').trim().toLowerCase();return rec?.approved===true||rec?.active===true||s==='active'||s==='approved';})){merged.active=true;if(!String(merged.status||'').trim()) merged.status='active';}return merged;}
-function collectMatchingUserIndexes(email){const candidates=emailCandidates(email);if(!candidates.length) return[];const localPart=candidates[0].split('@')[0];return users.reduce((acc,u,index)=>{if(rowEmails(u).some(e=>candidates.includes(e)||((e.split('@')[0]||'')===localPart))) acc.push(index);return acc;},[]);}function ensureOwnerFlags(target){if(!target) return target;const ownerEmail=normEmail(target.email||target.userEmail||currentEmail||OWNER_EMAIL);if(isOwnerEmail(ownerEmail)){target.email=target.email||ownerEmail;target.userEmail=target.userEmail||ownerEmail;target.loginEmail=target.loginEmail||ownerEmail;target.netlifyEmail=target.netlifyEmail||ownerEmail;target.role='owner';target.access='owner';target.type=target.type||'owner';target.residentType=target.residentType||'Owner';target.active=true;target.approved=true;target.status='active';}return target;}
-function findUserByEmail(email){loadUsers();const indexes=collectMatchingUserIndexes(email),matches=indexes.map(i=>users[i]).filter(Boolean);currentProfileIndexes=indexes.slice();const merged=mergeProfiles(matches,email);return ensureOwnerFlags(merged);}
-function normalizeVolKey(value){const raw=String(value||'').trim();if(!raw) return '';const alias=raw.replace(/\s+/g,' ').trim();const simple=alias.toLowerCase().replace(/[^a-z0-9]+/g,' ');const map={'street watch patrols':'streetWatch','distribute leaflets':'leaflets','tech support':'tech','elderly checks':'elderly','meeting organiser':'meetings','meeting organizer':'meetings','translation':'translation','community clean up':'cleanUp','parking assistance':'parking'};if(map[simple]) return map[simple];const compact=raw.replace(/[^a-zA-Z0-9]+/g,'');return compact?compact.charAt(0).toLowerCase()+compact.slice(1):'';}
-function prettifyVolLabel(key){if(VOL_ROLE_LABEL_ALIASES[key]) return VOL_ROLE_LABEL_ALIASES[key];return String(key||'').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim().replace(/(^|\s)\S/g,s=>s.toUpperCase());}
-function extractVolRolesFromRecord(record){const out={};const add=(k,v)=>{const key=normalizeVolKey(k);if(!key) return;out[key]=!!v;};const objCandidates=[record?.vol_roles,record?.volunteerRoles,record?.volunteer_roles,record?.volRoles];objCandidates.forEach(src=>{if(!src) return;if(Array.isArray(src)) src.forEach(v=>add(v,true));else if(typeof src==='object') Object.keys(src).forEach(k=>add(k,src[k]));});return out;}
-function buildVolunteerCatalog(records,profile){const order=[];const seen=new Set();const addKey=(k)=>{const key=normalizeVolKey(k);if(!key||seen.has(key)) return;seen.add(key);order.push(key);};extractVolRolesFromRecord(profile);Object.keys(extractVolRolesFromRecord(profile||{})).forEach(addKey);(records||[]).forEach(rec=>{Object.keys(extractVolRolesFromRecord(rec||{})).forEach(addKey);});return order.map(key=>({key,label:prettifyVolLabel(key)}));}
-function renderVolunteerRoleOptions(profile){if(!volunteerRolesWrap) return;const records=currentProfileIndexes.map(i=>users[i]).filter(Boolean);volunteerCatalog=buildVolunteerCatalog(records.concat(users||[]),profile);const active=extractVolRolesFromRecord(profile||{});if(!volunteerCatalog.length){volunteerRolesWrap.innerHTML='<p class="tiny muted" style="margin:0;">No volunteer roles are configured yet in your resident record.</p>';return;}volunteerRolesWrap.innerHTML='<div class="grid-2">'+volunteerCatalog.map(item=>`<label class="chk" style="display:flex; align-items:flex-start; gap:10px; margin:0;"><input data-vol-role="${item.key}" type="checkbox" ${active[item.key]?'checked':''}/><span>${item.label}</span></label>`).join('')+'</div>';}
-function persistCurrentProfileToUsers(){if(!currentProfile) return;loadUsers();let indexes=currentProfileIndexes&&currentProfileIndexes.length?currentProfileIndexes.slice():collectMatchingUserIndexes(currentEmail||currentProfile.email||'');if(!indexes.length){const base=ensureOwnerFlags({email:normEmail(currentProfile.email||currentEmail||''),userEmail:normEmail(currentProfile.userEmail||currentEmail||''),loginEmail:normEmail(currentProfile.loginEmail||currentEmail||''),netlifyEmail:normEmail(currentProfile.netlifyEmail||currentEmail||'')});users.push(base);indexes=[users.length-1];}const copyObject=value=>JSON.parse(JSON.stringify(value));indexes.forEach(idx=>{if(!users[idx]||typeof users[idx]!=='object') users[idx]={};const row=users[idx],editable=['phone','mobile','alertsConsent','termsAccepted','termsAcceptedAt','avatar','photo','profilePhoto','photoURL','interest','vol_roles'];editable.forEach(key=>{if(currentProfile[key]!==undefined) row[key]=copyObject(currentProfile[key]);});const activeKeys=Object.keys(currentProfile.vol_roles||{}).filter(k=>currentProfile.vol_roles[k]);row.volunteerRoles=activeKeys.slice();row.volunteer_roles=activeKeys.slice();['email','userEmail','loginEmail','netlifyEmail'].forEach(key=>{if(currentProfile[key]) row[key]=currentProfile[key];});if(isOwnerEmail(currentEmail||currentProfile.email||row.email||row.userEmail)) ensureOwnerFlags(row);row.updatedAt=new Date().toISOString();});currentProfileIndexes=indexes.slice();}
-window.anwFindDashboardUserByEmail=function(email){return findUserByEmail(email);};
-function prettyStatus(value){const raw=String(value||'').trim().toLowerCase();if(['active','approved'].includes(raw)) return 'Active';if(raw) return raw.replace(/(^|\s)\S/g,s=>s.toUpperCase());return 'Pending';}function electedLabelFromUser(u){const r=String(u?.electedRole||'').toLowerCase();if(r==='assistant') return 'Assistant Area Coordinator';if(r==='area') return 'Area Coordinator';return '—';}function primaryRoleFromUser(u){const elected=String(u?.electedRole||'').toLowerCase();if(elected==='area') return 'Street Coordinator';if(elected==='assistant') return 'Assistant Street Coordinator';const raw=u?.role||u?.type||u?.residentType||'';if(!raw) return 'Resident';return String(raw).replace(/(^|\s)\S/g,s=>s.toUpperCase());}function addressFromUser(u){return String(u?.address||u?.fullAddress||'').trim()||'—';}function statusFromUser(u){if(!u) return 'pending';if(isOwnerEmail(currentEmail||u.email||u.userEmail)) return 'active';const raw=String(u.status||u.accountStatus||u.registrationStatus||'').trim().toLowerCase();if(raw) return raw;if(u.active===true||u.approved===true) return 'active';const roles=[u?.role,u?.type,u?.residentType,u?.access].map(v=>String(v||'').trim().toLowerCase());if(roles.includes('owner')||roles.includes('admin')) return 'active';return 'pending';}function fullNameFromUser(u){return String(u?.name||u?.fullName||'').trim()||'Resident';}
-function hideLegacyEircodeField(){const legacyInput=document.getElementById('pfEir');if(legacyInput){const field=legacyInput.closest('.field')||legacyInput.parentElement;if(field) field.style.display='none';legacyInput.setAttribute('hidden','hidden');legacyInput.style.display='none';}}
-function clearProfileUi(){['pfPhone','pfEmail','pfMgmt','pfElected'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});const cb=document.getElementById('pfAlertOptIn');if(cb) cb.checked=false;setText('pfAlertMeta','No alert preference recorded yet (Email/SMS/WhatsApp).');setText('pfNameHero','Resident');setText('pfStatusHero','Pending');setText('pfRegHero','—');setText('pfPrimaryRoleHero','Resident');setText('pfAddressHero','—');setText('pfEirHero','Eircode: —');setText('pfTypeHero','—');const volHero=document.getElementById('pfVolHero');if(volHero) volHero.innerHTML='<span class="profile-empty-note">No volunteer positions selected</span>';if(volunteerRolesWrap) volunteerRolesWrap.innerHTML='';setText('pfMsg','');hideLegacyEircodeField();}
-function applyProfileUi(){if(!currentEmail||!currentProfile){if(notLoggedBox) notLoggedBox.style.display='block';if(profileArea) profileArea.style.display='none';clearProfileUi();return;}if(notLoggedBox) notLoggedBox.style.display='none';if(profileArea) profileArea.style.display='block';const regValue=currentProfile.regId||currentProfile.regNo||currentProfile.registrationNo||'—',statusValue=statusFromUser(currentProfile);document.getElementById('pfPhone').value=currentProfile.phone||currentProfile.mobile||'';document.getElementById('pfEmail').value=currentProfile.email||currentProfile.userEmail||currentEmail||'';document.getElementById('pfMgmt').value=currentProfile.managementCompany||'';document.getElementById('pfElected').value=electedLabelFromUser(currentProfile);setText('pfNameHero',fullNameFromUser(currentProfile));setText('pfStatusHero',prettyStatus(statusValue));setText('pfRegHero',regValue);setText('pfPrimaryRoleHero',primaryRoleFromUser(currentProfile));setText('pfAddressHero',addressFromUser(currentProfile));setText('pfEirHero','Eircode: '+(currentProfile.eircode||currentProfile.eir||'—'));setText('pfTypeHero',currentProfile.type||currentProfile.residentType||'—');const ac=currentProfile.alertsConsent||{},cb=document.getElementById('pfAlertOptIn');if(cb) cb.checked=!!ac.optIn||!!ac.email||!!ac.sms;setText('pfAlertMeta',ac.updatedAt?('Last updated: '+new Date(ac.updatedAt).toLocaleString()):'No alert preference recorded yet (Email/SMS/WhatsApp).');renderVolunteerRoleOptions(currentProfile);const vr=extractVolRolesFromRecord(currentProfile||{}),volHero=document.getElementById('pfVolHero');if(volHero){volHero.innerHTML='';Object.keys(vr).filter(k=>vr[k]).forEach(k=>{const chip=document.createElement('span');chip.className='profile-volunteer-chip';chip.textContent=prettifyVolLabel(k);volHero.appendChild(chip);});if(!volHero.children.length) volHero.innerHTML='<span class="profile-empty-note">No volunteer positions selected</span>';}hideLegacyEircodeField();}
-async function getIdentityEmail(){try{const current=window.netlifyIdentity&&typeof window.netlifyIdentity.currentUser==='function'?window.netlifyIdentity.currentUser():null;if(current&&current.email) return String(current.email||'');}catch(_){}if(window.netlifyIdentity&&typeof window.netlifyIdentity.on==='function'){try{return await new Promise(resolve=>{let done=false;const finish=u=>{if(done) return;done=true;resolve(String((u&&u.email)||''));};try{window.netlifyIdentity.on('init',finish);window.netlifyIdentity.init&&window.netlifyIdentity.init();}catch(_){}setTimeout(()=>{try{const user=window.netlifyIdentity.currentUser?window.netlifyIdentity.currentUser():null;finish(user||null);}catch(_){finish(null);}},600);});}catch(_){}}return '';}
-async function resolveDashboardContext(){try{await anwInitStore();}catch(_){}try{if(typeof window.anwSyncFromServer==='function'&&(Date.now()-lastLocalUsersWriteAt>2500)) await window.anwSyncFromServer([KEY_USERS],0);}catch(_){}loadUsers();let email='';try{email=String(await getIdentityEmail()||'');}catch(_){}if(!email){try{email=String(anwGetLoggedEmail()||'');}catch(_){}}if(!email){try{const session=(typeof anwGetSession==='function')?(anwGetSession()||{}):{};email=String(session.email||'');}catch(_){}}currentEmail=email;currentProfile=email?findUserByEmail(email):null;if(isOwnerEmail(email)){if(!currentProfile) currentProfile={};currentProfile.email=currentProfile.email||normEmail(email);currentProfile.userEmail=currentProfile.userEmail||normEmail(email);currentProfile.loginEmail=currentProfile.loginEmail||normEmail(email);currentProfile.netlifyEmail=currentProfile.netlifyEmail||normEmail(email);ensureOwnerFlags(currentProfile);}if(!currentProfile&&users.length===1){const only=users[0];if(statusFromUser(only)==='active') currentProfile=only;}currentProfile.vol_roles=Object.assign({},extractVolRolesFromRecord(currentProfile||{}),currentProfile?.vol_roles||{});applyProfileUi();return{email:currentEmail,profile:currentProfile};}
-window.anwResolveDashboardContext=resolveDashboardContext;function isApprovedResident(profile){const status=statusFromUser(profile);return !!(profile&&(profile.approved===true||profile.active===true||status==='active'||status==='approved'));}window.anwIsApprovedDashboardProfile=function(profile){return isApprovedResident(profile);};function syncInterestAccess(){const __demo=(location.protocol==='file:'||(new URLSearchParams(location.search)).get('demo')==='1'||localStorage.getItem('anw_demo')==='1');const allowed=__demo?true:!!(currentProfile&&isApprovedResident(currentProfile));if(!interestBlocked||!interestArea) return allowed;interestBlocked.style.display=allowed?'none':'block';interestArea.style.display=allowed?'block':'none';return allowed;}
-await resolveDashboardContext();hideLegacyEircodeField();syncInterestAccess();const avatarImg=document.getElementById('pfAvatar'),avatarInput=document.getElementById('pfAvatarInput'),avatarBtn=document.getElementById('btnUploadAvatar'),logoutBtn=document.getElementById('btnLogout');function getStoredAvatar(){const session=(typeof anwGetSession==='function')?anwGetSession():null,sessionAvatar=session&&(session.avatar||session.photo);let metadataAvatar='';try{const current=window.netlifyIdentity&&window.netlifyIdentity.currentUser?window.netlifyIdentity.currentUser():null;metadataAvatar=current&&current.user_metadata?(current.user_metadata.avatar||current.user_metadata.photo||''):'';}catch(_){}return(currentProfile&&(currentProfile.profilePhoto||currentProfile.avatar||currentProfile.photo||currentProfile.photoURL))||sessionAvatar||metadataAvatar||'assets/default-avatar.png';}if(avatarImg) avatarImg.src=getStoredAvatar();
-try{window.addEventListener('storage',async ev=>{if(ev&&(ev.key===KEY_USERS||ev.key===ANW_KEYS.SESSION)){await resolveDashboardContext();syncInterestAccess();if(avatarImg) avatarImg.src=getStoredAvatar();}});document.addEventListener('visibilitychange',async()=>{if(document.visibilityState==='visible'){await resolveDashboardContext();syncInterestAccess();if(avatarImg) avatarImg.src=getStoredAvatar();}});window.addEventListener('focus',async()=>{await resolveDashboardContext();syncInterestAccess();if(avatarImg) avatarImg.src=getStoredAvatar();});}catch(_){}
-document.getElementById('btnSaveProfile')?.addEventListener('click',async()=>{if(!currentProfile) return;try{currentProfile.phone=document.getElementById('pfPhone').value.trim();currentProfile.mobile=currentProfile.phone;const cb=document.getElementById('pfAlertOptIn'),nextOptIn=!!(cb&&cb.checked),now=new Date().toISOString();currentProfile.termsAccepted=true;if(!currentProfile.termsAcceptedAt) currentProfile.termsAcceptedAt=currentProfile.createdAt||now;const prev=currentProfile.alertsConsent||{email:false,sms:false,history:[]},prevOptIn=!!(prev.optIn||prev.email||prev.sms);if(prevOptIn!==nextOptIn){const hist=Array.isArray(prev.history)?prev.history.slice():[];hist.push({at:now,email:nextOptIn,sms:nextOptIn,source:'profile'});currentProfile.alertsConsent={optIn:nextOptIn,email:nextOptIn,sms:nextOptIn,updatedAt:now,history:hist};}else currentProfile.alertsConsent={optIn:prevOptIn,email:!!prev.email,sms:!!prev.sms,updatedAt:prev.updatedAt||now,history:Array.isArray(prev.history)?prev.history:[]};const nextVolRoles={};volunteerRolesWrap?.querySelectorAll('[data-vol-role]').forEach(el=>{nextVolRoles[el.getAttribute('data-vol-role')]=!!el.checked;});currentProfile.vol_roles=nextVolRoles;ensureOwnerFlags(currentProfile);persistCurrentProfileToUsers();applyProfileUi();await saveUsersAndSync();const resolved=await resolveDashboardContext();setText('pfMsg','Profile updated.');toast('Profile updated.','success');if(typeof window.anwDashboardRequestTab==='function'){const nextTab=isApprovedResident((resolved&&resolved.profile)||currentProfile)?'tabInterest':'tabGarda';try{await window.anwDashboardRequestTab(nextTab);}catch(_){}}}catch(err){setText('pfMsg','Error updating profile.');modal('Error updating profile. Please try again.','Error');toast('Error updating profile.','error');}});
-avatarBtn?.addEventListener('click',()=>avatarInput?.click());logoutBtn?.addEventListener('click',async()=>{try{if(typeof window.anwLogout==='function'){await window.anwLogout();return;}}catch(_){}window.location.href='login.html';});
-const intRole=document.getElementById('intRole'),intText=document.getElementById('intText'),intMeta=document.getElementById('intMeta'),btnSubmitInterest=document.getElementById('btnSubmitInterest'),btnWithdrawInterest=document.getElementById('btnWithdrawInterest');function renderInterest(){if(!currentProfile){if(intRole) intRole.value='';if(intText) intText.value='';if(intMeta) intMeta.textContent='';if(btnWithdrawInterest) btnWithdrawInterest.style.display='none';if(btnSubmitInterest) btnSubmitInterest.textContent='Submit';return;}if(currentProfile.interest){intRole.value=currentProfile.interest.role||'';intText.value=currentProfile.interest.text||'';intMeta.textContent='Submitted on '+(currentProfile.interest.date||'—')+' · Status: '+(currentProfile.interest.status||'pending');btnWithdrawInterest.style.display='inline-block';btnSubmitInterest.textContent='Update';}else{intRole.value='';intText.value='';intMeta.textContent='';btnWithdrawInterest.style.display='none';btnSubmitInterest.textContent='Submit';}}renderInterest();window.anwRefreshDashboardProfile=async function(){await resolveDashboardContext();syncInterestAccess();if(avatarImg) avatarImg.src=getStoredAvatar();renderInterest();renderNotices();};
-const electionsBody=document.getElementById('electionsBody'),electionsEmpty=document.getElementById('electionsEmpty'),elections=anwLoad(KEY_ELECTIONS,[]);electionsBody.innerHTML='';if(!Array.isArray(elections)||!elections.length) electionsEmpty.style.display='block';else{electionsEmpty.style.display='none';elections.forEach(e=>{const tr=document.createElement('tr'),roleLabel=(String(e.role||'').toLowerCase()==='assistant')?'Assistant Area Coordinator':'Area Coordinator',winner=e.electedName||e.winnerName||e.electedEmail||'—';tr.innerHTML=`<td>${roleLabel}</td><td>${e.start||'—'} → ${e.end||'—'}</td><td>${e.status||'—'}</td><td>${winner}</td>`;electionsBody.appendChild(tr);});}
-const noticesBadge=document.getElementById('noticesBadge'),noticesBadgeTop=document.getElementById('noticesBadgeTop'),noticesEmpty=document.getElementById('noticesEmpty'),noticesList=document.getElementById('noticesList');function getReadSet(){try{const key=`anw_notices_read_${normEmail(currentEmail)}`,raw=localStorage.getItem(key),arr=raw?JSON.parse(raw):[];return new Set(Array.isArray(arr)?arr:[]);}catch{return new Set();}}function saveReadSet(set){try{const key=`anw_notices_read_${normEmail(currentEmail)}`;localStorage.setItem(key,JSON.stringify(Array.from(set)));}catch{}}function cleanText(value){return String(value||'').replace(/\s+/g,' ').trim();}function cleanNoticeTitle(value){let title=cleanText(value);if(!title) return '';if(/^\d+$/.test(title)) return '';if(/^(null|undefined|notice|untitled)$/i.test(title)) return '';title=title.replace(/^#+\s*/,'').replace(/^[\W_]+|[\W_]+$/g,'').trim();if(title.length<3) return '';return title;}function isLiveNotice(item){if(!item||typeof item!=='object') return false;if(item.deleted===true||item.hidden===true||item.archived===true) return false;if(item.isPublished===false||item.published===false||item.enabled===false||item.visible===false||item.active===false) return false;const status=cleanText(item.status).toLowerCase();if(status&&['deleted','hidden','inactive','draft','archived','trash'].includes(status)) return false;return true;}function dedupeNotices(items){const seen=new Set(),out=[];for(const raw of(items||[])){if(!isLiveNotice(raw)) continue;const title=cleanNoticeTitle(raw?.title),message=cleanText(raw?.message||raw?.body||raw?.content||'');if(!title&&!message) continue;const key=[String(raw?.id||''),title.toLowerCase(),message.toLowerCase(),cleanText(raw?.createdAt)].join('|');if(seen.has(key)) continue;seen.add(key);out.push(Object.assign({},raw,{title:title||'Notice',message}));}return out;}function isBinCollectionNotice(item){if(!item||typeof item!=='object') return false;const scalarFields=[item?.kind,item?.type,item?.category,item?.section,item?.source,item?.feed,item?.noticeType,item?.topic].map(v=>cleanText(v).toLowerCase()).filter(Boolean),tags=Array.isArray(item?.tags)?item.tags.map(v=>cleanText(v).toLowerCase()).filter(Boolean):[],explicitMarkers=scalarFields.concat(tags);if(explicitMarkers.some(v=>['bin','bins','bin collection','waste','waste collection','recycling','recycling collection','refuse','bin day'].includes(v))) return true;const title=cleanText(item?.title).toLowerCase(),message=cleanText(item?.message||item?.body||item?.content||'').toLowerCase(),combined=`${title} ${message}`;return ['bin collection','waste collection','recycling collection','domestic waste collection','household waste collection','black bin','brown bin','green bin','general waste bin','recycling bin','organic bin','bin day','collection schedule','waste schedule'].some(p=>combined.includes(p));}function getStreetName(address){const a=String(address||'').trim();if(!a) return '';let s=a.replace(/[A-Z]\d{2}\s?[A-Z0-9]{4}\b/gi,'').replace(/\s{2,}/g,' ').trim();s=s.split(',')[0]||s;s=s.replace(/^\s*\d+[A-Za-z]?\s+/,'').trim();return s;}function noticeMatchesUser(n,user){const t=n?.target||n?.targets||{},inc=t.include||t,exc=t.exclude||{},collectRoles=profile=>{const raw=[];const pushAny=v=>{if(v==null||v==='') return;if(Array.isArray(v)) return v.forEach(pushAny);raw.push(String(v));};pushAny(profile?.type);pushAny(profile?.role);pushAny(profile?.roles);pushAny(profile?.residentType);pushAny(profile?.position);pushAny(profile?.title);pushAny(profile?.access);if(typeof window.anwGetLoggedRole==='function') pushAny(window.anwGetLoggedRole());return Array.from(new Set(raw.map(v=>{try{return typeof window.anwNormalizeRoleName==='function'?window.anwNormalizeRoleName(v):String(v||'').toLowerCase().trim();}catch(_){return String(v||'').toLowerCase().trim();}}).filter(Boolean)));};const roles=collectRoles(user),isAdmin=roles.includes('admin')||roles.includes('owner'),eir=String(user?.eircode||'').replace(/\s+/g,'').toUpperCase(),street=getStreetName(user?.address||user?.fullAddress||''),email=normEmail(user?.email||user?.userEmail),hasRole=list=>Array.isArray(list)&&list.map(String).map(v=>{try{return typeof window.anwNormalizeRoleName==='function'?window.anwNormalizeRoleName(v):String(v||'').toLowerCase().trim();}catch(_){return String(v||'').toLowerCase().trim();}}).some(v=>roles.includes(v));if(hasRole(exc.roles)) return false;if(Array.isArray(exc.eircodes)&&exc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return false;if(Array.isArray(exc.emails)&&exc.emails.map(normEmail).includes(email)) return false;if(inc.nonAdminOnly&&isAdmin) return false;const hasAnyInclude=!!(inc.allLoggedIn||(Array.isArray(inc.roles)&&inc.roles.length)||(Array.isArray(inc.eircodes)&&inc.eircodes.length)||(Array.isArray(inc.eircodePrefixes)&&inc.eircodePrefixes.length)||(Array.isArray(inc.streets)&&inc.streets.length)||(Array.isArray(inc.emails)&&inc.emails.length));if(!hasAnyInclude) return true;if(inc.allLoggedIn) return true;if(hasRole(inc.roles)) return true;if(Array.isArray(inc.emails)&&inc.emails.map(normEmail).includes(email)) return true;if(Array.isArray(inc.eircodes)&&inc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return true;if(Array.isArray(inc.eircodePrefixes)&&inc.eircodePrefixes.map(String).map(x=>x.toUpperCase()).some(p=>eir.startsWith(p))) return true;if(Array.isArray(inc.streets)&&street){const stList=inc.streets.map(String).map(x=>x.trim().toLowerCase()).filter(Boolean);if(stList.includes(street.toLowerCase())) return true;}return false;}function setBadge(count){const show=Number(count||0)>0;if(noticesBadge){noticesBadge.textContent=String(count||0);noticesBadge.style.display=show?'inline-flex':'none';}if(noticesBadgeTop){noticesBadgeTop.textContent=String(count||0);noticesBadgeTop.style.display=show?'inline-flex':'none';}}function renderNotices(){if(!noticesList||!noticesEmpty) return;if(!currentEmail||!currentProfile){setBadge(0);noticesEmpty.style.display='block';noticesList.style.display='none';return;}const all=anwLoad(KEY_NOTICES,[]),arr=Array.isArray(all)?all:[],now=Date.now(),filtered=dedupeNotices(arr).filter(n=>{if(isBinCollectionNotice(n)) return false;const exp=n?.expiresAt?Date.parse(n.expiresAt):NaN;if(!isNaN(exp)&&exp<now) return false;return noticeMatchesUser(n,currentProfile);}).sort((a,b)=>Date.parse(b?.createdAt||0)-Date.parse(a?.createdAt||0)),read=getReadSet(),unread=filtered.filter(n=>n?.id&&!read.has(n.id)).length;setBadge(unread);if(!filtered.length){noticesEmpty.style.display='block';noticesList.style.display='none';return;}noticesEmpty.style.display='none';noticesList.style.display='block';noticesList.innerHTML='';filtered.forEach(n=>{const isUnread=n?.id&&!read.has(n.id),card=document.createElement('div');card.className='card';card.style.margin='0.75rem 0';card.style.cursor='pointer';card.innerHTML=`<div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;"><div><div style="font-weight:${isUnread?'800':'700'};">${String(cleanNoticeTitle(n?.title)||'Notice').replace(/</g,'&lt;').replace(/>/g,'&gt;')}${isUnread?'<span class="badge" style="margin-left:8px;">NEW</span>':''}</div><div class="tiny muted" style="margin-top:4px; font-weight:${isUnread?'700':'400'};">${String(n?.message||n?.body||n?.content||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div></div><div class="tiny muted">${n?.createdAt?new Date(n.createdAt).toLocaleDateString():''}</div></div>`;card.addEventListener('click',async()=>{if(n?.id){read.add(n.id);saveReadSet(read);renderNotices();}});noticesList.appendChild(card);});}renderNotices();document.querySelectorAll('.dash-tab').forEach(b=>{b.addEventListener('click',()=>{if(b.dataset.tab==='tabNotices') renderNotices();});});
+(async function(){
+  'use strict';
+  await anwInitStore();
+
+  function toast(msg, type){ try{ if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){ ANW.ui.toast(String(msg || ''), type || 'info'); } }catch{} }
+  function modal(msg, title){ try{ if(window.ANW && ANW.ui && typeof ANW.ui.alert === 'function'){ ANW.ui.alert(String(msg || ''), { title: title || 'Message' }); return; } }catch{} alert(msg); }
+  async function confirmModal(msg, title){ try{ if(typeof window.anwConfirm === 'function'){ return await window.anwConfirm(String(msg || ''), { title: title || 'Confirm' }); } }catch{} return confirm(msg); }
+  function setText(id, value){ const el = document.getElementById(id); if(el) el.textContent = (value ?? '').toString(); }
+
+  const KEY_USERS = ANW_KEYS.USERS;
+  const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
+  const KEY_NOTICES = ANW_KEYS.NOTICES || 'anw_notices';
+  const OWNER_EMAIL = String(window.ANW_MASTER_EMAIL || 'claudiosantos1968@gmail.com').trim().toLowerCase();
+
+  let users = [];
+  let currentEmail = '';
+  let currentProfile = null;
+  let currentProfileIndexes = [];
+  let lastLocalUsersWriteAt = 0;
+  let volunteerCatalog = [];
+
+  const notLoggedBox = document.getElementById('dbNotLogged');
+  const profileArea = document.getElementById('dbProfileArea');
+  const interestBlocked = document.getElementById('interestBlocked');
+  const interestArea = document.getElementById('interestArea');
+  const volunteerRolesWrap = document.getElementById('pfVolRolesWrap');
+
+  function loadUsers(){ const next = anwLoad(KEY_USERS, []); users = Array.isArray(next) ? next : []; return users; }
+  async function saveUsersAndSync(){
+    lastLocalUsersWriteAt = Date.now();
+    await anwSave(KEY_USERS, users);
+    try{
+      if(typeof window.anwSyncToServer === 'function'){
+        await window.anwSyncToServer([KEY_USERS]);
+      }else if(typeof window.anwSyncKeyToServer === 'function'){
+        await window.anwSyncKeyToServer(KEY_USERS);
+      }else if(typeof window.anwPushToServer === 'function'){
+        await window.anwPushToServer([KEY_USERS]);
+      }else if(typeof window.anwPublishStoreKey === 'function'){
+        await window.anwPublishStoreKey(KEY_USERS);
+      }
+    }catch(syncErr){
+      console.warn('users sync failed', syncErr);
+    }
+  }
+  function normEmail(v){ try{ return anwNormEmail(v || ''); }catch(_){ return String(v || '').trim().toLowerCase(); } }
+  function emailCandidates(email){
+    const norm = normEmail(email);
+    const local = norm.split('@')[0] || '';
+    return Array.from(new Set([norm, local].filter(Boolean)));
+  }
+  function rowEmails(u){
+    return Array.from(new Set([
+      normEmail(u && u.email),
+      normEmail(u && u.userEmail),
+      normEmail(u && u.loginEmail),
+      normEmail(u && u.netlifyEmail)
+    ].filter(Boolean)));
+  }
+  function isOwnerEmail(email){
+    return normEmail(email) === OWNER_EMAIL;
+  }
+  function scoreProfileRecord(u, targetEmail){
+    const normTarget = normEmail(targetEmail || '');
+    const localTarget = normTarget.split('@')[0] || '';
+    const emails = rowEmails(u);
+    const exact = emails.includes(normTarget);
+    const local = emails.some(e => (e.split('@')[0] || '') === localTarget);
+    const status = String(u?.status || u?.accountStatus || u?.registrationStatus || '').trim().toLowerCase();
+    const approved = !!(u?.approved === true || u?.active === true || status === 'active' || status === 'approved');
+    const ownerish = !!(emails.includes(OWNER_EMAIL) || [u?.role,u?.type,u?.residentType,u?.access].map(v => String(v || '').toLowerCase()).some(v => ['owner','admin'].includes(v)));
+    const richness = [u?.name,u?.fullName,u?.address,u?.fullAddress,u?.eircode,u?.eir,u?.managementCompany,u?.regId,u?.regNo,u?.registrationNo,u?.type,u?.residentType,u?.phone,u?.mobile].filter(v => String(v || '').trim()).length;
+    const updated = Date.parse(u?.updatedAt || u?.modifiedAt || u?.createdAt || 0) || 0;
+    return (exact ? 1000 : 0) + (local ? 200 : 0) + (approved ? 120 : 0) + (ownerish ? 80 : 0) + richness + Math.min(50, Math.floor(updated / 1000000000));
+  }
+  function mergeProfiles(records, targetEmail){
+    const list = Array.isArray(records) ? records.filter(Boolean).slice() : [];
+    if(!list.length) return null;
+    list.sort((a,b) => scoreProfileRecord(b, targetEmail) - scoreProfileRecord(a, targetEmail));
+    const merged = {};
+    const assignIfEmpty = (key, value) => {
+      if(value == null) return;
+      if(typeof value === 'string' && !value.trim()) return;
+      if(merged[key] == null || (typeof merged[key] === 'string' && !String(merged[key]).trim())) merged[key] = value;
+    };
+    list.forEach((rec, index) => {
+      if(index === 0) Object.assign(merged, rec || {});
+      Object.keys(rec || {}).forEach((key) => {
+        const value = rec[key];
+        if(value && typeof value === 'object' && !Array.isArray(value)){
+          merged[key] = Object.assign({}, value, merged[key] || {});
+        } else {
+          assignIfEmpty(key, value);
+        }
+      });
+    });
+    if(!merged.email) merged.email = normEmail(targetEmail || list[0]?.email || list[0]?.userEmail || '');
+    if((merged.approved !== true && merged.active !== true) && list.some(rec => {
+      const s = String(rec?.status || rec?.accountStatus || rec?.registrationStatus || '').trim().toLowerCase();
+      return rec?.approved === true || rec?.active === true || s === 'active' || s === 'approved';
+    })){
+      merged.active = true;
+      if(!String(merged.status || '').trim()) merged.status = 'active';
+    }
+    return merged;
+  }
+  function collectMatchingUserIndexes(email){
+    const candidates = emailCandidates(email);
+    if(!candidates.length) return [];
+    const localPart = candidates[0].split('@')[0];
+    return users.reduce((acc, u, index) => {
+      if(rowEmails(u).some(e => candidates.includes(e) || ((e.split('@')[0] || '') === localPart))) acc.push(index);
+      return acc;
+    }, []);
+  }
+  function ensureOwnerFlags(target){
+    if(!target) return target;
+    const ownerEmail = normEmail(target.email || target.userEmail || currentEmail || OWNER_EMAIL);
+    if(isOwnerEmail(ownerEmail)){
+      target.email = target.email || ownerEmail;
+      target.userEmail = target.userEmail || ownerEmail;
+      target.loginEmail = target.loginEmail || ownerEmail;
+      target.netlifyEmail = target.netlifyEmail || ownerEmail;
+      target.role = 'owner';
+      target.access = 'owner';
+      target.type = target.type || 'owner';
+      target.residentType = target.residentType || 'Owner';
+      target.active = true;
+      target.approved = true;
+      target.status = 'active';
+    }
+    return target;
+  }
+  function findUserByEmail(email){
+    loadUsers();
+    const indexes = collectMatchingUserIndexes(email);
+    const matches = indexes.map(i => users[i]).filter(Boolean);
+    currentProfileIndexes = indexes.slice();
+    const merged = mergeProfiles(matches, email);
+    return ensureOwnerFlags(merged);
+  }
+  const VOL_ROLE_LABEL_ALIASES = {
+    streetwatch:'Street watch / patrols',
+    streetWatch:'Street watch / patrols',
+    leaflets:'Distribute leaflets',
+    tech:'Tech support',
+    elderly:'Elderly checks',
+    meetings:'Meeting organiser',
+    translation:'Translation',
+    cleanup:'Community clean-up',
+    cleanUp:'Community clean-up',
+    parking:'Parking assistance'
+  };
+  function normalizeVolKey(value){
+    const raw = String(value || '').trim();
+    if(!raw) return '';
+    const simple = raw.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+    const aliasMap = {
+      'street watch patrols':'streetWatch',
+      'distribute leaflets':'leaflets',
+      'tech support':'tech',
+      'elderly checks':'elderly',
+      'meeting organiser':'meetings',
+      'meeting organizer':'meetings',
+      'translation':'translation',
+      'community clean up':'cleanUp',
+      'parking assistance':'parking'
+    };
+    if(aliasMap[simple]) return aliasMap[simple];
+    const compact = raw.replace(/[^a-zA-Z0-9]+/g,'');
+    return compact ? compact.charAt(0).toLowerCase() + compact.slice(1) : '';
+  }
+  function prettifyVolLabel(key){
+    return VOL_ROLE_LABEL_ALIASES[key] || String(key || '').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim().replace(/(^|\s)\S/g, s => s.toUpperCase());
+  }
+  function extractVolRolesFromRecord(record){
+    const out = {};
+    const add = (k, v) => {
+      const key = normalizeVolKey(k);
+      if(!key) return;
+      out[key] = !!v;
+    };
+    [record?.vol_roles, record?.volunteerRoles, record?.volunteer_roles, record?.volRoles].forEach((src) => {
+      if(!src) return;
+      if(Array.isArray(src)) src.forEach(v => add(v, true));
+      else if(typeof src === 'object') Object.keys(src).forEach(k => add(k, src[k]));
+    });
+    return out;
+  }
+  function buildVolunteerCatalog(records, profile){
+    const order = [];
+    const seen = new Set();
+    const addKey = (k) => {
+      const key = normalizeVolKey(k);
+      if(!key || seen.has(key)) return;
+      seen.add(key);
+      order.push(key);
+    };
+    Object.keys(extractVolRolesFromRecord(profile || {})).forEach(addKey);
+    (records || []).forEach(rec => Object.keys(extractVolRolesFromRecord(rec || {})).forEach(addKey));
+    return order.map(key => ({ key, label: prettifyVolLabel(key) }));
+  }
+  function renderVolunteerRoleOptions(profile){
+    if(!volunteerRolesWrap) return;
+    const records = currentProfileIndexes.map(i => users[i]).filter(Boolean);
+    volunteerCatalog = buildVolunteerCatalog(records.concat(users || []), profile);
+    const active = extractVolRolesFromRecord(profile || {});
+    if(!volunteerCatalog.length){
+      volunteerRolesWrap.innerHTML = '<p class="tiny muted" style="margin:0;">No volunteer roles are configured yet in your resident record.</p>';
+      return;
+    }
+    volunteerRolesWrap.innerHTML = '<div class="grid-2">' + volunteerCatalog.map(item => `<label class="chk" style="display:flex; align-items:flex-start; gap:10px; margin:0;"><input data-vol-role="${item.key}" type="checkbox" ${active[item.key] ? 'checked' : ''}/><span>${item.label}</span></label>`).join('') + '</div>';
+  }
+
+  function persistCurrentProfileToUsers(){
+    if(!currentProfile) return;
+    loadUsers();
+    let indexes = currentProfileIndexes && currentProfileIndexes.length ? currentProfileIndexes.slice() : collectMatchingUserIndexes(currentEmail || currentProfile.email || '');
+    if(!indexes.length){
+      const base = ensureOwnerFlags({
+        email: normEmail(currentProfile.email || currentEmail || ''),
+        userEmail: normEmail(currentProfile.userEmail || currentEmail || ''),
+        loginEmail: normEmail(currentProfile.loginEmail || currentEmail || ''),
+        netlifyEmail: normEmail(currentProfile.netlifyEmail || currentEmail || '')
+      });
+      users.push(base);
+      indexes = [users.length - 1];
+    }
+    const copyObject = (value) => JSON.parse(JSON.stringify(value));
+    indexes.forEach((idx) => {
+      if(!users[idx] || typeof users[idx] !== 'object') users[idx] = {};
+      const row = users[idx];
+      const editable = ['phone','mobile','alertsConsent','termsAccepted','termsAcceptedAt','avatar','photo','profilePhoto','photoURL','interest','vol_roles'];
+      editable.forEach((key) => {
+        if(currentProfile[key] !== undefined) row[key] = copyObject(currentProfile[key]);
+      });
+      const activeVolRoleKeys = Object.keys(currentProfile.vol_roles || {}).filter(k => currentProfile.vol_roles[k]);
+      row.volunteerRoles = activeVolRoleKeys.slice();
+      row.volunteer_roles = activeVolRoleKeys.slice();
+      ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
+        if(currentProfile[key]) row[key] = currentProfile[key];
+      });
+      if(isOwnerEmail(currentEmail || currentProfile.email || row.email || row.userEmail)){
+        ensureOwnerFlags(row);
+      }
+      row.updatedAt = new Date().toISOString();
+    });
+    currentProfileIndexes = indexes.slice();
+  }
+
+  window.anwFindDashboardUserByEmail = function(email){ return findUserByEmail(email); };
+
+  function prettyStatus(value){
+    const raw = String(value || '').trim().toLowerCase();
+    if(['active','approved'].includes(raw)) return 'Active';
+    if(raw) return raw.replace(/(^|\s)\S/g, s => s.toUpperCase());
+    return 'Pending';
+  }
+  function electedLabelFromUser(u){
+    const r = String(u?.electedRole || '').toLowerCase();
+    if(r === 'assistant') return 'Assistant Area Coordinator';
+    if(r === 'area') return 'Area Coordinator';
+    return '—';
+  }
+  function primaryRoleFromUser(u){
+    const elected = String(u?.electedRole || '').toLowerCase();
+    if(elected === 'area') return 'Street Coordinator';
+    if(elected === 'assistant') return 'Assistant Street Coordinator';
+    const raw = u?.role || u?.type || u?.residentType || '';
+    if(!raw) return 'Resident';
+    return String(raw).replace(/(^|\s)\S/g, s => s.toUpperCase());
+  }
+  function addressFromUser(u){
+    return String(u?.address || u?.fullAddress || '').trim() || '—';
+  }
+  function statusFromUser(u){
+    if(!u) return 'pending';
+    if(isOwnerEmail(currentEmail || u.email || u.userEmail)) return 'active';
+    const raw = String(u.status || u.accountStatus || u.registrationStatus || '').trim().toLowerCase();
+    if(raw) return raw;
+    if(u.active === true || u.approved === true) return 'active';
+    const roles = [u?.role,u?.type,u?.residentType,u?.access].map(v => String(v || '').trim().toLowerCase());
+    if(roles.includes('owner') || roles.includes('admin')) return 'active';
+    return 'pending';
+  }
+  function fullNameFromUser(u){
+    return String(u?.name || u?.fullName || '').trim() || 'Resident';
+  }
+
+  function clearProfileUi(){
+    ['pfPhone','pfEmail','pfMgmt','pfElected'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    const cb = document.getElementById('pfAlertOptIn'); if(cb) cb.checked = false;
+    if(volunteerRolesWrap) volunteerRolesWrap.innerHTML = '';
+    document.querySelectorAll('[data-vol-role]').forEach(el => { el.checked = false; });
+    setText('pfAlertMeta', 'No alert preference recorded yet (Email/SMS/WhatsApp).');
+    setText('pfNameHero', 'Resident');
+    setText('pfStatusHero', 'Pending');
+    setText('pfRegHero', '—');
+    setText('pfPrimaryRoleHero', 'Resident');
+    setText('pfAddressHero', '—');
+    setText('pfEirHero', 'Eircode: —');
+    setText('pfTypeHero', '—');
+    const volHero = document.getElementById('pfVolHero');
+    if(volHero) volHero.innerHTML = '<span class="profile-empty-note">No volunteer positions selected</span>';
+    setText('pfMsg', '');
+  }
+
+  function applyProfileUi(){
+    if(!currentEmail || !currentProfile){
+      if(notLoggedBox) notLoggedBox.style.display = 'block';
+      if(profileArea) profileArea.style.display = 'none';
+      clearProfileUi();
+      return;
+    }
+    if(notLoggedBox) notLoggedBox.style.display = 'none';
+    if(profileArea) profileArea.style.display = 'block';
+
+    const regValue = currentProfile.regId || currentProfile.regNo || currentProfile.registrationNo || '—';
+    const statusValue = statusFromUser(currentProfile);
+    document.getElementById('pfPhone').value = currentProfile.phone || currentProfile.mobile || '';
+    document.getElementById('pfEmail').value = currentProfile.email || currentProfile.userEmail || currentEmail || '';
+    document.getElementById('pfMgmt').value = currentProfile.managementCompany || '';
+    document.getElementById('pfElected').value = electedLabelFromUser(currentProfile);
+
+    setText('pfNameHero', fullNameFromUser(currentProfile));
+    setText('pfStatusHero', prettyStatus(statusValue));
+    setText('pfRegHero', regValue);
+    setText('pfPrimaryRoleHero', primaryRoleFromUser(currentProfile));
+    setText('pfAddressHero', addressFromUser(currentProfile));
+    setText('pfEirHero', 'Eircode: ' + (currentProfile.eircode || currentProfile.eir || '—'));
+    setText('pfTypeHero', currentProfile.type || currentProfile.residentType || '—');
+
+    const ac = currentProfile.alertsConsent || {};
+    const cb = document.getElementById('pfAlertOptIn'); if(cb) cb.checked = !!ac.optIn || !!ac.email || !!ac.sms;
+    setText('pfAlertMeta', ac.updatedAt ? ('Last updated: ' + new Date(ac.updatedAt).toLocaleString()) : 'No alert preference recorded yet (Email/SMS/WhatsApp).');
+
+    currentProfile.vol_roles = Object.assign({}, extractVolRolesFromRecord(currentProfile), currentProfile.vol_roles || {});
+    renderVolunteerRoleOptions(currentProfile);
+
+    const vr = extractVolRolesFromRecord(currentProfile);
+    const volHero = document.getElementById('pfVolHero');
+    if(volHero){
+      volHero.innerHTML = '';
+      Object.keys(vr).filter(k => vr[k]).forEach(k => {
+        const chip = document.createElement('span');
+        chip.className = 'profile-volunteer-chip';
+        chip.textContent = prettifyVolLabel(k);
+        volHero.appendChild(chip);
+      });
+      if(!volHero.children.length){
+        volHero.innerHTML = '<span class="profile-empty-note">No volunteer positions selected</span>';
+      }
+    }
+  }
+
+  async function getIdentityEmail(){
+    try{
+      const current = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function' ? window.netlifyIdentity.currentUser() : null;
+      if(current && current.email) return String(current.email || '');
+    }catch(_){}
+    if(window.netlifyIdentity && typeof window.netlifyIdentity.on === 'function'){
+      try{
+        return await new Promise((resolve) => {
+          let done = false;
+          const finish = (u) => {
+            if(done) return;
+            done = true;
+            resolve(String((u && u.email) || ''));
+          };
+          try{
+            window.netlifyIdentity.on('init', finish);
+            window.netlifyIdentity.init && window.netlifyIdentity.init();
+          }catch(_){}
+          setTimeout(() => {
+            try{
+              const user = window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+              finish(user || null);
+            }catch(_){
+              finish(null);
+            }
+          }, 600);
+        });
+      }catch(_){}
+    }
+    return '';
+  }
+
+  async function resolveDashboardContext(){
+    try{ await anwInitStore(); }catch(_){}
+    try{ if(typeof window.anwSyncFromServer === 'function' && (Date.now() - lastLocalUsersWriteAt > 2500)){ await window.anwSyncFromServer([KEY_USERS], 0); } }catch(_){}
+    loadUsers();
+    let email = '';
+    try{ email = String(await getIdentityEmail() || ''); }catch(_){}
+    if(!email){ try{ email = String(anwGetLoggedEmail() || ''); }catch(_){ } }
+    if(!email){
+      try{
+        const session = (typeof anwGetSession === 'function') ? (anwGetSession() || {}) : {};
+        email = String(session.email || '');
+      }catch(_){}
+    }
+    currentEmail = email;
+    currentProfile = email ? findUserByEmail(email) : null;
+    if(isOwnerEmail(email)){
+      if(!currentProfile) currentProfile = {};
+      currentProfile.email = currentProfile.email || normEmail(email);
+      currentProfile.userEmail = currentProfile.userEmail || normEmail(email);
+      currentProfile.loginEmail = currentProfile.loginEmail || normEmail(email);
+      currentProfile.netlifyEmail = currentProfile.netlifyEmail || normEmail(email);
+      ensureOwnerFlags(currentProfile);
+    }
+
+    if(!currentProfile && users.length === 1){
+      const only = users[0];
+      if(statusFromUser(only) === 'active') currentProfile = only;
+    }
+
+    if(currentProfile) currentProfile.vol_roles = Object.assign({}, extractVolRolesFromRecord(currentProfile), currentProfile.vol_roles || {});
+    applyProfileUi();
+    return { email: currentEmail, profile: currentProfile };
+  }
+  window.anwResolveDashboardContext = resolveDashboardContext;
+
+  function isApprovedResident(profile){
+    const status = statusFromUser(profile);
+    return !!(profile && (profile.approved === true || profile.active === true || status === 'active' || status === 'approved'));
+  }
+  window.anwIsApprovedDashboardProfile = function(profile){ return isApprovedResident(profile); };
+
+  function syncInterestAccess(){
+    const __demo = (location.protocol === 'file:' || (new URLSearchParams(location.search)).get('demo') === '1' || localStorage.getItem('anw_demo') === '1');
+    const allowed = __demo ? true : !!(currentProfile && isApprovedResident(currentProfile));
+    if(!interestBlocked || !interestArea) return allowed;
+    interestBlocked.style.display = allowed ? 'none' : 'block';
+    interestArea.style.display = allowed ? 'block' : 'none';
+    return allowed;
+  }
+
+  await resolveDashboardContext();
+  syncInterestAccess();
+
+  const avatarImg = document.getElementById('pfAvatar');
+  const avatarInput = document.getElementById('pfAvatarInput');
+  const avatarBtn = document.getElementById('btnUploadAvatar');
+  const logoutBtn = document.getElementById('btnLogout');
+
+  function getStoredAvatar(){
+    const session = (typeof anwGetSession === 'function') ? anwGetSession() : null;
+    const sessionAvatar = session && (session.avatar || session.photo);
+    let metadataAvatar = '';
+    try{
+      const current = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+      metadataAvatar = current && current.user_metadata ? (current.user_metadata.avatar || current.user_metadata.photo || '') : '';
+    }catch(_){}
+    return (currentProfile && (currentProfile.profilePhoto || currentProfile.avatar || currentProfile.photo || currentProfile.photoURL)) || sessionAvatar || metadataAvatar || 'assets/default-avatar.png';
+  }
+  if(avatarImg) avatarImg.src = getStoredAvatar();
+
+  try{
+    window.addEventListener('storage', async (ev) => {
+      if(ev && (ev.key === KEY_USERS || ev.key === ANW_KEYS.SESSION)){
+        await resolveDashboardContext();
+        syncInterestAccess();
+        if(avatarImg) avatarImg.src = getStoredAvatar();
+      }
+    });
+    document.addEventListener('visibilitychange', async () => {
+      if(document.visibilityState === 'visible'){
+        await resolveDashboardContext();
+        syncInterestAccess();
+        if(avatarImg) avatarImg.src = getStoredAvatar();
+      }
+    });
+    window.addEventListener('focus', async () => {
+      await resolveDashboardContext();
+      syncInterestAccess();
+      if(avatarImg) avatarImg.src = getStoredAvatar();
+    });
+  }catch(_){ }
+
+  document.getElementById('btnSaveProfile')?.addEventListener('click', async ()=>{
+    if(!currentProfile) return;
+    try{
+      currentProfile.phone = document.getElementById('pfPhone').value.trim();
+      currentProfile.mobile = currentProfile.phone;
+      const cb = document.getElementById('pfAlertOptIn');
+      const nextOptIn = !!(cb && cb.checked);
+      const now = new Date().toISOString();
+      currentProfile.termsAccepted = true;
+      if(!currentProfile.termsAcceptedAt) currentProfile.termsAcceptedAt = currentProfile.createdAt || now;
+      const prev = currentProfile.alertsConsent || { email:false, sms:false, history:[] };
+      const prevOptIn = !!(prev.optIn || prev.email || prev.sms);
+      if(prevOptIn !== nextOptIn){
+        const hist = Array.isArray(prev.history) ? prev.history.slice() : [];
+        hist.push({ at: now, email: nextOptIn, sms: nextOptIn, source: 'profile' });
+        currentProfile.alertsConsent = { optIn: nextOptIn, email: nextOptIn, sms: nextOptIn, updatedAt: now, history: hist };
+      } else {
+        currentProfile.alertsConsent = { optIn: prevOptIn, email: !!prev.email, sms: !!prev.sms, updatedAt: prev.updatedAt || now, history: Array.isArray(prev.history) ? prev.history : [] };
+      }
+      const nextVolRoles = {};
+      (volunteerRolesWrap || document).querySelectorAll('[data-vol-role]').forEach((el) => { nextVolRoles[el.getAttribute('data-vol-role')] = !!el.checked; });
+      currentProfile.vol_roles = nextVolRoles;
+      ensureOwnerFlags(currentProfile);
+      persistCurrentProfileToUsers();
+      applyProfileUi();
+      await saveUsersAndSync();
+      const resolved = await resolveDashboardContext();
+      setText('pfMsg', 'Profile updated.');
+      toast('Profile updated.', 'success');
+      if(typeof window.anwDashboardRequestTab === 'function'){
+        const nextTab = isApprovedResident((resolved && resolved.profile) || currentProfile) ? 'tabInterest' : 'tabGarda';
+        try{ await window.anwDashboardRequestTab(nextTab); }catch(_){ }
+      }
+    }catch(err){
+      setText('pfMsg', 'Error updating profile.');
+      modal('Error updating profile. Please try again.', 'Error');
+      toast('Error updating profile.', 'error');
+    }
+  });
+
+  avatarBtn?.addEventListener('click', () => avatarInput?.click());
+  avatarInput?.addEventListener('change', async () => {
+    const file = avatarInput.files && avatarInput.files[0];
+    if(!file) return;
+    if(!/^image\/(jpeg|png)$/i.test(String(file.type || ''))){
+      modal('Please select a JPG or PNG image.', 'Invalid file');
+      avatarInput.value = '';
+      return;
+    }
+    try{
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('read_failed'));
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.readAsDataURL(file);
+      });
+      const processed = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('image_failed'));
+        img.onload = () => {
+          const size = 300, canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          const minSide = Math.min(img.width, img.height);
+          const sx = Math.max(0, (img.width - minSide) / 2);
+          const sy = Math.max(0, (img.height - minSide) / 2);
+          ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+          resolve(canvas.toDataURL('image/jpeg', 0.78));
+        };
+        img.src = dataUrl;
+      });
+      if(avatarImg) avatarImg.src = processed;
+      if(currentProfile){
+        currentProfile.avatar = processed;
+        currentProfile.photo = processed;
+        currentProfile.profilePhoto = processed;
+        currentProfile.photoURL = processed;
+      }
+      const session = (typeof anwGetSession === 'function') ? (anwGetSession() || {}) : {};
+      session.avatar = processed; session.photo = processed; session.email = session.email || currentEmail || currentProfile?.email || '';
+      if(typeof anwSave === 'function' && window.ANW_KEYS) anwSave(ANW_KEYS.SESSION, session);
+      ensureOwnerFlags(currentProfile);
+      persistCurrentProfileToUsers();
+      if(typeof anwSave === 'function') await saveUsersAndSync();
+      try{
+        const user = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+        if(user && typeof user.update === 'function'){
+          const currentMeta = user.user_metadata || {};
+          await user.update({ user_metadata: Object.assign({}, currentMeta, { avatar: processed, photo: processed }) });
+        }
+      }catch(_){}
+      setText('pfMsg', 'Profile photo updated.');
+      toast('Profile photo updated.', 'success');
+    }catch(err){
+      setText('pfMsg', 'Error updating profile photo.');
+      modal('Error updating profile photo. Please try again.', 'Error');
+      toast('Error updating profile photo.', 'error');
+    } finally {
+      avatarInput.value = '';
+    }
+  });
+
+  logoutBtn?.addEventListener('click', async ()=>{ try{ if(typeof window.anwLogout === 'function'){ await window.anwLogout(); return; } }catch(_){ } window.location.href = 'login.html'; });
+
+  const intRole = document.getElementById('intRole');
+  const intText = document.getElementById('intText');
+  const intMeta = document.getElementById('intMeta');
+  const btnSubmitInterest = document.getElementById('btnSubmitInterest');
+  const btnWithdrawInterest = document.getElementById('btnWithdrawInterest');
+  function renderInterest(){
+    if(!currentProfile){
+      if(intRole) intRole.value = '';
+      if(intText) intText.value = '';
+      if(intMeta) intMeta.textContent = '';
+      if(btnWithdrawInterest) btnWithdrawInterest.style.display = 'none';
+      if(btnSubmitInterest) btnSubmitInterest.textContent = 'Submit';
+      return;
+    }
+    if(currentProfile.interest){
+      intRole.value = currentProfile.interest.role || '';
+      intText.value = currentProfile.interest.text || '';
+      intMeta.textContent = 'Submitted on ' + (currentProfile.interest.date || '—') + ' · Status: ' + (currentProfile.interest.status || 'pending');
+      btnWithdrawInterest.style.display = 'inline-block';
+      btnSubmitInterest.textContent = 'Update';
+    } else {
+      intRole.value = '';
+      intText.value = '';
+      intMeta.textContent = '';
+      btnWithdrawInterest.style.display = 'none';
+      btnSubmitInterest.textContent = 'Submit';
+    }
+  }
+  renderInterest();
+
+  window.anwRefreshDashboardProfile = async function(){
+    await resolveDashboardContext();
+    syncInterestAccess();
+    if(avatarImg) avatarImg.src = getStoredAvatar();
+    renderInterest();
+    renderNotices();
+  };
+
+  btnSubmitInterest?.addEventListener('click', async ()=>{
+    if(!currentProfile) return;
+    const roleVal = (intRole.value || '').trim();
+    const textVal = (intText.value || '').trim();
+    if(!roleVal || !textVal){
+      intMeta.textContent = 'Please complete all fields.';
+      toast('Please complete all fields.', 'warn');
+      modal('Please complete all fields before submitting.', 'Missing information');
+      return;
+    }
+    try{
+      const existingStatus = currentProfile.interest?.status || 'pending';
+      currentProfile.interest = {
+        role: roleVal,
+        text: textVal,
+        date: new Date().toISOString().slice(0,10),
+        status: existingStatus,
+        residentEmail: currentProfile.email || currentProfile.userEmail || currentEmail || '',
+        residentName: fullNameFromUser(currentProfile),
+        residentRegId: currentProfile.regId || currentProfile.regNo || ''
+      };
+      ensureOwnerFlags(currentProfile);
+      persistCurrentProfileToUsers();
+      await saveUsersAndSync();
+      renderInterest();
+      intMeta.textContent = 'Interest saved. Awaiting admin approval if pending.';
+      toast('Interest saved.', 'success');
+    } catch(err){
+      intMeta.textContent = 'Error saving interest.';
+      toast('Error saving interest.', 'error');
+      modal('Error saving your interest. Please try again.', 'Error');
+    }
+  });
+
+  btnWithdrawInterest?.addEventListener('click', async ()=>{
+    if(!currentProfile || !currentProfile.interest) return;
+    const ok = await confirmModal('Withdraw your submitted interest?', 'Confirm');
+    if(!ok) return;
+    try{
+      delete currentProfile.interest;
+      ensureOwnerFlags(currentProfile);
+      persistCurrentProfileToUsers();
+      await saveUsersAndSync();
+      renderInterest();
+      intMeta.textContent = 'Interest withdrawn.';
+      toast('Interest withdrawn.', 'info');
+    }catch(err){
+      intMeta.textContent = 'Error withdrawing interest.';
+      toast('Error withdrawing interest.', 'error');
+      modal('Error withdrawing interest. Please try again.', 'Error');
+    }
+  });
+
+  const electionsBody = document.getElementById('electionsBody');
+  const electionsEmpty = document.getElementById('electionsEmpty');
+  const elections = anwLoad(KEY_ELECTIONS, []);
+  electionsBody.innerHTML = '';
+  if(!Array.isArray(elections) || !elections.length) electionsEmpty.style.display = 'block';
+  else {
+    electionsEmpty.style.display = 'none';
+    elections.forEach(e=>{
+      const tr = document.createElement('tr');
+      const roleLabel = (String(e.role||'').toLowerCase()==='assistant') ? 'Assistant Area Coordinator' : 'Area Coordinator';
+      const winner = e.electedName || e.winnerName || e.electedEmail || '—';
+      tr.innerHTML = `<td>${roleLabel}</td><td>${e.start || '—'} → ${e.end || '—'}</td><td>${e.status || '—'}</td><td>${winner}</td>`;
+      electionsBody.appendChild(tr);
+    });
+  }
+
+  const noticesBadge = document.getElementById('noticesBadge');
+  const noticesBadgeTop = document.getElementById('noticesBadgeTop');
+  const noticesEmpty = document.getElementById('noticesEmpty');
+  const noticesList = document.getElementById('noticesList');
+  function getReadSet(){ try{ const key = `anw_notices_read_${normEmail(currentEmail)}`; const raw = localStorage.getItem(key); const arr = raw ? JSON.parse(raw) : []; return new Set(Array.isArray(arr) ? arr : []); }catch{ return new Set(); } }
+  function saveReadSet(set){ try{ const key = `anw_notices_read_${normEmail(currentEmail)}`; localStorage.setItem(key, JSON.stringify(Array.from(set))); }catch{} }
+  function cleanText(value){ return String(value || '').replace(/\s+/g, ' ').trim(); }
+  function cleanNoticeTitle(value){ let title = cleanText(value); if(!title) return ''; if(/^\d+$/.test(title)) return ''; if(/^(null|undefined|notice|untitled)$/i.test(title)) return ''; title = title.replace(/^#+\s*/, '').replace(/^[\W_]+|[\W_]+$/g, '').trim(); if(title.length < 3) return ''; return title; }
+  function isLiveNotice(item){ if(!item || typeof item !== 'object') return false; if(item.deleted === true || item.hidden === true || item.archived === true) return false; if(item.isPublished === false || item.published === false || item.enabled === false || item.visible === false || item.active === false) return false; const status = cleanText(item.status).toLowerCase(); if(status && ['deleted','hidden','inactive','draft','archived','trash'].includes(status)) return false; return true; }
+  function dedupeNotices(items){ const seen = new Set(); const out = []; for(const raw of (items || [])){ if(!isLiveNotice(raw)) continue; const title = cleanNoticeTitle(raw?.title); const message = cleanText(raw?.message || raw?.body || raw?.content || ''); if(!title && !message) continue; const key = [String(raw?.id || ''), title.toLowerCase(), message.toLowerCase(), cleanText(raw?.createdAt)].join('|'); if(seen.has(key)) continue; seen.add(key); out.push(Object.assign({}, raw, { title: title || 'Notice', message })); } return out; }
+  function isBinCollectionNotice(item){
+    if(!item || typeof item !== 'object') return false;
+
+    const scalarFields = [
+      item?.kind,
+      item?.type,
+      item?.category,
+      item?.section,
+      item?.source,
+      item?.feed,
+      item?.noticeType,
+      item?.topic
+    ].map(v => cleanText(v).toLowerCase()).filter(Boolean);
+
+    const tags = Array.isArray(item?.tags)
+      ? item.tags.map(v => cleanText(v).toLowerCase()).filter(Boolean)
+      : [];
+
+    const explicitMarkers = scalarFields.concat(tags);
+    if(explicitMarkers.some(v => [
+      'bin',
+      'bins',
+      'bin collection',
+      'waste',
+      'waste collection',
+      'recycling',
+      'recycling collection',
+      'refuse',
+      'bin day'
+    ].includes(v))) return true;
+
+    const title = cleanText(item?.title).toLowerCase();
+    const message = cleanText(item?.message || item?.body || item?.content || '').toLowerCase();
+    const combined = `${title} ${message}`;
+
+    const phrases = [
+      'bin collection',
+      'waste collection',
+      'recycling collection',
+      'domestic waste collection',
+      'household waste collection',
+      'black bin',
+      'brown bin',
+      'green bin',
+      'general waste bin',
+      'recycling bin',
+      'organic bin',
+      'bin day',
+      'collection schedule',
+      'waste schedule'
+    ];
+
+    return phrases.some(p => combined.includes(p));
+  }
+  function getStreetName(address){ const a = String(address||'').trim(); if(!a) return ''; let s = a.replace(/[A-Z]\d{2}\s?[A-Z0-9]{4}\b/gi, '').replace(/\s{2,}/g,' ').trim(); s = s.split(',')[0] || s; s = s.replace(/^\s*\d+[A-Za-z]?\s+/, '').trim(); return s; }
+  function noticeMatchesUser(n, user){
+    const t = n?.target || n?.targets || {};
+    const inc = t.include || t;
+    const exc = t.exclude || {};
+    const collectRoles = (profile) => {
+      const raw = [];
+      const pushAny = (v) => { if(v == null || v === '') return; if(Array.isArray(v)) return v.forEach(pushAny); raw.push(String(v)); };
+      pushAny(profile?.type); pushAny(profile?.role); pushAny(profile?.roles); pushAny(profile?.residentType); pushAny(profile?.position); pushAny(profile?.title); pushAny(profile?.access);
+      if(typeof window.anwGetLoggedRole === 'function') pushAny(window.anwGetLoggedRole());
+      return Array.from(new Set(raw.map(v => { try{ return typeof window.anwNormalizeRoleName === 'function' ? window.anwNormalizeRoleName(v) : String(v || '').toLowerCase().trim(); }catch(_){ return String(v || '').toLowerCase().trim(); } }).filter(Boolean)));
+    };
+    const roles = collectRoles(user), isAdmin = roles.includes('admin') || roles.includes('owner'), eir = String(user?.eircode || '').replace(/\s+/g,'').toUpperCase(), street = getStreetName(user?.address || user?.fullAddress || ''), email = normEmail(user?.email || user?.userEmail);
+    const hasRole = (list) => Array.isArray(list) && list.map(String).map(v => { try{ return typeof window.anwNormalizeRoleName === 'function' ? window.anwNormalizeRoleName(v) : String(v || '').toLowerCase().trim(); }catch(_){ return String(v || '').toLowerCase().trim(); } }).some(v => roles.includes(v));
+    if(hasRole(exc.roles)) return false;
+    if(Array.isArray(exc.eircodes) && exc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return false;
+    if(Array.isArray(exc.emails) && exc.emails.map(normEmail).includes(email)) return false;
+    if(inc.nonAdminOnly && isAdmin) return false;
+    const hasAnyInclude = !!(inc.allLoggedIn || (Array.isArray(inc.roles) && inc.roles.length) || (Array.isArray(inc.eircodes) && inc.eircodes.length) || (Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.length) || (Array.isArray(inc.streets) && inc.streets.length) || (Array.isArray(inc.emails) && inc.emails.length));
+    if(!hasAnyInclude) return true;
+    if(inc.allLoggedIn) return true;
+    if(hasRole(inc.roles)) return true;
+    if(Array.isArray(inc.emails) && inc.emails.map(normEmail).includes(email)) return true;
+    if(Array.isArray(inc.eircodes) && inc.eircodes.map(String).map(x=>x.replace(/\s+/g,'').toUpperCase()).includes(eir)) return true;
+    if(Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.map(String).map(x=>x.toUpperCase()).some(p=>eir.startsWith(p))) return true;
+    if(Array.isArray(inc.streets) && street){ const stList = inc.streets.map(String).map(x=>x.trim().toLowerCase()).filter(Boolean); if(stList.includes(street.toLowerCase())) return true; }
+    return false;
+  }
+  function setBadge(count){ const show = Number(count||0) > 0; if(noticesBadge){ noticesBadge.textContent = String(count||0); noticesBadge.style.display = show ? 'inline-flex' : 'none'; } if(noticesBadgeTop){ noticesBadgeTop.textContent = String(count||0); noticesBadgeTop.style.display = show ? 'inline-flex' : 'none'; } }
+  function renderNotices(){
+    if(!noticesList || !noticesEmpty) return;
+    if(!currentEmail || !currentProfile){ setBadge(0); noticesEmpty.style.display = 'block'; noticesList.style.display = 'none'; return; }
+    const all = anwLoad(KEY_NOTICES, []); const arr = Array.isArray(all) ? all : []; const now = Date.now();
+    const filtered = dedupeNotices(arr).filter(n => {
+      if(isBinCollectionNotice(n)) return false;
+      const exp = n?.expiresAt ? Date.parse(n.expiresAt) : NaN;
+      if(!isNaN(exp) && exp < now) return false;
+      return noticeMatchesUser(n, currentProfile);
+    }).sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
+    const read = getReadSet(); const unread = filtered.filter(n => n?.id && !read.has(n.id)).length; setBadge(unread);
+    if(!filtered.length){ noticesEmpty.style.display = 'block'; noticesList.style.display = 'none'; return; }
+    noticesEmpty.style.display = 'none'; noticesList.style.display = 'block'; noticesList.innerHTML = '';
+    filtered.forEach(n => {
+      const isUnread = n?.id && !read.has(n.id);
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.margin = '0.75rem 0';
+      card.style.cursor = 'pointer';
+      card.innerHTML = `<div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;"><div><div style="font-weight:${isUnread ? '800' : '700'};">${String(cleanNoticeTitle(n?.title) || 'Notice').replace(/</g,'&lt;').replace(/>/g,'&gt;')}${isUnread ? '<span class="badge" style="margin-left:8px;">NEW</span>' : ''}</div><div class="tiny muted" style="margin-top:4px; font-weight:${isUnread ? '700' : '400'};">${String(n?.message || n?.body || n?.content || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div></div><div class="tiny muted">${n?.createdAt ? new Date(n.createdAt).toLocaleDateString() : ''}</div></div>`;
+      card.addEventListener('click', async ()=>{ if(n?.id){ read.add(n.id); saveReadSet(read); renderNotices(); } });
+      noticesList.appendChild(card);
+    });
+  }
+  renderNotices();
+  document.querySelectorAll('.dash-tab').forEach(b => { b.addEventListener('click', () => { if(b.dataset.tab === 'tabNotices') renderNotices(); }); });
+
+  (function(){
+    const statusEl = document.getElementById('gardaStatus');
+    const chipsEl = document.getElementById('gardaChips');
+    const listEl = document.getElementById('gardaList');
+    const PRESET = {
+      categories: ['Fraud / Economic Crime','Cyber Crime','Burglary & Theft','Drugs','Domestic Abuse','Traffic Matters','Community Policing','Other'],
+      linksByCategory: {
+        'Fraud / Economic Crime': [{ title:'Fraud (information hub)', url:'https://www.garda.ie/en/crime/fraud/', snippet:'Practical advice on avoiding scams, spotting fraud attempts, and reporting economic crime.' }],
+        'Cyber Crime': [{ title:'Cyber crime (information hub)', url:'https://www.garda.ie/en/crime/cyber-crime/', snippet:'Guidance on staying safe online, common cyber threats, and how to report incidents.' }, { title:'Cyber crime awareness', url:'https://www.garda.ie/en/crime/cyber-crime/cyber-crime-awareness.html', snippet:'Tips and campaigns to help residents recognise phishing, hacking and online fraud.' }],
+        'Burglary & Theft': [{ title:'Securing your home (burglary prevention)', url:'https://www.garda.ie/en/crime-prevention/securing-your-home/', snippet:'Steps to protect your home: locks, lighting, alarms and everyday habits that deter burglary.' }, { title:'Burglary & theft (hub)', url:'https://www.garda.ie/en/crime/burglary-theft/', snippet:'Information and guidance related to burglary and theft, including prevention and reporting.' }, { title:'Burglary & theft FAQs', url:'https://www.garda.ie/en/crime/burglary-theft/burglary-and-theft-faqs.html', snippet:'Frequently asked questions about burglary and theft: what to do and how to prevent it.' }],
+        'Drugs': [{ title:'Drugs (information hub)', url:'https://www.garda.ie/en/crime/drugs/', snippet:'Information on drug-related crime, community safety guidance and how to share information.' }],
+        'Domestic Abuse': [{ title:'Domestic abuse (information hub)', url:'https://www.garda.ie/en/crime/domestic-abuse/domestic-abuse.html', snippet:'Support and reporting information for domestic abuse, including emergency contacts and resources.' }],
+        'Traffic Matters': [{ title:'Road safety (Roads Policing)', url:'https://www.garda.ie/en/roads-policing/road-safety/', snippet:'Road safety information, campaigns and advice to help keep drivers, cyclists and pedestrians safe.' }, { title:'Traffic matters (crime hub)', url:'https://www.garda.ie/en/crime/traffic-matters/', snippet:'Guidance on traffic-related offences and how to report dangerous driving or incidents.' }],
+        'Community Policing': [{ title:'Community policing', url:'https://www.garda.ie/en/crime-prevention/community-policing/community-policing.html', snippet:'How Garda community policing works and how residents can engage locally.' }, { title:'Community engagement', url:'https://www.garda.ie/en/crime-prevention/community-engagement/', snippet:'Neighbourhood Watch and other community engagement initiatives and resources.' }],
+        'Other': [{ title:'Crime prevention (main hub)', url:'https://www.garda.ie/en/crime-prevention/', snippet:'Main Garda crime prevention hub with practical guidance and official resources.' }, { title:'Garda press releases', url:'https://www.garda.ie/en/about-us/our-departments/office-of-corporate-communications/press-releases/', snippet:'Official press releases and updates published by An Garda Síochána.' }]
+      }
+    };
+    function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function normCat(cat){ return String(cat || '').toLowerCase().replace(/\s+/g,' ').trim(); }
+    function iconSvg(cat){ const c = normCat(cat); const svgs = { all:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V7l8-4z"/></svg>`, fraud:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M17 7h-6a3 3 0 0 0 0 6h2a3 3 0 0 1 0 6H7"/></svg>`, cyber:`<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="11" rx="2"/><path d="M8 21h8"/><path d="M12 16v5"/></svg>`, burglary:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 10v11h14V10"/><path d="M10 21v-6h4v6"/></svg>`, drugs:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 7l7 7"/><path d="M14 6l4 4a4 4 0 0 1-6 6l-4-4a4 4 0 0 1 6-6z"/><path d="M7 17l-1 1"/></svg>`, domestic:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z"/></svg>`, traffic:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17h10"/><path d="M6 17l-1-6 2-5h10l2 5-1 6"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/></svg>`, community:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M12 15c-4 0-7 2-7 5h14c0-3-3-5-7-5z"/><path d="M12 3v2"/></svg>`, other:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="10"/></svg>`}; if(c==='all') return svgs.all; if(c.includes('fraud')||c.includes('economic')) return svgs.fraud; if(c.includes('cyber')) return svgs.cyber; if(c.includes('burglary')||c.includes('theft')) return svgs.burglary; if(c.includes('drug')) return svgs.drugs; if(c.includes('domestic')) return svgs.domestic; if(c.includes('traffic')||c.includes('road')) return svgs.traffic; if(c.includes('community')||c.includes('policing')) return svgs.community; return svgs.other; }
+    function canonicalGardaUrl(u){ try{ const url = new URL(u); url.hash = ''; url.search = ''; return url.toString().replace(/\/+$/, '').toLowerCase(); }catch(e){ return (u || '').toLowerCase(); } }
+    function dedupeGarda(items){
+      const seen = new Set();
+      return (items || []).filter(it => {
+        const titleKey = String(it && it.title || '').trim().toLowerCase().replace(/\s+/g,' ');
+        const categoryKey = String(it && it.category || '').trim().toLowerCase().replace(/\s+/g,' ');
+        const urlKey = canonicalGardaUrl(it && it.url || '');
+        const key = [titleKey, categoryKey].join('|') || urlKey;
+        if(!key) return false;
+        if(seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+    function isBadUrl(url){ const u = String(url || ''); if(!u) return true; if(u.includes('/403/?404') || u.includes('/404/') || u.includes('404%3b') || u.includes('page-not-found')) return true; if(!/^https:\/\/(www\.)?garda\.ie\//i.test(u)) return true; return false; }
+    function looksLikeNotFound(item){ const t = String(item?.title || ''); const s = String(item?.snippet || ''); const joined = (t + ' ' + s).toLowerCase(); return joined.includes('page not found') || joined.includes(' 404') || joined.startsWith('404'); }
+    function itemIsActive(item){ if(!item || typeof item !== 'object') return false; if(item.active === false || item.isActive === false || item.enabled === false || item.visible === false) return false; const status = String(item.status || '').trim().toLowerCase(); if(status && ['inactive','disabled','hidden','broken','invalid','404','not_found','page_not_found'].includes(status)) return false; return true; }
+    function filterItems(items){ const cleaned = (items || []).filter(it => it && itemIsActive(it) && !isBadUrl(it.url) && !looksLikeNotFound(it)); return dedupeGarda(cleaned); }
+    function getGardaTabButton(){ return document.querySelector('.dash-tab[data-tab="tabGarda"]'); }
+    function showGardaTab(){ const btn = getGardaTabButton(); if(btn) btn.style.display = ''; }
+    function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
+    function render(items){
+      if(!chipsEl || !listEl) return;
+      const cats = Array.from(new Set((items||[]).map(x => x.category || 'Other'))).sort((a,b)=>a.localeCompare(b));
+      const allCats = ['All', ...cats];
+      chipsEl.innerHTML = `<div class="garda-cat-grid">${allCats.map((c,i)=>`<button type="button" class="garda-cat ${i===0?'is-active':''}" data-cat="${esc(c)}"><span class="icon">${iconSvg(c)}</span><span class="label">${esc(c)}</span></button>`).join('')}</div>`;
+      function apply(cat){
+        chipsEl.querySelectorAll('.garda-cat').forEach(b => b.classList.toggle('is-active', b.dataset.cat === cat));
+        const show = (cat === 'All') ? items : items.filter(x => (x.category||'Other') === cat);
+        listEl.innerHTML = (show||[]).map(x => `<div class="garda-item"><div class="row"><div class="title">${esc(x.title || '')}</div><div class="date">${esc(x.date || '')}</div></div>${x.snippet ? `<div class="snippet">${esc(x.snippet)}</div>` : ''}<a class="link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">Read more…</a><div class="meta">${esc(x.category || 'Other')}</div></div>`).join('') || `<div class="tiny muted">No valid items found for this category.</div>`;
+      }
+      chipsEl.querySelectorAll('.garda-cat').forEach(b => b.addEventListener('click', () => apply(b.dataset.cat)));
+      apply('All');
+    }
+    function renderPreset(){
+      if(!chipsEl || !listEl) return;
+      const items = [];
+      PRESET.categories.forEach(cc => (PRESET.linksByCategory[cc] || []).forEach(l => items.push({ category: cc, title: l.title, url: l.url, snippet: l.snippet || '', date: 'Official link' })));
+      showGardaTab();
+      setStatus('Official Garda resources');
+      render(filterItems(items));
+    }
+    async function loadGardaFeed(){
+      setStatus('Loading Garda updates…');
+      try{
+        const res = await fetch('/.netlify/functions/garda-feed', { cache: 'no-store' });
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        let itemsRaw = [];
+        if(Array.isArray(data.items)) itemsRaw = data.items;
+        else if(Array.isArray(data.categories)) itemsRaw = data.categories.map(c => ({ title: c.label || c.title || 'Official link', url: c.url || '', category: c.label || c.category || 'Other', date: 'Official link', snippet: c.snippet || '' }));
+        const items = filterItems(itemsRaw);
+        if(!items.length){ renderPreset(); return; }
+        showGardaTab();
+        setStatus('Official Garda resources (source: Garda.ie)');
+        render(items.slice(0, 40));
+      }catch(e){
+        console.warn('garda-feed failed', e);
+        renderPreset();
+      }
+    }
+    let loaded = false, started = false;
+    function ensureGardaLoaded(){ if(loaded) return; loaded = true; loadGardaFeed(); }
+    function primeGardaPanel(){ if(started) return; started = true; renderPreset(); setTimeout(ensureGardaLoaded, 0); }
+    document.addEventListener('DOMContentLoaded', primeGardaPanel, { once:true });
+    document.querySelectorAll('.dash-tab').forEach(b => { b.addEventListener('click', () => { if(b.dataset.tab !== 'tabGarda') return; primeGardaPanel(); }); });
+    if(document.querySelector('.dash-tab.active[data-tab="tabGarda"]')) primeGardaPanel();
+  })();
 })();
 </script>
-<script>(function(){const btn=document.getElementById('scrollTopBtn');if(!btn) return;btn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));})();</script>
-<script>document.addEventListener('DOMContentLoaded',()=>{const label=document.getElementById('pageAccessLabel');if(!label) return;const setLabel=tabId=>{label.textContent=tabId==='tabGarda'?'Public Page':'Private Page';};document.querySelectorAll('.dash-tab').forEach(btn=>{btn.addEventListener('click',()=>setLabel(btn.dataset.tab||'tabProfile'));});setLabel(document.querySelector('.dash-tab.active')?.dataset.tab||'tabProfile');window.anwDashboardSetAccessLabel=setLabel;});</script>
-<script>(function(){const OWNER_EMAIL=String(window.ANW_MASTER_EMAIL||'claudiosantos1968@gmail.com').trim().toLowerCase(),notice=document.getElementById('anwAccessNotice'),tabs=Array.from(document.querySelectorAll('.dash-tab')),panels=Array.from(document.querySelectorAll('.dash-tab-content')),publicTabs=new Set(['tabGarda']),norm=s=>String(s||'').toLowerCase().trim(),sameEmail=(a,b)=>norm(a)===norm(b),getSessionEmail=()=>{try{return typeof window.anwGetLoggedEmail==='function'?String(window.anwGetLoggedEmail()||''):'';}catch(_){return '';}};const getIdentityUser=async()=>{if(!window.netlifyIdentity) return null;return await new Promise(resolve=>{let done=false;const finish=u=>{if(done) return;done=true;resolve(u||null);};try{window.netlifyIdentity.on?.('init',finish);window.netlifyIdentity.init?.();}catch(_){}setTimeout(()=>{try{finish(window.netlifyIdentity.currentUser?.()||null);}catch(_){finish(null);}},600);});};const getProfile=async email=>{try{if(typeof window.anwResolveDashboardContext==='function'){const resolved=await window.anwResolveDashboardContext();if(resolved&&sameEmail(resolved.email,email)&&resolved.profile) return resolved.profile;}}catch(_){}try{if(typeof window.anwFindDashboardUserByEmail==='function') return window.anwFindDashboardUserByEmail(email)||null;}catch(_){}return null;};const isApprovedProfile=(profile,email)=>{if(sameEmail(email,OWNER_EMAIL)) return true;if(typeof window.anwIsApprovedDashboardProfile==='function'){try{return !!window.anwIsApprovedDashboardProfile(profile);}catch(_){}}const status=String(profile?.status||profile?.accountStatus||profile?.registrationStatus||'').toLowerCase().trim(),roles=[profile?.role,profile?.type,profile?.residentType,profile?.access].map(v=>String(v||'').toLowerCase().trim());return !!(profile&&(profile.approved===true||profile.active===true||status==='active'||status==='approved'||roles.includes('owner')||roles.includes('admin')));};function hidePanels(){panels.forEach(panel=>{panel.style.display='none';});}function setActive(tabId){tabs.forEach(btn=>{const on=btn.dataset.tab===tabId;btn.classList.toggle('active',on);btn.setAttribute('aria-selected',on?'true':'false');});if(typeof window.anwDashboardSetAccessLabel==='function') window.anwDashboardSetAccessLabel(tabId);}function showNotice(html){if(!notice) return;notice.style.display='block';notice.innerHTML=html||'';}function hideNotice(){if(!notice) return;notice.style.display='none';notice.innerHTML='';}function openPanel(tabId){const target=tabId||'tabProfile';hidePanels();const panel=document.getElementById(target);if(panel) panel.style.display='block';const blocked=document.getElementById('dashBlockedMessage');if(blocked) blocked.style.display='none';setActive(target);}async function requestTab(tabId){const target=tabId||'tabProfile',email=getSessionEmail();if(publicTabs.has(target)){hideNotice();openPanel(target);return;}const identityUser=await getIdentityUser(),effectiveEmail=norm(identityUser?.email||email||'');if(!effectiveEmail){showNotice('Please log in to access this section.');openPanel('tabGarda');return;}const profile=await getProfile(effectiveEmail);if(!isApprovedProfile(profile,effectiveEmail)){showNotice('Your account is pending approval. Garda & Safety remains available while private tabs stay locked.');openPanel('tabGarda');return;}hideNotice();if(typeof window.anwRefreshDashboardProfile==='function'){try{await window.anwRefreshDashboardProfile();}catch(_){}}openPanel(target);}tabs.forEach(btn=>{btn.addEventListener('click',event=>{event.preventDefault();requestTab(btn.dataset.tab||'tabProfile');});});window.anwDashboardRequestTab=requestTab;document.addEventListener('DOMContentLoaded',async()=>{const email=getSessionEmail(),identityUser=await getIdentityUser(),effectiveEmail=norm(identityUser?.email||email||''),profile=effectiveEmail?await getProfile(effectiveEmail):null;if(typeof window.anwRefreshDashboardProfile==='function'){try{await window.anwRefreshDashboardProfile();}catch(_){}}if(effectiveEmail&&isApprovedProfile(profile,effectiveEmail)) await requestTab('tabProfile');else await requestTab('tabGarda');});})();</script>
+<script>
+(function(){ const btn = document.getElementById('scrollTopBtn'); if(!btn) return; function isScrollable(el){ if(!el || el === document.documentElement) return false; const cs = window.getComputedStyle(el); const oy = cs.overflowY; if(!(oy === 'auto' || oy === 'scroll')) return false; return el.scrollHeight > (el.clientHeight + 5); } function scrollElementToTop(el){ try{ if(typeof el.scrollTo === 'function'){ el.scrollTo({ top: 0, behavior: 'smooth' }); } else { el.scrollTop = 0; } }catch(e){ try{ el.scrollTop = 0; }catch(_){} } } function scrollEverythingToTop(){ const docEl = document.scrollingElement || document.documentElement; scrollElementToTop(docEl); scrollElementToTop(document.documentElement); scrollElementToTop(document.body); let p = btn.parentElement; while(p){ if(isScrollable(p)) scrollElementToTop(p); p = p.parentElement; } document.querySelectorAll('*').forEach(el => { if(isScrollable(el)) scrollElementToTop(el); }); try{ window.scrollTo({ top: 0, behavior: 'smooth' }); }catch(e){ try{ window.scrollTo(0,0); }catch(_){} } } btn.addEventListener('click', () => { btn.classList.add('is-active'); scrollEverythingToTop(); setTimeout(() => btn.classList.remove('is-active'), 600); }); })();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => { const label = document.getElementById('pageAccessLabel'); if(!label) return; const setLabel = (tabId) => { label.textContent = tabId === 'tabGarda' ? 'Public Page' : 'Private Page'; }; document.querySelectorAll('.dash-tab').forEach((btn) => { btn.addEventListener('click', () => setLabel(btn.dataset.tab || 'tabProfile')); }); setLabel(document.querySelector('.dash-tab.active')?.dataset.tab || 'tabProfile'); window.anwDashboardSetAccessLabel = setLabel; });
+</script>
+<script>
+(function(){
+  const OWNER_EMAIL = String(window.ANW_MASTER_EMAIL || 'claudiosantos1968@gmail.com').trim().toLowerCase();
+  const notice = document.getElementById('anwAccessNotice');
+  const tabs = Array.from(document.querySelectorAll('.dash-tab'));
+  const panels = Array.from(document.querySelectorAll('.dash-tab-content'));
+  const publicTabs = new Set(['tabGarda']);
+  const norm = (s) => String(s || '').toLowerCase().trim();
+  const sameEmail = (a, b) => norm(a) === norm(b);
+  const getSessionEmail = () => { try{ return typeof window.anwGetLoggedEmail === 'function' ? String(window.anwGetLoggedEmail() || '') : ''; }catch(_){ return ''; } };
+  const getIdentityUser = async () => {
+    if(!window.netlifyIdentity) return null;
+    return await new Promise((resolve) => {
+      let done = false;
+      const finish = (u) => { if(done) return; done = true; resolve(u || null); };
+      try{ window.netlifyIdentity.on?.('init', finish); window.netlifyIdentity.init?.(); }catch(_){}
+      setTimeout(() => { try{ finish(window.netlifyIdentity.currentUser?.() || null); } catch(_){ finish(null); } }, 600);
+    });
+  };
+  const getProfile = async (email) => {
+    try{
+      if(typeof window.anwResolveDashboardContext === 'function'){
+        const resolved = await window.anwResolveDashboardContext();
+        if(resolved && sameEmail(resolved.email, email) && resolved.profile) return resolved.profile;
+      }
+    }catch(_){}
+    try{
+      if(typeof window.anwFindDashboardUserByEmail === 'function'){
+        return window.anwFindDashboardUserByEmail(email) || null;
+      }
+    }catch(_){}
+    try{ await window.anwInitStore?.(); }catch(_){}
+    try{
+      const users = (window.anwLoad && window.ANW_KEYS) ? (window.anwLoad(window.ANW_KEYS.USERS, []) || []) : [];
+      const target = norm(email);
+      const localTarget = target.split('@')[0] || '';
+      const rowEmails = (u) => [u?.email, u?.userEmail, u?.loginEmail, u?.netlifyEmail].map(v => norm(v)).filter(Boolean);
+      const matches = Array.isArray(users) ? users.filter((u) => rowEmails(u).some((e) => e === target || (e.split('@')[0] || '') === localTarget)) : [];
+      return matches[0] || null;
+    }catch(_){ return null; }
+  };
+  const isApprovedProfile = (profile, email) => {
+    if(sameEmail(email, OWNER_EMAIL)) return true;
+    if(typeof window.anwIsApprovedDashboardProfile === 'function'){
+      try{ return !!window.anwIsApprovedDashboardProfile(profile); }catch(_){}
+    }
+    const status = String(profile?.status || profile?.accountStatus || profile?.registrationStatus || '').toLowerCase().trim();
+    const roles = [profile?.role, profile?.type, profile?.residentType, profile?.access].map(v => String(v || '').toLowerCase().trim());
+    return !!(profile && (profile.approved === true || profile.active === true || status === 'active' || status === 'approved' || roles.includes('owner') || roles.includes('admin')));
+  };
+  function hidePanels(){ panels.forEach((panel) => { panel.style.display = 'none'; }); }
+  function setActive(tabId){ tabs.forEach((btn) => { const on = btn.dataset.tab === tabId; btn.classList.toggle('active', on); btn.setAttribute('aria-selected', on ? 'true' : 'false'); }); if(typeof window.anwDashboardSetAccessLabel === 'function') window.anwDashboardSetAccessLabel(tabId); }
+  function showNotice(html){ if(!notice) return; notice.style.display = 'block'; notice.innerHTML = html || ''; }
+  function hideNotice(){ if(!notice) return; notice.style.display = 'none'; notice.innerHTML = ''; }
+  function openPanel(tabId){ const target = tabId || 'tabProfile'; hidePanels(); const panel = document.getElementById(target); if(panel) panel.style.display = 'block'; const blocked = document.getElementById('dashBlockedMessage'); if(blocked) blocked.style.display = 'none'; setActive(target); }
+  async function requestTab(tabId){
+    const target = tabId || 'tabProfile';
+    const email = getSessionEmail();
+    if(publicTabs.has(target)){ hideNotice(); openPanel(target); return; }
+    const identityUser = await getIdentityUser();
+    const effectiveEmail = norm(identityUser?.email || email || '');
+    if(!effectiveEmail){ showNotice('Please log in to access this section.'); openPanel('tabGarda'); return; }
+    const profile = await getProfile(effectiveEmail);
+    if(!isApprovedProfile(profile, effectiveEmail)){ showNotice('Your account is pending approval. Garda & Safety remains available while private tabs stay locked.'); openPanel('tabGarda'); return; }
+    hideNotice();
+    if(typeof window.anwRefreshDashboardProfile === 'function'){ try{ await window.anwRefreshDashboardProfile(); }catch(_){} }
+    openPanel(target);
+  }
+  tabs.forEach((btn) => { btn.addEventListener('click', (event) => { event.preventDefault(); requestTab(btn.dataset.tab || 'tabProfile'); }); });
+  window.anwDashboardRequestTab = requestTab; window.openDashboardTab = requestTab;
+  document.addEventListener('DOMContentLoaded', async () => {
+    const email = getSessionEmail();
+    const identityUser = await getIdentityUser();
+    const effectiveEmail = norm(identityUser?.email || email || '');
+    const profile = effectiveEmail ? await getProfile(effectiveEmail) : null;
+    if(typeof window.anwRefreshDashboardProfile === 'function'){ try{ await window.anwRefreshDashboardProfile(); }catch(_){} }
+    if(effectiveEmail && isApprovedProfile(profile, effectiveEmail)) await requestTab('tabProfile'); else await requestTab('tabGarda');
+    try{ document.body.removeAttribute('data-acl-loading'); }catch(_){}
+  }, { once:true });
+})();
+</script>
 <script src="assets/acl-guard.js"></script>
 </body>
 </html>
