@@ -205,6 +205,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   const KEY_NOTICES = ANW_KEYS.NOTICES || 'anw_notices';
   const OWNER_EMAIL = String(window.ANW_MASTER_EMAIL || 'claudiosantos1968@gmail.com').trim().toLowerCase();
   const LOCAL_WRITE_SYNC_GRACE_MS = 15000;
+  const LOCAL_WRITE_TS_KEY = 'anw_users_last_local_write';
 
   let users = [];
   let currentEmail = '';
@@ -219,6 +220,19 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   const interestArea = document.getElementById('interestArea');
   const volunteerRolesWrap = document.getElementById('pfVolRolesWrap');
 
+  function markLocalUsersWrite(ts){
+    const stamp = Number(ts || Date.now()) || Date.now();
+    lastLocalUsersWriteAt = stamp;
+    try{ localStorage.setItem(LOCAL_WRITE_TS_KEY, String(stamp)); }catch(_){}
+    return stamp;
+  }
+
+  function getEffectiveLastLocalWrite(){
+    let persisted = 0;
+    try{ persisted = Number(localStorage.getItem(LOCAL_WRITE_TS_KEY) || '0') || 0; }catch(_){}
+    return Math.max(lastLocalUsersWriteAt || 0, persisted || 0);
+  }
+
   function loadUsers(){
     const next = anwLoad(KEY_USERS, []);
     users = Array.isArray(next) ? next : [];
@@ -226,8 +240,10 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   }
 
   async function saveUsersAndSync(){
-    lastLocalUsersWriteAt = Date.now();
+    markLocalUsersWrite();
     await anwSave(KEY_USERS, users);
+
+    let syncErr = null;
     try{
       if(typeof window.anwSyncToServer === 'function'){
         await window.anwSyncToServer([KEY_USERS]);
@@ -238,9 +254,15 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       }else if(typeof window.anwPublishStoreKey === 'function'){
         await window.anwPublishStoreKey(KEY_USERS);
       }
-    }catch(syncErr){
-      console.warn('users sync failed', syncErr);
+    }catch(err){
+      syncErr = err;
+      console.warn('users sync failed', err);
     }
+
+    await anwSave(KEY_USERS, users);
+    markLocalUsersWrite();
+
+    if(syncErr) throw syncErr;
   }
 
   function normEmail(v){ try{ return anwNormEmail(v || ''); }catch(_){ return String(v || '').trim().toLowerCase(); } }
@@ -465,7 +487,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   function collectVolRolesFromInputs(){
     const nextVolRoles = {};
     (volunteerRolesWrap || document).querySelectorAll('[data-vol-role]').forEach((el) => {
-      nextVolRoles[el.getAttribute('data-vol-role')] = !!el.checked;
+      const key = el.getAttribute('data-vol-role');
+      if(key) nextVolRoles[key] = !!el.checked;
     });
     return nextVolRoles;
   }
@@ -694,7 +717,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     try{ await anwInitStore(); }catch(_){}
 
     try{
-      if(typeof window.anwSyncFromServer === 'function' && (Date.now() - lastLocalUsersWriteAt > LOCAL_WRITE_SYNC_GRACE_MS)){
+      const effectiveLastWrite = getEffectiveLastLocalWrite();
+      if(typeof window.anwSyncFromServer === 'function' && (Date.now() - effectiveLastWrite > LOCAL_WRITE_SYNC_GRACE_MS)){
         await window.anwSyncFromServer([KEY_USERS], 0);
       }
     }catch(_){}
@@ -777,7 +801,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   try{
     window.addEventListener('storage', async (ev) => {
-      if(ev && (ev.key === KEY_USERS || ev.key === ANW_KEYS.SESSION)){
+      if(ev && (ev.key === KEY_USERS || ev.key === ANW_KEYS.SESSION || ev.key === LOCAL_WRITE_TS_KEY)){
         await resolveDashboardContext();
         syncInterestAccess();
         if(avatarImg) avatarImg.src = getStoredAvatar();
@@ -835,10 +859,16 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       ensureOwnerFlags(currentProfile);
 
       persistCurrentProfileToUsers();
+
+      await anwSave(KEY_USERS, users);
+      markLocalUsersWrite();
+
       applyProfileUi();
+
       await saveUsersAndSync();
 
-      currentProfile = findUserByEmail(currentEmail) || currentProfile;
+      loadUsers();
+      currentProfile = currentEmail ? findUserByEmail(currentEmail) : currentProfile;
       if(currentProfile) applyVolRolesToProfile(currentProfile, extractVolRolesFromRecord(currentProfile));
       applyProfileUi();
 
@@ -1314,7 +1344,7 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
       try{ return !!window.anwIsApprovedDashboardProfile(profile); }catch(_){}
     }
     const status = String(profile?.status || profile?.accountStatus || profile?.registrationStatus || '').toLowerCase().trim();
-    const roles = [profile?.role, profile?.type, profile?.residentType, profile?.access].map(v => String(v || '').toLowerCase().trim());
+    const roles = [profile?.role,profile?.type,profile?.residentType,profile?.access].map(v => String(v || '').toLowerCase().trim());
     return !!(profile && (profile.approved === true || profile.active === true || status === 'active' || status === 'approved' || roles.includes('owner') || roles.includes('admin')));
   };
   function hidePanels(){ panels.forEach((panel) => { panel.style.display = 'none'; }); }
