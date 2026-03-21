@@ -197,10 +197,12 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   const KEY_USERS = ANW_KEYS.USERS;
   const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
   const KEY_NOTICES = ANW_KEYS.NOTICES || 'anw_notices';
+  const OWNER_EMAIL = String(window.ANW_MASTER_EMAIL || 'claudiosantos1968@gmail.com').trim().toLowerCase();
 
   let users = [];
   let currentEmail = '';
   let currentProfile = null;
+  let currentProfileIndexes = [];
 
   const notLoggedBox = document.getElementById('dbNotLogged');
   const profileArea = document.getElementById('dbProfileArea');
@@ -222,15 +224,122 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       normEmail(u && u.netlifyEmail)
     ].filter(Boolean)));
   }
-  function findUserByEmail(email){
-    const candidates = emailCandidates(email);
-    if(!candidates.length) return null;
-    loadUsers();
-    const exact = users.find(u => rowEmails(u).some(e => candidates.includes(e)));
-    if(exact) return exact;
-    const localPart = candidates[0].split('@')[0];
-    return users.find(u => rowEmails(u).some(e => e.split('@')[0] === localPart)) || null;
+  function isOwnerEmail(email){
+    return normEmail(email) === OWNER_EMAIL;
   }
+  function scoreProfileRecord(u, targetEmail){
+    const normTarget = normEmail(targetEmail || '');
+    const localTarget = normTarget.split('@')[0] || '';
+    const emails = rowEmails(u);
+    const exact = emails.includes(normTarget);
+    const local = emails.some(e => (e.split('@')[0] || '') === localTarget);
+    const status = String(u?.status || u?.accountStatus || u?.registrationStatus || '').trim().toLowerCase();
+    const approved = !!(u?.approved === true || u?.active === true || status === 'active' || status === 'approved');
+    const ownerish = !!(emails.includes(OWNER_EMAIL) || [u?.role,u?.type,u?.residentType,u?.access].map(v => String(v || '').toLowerCase()).some(v => ['owner','admin'].includes(v)));
+    const richness = [u?.name,u?.fullName,u?.address,u?.fullAddress,u?.eircode,u?.eir,u?.managementCompany,u?.regId,u?.regNo,u?.registrationNo,u?.type,u?.residentType,u?.phone,u?.mobile].filter(v => String(v || '').trim()).length;
+    const updated = Date.parse(u?.updatedAt || u?.modifiedAt || u?.createdAt || 0) || 0;
+    return (exact ? 1000 : 0) + (local ? 200 : 0) + (approved ? 120 : 0) + (ownerish ? 80 : 0) + richness + Math.min(50, Math.floor(updated / 1000000000));
+  }
+  function mergeProfiles(records, targetEmail){
+    const list = Array.isArray(records) ? records.filter(Boolean).slice() : [];
+    if(!list.length) return null;
+    list.sort((a,b) => scoreProfileRecord(b, targetEmail) - scoreProfileRecord(a, targetEmail));
+    const merged = {};
+    const assignIfEmpty = (key, value) => {
+      if(value == null) return;
+      if(typeof value === 'string' && !value.trim()) return;
+      if(merged[key] == null || (typeof merged[key] === 'string' && !String(merged[key]).trim())) merged[key] = value;
+    };
+    list.forEach((rec, index) => {
+      if(index === 0) Object.assign(merged, rec || {});
+      Object.keys(rec || {}).forEach((key) => {
+        const value = rec[key];
+        if(value && typeof value === 'object' && !Array.isArray(value)){
+          merged[key] = Object.assign({}, value, merged[key] || {});
+        } else {
+          assignIfEmpty(key, value);
+        }
+      });
+    });
+    if(!merged.email) merged.email = normEmail(targetEmail || list[0]?.email || list[0]?.userEmail || '');
+    if((merged.approved !== true && merged.active !== true) && list.some(rec => {
+      const s = String(rec?.status || rec?.accountStatus || rec?.registrationStatus || '').trim().toLowerCase();
+      return rec?.approved === true || rec?.active === true || s === 'active' || s === 'approved';
+    })){
+      merged.active = true;
+      if(!String(merged.status || '').trim()) merged.status = 'active';
+    }
+    return merged;
+  }
+  function collectMatchingUserIndexes(email){
+    const candidates = emailCandidates(email);
+    if(!candidates.length) return [];
+    const localPart = candidates[0].split('@')[0];
+    return users.reduce((acc, u, index) => {
+      if(rowEmails(u).some(e => candidates.includes(e) || ((e.split('@')[0] || '') === localPart))) acc.push(index);
+      return acc;
+    }, []);
+  }
+  function ensureOwnerFlags(target){
+    if(!target) return target;
+    const ownerEmail = normEmail(target.email || target.userEmail || currentEmail || OWNER_EMAIL);
+    if(isOwnerEmail(ownerEmail)){
+      target.email = target.email || ownerEmail;
+      target.userEmail = target.userEmail || ownerEmail;
+      target.loginEmail = target.loginEmail || ownerEmail;
+      target.netlifyEmail = target.netlifyEmail || ownerEmail;
+      target.role = 'owner';
+      target.access = 'owner';
+      target.type = target.type || 'owner';
+      target.residentType = target.residentType || 'Owner';
+      target.active = true;
+      target.approved = true;
+      target.status = 'active';
+    }
+    return target;
+  }
+  function findUserByEmail(email){
+    loadUsers();
+    const indexes = collectMatchingUserIndexes(email);
+    const matches = indexes.map(i => users[i]).filter(Boolean);
+    currentProfileIndexes = indexes.slice();
+    const merged = mergeProfiles(matches, email);
+    return ensureOwnerFlags(merged);
+  }
+  function persistCurrentProfileToUsers(){
+    if(!currentProfile) return;
+    loadUsers();
+    let indexes = currentProfileIndexes && currentProfileIndexes.length ? currentProfileIndexes.slice() : collectMatchingUserIndexes(currentEmail || currentProfile.email || '');
+    if(!indexes.length){
+      const base = ensureOwnerFlags({
+        email: normEmail(currentProfile.email || currentEmail || ''),
+        userEmail: normEmail(currentProfile.userEmail || currentEmail || ''),
+        loginEmail: normEmail(currentProfile.loginEmail || currentEmail || ''),
+        netlifyEmail: normEmail(currentProfile.netlifyEmail || currentEmail || '')
+      });
+      users.push(base);
+      indexes = [users.length - 1];
+    }
+    const copyObject = (value) => JSON.parse(JSON.stringify(value));
+    indexes.forEach((idx) => {
+      if(!users[idx] || typeof users[idx] !== 'object') users[idx] = {};
+      const row = users[idx];
+      const editable = ['phone','mobile','alertsConsent','termsAccepted','termsAcceptedAt','avatar','photo','profilePhoto','photoURL','interest'];
+      editable.forEach((key) => {
+        if(currentProfile[key] !== undefined) row[key] = copyObject(currentProfile[key]);
+      });
+      ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
+        if(currentProfile[key]) row[key] = currentProfile[key];
+      });
+      if(isOwnerEmail(currentEmail || currentProfile.email || row.email || row.userEmail)){
+        ensureOwnerFlags(row);
+      }
+      row.updatedAt = new Date().toISOString();
+    });
+    currentProfileIndexes = indexes.slice();
+  }
+
+  window.anwFindDashboardUserByEmail = function(email){ return findUserByEmail(email); };
 
   function prettyStatus(value){
     const raw = String(value || '').trim().toLowerCase();
@@ -257,9 +366,12 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   }
   function statusFromUser(u){
     if(!u) return 'pending';
+    if(isOwnerEmail(currentEmail || u.email || u.userEmail)) return 'active';
     const raw = String(u.status || u.accountStatus || u.registrationStatus || '').trim().toLowerCase();
     if(raw) return raw;
     if(u.active === true || u.approved === true) return 'active';
+    const roles = [u?.role,u?.type,u?.residentType,u?.access].map(v => String(v || '').trim().toLowerCase());
+    if(roles.includes('owner') || roles.includes('admin')) return 'active';
     return 'pending';
   }
   function fullNameFromUser(u){
@@ -267,10 +379,9 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   }
 
   function clearProfileUi(){
-    ['pfPhone','pfEmail','pfEir','pfAddress','pfType','pfMgmt','pfElected'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    ['pfPhone','pfEmail','pfEir','pfMgmt','pfElected'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     const cb = document.getElementById('pfAlertOptIn'); if(cb) cb.checked = false;
     setText('pfAlertMeta', 'No alert preference recorded yet (Email/SMS/WhatsApp).');
-    const ul = document.getElementById('pfVolRoles'); if(ul) ul.innerHTML = '<li class="muted">No volunteer roles selected</li>';
     setText('pfNameHero', 'Resident');
     setText('pfStatusHero', 'Pending');
     setText('pfRegHero', '—');
@@ -297,8 +408,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     document.getElementById('pfPhone').value = currentProfile.phone || currentProfile.mobile || '';
     document.getElementById('pfEmail').value = currentProfile.email || currentProfile.userEmail || currentEmail || '';
     document.getElementById('pfEir').value = currentProfile.eircode || currentProfile.eir || '';
-    document.getElementById('pfAddress').value = addressFromUser(currentProfile) === '—' ? '' : addressFromUser(currentProfile);
-    document.getElementById('pfType').value = currentProfile.type || currentProfile.residentType || '';
     document.getElementById('pfMgmt').value = currentProfile.managementCompany || '';
     document.getElementById('pfElected').value = electedLabelFromUser(currentProfile);
 
@@ -313,11 +422,9 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const cb = document.getElementById('pfAlertOptIn'); if(cb) cb.checked = !!ac.optIn || !!ac.email || !!ac.sms;
     setText('pfAlertMeta', ac.updatedAt ? ('Last updated: ' + new Date(ac.updatedAt).toLocaleString()) : 'No alert preference recorded yet (Email/SMS/WhatsApp).');
 
-    const ul = document.getElementById('pfVolRoles');
     const volHero = document.getElementById('pfVolHero');
-    if(ul){
-      ul.innerHTML = '';
-      if(volHero) volHero.innerHTML = '';
+    if(volHero){
+      volHero.innerHTML = '';
       const vr = currentProfile.vol_roles || {};
       const labels = {
         streetWatch:'Street watch / patrols',
@@ -329,20 +436,14 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       };
       Object.keys(labels).forEach(k=>{
         if(vr[k]){
-          const li = document.createElement('li');
-          li.textContent = labels[k];
-          ul.appendChild(li);
-          if(volHero){
-            const chip = document.createElement('span');
-            chip.className = 'profile-volunteer-chip';
-            chip.textContent = labels[k];
-            volHero.appendChild(chip);
-          }
+          const chip = document.createElement('span');
+          chip.className = 'profile-volunteer-chip';
+          chip.textContent = labels[k];
+          volHero.appendChild(chip);
         }
       });
-      if(!ul.children.length){
-        ul.innerHTML = '<li class="muted">No volunteer roles selected</li>';
-        if(volHero) volHero.innerHTML = '<span class="profile-empty-note">No volunteer positions selected</span>';
+      if(!volHero.children.length){
+        volHero.innerHTML = '<span class="profile-empty-note">No volunteer positions selected</span>';
       }
     }
   }
@@ -381,6 +482,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   async function resolveDashboardContext(){
     try{ await anwInitStore(); }catch(_){}
+    try{ if(typeof window.anwSyncFromServer === 'function'){ await window.anwSyncFromServer([KEY_USERS], 0); } }catch(_){}
     loadUsers();
     let email = '';
     try{ email = String(await getIdentityEmail() || ''); }catch(_){}
@@ -393,6 +495,14 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     }
     currentEmail = email;
     currentProfile = email ? findUserByEmail(email) : null;
+    if(isOwnerEmail(email)){
+      if(!currentProfile) currentProfile = {};
+      currentProfile.email = currentProfile.email || normEmail(email);
+      currentProfile.userEmail = currentProfile.userEmail || normEmail(email);
+      currentProfile.loginEmail = currentProfile.loginEmail || normEmail(email);
+      currentProfile.netlifyEmail = currentProfile.netlifyEmail || normEmail(email);
+      ensureOwnerFlags(currentProfile);
+    }
 
     if(!currentProfile && users.length === 1){
       const only = users[0];
@@ -402,11 +512,13 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     applyProfileUi();
     return { email: currentEmail, profile: currentProfile };
   }
+  window.anwResolveDashboardContext = resolveDashboardContext;
 
   function isApprovedResident(profile){
     const status = statusFromUser(profile);
     return !!(profile && (profile.approved === true || profile.active === true || status === 'active' || status === 'approved'));
   }
+  window.anwIsApprovedDashboardProfile = function(profile){ return isApprovedResident(profile); };
 
   function syncInterestAccess(){
     const __demo = (location.protocol === 'file:' || (new URLSearchParams(location.search)).get('demo') === '1' || localStorage.getItem('anw_demo') === '1');
@@ -419,6 +531,45 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   await resolveDashboardContext();
   syncInterestAccess();
+
+  const avatarImg = document.getElementById('pfAvatar');
+  const avatarInput = document.getElementById('pfAvatarInput');
+  const avatarBtn = document.getElementById('btnUploadAvatar');
+  const logoutBtn = document.getElementById('btnLogout');
+
+  function getStoredAvatar(){
+    const session = (typeof anwGetSession === 'function') ? anwGetSession() : null;
+    const sessionAvatar = session && (session.avatar || session.photo);
+    let metadataAvatar = '';
+    try{
+      const current = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
+      metadataAvatar = current && current.user_metadata ? (current.user_metadata.avatar || current.user_metadata.photo || '') : '';
+    }catch(_){}
+    return (currentProfile && (currentProfile.profilePhoto || currentProfile.avatar || currentProfile.photo || currentProfile.photoURL)) || sessionAvatar || metadataAvatar || 'assets/default-avatar.png';
+  }
+  if(avatarImg) avatarImg.src = getStoredAvatar();
+
+  try{
+    window.addEventListener('storage', async (ev) => {
+      if(ev && (ev.key === KEY_USERS || ev.key === ANW_KEYS.SESSION)){
+        await resolveDashboardContext();
+        syncInterestAccess();
+        if(avatarImg) avatarImg.src = getStoredAvatar();
+      }
+    });
+    document.addEventListener('visibilitychange', async () => {
+      if(document.visibilityState === 'visible'){
+        await resolveDashboardContext();
+        syncInterestAccess();
+        if(avatarImg) avatarImg.src = getStoredAvatar();
+      }
+    });
+    window.addEventListener('focus', async () => {
+      await resolveDashboardContext();
+      syncInterestAccess();
+      if(avatarImg) avatarImg.src = getStoredAvatar();
+    });
+  }catch(_){ }
 
   document.getElementById('btnSaveProfile')?.addEventListener('click', async ()=>{
     if(!currentProfile) return;
@@ -439,14 +590,14 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       } else {
         currentProfile.alertsConsent = { optIn: prevOptIn, email: !!prev.email, sms: !!prev.sms, updatedAt: prev.updatedAt || now, history: Array.isArray(prev.history) ? prev.history : [] };
       }
+      ensureOwnerFlags(currentProfile);
+      persistCurrentProfileToUsers();
       await anwSave(KEY_USERS, users);
-      applyProfileUi();
+      const resolved = await resolveDashboardContext();
       setText('pfMsg', 'Profile updated.');
       toast('Profile updated.', 'success');
-      const nextTab = syncInterestAccess() ? 'tabInterest' : 'tabGarda';
-      if(typeof requestTab === 'function'){
-        try{ await requestTab(nextTab); }catch(_){ openPanel(nextTab); }
-      } else if(typeof window.anwDashboardRequestTab === 'function'){
+      if(typeof window.anwDashboardRequestTab === 'function'){
+        const nextTab = isApprovedResident((resolved && resolved.profile) || currentProfile) ? 'tabInterest' : 'tabGarda';
         try{ await window.anwDashboardRequestTab(nextTab); }catch(_){ }
       }
     }catch(err){
@@ -455,22 +606,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       toast('Error updating profile.', 'error');
     }
   });
-
-  const avatarImg = document.getElementById('pfAvatar');
-  const avatarInput = document.getElementById('pfAvatarInput');
-  const avatarBtn = document.getElementById('btnUploadAvatar');
-  const logoutBtn = document.getElementById('btnLogout');
-  function getStoredAvatar(){
-    const session = (typeof anwGetSession === 'function') ? anwGetSession() : null;
-    const sessionAvatar = session && (session.avatar || session.photo);
-    let metadataAvatar = '';
-    try{
-      const current = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
-      metadataAvatar = current && current.user_metadata ? (current.user_metadata.avatar || current.user_metadata.photo || '') : '';
-    }catch(_){}
-    return (currentProfile && (currentProfile.profilePhoto || currentProfile.avatar || currentProfile.photo || currentProfile.photoURL)) || sessionAvatar || metadataAvatar || 'assets/default-avatar.png';
-  }
-  if(avatarImg) avatarImg.src = getStoredAvatar();
 
   avatarBtn?.addEventListener('click', () => avatarInput?.click());
   avatarInput?.addEventListener('change', async () => {
@@ -512,6 +647,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       const session = (typeof anwGetSession === 'function') ? (anwGetSession() || {}) : {};
       session.avatar = processed; session.photo = processed; session.email = session.email || currentEmail || currentProfile?.email || '';
       if(typeof anwSave === 'function' && window.ANW_KEYS) anwSave(ANW_KEYS.SESSION, session);
+      ensureOwnerFlags(currentProfile);
+      persistCurrentProfileToUsers();
       if(typeof anwSave === 'function') await anwSave(KEY_USERS, users);
       try{
         const user = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
@@ -592,6 +729,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         residentName: fullNameFromUser(currentProfile),
         residentRegId: currentProfile.regId || currentProfile.regNo || ''
       };
+      ensureOwnerFlags(currentProfile);
+      persistCurrentProfileToUsers();
       await anwSave(KEY_USERS, users);
       renderInterest();
       intMeta.textContent = 'Interest saved. Awaiting admin approval if pending.';
@@ -609,6 +748,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     if(!ok) return;
     try{
       delete currentProfile.interest;
+      ensureOwnerFlags(currentProfile);
+      persistCurrentProfileToUsers();
       await anwSave(KEY_USERS, users);
       renderInterest();
       intMeta.textContent = 'Interest withdrawn.';
@@ -795,7 +936,7 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
 </script>
 <script>
 (function(){
-  const OWNER_EMAIL = 'claudiosantos1968@gmail.com';
+  const OWNER_EMAIL = String(window.ANW_MASTER_EMAIL || 'claudiosantos1968@gmail.com').trim().toLowerCase();
   const notice = document.getElementById('anwAccessNotice');
   const tabs = Array.from(document.querySelectorAll('.dash-tab'));
   const panels = Array.from(document.querySelectorAll('.dash-tab-content'));
@@ -813,18 +954,35 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     });
   };
   const getProfile = async (email) => {
+    try{
+      if(typeof window.anwResolveDashboardContext === 'function'){
+        const resolved = await window.anwResolveDashboardContext();
+        if(resolved && sameEmail(resolved.email, email) && resolved.profile) return resolved.profile;
+      }
+    }catch(_){}
+    try{
+      if(typeof window.anwFindDashboardUserByEmail === 'function'){
+        return window.anwFindDashboardUserByEmail(email) || null;
+      }
+    }catch(_){}
     try{ await window.anwInitStore?.(); }catch(_){}
     try{
       const users = (window.anwLoad && window.ANW_KEYS) ? (window.anwLoad(window.ANW_KEYS.USERS, []) || []) : [];
       const target = norm(email);
-      const findMatch = (u) => [u?.email, u?.userEmail, u?.loginEmail, u?.netlifyEmail].map(v => norm(v)).includes(target);
-      return Array.isArray(users) ? users.find(findMatch) || null : null;
+      const localTarget = target.split('@')[0] || '';
+      const rowEmails = (u) => [u?.email, u?.userEmail, u?.loginEmail, u?.netlifyEmail].map(v => norm(v)).filter(Boolean);
+      const matches = Array.isArray(users) ? users.filter((u) => rowEmails(u).some((e) => e === target || (e.split('@')[0] || '') === localTarget)) : [];
+      return matches[0] || null;
     }catch(_){ return null; }
   };
   const isApprovedProfile = (profile, email) => {
     if(sameEmail(email, OWNER_EMAIL)) return true;
+    if(typeof window.anwIsApprovedDashboardProfile === 'function'){
+      try{ return !!window.anwIsApprovedDashboardProfile(profile); }catch(_){}
+    }
     const status = String(profile?.status || profile?.accountStatus || profile?.registrationStatus || '').toLowerCase().trim();
-    return !!(profile && (profile.approved === true || profile.active === true || status === 'active' || status === 'approved'));
+    const roles = [profile?.role, profile?.type, profile?.residentType, profile?.access].map(v => String(v || '').toLowerCase().trim());
+    return !!(profile && (profile.approved === true || profile.active === true || status === 'active' || status === 'approved' || roles.includes('owner') || roles.includes('admin')));
   };
   function hidePanels(){ panels.forEach((panel) => { panel.style.display = 'none'; }); }
   function setActive(tabId){ tabs.forEach((btn) => { const on = btn.dataset.tab === tabId; btn.classList.toggle('active', on); btn.setAttribute('aria-selected', on ? 'true' : 'false'); }); if(typeof window.anwDashboardSetAccessLabel === 'function') window.anwDashboardSetAccessLabel(tabId); }
@@ -837,8 +995,8 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     if(publicTabs.has(target)){ hideNotice(); openPanel(target); return; }
     const identityUser = await getIdentityUser();
     const effectiveEmail = norm(identityUser?.email || email || '');
-    const profile = effectiveEmail ? await getProfile(effectiveEmail) : null;
     if(!effectiveEmail){ showNotice('Please log in to access this section.'); openPanel('tabGarda'); return; }
+    const profile = await getProfile(effectiveEmail);
     if(!isApprovedProfile(profile, effectiveEmail)){ showNotice('Your account is pending approval. Garda & Safety remains available while private tabs stay locked.'); openPanel('tabGarda'); return; }
     hideNotice();
     if(typeof window.anwRefreshDashboardProfile === 'function'){ try{ await window.anwRefreshDashboardProfile(); }catch(_){} }
