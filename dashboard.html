@@ -204,19 +204,17 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
   const KEY_NOTICES = ANW_KEYS.NOTICES || 'anw_notices';
   const OWNER_EMAIL = String(window.ANW_MASTER_EMAIL || 'claudiosantos1968@gmail.com').trim().toLowerCase();
-  const LOCAL_WRITE_SYNC_GRACE_MS = 15000;
   const LOCAL_WRITE_TS_KEY = 'anw_users_last_local_write';
 
   let users = [];
   let currentEmail = '';
   let currentProfile = null;
   let currentProfileIndexes = [];
-  let profileSaveInFlight = false;
-  let profileDirty = false;
-  let refreshDebounceTimer = null;
-  let suppressContextRefreshUntil = 0;
   let lastLocalUsersWriteAt = 0;
   let volunteerCatalog = [];
+  let isProfileSaving = false;
+  let refreshTimer = null;
+  let refreshInFlight = null;
 
   const notLoggedBox = document.getElementById('dbNotLogged');
   const profileArea = document.getElementById('dbProfileArea');
@@ -231,12 +229,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     return stamp;
   }
 
-  function getEffectiveLastLocalWrite(){
-    let persisted = 0;
-    try{ persisted = Number(localStorage.getItem(LOCAL_WRITE_TS_KEY) || '0') || 0; }catch(_){}
-    return Math.max(lastLocalUsersWriteAt || 0, persisted || 0);
-  }
-
   function loadUsers(){
     const next = anwLoad(KEY_USERS, []);
     users = Array.isArray(next) ? next : [];
@@ -249,26 +241,27 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       if(!res.ok) throw new Error('store load failed');
       const data = await res.json();
       users = Array.isArray(data) ? data : [];
-      try{ await anwSave(KEY_USERS, users); }catch(_){ }
+      try{ await anwSave(KEY_USERS, users); }catch(_){}
       return users;
     }catch(err){
-      console.warn('users store load failed', err);
+      console.warn('dashboard store load failed; using local cache', err);
       return loadUsers();
     }
   }
 
   async function saveUsersAndSync(){
+    const payload = Array.isArray(users) ? users : [];
     markLocalUsersWrite();
-    await anwSave(KEY_USERS, users);
+    try{ await anwSave(KEY_USERS, payload); }catch(_){}
 
     const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
       method:'POST',
       headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify(users)
+      body: JSON.stringify(payload)
     });
     if(!res.ok) throw new Error('store save failed');
 
-    await anwSave(KEY_USERS, users);
+    try{ await anwSave(KEY_USERS, payload); }catch(_){}
     markLocalUsersWrite();
     return true;
   }
@@ -376,7 +369,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   }
 
   function findUserByEmail(email){
-    loadUsers();
     const indexes = collectMatchingUserIndexes(email);
     const matches = indexes.map(i => users[i]).filter(Boolean);
     currentProfileIndexes = indexes.slice();
@@ -394,6 +386,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     translation:'Translation',
     cleanup:'Community clean-up',
     cleanUp:'Community clean-up',
+    parkingAssistance:'Parking assistance',
     parking:'Parking assistance'
   };
 
@@ -411,7 +404,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       'translation':'translation',
       'community clean up':'cleanUp',
       'parking assistance':'parkingAssistance'
-
     };
     if(aliasMap[simple]) return aliasMap[simple];
     const compact = raw.replace(/[^a-zA-Z0-9]+/g,'');
@@ -510,12 +502,98 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       if(!nk) return;
       normalized[nk] = !!nextVolRoles[k];
     });
-    const activeKeys = Object.keys(normalized).filter(k => normalized[k]);
+    const activeLabels = Object.keys(normalized).filter(k => normalized[k]).map(prettifyVolLabel);
 
     target.vol_roles = Object.assign({}, normalized);
-    target.volunteerRoles = activeKeys.slice();
+    target.volunteerRoles = activeLabels.slice();
     target.volunteer_roles = Object.assign({}, normalized);
     target.volRoles = Object.assign({}, normalized);
+  }
+
+  function buildProfilePatchFromInputs(){
+    if(!currentProfile) return null;
+    const phoneEl = document.getElementById('pfPhone');
+    const cb = document.getElementById('pfAlertOptIn');
+    const nextPhone = phoneEl ? String(phoneEl.value || '').trim() : '';
+    const nextOptIn = !!(cb && cb.checked);
+    const now = new Date().toISOString();
+    const prev = currentProfile.alertsConsent || { email:false, sms:false, history:[] };
+    const prevOptIn = !!(prev.optIn || prev.email || prev.sms);
+    let nextAlerts;
+
+    if(prevOptIn !== nextOptIn){
+      const hist = Array.isArray(prev.history) ? prev.history.slice() : [];
+      hist.push({ at: now, email: nextOptIn, sms: nextOptIn, source: 'profile' });
+      nextAlerts = { optIn: nextOptIn, email: nextOptIn, sms: nextOptIn, updatedAt: now, history: hist };
+    } else {
+      nextAlerts = {
+        optIn: prevOptIn,
+        email: !!prev.email,
+        sms: !!prev.sms,
+        updatedAt: prev.updatedAt || now,
+        history: Array.isArray(prev.history) ? prev.history : []
+      };
+    }
+
+    return {
+      phone: nextPhone,
+      mobile: nextPhone,
+      alertsConsent: nextAlerts,
+      termsAccepted: true,
+      termsAcceptedAt: currentProfile.termsAcceptedAt || currentProfile.createdAt || now,
+      vol_roles: collectVolRolesFromInputs(),
+      updatedAt: now
+    };
+  }
+
+  function applyProfilePatch(target, patch){
+    if(!target || !patch) return target;
+    target.phone = patch.phone;
+    target.mobile = patch.mobile;
+    target.alertsConsent = patch.alertsConsent;
+    target.termsAccepted = patch.termsAccepted;
+    target.termsAcceptedAt = patch.termsAcceptedAt;
+    target.updatedAt = patch.updatedAt;
+    applyVolRolesToProfile(target, patch.vol_roles || {});
+    ensureOwnerFlags(target);
+    return target;
+  }
+
+  async function saveCurrentProfileDirect(){
+    if(!currentProfile) throw new Error('no current profile');
+    await loadUsersFromStore();
+
+    const patch = buildProfilePatchFromInputs();
+    if(!patch) throw new Error('profile patch failed');
+
+    let indexes = collectMatchingUserIndexes(currentEmail || currentProfile.email || currentProfile.userEmail || '');
+
+    if(!indexes.length){
+      const base = ensureOwnerFlags({
+        email: normEmail(currentProfile.email || currentEmail || ''),
+        userEmail: normEmail(currentProfile.userEmail || currentEmail || ''),
+        loginEmail: normEmail(currentProfile.loginEmail || currentEmail || ''),
+        netlifyEmail: normEmail(currentProfile.netlifyEmail || currentEmail || '')
+      });
+      applyProfilePatch(base, patch);
+      users.push(base);
+      indexes = [users.length - 1];
+    } else {
+      indexes.forEach((idx) => {
+        if(!users[idx] || typeof users[idx] !== 'object') users[idx] = {};
+        applyProfilePatch(users[idx], patch);
+        ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
+          if(currentProfile && currentProfile[key]) users[idx][key] = currentProfile[key];
+        });
+      });
+    }
+
+    currentProfileIndexes = indexes.slice();
+    await saveUsersAndSync();
+    await loadUsersFromStore();
+    currentProfile = currentEmail ? findUserByEmail(currentEmail) : null;
+    if(currentProfile) applyVolRolesToProfile(currentProfile, extractVolRolesFromRecord(currentProfile));
+    return currentProfile;
   }
 
   function persistCurrentProfileToUsers(){
@@ -540,7 +618,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     }
 
     const copyObject = (value) => JSON.parse(JSON.stringify(value));
-    const activeVolRoleKeys = Object.keys(currentProfile.vol_roles || {}).filter(k => currentProfile.vol_roles[k]);
+    const activeVolRoleLabels = Object.keys(currentProfile.vol_roles || {}).filter(k => currentProfile.vol_roles[k]).map(prettifyVolLabel);
 
     indexes.forEach((idx) => {
       if(!users[idx] || typeof users[idx] !== 'object') users[idx] = {};
@@ -552,7 +630,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       });
 
       row.vol_roles = copyObject(currentProfile.vol_roles || {});
-      row.volunteerRoles = activeVolRoleKeys.slice();
+      row.volunteerRoles = activeVolRoleLabels.slice();
       row.volunteer_roles = copyObject(currentProfile.vol_roles || {});
       row.volRoles = copyObject(currentProfile.vol_roles || {});
 
@@ -722,78 +800,72 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     return '';
   }
 
-  async function resolveDashboardContext(){
-    try{ await anwInitStore(); }catch(_){}
+  async function resolveDashboardContext(options){
+    const opts = options || {};
+    if(isProfileSaving && !opts.force) return { email: currentEmail, profile: currentProfile };
+    if(refreshInFlight && !opts.force) return refreshInFlight;
 
-    const effectiveLastWrite = getEffectiveLastLocalWrite();
-    const shouldPreferServer = (Date.now() - effectiveLastWrite > LOCAL_WRITE_SYNC_GRACE_MS);
+    refreshInFlight = (async () => {
+      try{ await anwInitStore(); }catch(_){}
 
-    if(shouldPreferServer){
       await loadUsersFromStore();
-    }else{
-      loadUsers();
+
+      let email = '';
+      try{ email = String(await getIdentityEmail() || ''); }catch(_){}
+      if(!email){ try{ email = String(anwGetLoggedEmail() || ''); }catch(_){ } }
+      if(!email){
+        try{
+          const session = (typeof anwGetSession === 'function') ? (anwGetSession() || {}) : {};
+          email = String(session.email || '');
+        }catch(_){}
+      }
+
+      currentEmail = email;
+      currentProfile = email ? findUserByEmail(email) : null;
+
+      if(isOwnerEmail(email)){
+        if(!currentProfile) currentProfile = {};
+        currentProfile.email = currentProfile.email || normEmail(email);
+        currentProfile.userEmail = currentProfile.userEmail || normEmail(email);
+        currentProfile.loginEmail = currentProfile.loginEmail || normEmail(email);
+        currentProfile.netlifyEmail = currentProfile.netlifyEmail || normEmail(email);
+        ensureOwnerFlags(currentProfile);
+      }
+
+      if(!currentProfile && users.length === 1){
+        const only = users[0];
+        if(statusFromUser(only) === 'active') currentProfile = only;
+      }
+
+      if(currentProfile){
+        applyVolRolesToProfile(currentProfile, extractVolRolesFromRecord(currentProfile));
+      }
+
+      applyProfileUi();
+      return { email: currentEmail, profile: currentProfile };
+    })();
+
+    try{
+      return await refreshInFlight;
+    } finally {
+      refreshInFlight = null;
     }
+  }
 
-    let email = '';
-    try{ email = String(await getIdentityEmail() || ''); }catch(_){}
-    if(!email){ try{ email = String(anwGetLoggedEmail() || ''); }catch(_){ } }
-    if(!email){
-      try{
-        const session = (typeof anwGetSession === 'function') ? (anwGetSession() || {}) : {};
-        email = String(session.email || '');
-      }catch(_){}
-    }
-
-    currentEmail = email;
-    currentProfile = email ? findUserByEmail(email) : null;
-
-    if(isOwnerEmail(email)){
-      if(!currentProfile) currentProfile = {};
-      currentProfile.email = currentProfile.email || normEmail(email);
-      currentProfile.userEmail = currentProfile.userEmail || normEmail(email);
-      currentProfile.loginEmail = currentProfile.loginEmail || normEmail(email);
-      currentProfile.netlifyEmail = currentProfile.netlifyEmail || normEmail(email);
-      ensureOwnerFlags(currentProfile);
-    }
-
-    if(!currentProfile && users.length === 1){
-      const only = users[0];
-      if(statusFromUser(only) === 'active') currentProfile = only;
-    }
-
-    if(currentProfile){
-      applyVolRolesToProfile(currentProfile, extractVolRolesFromRecord(currentProfile));
-    }
-
-    applyProfileUi();
-    return { email: currentEmail, profile: currentProfile };
+  function scheduleDashboardRefresh(delay){
+    if(isProfileSaving) return;
+    try{ clearTimeout(refreshTimer); }catch(_){}
+    refreshTimer = setTimeout(async () => {
+      if(isProfileSaving) return;
+      await resolveDashboardContext();
+      syncInterestAccess();
+      if(avatarImg) avatarImg.src = getStoredAvatar();
+      renderInterest();
+      renderNotices();
+    }, Number(delay || 0));
   }
 
   window.anwResolveDashboardContext = resolveDashboardContext;
-
-  async function refreshDashboardProfileUi(reason){
-    if(profileSaveInFlight) return;
-    if(profileDirty && reason !== 'force') return;
-    if(Date.now() < suppressContextRefreshUntil) return;
-    await resolveDashboardContext();
-    syncInterestAccess();
-    if(avatarImg) avatarImg.src = getStoredAvatar();
-  }
-
-  function scheduleDashboardProfileRefresh(reason, delay = 180){
-    clearTimeout(refreshDebounceTimer);
-    refreshDebounceTimer = setTimeout(() => {
-      refreshDashboardProfileUi(reason).catch(err => console.warn('dashboard refresh skipped', err));
-    }, delay);
-  }
-
-  function markProfileDirty(){
-    profileDirty = true;
-  }
-
-  function clearProfileDirty(){
-    profileDirty = false;
-  }
 
   function isApprovedResident(profile){
     const status = statusFromUser(profile);
@@ -833,77 +905,37 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   if(avatarImg) avatarImg.src = getStoredAvatar();
 
   try{
-    ['pfPhone','pfAlertOptIn'].forEach((id) => {
-      const el = document.getElementById(id);
-      if(!el) return;
-      el.addEventListener('input', markProfileDirty);
-      el.addEventListener('change', markProfileDirty);
-    });
-    volunteerRolesWrap?.addEventListener('change', markProfileDirty);
-
     window.addEventListener('storage', (ev) => {
       if(ev && (ev.key === KEY_USERS || ev.key === ANW_KEYS.SESSION || ev.key === LOCAL_WRITE_TS_KEY)){
-        scheduleDashboardProfileRefresh('storage');
+        scheduleDashboardRefresh(120);
       }
     });
 
     document.addEventListener('visibilitychange', () => {
       if(document.visibilityState === 'visible'){
-        scheduleDashboardProfileRefresh('visibility');
+        scheduleDashboardRefresh(120);
       }
     });
 
     window.addEventListener('focus', () => {
-      scheduleDashboardProfileRefresh('focus');
+      scheduleDashboardRefresh(120);
     });
-  }catch(_){ }
+  }catch(_){}
 
   document.getElementById('btnSaveProfile')?.addEventListener('click', async ()=>{
-    if(!currentProfile || profileSaveInFlight) return;
+    if(!currentProfile || isProfileSaving) return;
+
+    const btn = document.getElementById('btnSaveProfile');
+    const oldLabel = btn ? btn.textContent : '';
 
     try{
-      profileSaveInFlight = true;
-      clearProfileDirty();
-      suppressContextRefreshUntil = Date.now() + 1800;
-      currentProfile.phone = document.getElementById('pfPhone').value.trim();
-      currentProfile.mobile = currentProfile.phone;
+      isProfileSaving = true;
+      setText('pfMsg', 'Saving...');
+      if(btn){ btn.disabled = true; btn.textContent = 'Saving...'; }
 
-      const cb = document.getElementById('pfAlertOptIn');
-      const nextOptIn = !!(cb && cb.checked);
-      const now = new Date().toISOString();
-
-      currentProfile.termsAccepted = true;
-      if(!currentProfile.termsAcceptedAt) currentProfile.termsAcceptedAt = currentProfile.createdAt || now;
-
-      const prev = currentProfile.alertsConsent || { email:false, sms:false, history:[] };
-      const prevOptIn = !!(prev.optIn || prev.email || prev.sms);
-
-      if(prevOptIn !== nextOptIn){
-        const hist = Array.isArray(prev.history) ? prev.history.slice() : [];
-        hist.push({ at: now, email: nextOptIn, sms: nextOptIn, source: 'profile' });
-        currentProfile.alertsConsent = { optIn: nextOptIn, email: nextOptIn, sms: nextOptIn, updatedAt: now, history: hist };
-      } else {
-        currentProfile.alertsConsent = {
-          optIn: prevOptIn,
-          email: !!prev.email,
-          sms: !!prev.sms,
-          updatedAt: prev.updatedAt || now,
-          history: Array.isArray(prev.history) ? prev.history : []
-        };
-      }
-
-      const nextVolRoles = collectVolRolesFromInputs();
-      applyVolRolesToProfile(currentProfile, nextVolRoles);
-      ensureOwnerFlags(currentProfile);
-
-      persistCurrentProfileToUsers();
-
-      await saveUsersAndSync();
-
-      await loadUsersFromStore();
-      currentProfile = currentEmail ? findUserByEmail(currentEmail) : currentProfile;
-      if(currentProfile) applyVolRolesToProfile(currentProfile, extractVolRolesFromRecord(currentProfile));
+      await saveCurrentProfileDirect();
       applyProfileUi();
+      syncInterestAccess();
 
       setText('pfMsg', 'Profile updated.');
       toast('Profile updated.', 'success');
@@ -912,8 +944,9 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       setText('pfMsg', 'Error updating profile.');
       modal('Error updating profile. Please try again.', 'Error');
       toast('Error updating profile.', 'error');
-    } finally {
-      profileSaveInFlight = false;
+    }finally{
+      isProfileSaving = false;
+      if(btn){ btn.disabled = false; btn.textContent = oldLabel || 'Save'; }
     }
   });
 
@@ -973,6 +1006,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       ensureOwnerFlags(currentProfile);
       persistCurrentProfileToUsers();
       await saveUsersAndSync();
+      await loadUsersFromStore();
+      currentProfile = currentEmail ? findUserByEmail(currentEmail) : currentProfile;
 
       try{
         const user = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
@@ -999,7 +1034,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         await window.anwLogout();
         return;
       }
-    }catch(_){ }
+    }catch(_){}
     window.location.href = 'login.html';
   });
 
@@ -1036,7 +1071,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   renderInterest();
 
   window.anwRefreshDashboardProfile = async function(){
-    await resolveDashboardContext();
+    await resolveDashboardContext({ force:true });
     syncInterestAccess();
     if(avatarImg) avatarImg.src = getStoredAvatar();
     renderInterest();
@@ -1067,6 +1102,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       ensureOwnerFlags(currentProfile);
       persistCurrentProfileToUsers();
       await saveUsersAndSync();
+      await loadUsersFromStore();
+      currentProfile = currentEmail ? findUserByEmail(currentEmail) : currentProfile;
       renderInterest();
       intMeta.textContent = 'Interest saved. Awaiting admin approval if pending.';
       toast('Interest saved.', 'success');
@@ -1086,6 +1123,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       ensureOwnerFlags(currentProfile);
       persistCurrentProfileToUsers();
       await saveUsersAndSync();
+      await loadUsersFromStore();
+      currentProfile = currentEmail ? findUserByEmail(currentEmail) : currentProfile;
       renderInterest();
       intMeta.textContent = 'Interest withdrawn.';
       toast('Interest withdrawn.', 'info');
