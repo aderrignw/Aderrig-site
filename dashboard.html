@@ -298,45 +298,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const ownerish = !!(emails.includes(OWNER_EMAIL) || [u?.role,u?.type,u?.residentType,u?.access].map(v => String(v || '').toLowerCase()).some(v => ['owner','admin'].includes(v)));
     const richness = [u?.name,u?.fullName,u?.address,u?.fullAddress,u?.eircode,u?.eir,u?.managementCompany,u?.regId,u?.regNo,u?.registrationNo,u?.type,u?.residentType,u?.phone,u?.mobile].filter(v => String(v || '').trim()).length;
     const updated = Date.parse(u?.updatedAt || u?.modifiedAt || u?.createdAt || 0) || 0;
-    return (exact ? 1000 : 0) + (local ? 200 : 0) + (approved ? 120 : 0) + (ownerish ? 80 : 0) + richness + Math.min(50, Math.floor(updated / 1000000000));
-  }
-
-  function mergeProfiles(records, targetEmail){
-    const list = Array.isArray(records) ? records.filter(Boolean).slice() : [];
-    if(!list.length) return null;
-
-    list.sort((a,b) => scoreProfileRecord(b, targetEmail) - scoreProfileRecord(a, targetEmail));
-
-    const merged = {};
-    const assignIfEmpty = (key, value) => {
-      if(value == null) return;
-      if(typeof value === 'string' && !value.trim()) return;
-      if(merged[key] == null || (typeof merged[key] === 'string' && !String(merged[key]).trim())) merged[key] = value;
-    };
-
-    list.forEach((rec, index) => {
-      if(index === 0) Object.assign(merged, rec || {});
-      Object.keys(rec || {}).forEach((key) => {
-        const value = rec[key];
-        if(value && typeof value === 'object' && !Array.isArray(value)){
-          merged[key] = Object.assign({}, value, merged[key] || {});
-        } else {
-          assignIfEmpty(key, value);
-        }
-      });
-    });
-
-    if(!merged.email) merged.email = normEmail(targetEmail || list[0]?.email || list[0]?.userEmail || '');
-
-    if((merged.approved !== true && merged.active !== true) && list.some(rec => {
-      const s = String(rec?.status || rec?.accountStatus || rec?.registrationStatus || '').trim().toLowerCase();
-      return rec?.approved === true || rec?.active === true || s === 'active' || s === 'approved';
-    })){
-      merged.active = true;
-      if(!String(merged.status || '').trim()) merged.status = 'active';
-    }
-
-    return merged;
+    return (exact ? 1000 : 0) + (local ? 200 : 0) + (approved ? 120 : 0) + (ownerish ? 80 : 0) + (richness * 2) + Math.min(1000000, updated);
   }
 
   function collectMatchingUserIndexes(email){
@@ -347,6 +309,19 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       if(rowEmails(u).some(e => candidates.includes(e) || ((e.split('@')[0] || '') === localPart))) acc.push(index);
       return acc;
     }, []);
+  }
+
+  function getCanonicalUserIndexByEmail(email){
+    const indexes = collectMatchingUserIndexes(email);
+    if(!indexes.length) return -1;
+    return indexes
+      .slice()
+      .sort((a, b) => scoreProfileRecord(users[b], email) - scoreProfileRecord(users[a], email))[0];
+  }
+
+  function cloneUserRecord(record){
+    if(!record || typeof record !== 'object') return null;
+    try{ return JSON.parse(JSON.stringify(record)); }catch(_){ return Object.assign({}, record); }
   }
 
   function ensureOwnerFlags(target){
@@ -369,11 +344,10 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   }
 
   function findUserByEmail(email){
-    const indexes = collectMatchingUserIndexes(email);
-    const matches = indexes.map(i => users[i]).filter(Boolean);
-    currentProfileIndexes = indexes.slice();
-    const merged = mergeProfiles(matches, email);
-    return ensureOwnerFlags(merged);
+    const index = getCanonicalUserIndexByEmail(email);
+    currentProfileIndexes = index >= 0 ? [index] : [];
+    const record = index >= 0 ? cloneUserRecord(users[index]) : null;
+    return ensureOwnerFlags(record);
   }
 
   const VOL_ROLE_LABEL_ALIASES = {
@@ -566,9 +540,9 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const patch = buildProfilePatchFromInputs();
     if(!patch) throw new Error('profile patch failed');
 
-    let indexes = collectMatchingUserIndexes(currentEmail || currentProfile.email || currentProfile.userEmail || '');
+    let index = getCanonicalUserIndexByEmail(currentEmail || currentProfile.email || currentProfile.userEmail || '');
 
-    if(!indexes.length){
+    if(index < 0){
       const base = ensureOwnerFlags({
         email: normEmail(currentProfile.email || currentEmail || ''),
         userEmail: normEmail(currentProfile.userEmail || currentEmail || ''),
@@ -577,18 +551,16 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       });
       applyProfilePatch(base, patch);
       users.push(base);
-      indexes = [users.length - 1];
+      index = users.length - 1;
     } else {
-      indexes.forEach((idx) => {
-        if(!users[idx] || typeof users[idx] !== 'object') users[idx] = {};
-        applyProfilePatch(users[idx], patch);
-        ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
-          if(currentProfile && currentProfile[key]) users[idx][key] = currentProfile[key];
-        });
+      if(!users[index] || typeof users[index] !== 'object') users[index] = {};
+      applyProfilePatch(users[index], patch);
+      ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
+        if(currentProfile && currentProfile[key]) users[index][key] = currentProfile[key];
       });
     }
 
-    currentProfileIndexes = indexes.slice();
+    currentProfileIndexes = index >= 0 ? [index] : [];
     await saveUsersAndSync();
     await loadUsersFromStore();
     currentProfile = currentEmail ? findUserByEmail(currentEmail) : null;
@@ -601,11 +573,11 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
     loadUsers();
 
-    let indexes = currentProfileIndexes && currentProfileIndexes.length
-      ? currentProfileIndexes.slice()
-      : collectMatchingUserIndexes(currentEmail || currentProfile.email || '');
+    let index = (currentProfileIndexes && currentProfileIndexes.length)
+      ? Number(currentProfileIndexes[0])
+      : getCanonicalUserIndexByEmail(currentEmail || currentProfile.email || '');
 
-    if(!indexes.length){
+    if(!(index >= 0)){
       const base = ensureOwnerFlags({
         email: normEmail(currentProfile.email || currentEmail || ''),
         userEmail: normEmail(currentProfile.userEmail || currentEmail || ''),
@@ -614,38 +586,35 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       });
       applyVolRolesToProfile(base, currentProfile.vol_roles || {});
       users.push(base);
-      indexes = [users.length - 1];
+      index = users.length - 1;
     }
 
     const copyObject = (value) => JSON.parse(JSON.stringify(value));
     const activeVolRoleLabels = Object.keys(currentProfile.vol_roles || {}).filter(k => currentProfile.vol_roles[k]).map(prettifyVolLabel);
 
-    indexes.forEach((idx) => {
-      if(!users[idx] || typeof users[idx] !== 'object') users[idx] = {};
-      const row = users[idx];
+    if(!users[index] || typeof users[index] !== 'object') users[index] = {};
+    const row = users[index];
 
-      const editable = ['phone','mobile','alertsConsent','termsAccepted','termsAcceptedAt','avatar','photo','profilePhoto','photoURL','interest'];
-      editable.forEach((key) => {
-        if(currentProfile[key] !== undefined) row[key] = copyObject(currentProfile[key]);
-      });
-
-      row.vol_roles = copyObject(currentProfile.vol_roles || {});
-      row.volunteerRoles = activeVolRoleLabels.slice();
-      row.volunteer_roles = copyObject(currentProfile.vol_roles || {});
-      row.volRoles = copyObject(currentProfile.vol_roles || {});
-
-      ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
-        if(currentProfile[key]) row[key] = currentProfile[key];
-      });
-
-      if(isOwnerEmail(currentEmail || currentProfile.email || row.email || row.userEmail)){
-        ensureOwnerFlags(row);
-      }
-
-      row.updatedAt = new Date().toISOString();
+    const editable = ['phone','mobile','alertsConsent','termsAccepted','termsAcceptedAt','avatar','photo','profilePhoto','photoURL','interest'];
+    editable.forEach((key) => {
+      if(currentProfile[key] !== undefined) row[key] = copyObject(currentProfile[key]);
     });
 
-    currentProfileIndexes = indexes.slice();
+    row.vol_roles = copyObject(currentProfile.vol_roles || {});
+    row.volunteerRoles = activeVolRoleLabels.slice();
+    row.volunteer_roles = copyObject(currentProfile.vol_roles || {});
+    row.volRoles = copyObject(currentProfile.vol_roles || {});
+
+    ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
+      if(currentProfile[key]) row[key] = currentProfile[key];
+    });
+
+    if(isOwnerEmail(currentEmail || currentProfile.email || row.email || row.userEmail)){
+      ensureOwnerFlags(row);
+    }
+
+    row.updatedAt = new Date().toISOString();
+    currentProfileIndexes = index >= 0 ? [index] : [];
   }
 
   window.anwFindDashboardUserByEmail = function(email){ return findUserByEmail(email); };
@@ -1409,7 +1378,17 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
       const localTarget = target.split('@')[0] || '';
       const rowEmails = (u) => [u?.email, u?.userEmail, u?.loginEmail, u?.netlifyEmail].map(v => norm(v)).filter(Boolean);
       const matches = Array.isArray(users) ? users.filter((u) => rowEmails(u).some((e) => e === target || (e.split('@')[0] || '') === localTarget)) : [];
-      return matches[0] || null;
+      const best = matches.slice().sort((a, b) => {
+        const aEmails = rowEmails(a);
+        const bEmails = rowEmails(b);
+        const aExact = aEmails.includes(target) ? 1 : 0;
+        const bExact = bEmails.includes(target) ? 1 : 0;
+        if(bExact !== aExact) return bExact - aExact;
+        const aUpdated = Date.parse(a?.updatedAt || a?.modifiedAt || a?.createdAt || 0) || 0;
+        const bUpdated = Date.parse(b?.updatedAt || b?.modifiedAt || b?.createdAt || 0) || 0;
+        return bUpdated - aUpdated;
+      })[0] || null;
+      return best;
     }catch(_){ return null; }
   };
   const isApprovedProfile = (profile, email) => {
