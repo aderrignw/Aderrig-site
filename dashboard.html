@@ -245,7 +245,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       if(!res.ok) throw new Error('store load failed');
       const data = await res.json();
       users = Array.isArray(data) ? data : [];
-      await anwSave(KEY_USERS, users);
+      try{ await anwSave(KEY_USERS, users); }catch(_){ }
       return users;
     }catch(err){
       console.warn('users store load failed', err);
@@ -257,50 +257,16 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     markLocalUsersWrite();
     await anwSave(KEY_USERS, users);
 
-    let storeErr = null;
-    try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify(users)
-      });
-      if(!res.ok) throw new Error('store save failed');
-    }catch(err){
-      storeErr = err;
-      console.warn('users store save failed', err);
-    }
-
-    if(!storeErr){
-      try{
-        await loadUsersFromStore();
-        markLocalUsersWrite();
-        return;
-      }catch(err){
-        console.warn('users reload after store save failed', err);
-      }
-    }
-
-    let syncErr = null;
-    try{
-      if(typeof window.anwSyncToServer === 'function'){
-        await window.anwSyncToServer([KEY_USERS]);
-      }else if(typeof window.anwSyncKeyToServer === 'function'){
-        await window.anwSyncKeyToServer(KEY_USERS);
-      }else if(typeof window.anwPushToServer === 'function'){
-        await window.anwPushToServer([KEY_USERS]);
-      }else if(typeof window.anwPublishStoreKey === 'function'){
-        await window.anwPublishStoreKey(KEY_USERS);
-      }
-    }catch(err){
-      syncErr = err;
-      console.warn('users sync failed', err);
-    }
+    const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(users)
+    });
+    if(!res.ok) throw new Error('store save failed');
 
     await anwSave(KEY_USERS, users);
     markLocalUsersWrite();
-
-    if(storeErr) throw storeErr;
-    if(syncErr) throw syncErr;
+    return true;
   }
 
   function normEmail(v){ try{ return anwNormEmail(v || ''); }catch(_){ return String(v || '').trim().toLowerCase(); } }
@@ -414,13 +380,25 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     return ensureOwnerFlags(merged);
   }
 
+  const VOL_ROLE_LABEL_ALIASES = {
+    streetwatch:'Street watch / patrols',
+    streetWatch:'Street watch / patrols',
+    leaflets:'Distribute leaflets',
+    tech:'Tech support',
+    elderly:'Elderly checks',
+    meetings:'Meeting organiser',
+    translation:'Translation',
+    cleanup:'Community clean-up',
+    cleanUp:'Community clean-up',
+    parking:'Parking assistance'
+  };
+
   function normalizeVolKey(value){
     const raw = String(value || '').trim();
     if(!raw) return '';
     const simple = raw.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
     const aliasMap = {
       'street watch patrols':'streetWatch',
-      'streetwatch':'streetWatch',
       'distribute leaflets':'leaflets',
       'tech support':'tech',
       'elderly checks':'elderly',
@@ -428,20 +406,16 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       'meeting organizer':'meetings',
       'translation':'translation',
       'community clean up':'cleanUp',
-      'cleanup':'cleanUp',
-      'clean up':'cleanUp',
-      'parking assistance':'parkingAssistance',
-      'parking':'parkingAssistance'
+      'parking assistance':'parkingAssistance'
+
     };
     if(aliasMap[simple]) return aliasMap[simple];
     const compact = raw.replace(/[^a-zA-Z0-9]+/g,'');
     return compact ? compact.charAt(0).toLowerCase() + compact.slice(1) : '';
   }
 
-  function prettifyVolLabel(key, fallbackLabel=''){
-    const raw = String(fallbackLabel || key || '').trim();
-    if(!raw) return '';
-    return raw
+  function prettifyVolLabel(key){
+    return VOL_ROLE_LABEL_ALIASES[key] || String(key || '')
       .replace(/([a-z])([A-Z])/g,'$1 $2')
       .replace(/[_-]+/g,' ')
       .replace(/\s+/g,' ')
@@ -451,26 +425,24 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   function extractVolRolesFromRecord(record){
     const out = {};
-    const add = (k, v, label='') => {
+    const add = (k, v) => {
       const key = normalizeVolKey(k);
       if(!key) return;
-      const current = out[key] || {};
-      const nextLabel = String(label || current.label || k || '').trim();
-      out[key] = { key, checked: !!v, label: prettifyVolLabel(key, nextLabel) };
+      out[key] = !!v;
     };
 
-    [record?.volunteerRoles].forEach((src) => {
+    [
+      record?.vol_roles,
+      record?.volunteerRoles,
+      record?.volunteer_roles,
+      record?.volRoles
+    ].forEach((src) => {
       if(!src) return;
       if(Array.isArray(src)){
-        src.forEach(v => add(v, true, v));
+        src.forEach(v => add(v, true));
       }else if(typeof src === 'object'){
-        Object.keys(src).forEach(k => add(k, src[k], k));
+        Object.keys(src).forEach(k => add(k, src[k]));
       }
-    });
-
-    [record?.vol_roles, record?.volunteer_roles, record?.volRoles].forEach((src) => {
-      if(!src || typeof src !== 'object' || Array.isArray(src)) return;
-      Object.keys(src).forEach(k => add(k, src[k], k));
     });
 
     return out;
@@ -480,19 +452,17 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const order = [];
     const seen = new Set();
 
-    const addEntry = (entry) => {
-      const key = normalizeVolKey(entry && entry.key);
+    const addKey = (k) => {
+      const key = normalizeVolKey(k);
       if(!key || seen.has(key)) return;
       seen.add(key);
-      order.push({ key, label: prettifyVolLabel(key, entry && entry.label) });
+      order.push(key);
     };
 
-    Object.values(extractVolRolesFromRecord(profile || {})).forEach(addEntry);
-    (records || []).forEach((rec) => {
-      Object.values(extractVolRolesFromRecord(rec || {})).forEach(addEntry);
-    });
+    Object.keys(extractVolRolesFromRecord(profile || {})).forEach(addKey);
+    (records || []).forEach(rec => Object.keys(extractVolRolesFromRecord(rec || {})).forEach(addKey));
 
-    return order;
+    return order.map(key => ({ key, label: prettifyVolLabel(key) }));
   }
 
   function renderVolunteerRoleOptions(profile){
@@ -512,7 +482,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       '<div class="grid-2">' +
       volunteerCatalog.map(item =>
         `<label class="chk" style="display:flex; align-items:flex-start; gap:10px; margin:0;">
-          <input data-vol-role="${item.key}" data-vol-label="${String(item.label || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}" type="checkbox" ${active[item.key]?.checked ? 'checked' : ''}/>
+          <input data-vol-role="${item.key}" type="checkbox" ${active[item.key] ? 'checked' : ''}/>
           <span>${item.label}</span>
         </label>`
       ).join('') +
@@ -523,12 +493,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const nextVolRoles = {};
     (volunteerRolesWrap || document).querySelectorAll('[data-vol-role]').forEach((el) => {
       const key = el.getAttribute('data-vol-role');
-      if(!key) return;
-      nextVolRoles[key] = {
-        key,
-        checked: !!el.checked,
-        label: String(el.getAttribute('data-vol-label') || key).trim()
-      };
+      if(key) nextVolRoles[key] = !!el.checked;
     });
     return nextVolRoles;
   }
@@ -537,25 +502,16 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     if(!target || typeof target !== 'object') return;
     const normalized = {};
     Object.keys(nextVolRoles || {}).forEach((k) => {
-      const entry = nextVolRoles[k];
-      const nk = normalizeVolKey(entry && entry.key ? entry.key : k);
+      const nk = normalizeVolKey(k);
       if(!nk) return;
-      const checked = typeof entry === 'object' ? !!entry.checked : !!nextVolRoles[k];
-      const label = typeof entry === 'object' ? String(entry.label || k).trim() : String(k || '').trim();
-      normalized[nk] = { key:nk, checked, label:prettifyVolLabel(nk, label) };
+      normalized[nk] = !!nextVolRoles[k];
     });
+    const activeKeys = Object.keys(normalized).filter(k => normalized[k]);
 
-    const volunteerRoleFlags = {};
-    const volunteerRoleLabels = [];
-    Object.keys(normalized).forEach((key) => {
-      volunteerRoleFlags[key] = !!normalized[key].checked;
-      if(normalized[key].checked) volunteerRoleLabels.push(normalized[key].label);
-    });
-
-    target.vol_roles = Object.assign({}, volunteerRoleFlags);
-    target.volunteerRoles = volunteerRoleLabels.slice();
-    target.volunteer_roles = Object.assign({}, volunteerRoleFlags);
-    target.volRoles = Object.assign({}, volunteerRoleFlags);
+    target.vol_roles = Object.assign({}, normalized);
+    target.volunteerRoles = activeKeys.slice();
+    target.volunteer_roles = Object.assign({}, normalized);
+    target.volRoles = Object.assign({}, normalized);
   }
 
   function persistCurrentProfileToUsers(){
@@ -580,13 +536,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     }
 
     const copyObject = (value) => JSON.parse(JSON.stringify(value));
-    const extractedVolRoles = extractVolRolesFromRecord(currentProfile);
-    const volunteerRoleFlags = {};
-    const volunteerRoleLabels = [];
-    Object.keys(extractedVolRoles).forEach((key) => {
-      volunteerRoleFlags[key] = !!extractedVolRoles[key].checked;
-      if(extractedVolRoles[key].checked) volunteerRoleLabels.push(extractedVolRoles[key].label);
-    });
+    const activeVolRoleKeys = Object.keys(currentProfile.vol_roles || {}).filter(k => currentProfile.vol_roles[k]);
 
     indexes.forEach((idx) => {
       if(!users[idx] || typeof users[idx] !== 'object') users[idx] = {};
@@ -597,10 +547,10 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         if(currentProfile[key] !== undefined) row[key] = copyObject(currentProfile[key]);
       });
 
-      row.vol_roles = copyObject(volunteerRoleFlags);
-      row.volunteerRoles = volunteerRoleLabels.slice();
-      row.volunteer_roles = copyObject(volunteerRoleFlags);
-      row.volRoles = copyObject(volunteerRoleFlags);
+      row.vol_roles = copyObject(currentProfile.vol_roles || {});
+      row.volunteerRoles = activeVolRoleKeys.slice();
+      row.volunteer_roles = activeVolRoleKeys.slice();
+      row.volRoles = copyObject(currentProfile.vol_roles || {});
 
       ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
         if(currentProfile[key]) row[key] = currentProfile[key];
@@ -771,14 +721,14 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   async function resolveDashboardContext(){
     try{ await anwInitStore(); }catch(_){}
 
-    try{
-      const effectiveLastWrite = getEffectiveLastLocalWrite();
-      if(typeof window.anwSyncFromServer === 'function' && (Date.now() - effectiveLastWrite > LOCAL_WRITE_SYNC_GRACE_MS)){
-        await window.anwSyncFromServer([KEY_USERS], 0);
-      }
-    }catch(_){}
+    const effectiveLastWrite = getEffectiveLastLocalWrite();
+    const shouldPreferServer = (Date.now() - effectiveLastWrite > LOCAL_WRITE_SYNC_GRACE_MS);
 
-    await loadUsersFromStore();
+    if(shouldPreferServer){
+      await loadUsersFromStore();
+    }else{
+      loadUsers();
+    }
 
     let email = '';
     try{ email = String(await getIdentityEmail() || ''); }catch(_){}
@@ -922,7 +872,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
       await saveUsersAndSync();
 
-      loadUsers();
+      await loadUsersFromStore();
       currentProfile = currentEmail ? findUserByEmail(currentEmail) : currentProfile;
       if(currentProfile) applyVolRolesToProfile(currentProfile, extractVolRolesFromRecord(currentProfile));
       applyProfileUi();
