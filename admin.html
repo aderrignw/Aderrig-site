@@ -1372,6 +1372,19 @@
     return String(v).split(/[;,|]/).map(s => s.trim()).filter(Boolean);
   }
 
+  function normEmail(v){
+    return String(v || '').trim().toLowerCase();
+  }
+
+  function residentRowEmails(u){
+    return Array.from(new Set([
+      normEmail(u && u.email),
+      normEmail(u && u.userEmail),
+      normEmail(u && u.loginEmail),
+      normEmail(u && u.netlifyEmail)
+    ].filter(Boolean)));
+  }
+
   function uniqueBy(arr, getKey){
     const seen = new Set();
     return arr.filter(item => {
@@ -1651,7 +1664,8 @@
   async function saveCurrentResident(nextStatus){
     if(!CURRENT_RESIDENT) return;
     const users = await anwLoadSafe(KEY_USERS, []);
-    const idx = users.findIndex(u => String(u.email||'').toLowerCase() === String(CURRENT_RESIDENT.email||'').toLowerCase());
+    const targetEmail = normEmail(CURRENT_RESIDENT.email || CURRENT_RESIDENT.userEmail || CURRENT_RESIDENT.loginEmail || CURRENT_RESIDENT.netlifyEmail || '');
+    const idx = users.findIndex(u => residentRowEmails(u).includes(targetEmail));
     if(idx < 0) return;
 
     const roles = [];
@@ -1692,6 +1706,7 @@
     users[idx].volunteer_roles = volunteerRoleFlags;
     users[idx].streetCoordinator = byId('mCoord').checked;
     users[idx].volunteer = byId('mVol').checked;
+    users[idx].updatedAt = new Date().toISOString();
 
     if(nextStatus){
       users[idx].status = nextStatus;
