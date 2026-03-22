@@ -271,7 +271,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   function emailCandidates(email){
     const norm = normEmail(email);
     const local = norm.split('@')[0] || '';
-    return Array.from(new Set([norm, local].filter(Boolean)));
+    return { norm, local };
   }
 
   function rowEmails(u){
@@ -287,36 +287,69 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     return normEmail(email) === OWNER_EMAIL;
   }
 
-  function scoreProfileRecord(u, targetEmail){
-    const normTarget = normEmail(targetEmail || '');
-    const localTarget = normTarget.split('@')[0] || '';
-    const emails = rowEmails(u);
-    const exact = emails.includes(normTarget);
-    const local = emails.some(e => (e.split('@')[0] || '') === localTarget);
-    const status = String(u?.status || u?.accountStatus || u?.registrationStatus || '').trim().toLowerCase();
-    const approved = !!(u?.approved === true || u?.active === true || status === 'active' || status === 'approved');
-    const ownerish = !!(emails.includes(OWNER_EMAIL) || [u?.role,u?.type,u?.residentType,u?.access].map(v => String(v || '').toLowerCase()).some(v => ['owner','admin'].includes(v)));
-    const richness = [u?.name,u?.fullName,u?.address,u?.fullAddress,u?.eircode,u?.eir,u?.managementCompany,u?.regId,u?.regNo,u?.registrationNo,u?.type,u?.residentType,u?.phone,u?.mobile].filter(v => String(v || '').trim()).length;
-    const updated = Date.parse(u?.updatedAt || u?.modifiedAt || u?.createdAt || 0) || 0;
-    return (exact ? 1000 : 0) + (local ? 200 : 0) + (approved ? 120 : 0) + (ownerish ? 80 : 0) + (richness * 2) + Math.floor(updated / 1000);
+  function getRowPrimaryEmail(u){
+    return normEmail((u && (u.email || u.userEmail || u.loginEmail || u.netlifyEmail)) || '');
   }
 
-  function collectMatchingUserIndexes(email){
-    const candidates = emailCandidates(email);
-    if(!candidates.length) return [];
-    const localPart = candidates[0].split('@')[0];
+  function getRowUpdatedMs(u){
+    return Date.parse(u?.updatedAt || u?.modifiedAt || u?.createdAt || 0) || 0;
+  }
+
+  function scoreProfileRecord(u, targetEmail, mode){
+    const target = emailCandidates(targetEmail || '');
+    const emails = rowEmails(u);
+    const primaryEmail = getRowPrimaryEmail(u);
+    const exact = !!target.norm && emails.includes(target.norm);
+    const primaryExact = !!target.norm && primaryEmail === target.norm;
+    const localOnly = !!target.local && emails.some(e => (e.split('@')[0] || '') === target.local);
+    const hasReg = !!String(u?.regId || u?.regNo || u?.registrationNo || '').trim();
+    const status = String(u?.status || u?.accountStatus || u?.registrationStatus || '').trim().toLowerCase();
+    const approved = !!(u?.approved === true || u?.active === true || status === 'active' || status === 'approved');
+    const updated = getRowUpdatedMs(u);
+
+    if(mode === 'exact'){
+      return (primaryExact ? 1000000000000 : 0)
+        + (exact ? 500000000000 : 0)
+        + (approved ? 1000000000 : 0)
+        + (hasReg ? 100000000 : 0)
+        + updated;
+    }
+
+    return (primaryExact ? 500000000000 : 0)
+      + (exact ? 250000000000 : 0)
+      + (localOnly ? 1000000000 : 0)
+      + (approved ? 100000000 : 0)
+      + (hasReg ? 10000000 : 0)
+      + updated;
+  }
+
+  function collectMatchingUserIndexes(email, options){
+    const target = emailCandidates(email);
+    if(!target.norm && !target.local) return [];
+    const opts = options || {};
+    const exactOnly = !!opts.exactOnly;
     return users.reduce((acc, u, index) => {
-      if(rowEmails(u).some(e => candidates.includes(e) || ((e.split('@')[0] || '') === localPart))) acc.push(index);
+      const emails = rowEmails(u);
+      const hasExact = !!target.norm && emails.includes(target.norm);
+      const hasLocal = !!target.local && emails.some(e => (e.split('@')[0] || '') === target.local);
+      if(hasExact || (!exactOnly && hasLocal)) acc.push(index);
       return acc;
     }, []);
   }
 
   function getCanonicalUserIndexByEmail(email){
-    const indexes = collectMatchingUserIndexes(email);
-    if(!indexes.length) return -1;
-    return indexes
+    const exactIndexes = collectMatchingUserIndexes(email, { exactOnly:true });
+    if(exactIndexes.length){
+      return exactIndexes
+        .slice()
+        .sort((a, b) => scoreProfileRecord(users[b], email, 'exact') - scoreProfileRecord(users[a], email, 'exact'))[0];
+    }
+
+    const fallbackIndexes = collectMatchingUserIndexes(email, { exactOnly:false });
+    if(!fallbackIndexes.length) return -1;
+    return fallbackIndexes
       .slice()
-      .sort((a, b) => scoreProfileRecord(users[b], email) - scoreProfileRecord(users[a], email))[0];
+      .sort((a, b) => scoreProfileRecord(users[b], email, 'fallback') - scoreProfileRecord(users[a], email, 'fallback'))[0];
   }
 
   function cloneUserRecord(record){
