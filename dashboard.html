@@ -211,6 +211,10 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   let currentEmail = '';
   let currentProfile = null;
   let currentProfileIndexes = [];
+  let profileSaveInFlight = false;
+  let profileDirty = false;
+  let refreshDebounceTimer = null;
+  let suppressContextRefreshUntil = 0;
   let lastLocalUsersWriteAt = 0;
   let volunteerCatalog = [];
 
@@ -549,7 +553,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
       row.vol_roles = copyObject(currentProfile.vol_roles || {});
       row.volunteerRoles = activeVolRoleKeys.slice();
-      row.volunteer_roles = activeVolRoleKeys.slice();
+      row.volunteer_roles = copyObject(currentProfile.vol_roles || {});
       row.volRoles = copyObject(currentProfile.vol_roles || {});
 
       ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
@@ -767,6 +771,30 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   window.anwResolveDashboardContext = resolveDashboardContext;
 
+  async function refreshDashboardProfileUi(reason){
+    if(profileSaveInFlight) return;
+    if(profileDirty && reason !== 'force') return;
+    if(Date.now() < suppressContextRefreshUntil) return;
+    await resolveDashboardContext();
+    syncInterestAccess();
+    if(avatarImg) avatarImg.src = getStoredAvatar();
+  }
+
+  function scheduleDashboardProfileRefresh(reason, delay = 180){
+    clearTimeout(refreshDebounceTimer);
+    refreshDebounceTimer = setTimeout(() => {
+      refreshDashboardProfileUi(reason).catch(err => console.warn('dashboard refresh skipped', err));
+    }, delay);
+  }
+
+  function markProfileDirty(){
+    profileDirty = true;
+  }
+
+  function clearProfileDirty(){
+    profileDirty = false;
+  }
+
   function isApprovedResident(profile){
     const status = statusFromUser(profile);
     return !!(profile && (profile.approved === true || profile.active === true || status === 'active' || status === 'approved'));
@@ -805,33 +833,38 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   if(avatarImg) avatarImg.src = getStoredAvatar();
 
   try{
-    window.addEventListener('storage', async (ev) => {
+    ['pfPhone','pfAlertOptIn'].forEach((id) => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.addEventListener('input', markProfileDirty);
+      el.addEventListener('change', markProfileDirty);
+    });
+    volunteerRolesWrap?.addEventListener('change', markProfileDirty);
+
+    window.addEventListener('storage', (ev) => {
       if(ev && (ev.key === KEY_USERS || ev.key === ANW_KEYS.SESSION || ev.key === LOCAL_WRITE_TS_KEY)){
-        await resolveDashboardContext();
-        syncInterestAccess();
-        if(avatarImg) avatarImg.src = getStoredAvatar();
+        scheduleDashboardProfileRefresh('storage');
       }
     });
 
-    document.addEventListener('visibilitychange', async () => {
+    document.addEventListener('visibilitychange', () => {
       if(document.visibilityState === 'visible'){
-        await resolveDashboardContext();
-        syncInterestAccess();
-        if(avatarImg) avatarImg.src = getStoredAvatar();
+        scheduleDashboardProfileRefresh('visibility');
       }
     });
 
-    window.addEventListener('focus', async () => {
-      await resolveDashboardContext();
-      syncInterestAccess();
-      if(avatarImg) avatarImg.src = getStoredAvatar();
+    window.addEventListener('focus', () => {
+      scheduleDashboardProfileRefresh('focus');
     });
   }catch(_){ }
 
   document.getElementById('btnSaveProfile')?.addEventListener('click', async ()=>{
-    if(!currentProfile) return;
+    if(!currentProfile || profileSaveInFlight) return;
 
     try{
+      profileSaveInFlight = true;
+      clearProfileDirty();
+      suppressContextRefreshUntil = Date.now() + 1800;
       currentProfile.phone = document.getElementById('pfPhone').value.trim();
       currentProfile.mobile = currentProfile.phone;
 
@@ -865,11 +898,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
       persistCurrentProfileToUsers();
 
-      await anwSave(KEY_USERS, users);
-      markLocalUsersWrite();
-
-      applyProfileUi();
-
       await saveUsersAndSync();
 
       await loadUsersFromStore();
@@ -884,6 +912,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       setText('pfMsg', 'Error updating profile.');
       modal('Error updating profile. Please try again.', 'Error');
       toast('Error updating profile.', 'error');
+    } finally {
+      profileSaveInFlight = false;
     }
   });
 
