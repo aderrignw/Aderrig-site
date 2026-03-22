@@ -414,10 +414,10 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
     const matches = (Array.isArray(users) ? users : []).reduce((acc, u, index) => {
       const emails = [
-        normEmail(u?.email),
-        normEmail(u?.userEmail),
-        normEmail(u?.loginEmail),
-        normEmail(u?.netlifyEmail)
+        normEmail(u && u.email),
+        normEmail(u && u.userEmail),
+        normEmail(u && u.loginEmail),
+        normEmail(u && u.netlifyEmail)
       ].filter(Boolean);
       if(emails.includes(target)) acc.push({ index, user: u });
       return acc;
@@ -429,26 +429,28 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     }
 
     matches.sort((a, b) => {
-      const aUser = a.user || {};
-      const bUser = b.user || {};
-      const aStatus = String(aUser.status || aUser.accountStatus || aUser.registrationStatus || '').trim().toLowerCase();
-      const bStatus = String(bUser.status || bUser.accountStatus || bUser.registrationStatus || '').trim().toLowerCase();
-      const aApproved = !!(aUser.approved === true || aUser.active === true || aStatus === 'active' || aStatus === 'approved');
-      const bApproved = !!(bUser.approved === true || bUser.active === true || bStatus === 'active' || bStatus === 'approved');
-      const aReg = String(aUser.regId || aUser.regNo || aUser.registrationNo || '').trim() ? 1 : 0;
-      const bReg = String(bUser.regId || bUser.regNo || bUser.registrationNo || '').trim() ? 1 : 0;
-      const aTs = Date.parse(aUser.updatedAt || aUser.modifiedAt || aUser.createdAt || 0) || 0;
-      const bTs = Date.parse(bUser.updatedAt || bUser.modifiedAt || bUser.createdAt || 0) || 0;
+      const ua = a.user || {};
+      const ub = b.user || {};
+      const statusA = String(ua.status || ua.accountStatus || ua.registrationStatus || '').trim().toLowerCase();
+      const statusB = String(ub.status || ub.accountStatus || ub.registrationStatus || '').trim().toLowerCase();
+      const approvedA = !!(ua.approved === true || ua.active === true || statusA === 'active' || statusA === 'approved');
+      const approvedB = !!(ub.approved === true || ub.active === true || statusB === 'active' || statusB === 'approved');
+      if(approvedB !== approvedA) return Number(approvedB) - Number(approvedA);
 
-      if(bApproved !== aApproved) return Number(bApproved) - Number(aApproved);
-      if(bReg !== aReg) return bReg - aReg;
-      if(bTs !== aTs) return bTs - aTs;
+      const regA = String(ua.regId || ua.regNo || ua.registrationNo || '').trim() ? 1 : 0;
+      const regB = String(ub.regId || ub.regNo || ub.registrationNo || '').trim() ? 1 : 0;
+      if(regB !== regA) return regB - regA;
+
+      const updatedA = Date.parse(ua.updatedAt || ua.modifiedAt || ua.createdAt || 0) || 0;
+      const updatedB = Date.parse(ub.updatedAt || ub.modifiedAt || ub.createdAt || 0) || 0;
+      if(updatedB !== updatedA) return updatedB - updatedA;
+
       return b.index - a.index;
     });
 
-    const winner = matches[0];
-    currentProfileIndexes = [winner.index];
-    return ensureOwnerFlags(cloneUserRecord(winner.user));
+    const best = matches[0];
+    currentProfileIndexes = [best.index];
+    return ensureOwnerFlags(cloneUserRecord(best.user));
   }
 
   function findUserByEmail(email){
@@ -668,7 +670,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     currentProfileIndexes = index >= 0 ? [index] : [];
     await saveUsersAndSync();
     await loadUsersFromStore();
-    currentProfile = currentEmail ? findUserByEmail(currentEmail) : null;
+    currentProfile = currentEmail ? findExactUserByEmail(currentEmail) : null;
     if(currentProfile) applyVolRolesToProfile(currentProfile, extractVolRolesFromRecord(currentProfile));
     return currentProfile;
   }
@@ -1079,7 +1081,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       persistCurrentProfileToUsers();
       await saveUsersAndSync();
       await loadUsersFromStore();
-      currentProfile = currentEmail ? findUserByEmail(currentEmail) : currentProfile;
+      currentProfile = currentEmail ? findExactUserByEmail(currentEmail) : currentProfile;
 
       try{
         const user = window.netlifyIdentity && window.netlifyIdentity.currentUser ? window.netlifyIdentity.currentUser() : null;
@@ -1175,7 +1177,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       persistCurrentProfileToUsers();
       await saveUsersAndSync();
       await loadUsersFromStore();
-      currentProfile = currentEmail ? findUserByEmail(currentEmail) : currentProfile;
+      currentProfile = currentEmail ? findExactUserByEmail(currentEmail) : currentProfile;
       renderInterest();
       intMeta.textContent = 'Interest saved. Awaiting admin approval if pending.';
       toast('Interest saved.', 'success');
@@ -1196,7 +1198,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       persistCurrentProfileToUsers();
       await saveUsersAndSync();
       await loadUsersFromStore();
-      currentProfile = currentEmail ? findUserByEmail(currentEmail) : currentProfile;
+      currentProfile = currentEmail ? findExactUserByEmail(currentEmail) : currentProfile;
       renderInterest();
       intMeta.textContent = 'Interest withdrawn.';
       toast('Interest withdrawn.', 'info');
