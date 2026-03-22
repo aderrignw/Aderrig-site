@@ -298,7 +298,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const ownerish = !!(emails.includes(OWNER_EMAIL) || [u?.role,u?.type,u?.residentType,u?.access].map(v => String(v || '').toLowerCase()).some(v => ['owner','admin'].includes(v)));
     const richness = [u?.name,u?.fullName,u?.address,u?.fullAddress,u?.eircode,u?.eir,u?.managementCompany,u?.regId,u?.regNo,u?.registrationNo,u?.type,u?.residentType,u?.phone,u?.mobile].filter(v => String(v || '').trim()).length;
     const updated = Date.parse(u?.updatedAt || u?.modifiedAt || u?.createdAt || 0) || 0;
-    return (exact ? 1000 : 0) + (local ? 200 : 0) + (approved ? 120 : 0) + (ownerish ? 80 : 0) + (richness * 2) + Math.min(1000000, updated);
+    return (exact ? 1000 : 0) + (local ? 200 : 0) + (approved ? 120 : 0) + (ownerish ? 80 : 0) + (richness * 2) + Math.floor(updated / 1000);
   }
 
   function collectMatchingUserIndexes(email){
