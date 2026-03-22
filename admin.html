@@ -1385,6 +1385,42 @@
     ].filter(Boolean)));
   }
 
+  function residentEmailCandidates(email){
+    const norm = normEmail(email);
+    const local = norm.split('@')[0] || '';
+    return Array.from(new Set([norm, local].filter(Boolean)));
+  }
+
+  function scoreResidentRecord(u, targetEmail){
+    const normTarget = normEmail(targetEmail || '');
+    const localTarget = normTarget.split('@')[0] || '';
+    const emails = residentRowEmails(u);
+    const exact = emails.includes(normTarget);
+    const local = emails.some(e => (e.split('@')[0] || '') === localTarget);
+    const status = String(u?.status || u?.accountStatus || u?.registrationStatus || '').trim().toLowerCase();
+    const approved = !!(u?.approved === true || u?.active === true || status === 'active' || status === 'approved');
+    const ownerish = !!(emails.includes(normEmail(OWNER_EMAIL)) || [u?.role, u?.type, u?.residentType, u?.access]
+      .map(v => String(v || '').trim().toLowerCase())
+      .some(v => ['owner','admin'].includes(v)));
+    const richness = [u?.name, u?.fullName, u?.address, u?.fullAddress, u?.eircode, u?.eir, u?.managementCompany, u?.regId, u?.regNo, u?.registrationNo, u?.type, u?.residentType, u?.phone, u?.mobile]
+      .filter(v => String(v || '').trim()).length;
+    const updated = Date.parse(u?.updatedAt || u?.modifiedAt || u?.createdAt || 0) || 0;
+    return (exact ? 1000 : 0) + (local ? 200 : 0) + (approved ? 120 : 0) + (ownerish ? 80 : 0) + (richness * 2) + Math.floor(updated / 1000);
+  }
+
+  function getCanonicalResidentIndex(users, email){
+    const list = Array.isArray(users) ? users : [];
+    const candidates = residentEmailCandidates(email);
+    if(!candidates.length) return -1;
+    const localTarget = candidates[0].split('@')[0] || '';
+    const matches = list.reduce((acc, u, index) => {
+      if(residentRowEmails(u).some(e => candidates.includes(e) || ((e.split('@')[0] || '') === localTarget))) acc.push(index);
+      return acc;
+    }, []);
+    if(!matches.length) return -1;
+    return matches.slice().sort((a, b) => scoreResidentRecord(list[b], email) - scoreResidentRecord(list[a], email))[0];
+  }
+
   function uniqueBy(arr, getKey){
     const seen = new Set();
     return arr.filter(item => {
@@ -1665,7 +1701,7 @@
     if(!CURRENT_RESIDENT) return;
     const users = await anwLoadSafe(KEY_USERS, []);
     const targetEmail = normEmail(CURRENT_RESIDENT.email || CURRENT_RESIDENT.userEmail || CURRENT_RESIDENT.loginEmail || CURRENT_RESIDENT.netlifyEmail || '');
-    const idx = users.findIndex(u => residentRowEmails(u).includes(targetEmail));
+    const idx = getCanonicalResidentIndex(users, targetEmail);
     if(idx < 0) return;
 
     const roles = [];
@@ -2269,9 +2305,12 @@
   byId('btnRemoveResident')?.addEventListener('click', async () => {
     if(!CURRENT_RESIDENT) return;
     const users = await anwLoadSafe(KEY_USERS, []);
-    const next = users.filter(u => String(u.email||'').toLowerCase() !== String(CURRENT_RESIDENT.email||'').toLowerCase());
-    await anwSaveSafe(KEY_USERS, next);
-    RESIDENTS_CACHE = next;
+    const targetEmail = normEmail(CURRENT_RESIDENT.email || CURRENT_RESIDENT.userEmail || CURRENT_RESIDENT.loginEmail || CURRENT_RESIDENT.netlifyEmail || '');
+    const idx = getCanonicalResidentIndex(users, targetEmail);
+    if(idx < 0) return;
+    users.splice(idx, 1);
+    await anwSaveSafe(KEY_USERS, users);
+    RESIDENTS_CACHE = users;
     closeResidentModal();
     renderResidents('all');
   });
