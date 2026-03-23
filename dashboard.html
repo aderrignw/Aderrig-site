@@ -229,12 +229,12 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     return stamp;
   }
 
-  function cloneUsersList(list){
-    try{ return JSON.parse(JSON.stringify(Array.isArray(list) ? list : [])); }catch(_){ return Array.isArray(list) ? list.slice() : []; }
-  }
-
   function loadUsers(){
     return Array.isArray(users) ? users : [];
+  }
+
+  function cloneUsersList(list){
+    try{ return JSON.parse(JSON.stringify(Array.isArray(list) ? list : [])); }catch(_){ return Array.isArray(list) ? list.slice() : []; }
   }
 
   async function fetchUsersFromStoreRaw(){
@@ -247,43 +247,13 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   async function loadUsersFromStore(){
     try{
       users = await fetchUsersFromStoreRaw();
-      try{ await anwSave(KEY_USERS, users); }catch(_){}
+      try{ await anwSave(KEY_USERS, users); }catch(_){ }
       return users;
     }catch(err){
-      console.warn('dashboard store load failed; keeping in-memory users snapshot', err);
-      return Array.isArray(users) ? users : [];
+      console.warn('dashboard store load failed; not using local fallback', err);
+      users = [];
+      return [];
     }
-  }
-
-  function getCanonicalUserIndexFromList(list, email){
-    const pool = Array.isArray(list) ? list : [];
-    const normTarget = normEmail(email || '');
-    if(!normTarget) return -1;
-
-    const exact = pool.reduce((acc, u, index) => {
-      const emails = [
-        normEmail(u && u.email),
-        normEmail(u && u.userEmail),
-        normEmail(u && u.loginEmail),
-        normEmail(u && u.netlifyEmail)
-      ].filter(Boolean);
-      if(emails.includes(normTarget)) acc.push(index);
-      return acc;
-    }, []);
-
-    const indexes = exact.length ? exact : pool.reduce((acc, u, index) => {
-      const emails = [
-        normEmail(u && u.email),
-        normEmail(u && u.userEmail),
-        normEmail(u && u.loginEmail),
-        normEmail(u && u.netlifyEmail)
-      ].filter(Boolean);
-      if(emails.some(e => e && e.split('@')[0] === normTarget.split('@')[0])) acc.push(index);
-      return acc;
-    }, []);
-
-    if(!indexes.length) return -1;
-    return indexes.slice().sort((a, b) => scoreProfileRecord(pool[b], email) - scoreProfileRecord(pool[a], email))[0];
   }
 
   async function saveUsersAndSync(){
@@ -293,8 +263,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     try{
       const remoteUsers = await fetchUsersFromStoreRaw();
       if(currentProfile && emailRef){
-        const remoteIndex = getCanonicalUserIndexFromList(remoteUsers, emailRef);
-        const localIndex = getCanonicalUserIndexFromList(payload, emailRef);
+        const remoteIndex = getCanonicalUserIndexByEmailFromList(remoteUsers, emailRef);
+        const localIndex = getCanonicalUserIndexByEmailFromList(payload, emailRef);
         const source = localIndex >= 0 ? payload[localIndex] : currentProfile;
         if(remoteIndex >= 0){
           remoteUsers[remoteIndex] = JSON.parse(JSON.stringify(source));
@@ -311,7 +281,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
     users = Array.isArray(payload) ? payload : [];
     markLocalUsersWrite();
-    try{ await anwSave(KEY_USERS, users); }catch(_){}
+    try{ await anwSave(KEY_USERS, users); }catch(_){ }
 
     const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
       method:'POST',
@@ -320,7 +290,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     });
     if(!res.ok) throw new Error('store save failed');
 
-    try{ await anwSave(KEY_USERS, users); }catch(_){}
+    try{ await anwSave(KEY_USERS, users); }catch(_){ }
     markLocalUsersWrite();
     return true;
   }
@@ -348,42 +318,79 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   function scoreProfileRecord(u, targetEmail){
     const normTarget = normEmail(targetEmail || '');
-    const localTarget = normTarget.split('@')[0] || '';
     const emails = rowEmails(u);
     const exact = emails.includes(normTarget);
-    const local = emails.some(e => (e.split('@')[0] || '') === localTarget);
     const status = String(u?.status || u?.accountStatus || u?.registrationStatus || '').trim().toLowerCase();
     const approved = !!(u?.approved === true || u?.active === true || status === 'active' || status === 'approved');
     const ownerish = !!(emails.includes(OWNER_EMAIL) || [u?.role,u?.type,u?.residentType,u?.access].map(v => String(v || '').toLowerCase()).some(v => ['owner','admin'].includes(v)));
     const richness = [u?.name,u?.fullName,u?.address,u?.fullAddress,u?.eircode,u?.eir,u?.managementCompany,u?.regId,u?.regNo,u?.registrationNo,u?.type,u?.residentType,u?.phone,u?.mobile].filter(v => String(v || '').trim()).length;
     const updated = Date.parse(u?.updatedAt || u?.modifiedAt || u?.createdAt || 0) || 0;
-    return (exact ? 1000 : 0) + (local ? 200 : 0) + (approved ? 120 : 0) + (ownerish ? 80 : 0) + (richness * 2) + Math.floor(updated / 1000);
+    return (exact ? 1000 : 0) + (approved ? 120 : 0) + (ownerish ? 80 : 0) + (richness * 2) + Math.floor(updated / 1000);
+  }
+
+  function mergeProfiles(records, targetEmail){
+    const list = Array.isArray(records) ? records.filter(Boolean).slice() : [];
+    if(!list.length) return null;
+
+    list.sort((a,b) => scoreProfileRecord(b, targetEmail) - scoreProfileRecord(a, targetEmail));
+
+    const merged = {};
+    const assignIfEmpty = (key, value) => {
+      if(value == null) return;
+      if(typeof value === 'string' && !value.trim()) return;
+      if(merged[key] == null || (typeof merged[key] === 'string' && !String(merged[key]).trim())) merged[key] = value;
+    };
+
+    list.forEach((rec, index) => {
+      if(index === 0) Object.assign(merged, rec || {});
+      Object.keys(rec || {}).forEach((key) => {
+        const value = rec[key];
+        if(value && typeof value === 'object' && !Array.isArray(value)){
+          merged[key] = Object.assign({}, value, merged[key] || {});
+        } else {
+          assignIfEmpty(key, value);
+        }
+      });
+    });
+
+    if(!merged.email) merged.email = normEmail(targetEmail || list[0]?.email || list[0]?.userEmail || '');
+
+    if((merged.approved !== true && merged.active !== true) && list.some(rec => {
+      const s = String(rec?.status || rec?.accountStatus || rec?.registrationStatus || '').trim().toLowerCase();
+      return rec?.approved === true || rec?.active === true || s === 'active' || s === 'approved';
+    })){
+      merged.active = true;
+      if(!String(merged.status || '').trim()) merged.status = 'active';
+    }
+
+    return merged;
   }
 
   function collectMatchingUserIndexes(email){
     const normTarget = normEmail(email || '');
     if(!normTarget) return [];
-
-    const exact = users.reduce((acc, u, index) => {
+    return users.reduce((acc, u, index) => {
       if(rowEmails(u).includes(normTarget)) acc.push(index);
       return acc;
     }, []);
-    if(exact.length) return exact;
+  }
 
-    const localPart = normTarget.split('@')[0] || '';
-    return users.reduce((acc, u, index) => {
-      if(rowEmails(u).some(e => (e.split('@')[0] || '') === localPart)) acc.push(index);
+  function getCanonicalUserIndexByEmailFromList(list, email){
+    const pool = Array.isArray(list) ? list : [];
+    const normTarget = normEmail(email || '');
+    if(!normTarget) return -1;
+    const exact = pool.reduce((acc, u, index) => {
+      const emails = [
+        normEmail(u && u.email),
+        normEmail(u && u.userEmail),
+        normEmail(u && u.loginEmail),
+        normEmail(u && u.netlifyEmail)
+      ].filter(Boolean);
+      if(emails.includes(normTarget)) acc.push(index);
       return acc;
     }, []);
-  }
-
-  function getCanonicalUserIndexByEmail(email){
-    return getCanonicalUserIndexFromList(users, email);
-  }
-
-  function cloneUserRecord(record){
-    if(!record || typeof record !== 'object') return null;
-    try{ return JSON.parse(JSON.stringify(record)); }catch(_){ return Object.assign({}, record); }
+    if(!exact.length) return -1;
+    return exact.slice().sort((a, b) => scoreProfileRecord(pool[b], email) - scoreProfileRecord(pool[a], email))[0];
   }
 
   function ensureOwnerFlags(target){
@@ -407,50 +414,39 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   function findExactUserByEmail(email){
     const target = normEmail(email || '');
-    if(!target){
-      currentProfileIndexes = [];
-      return null;
-    }
+    if(!target) return null;
 
-    const matches = (Array.isArray(users) ? users : []).reduce((acc, u, index) => {
-      const emails = [
-        normEmail(u && u.email),
-        normEmail(u && u.userEmail),
-        normEmail(u && u.loginEmail),
-        normEmail(u && u.netlifyEmail)
-      ].filter(Boolean);
-      if(emails.includes(target)) acc.push({ index, user: u });
-      return acc;
-    }, []);
+    const matches = (Array.isArray(users) ? users : []).filter((u) => {
+      return [
+        normEmail(u?.email),
+        normEmail(u?.userEmail),
+        normEmail(u?.loginEmail),
+        normEmail(u?.netlifyEmail)
+      ].includes(target);
+    });
 
-    if(!matches.length){
-      currentProfileIndexes = [];
-      return null;
-    }
+    if(!matches.length) return null;
 
     matches.sort((a, b) => {
-      const ua = a.user || {};
-      const ub = b.user || {};
-      const statusA = String(ua.status || ua.accountStatus || ua.registrationStatus || '').trim().toLowerCase();
-      const statusB = String(ub.status || ub.accountStatus || ub.registrationStatus || '').trim().toLowerCase();
-      const approvedA = !!(ua.approved === true || ua.active === true || statusA === 'active' || statusA === 'approved');
-      const approvedB = !!(ub.approved === true || ub.active === true || statusB === 'active' || statusB === 'approved');
-      if(approvedB !== approvedA) return Number(approvedB) - Number(approvedA);
-
-      const regA = String(ua.regId || ua.regNo || ua.registrationNo || '').trim() ? 1 : 0;
-      const regB = String(ub.regId || ub.regNo || ub.registrationNo || '').trim() ? 1 : 0;
-      if(regB !== regA) return regB - regA;
-
-      const updatedA = Date.parse(ua.updatedAt || ua.modifiedAt || ua.createdAt || 0) || 0;
-      const updatedB = Date.parse(ub.updatedAt || ub.modifiedAt || ub.createdAt || 0) || 0;
-      if(updatedB !== updatedA) return updatedB - updatedA;
-
-      return b.index - a.index;
+      const aApproved = ['active','approved'].includes(String(a?.status || '').toLowerCase()) || a?.approved === true || a?.active === true;
+      const bApproved = ['active','approved'].includes(String(b?.status || '').toLowerCase()) || b?.approved === true || b?.active === true;
+      const aReg = String(a?.regId || a?.regNo || a?.registrationNo || '').trim() ? 1 : 0;
+      const bReg = String(b?.regId || b?.regNo || b?.registrationNo || '').trim() ? 1 : 0;
+      const aTs = Date.parse(a?.updatedAt || a?.modifiedAt || a?.createdAt || 0) || 0;
+      const bTs = Date.parse(b?.updatedAt || b?.modifiedAt || b?.createdAt || 0) || 0;
+      if (bApproved !== aApproved) return Number(bApproved) - Number(aApproved);
+      if (bReg !== aReg) return bReg - aReg;
+      return bTs - aTs;
     });
 
     const best = matches[0];
-    currentProfileIndexes = [best.index];
-    return ensureOwnerFlags(cloneUserRecord(best.user));
+    currentProfileIndexes = [];
+    if(Array.isArray(users)){
+      users.forEach((u, index) => {
+        if(u === best) currentProfileIndexes.push(index);
+      });
+    }
+    return ensureOwnerFlags(cloneUserRecord(best));
   }
 
   function findUserByEmail(email){
@@ -647,9 +643,11 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const patch = buildProfilePatchFromInputs();
     if(!patch) throw new Error('profile patch failed');
 
-    let index = getCanonicalUserIndexByEmail(currentEmail || currentProfile.email || currentProfile.userEmail || '');
+    let index = (currentProfileIndexes && currentProfileIndexes.length)
+      ? Number(currentProfileIndexes[0])
+      : getCanonicalUserIndexByEmailFromList(users, currentEmail || currentProfile.email || currentProfile.userEmail || '');
 
-    if(index < 0){
+    if(!(index >= 0)){
       const base = ensureOwnerFlags({
         email: normEmail(currentProfile.email || currentEmail || ''),
         userEmail: normEmail(currentProfile.userEmail || currentEmail || ''),
@@ -678,9 +676,11 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   function persistCurrentProfileToUsers(){
     if(!currentProfile) return;
 
+    loadUsers();
+
     let index = (currentProfileIndexes && currentProfileIndexes.length)
       ? Number(currentProfileIndexes[0])
-      : getCanonicalUserIndexByEmail(currentEmail || currentProfile.email || '');
+      : getCanonicalUserIndexByEmailFromList(users, currentEmail || currentProfile.email || '');
 
     if(!(index >= 0)){
       const base = ensureOwnerFlags({
@@ -722,7 +722,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     currentProfileIndexes = index >= 0 ? [index] : [];
   }
 
-  window.anwFindDashboardUserByEmail = function(email){ return findUserByEmail(email); };
+  window.anwFindDashboardUserByEmail = function(email){ return findExactUserByEmail(email); };
 
   function prettyStatus(value){
     const raw = String(value || '').trim().toLowerCase();
@@ -1465,36 +1465,21 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     });
   };
   const getProfile = async (email) => {
+    const target = norm(email);
+    if(!target) return null;
+
     try{
       if(typeof window.anwResolveDashboardContext === 'function'){
-        const resolved = await window.anwResolveDashboardContext();
-        if(resolved && sameEmail(resolved.email, email) && resolved.profile) return resolved.profile;
+        const resolved = await window.anwResolveDashboardContext({ force:true });
+        if(resolved && sameEmail(resolved.email, target) && resolved.profile) return resolved.profile;
       }
     }catch(_){}
     try{
       if(typeof window.anwFindDashboardUserByEmail === 'function'){
-        return window.anwFindDashboardUserByEmail(email) || null;
+        return window.anwFindDashboardUserByEmail(target) || null;
       }
     }catch(_){}
-    try{ await window.anwInitStore?.(); }catch(_){}
-    try{
-      const users = (window.anwLoad && window.ANW_KEYS) ? (window.anwLoad(window.ANW_KEYS.USERS, []) || []) : [];
-      const target = norm(email);
-      const localTarget = target.split('@')[0] || '';
-      const rowEmails = (u) => [u?.email, u?.userEmail, u?.loginEmail, u?.netlifyEmail].map(v => norm(v)).filter(Boolean);
-      const matches = Array.isArray(users) ? users.filter((u) => rowEmails(u).some((e) => e === target || (e.split('@')[0] || '') === localTarget)) : [];
-      const best = matches.slice().sort((a, b) => {
-        const aEmails = rowEmails(a);
-        const bEmails = rowEmails(b);
-        const aExact = aEmails.includes(target) ? 1 : 0;
-        const bExact = bEmails.includes(target) ? 1 : 0;
-        if(bExact !== aExact) return bExact - aExact;
-        const aUpdated = Date.parse(a?.updatedAt || a?.modifiedAt || a?.createdAt || 0) || 0;
-        const bUpdated = Date.parse(b?.updatedAt || b?.modifiedAt || b?.createdAt || 0) || 0;
-        return bUpdated - aUpdated;
-      })[0] || null;
-      return best;
-    }catch(_){ return null; }
+    return null;
   };
   const isApprovedProfile = (profile, email) => {
     if(sameEmail(email, OWNER_EMAIL)) return true;
