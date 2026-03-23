@@ -164,30 +164,7 @@
 <div class="field">
 <label>Activities they can help with</label>
 <div class="rolebox" id="hvRolesBox">
-<div class="role-row">
-<label class="tiny"><input type="checkbox" value="Street watch / patrols"/> Street watch / patrols</label>
-<span class="tag gray">outdoors</span>
-</div>
-<div class="role-row">
-<label class="tiny"><input type="checkbox" value="Distribute leaflets"/> Distribute leaflets</label>
-<span class="tag gray">letters</span>
-</div>
-<div class="role-row">
-<label class="tiny"><input type="checkbox" value="Elderly checks"/> Elderly checks</label>
-<span class="tag gray">support</span>
-</div>
-<div class="role-row">
-<label class="tiny"><input type="checkbox" value="Meeting organiser"/> Meeting organiser</label>
-<span class="tag gray">events</span>
-</div>
-<div class="role-row">
-<label class="tiny"><input type="checkbox" value="Tech support"/> Tech support</label>
-<span class="tag gray">digital</span>
-</div>
-<div class="role-row">
-<label class="tiny"><input type="checkbox" value="Translation"/> Translation</label>
-<span class="tag gray">language</span>
-</div>
+<p class="tiny muted" style="margin:0;">Volunteer roles are loaded automatically from your resident record.</p>
 </div>
 </div>
 </div>
@@ -444,13 +421,116 @@
   const hvTbody = document.getElementById('hvTbody');
   const hvEmpty = document.getElementById('hvEmpty');
 
+  const VOL_ROLE_LABEL_ALIASES = {
+    streetwatch:'Street watch / patrols',
+    streetWatch:'Street watch / patrols',
+    leaflets:'Distribute leaflets',
+    tech:'Tech support',
+    elderly:'Elderly checks',
+    meetings:'Meeting organiser',
+    translation:'Translation',
+    cleanup:'Community clean-up',
+    cleanUp:'Community clean-up',
+    parkingAssistance:'Parking assistance',
+    parking:'Parking assistance'
+  };
+
+  function normalizeVolKey(value){
+    const raw = String(value || '').trim();
+    if(!raw) return '';
+    const simple = raw.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+    const aliasMap = {
+      'street watch patrols':'streetWatch',
+      'distribute leaflets':'leaflets',
+      'tech support':'tech',
+      'elderly checks':'elderly',
+      'meeting organiser':'meetings',
+      'meeting organizer':'meetings',
+      'translation':'translation',
+      'community clean up':'cleanUp',
+      'parking assistance':'parkingAssistance'
+    };
+    if(aliasMap[simple]) return aliasMap[simple];
+    const compact = raw.replace(/[^a-zA-Z0-9]+/g,'');
+    return compact ? compact.charAt(0).toLowerCase() + compact.slice(1) : '';
+  }
+
+  function prettifyVolLabel(key){
+    return VOL_ROLE_LABEL_ALIASES[key] || String(key || '')
+      .replace(/([a-z])([A-Z])/g,'$1 $2')
+      .replace(/[_-]+/g,' ')
+      .replace(/\s+/g,' ')
+      .trim()
+      .replace(/(^|\s)\S/g, s => s.toUpperCase());
+  }
+
+  function extractVolRolesFromRecord(record){
+    const out = {};
+    const add = (k, v) => {
+      const key = normalizeVolKey(k);
+      if(!key) return;
+      out[key] = !!v;
+    };
+
+    [
+      record?.vol_roles,
+      record?.volunteerRoles,
+      record?.volunteer_roles,
+      record?.volRoles
+    ].forEach((src) => {
+      if(!src) return;
+      if(Array.isArray(src)){
+        src.forEach(v => add(v, true));
+      }else if(typeof src === 'object'){
+        Object.keys(src).forEach(k => add(k, src[k]));
+      }
+    });
+
+    return out;
+  }
+
+  function buildVolunteerCatalog(records, profile){
+    const order = [];
+    const seen = new Set();
+
+    const addKey = (k) => {
+      const key = normalizeVolKey(k);
+      if(!key || seen.has(key)) return;
+      seen.add(key);
+      order.push(key);
+    };
+
+    Object.keys(extractVolRolesFromRecord(profile || {})).forEach(addKey);
+    (records || []).forEach(rec => Object.keys(extractVolRolesFromRecord(rec || {})).forEach(addKey));
+
+    return order.map(key => ({ key, label: prettifyVolLabel(key) }));
+  }
+
+  function renderVolunteerRoleOptions(){
+    if(!hvRolesBox) return;
+    const info = getLoggedUser();
+    const profile = info && info.user ? info.user : {};
+    const volunteerCatalog = buildVolunteerCatalog([profile], profile);
+
+    if(!volunteerCatalog.length){
+      hvRolesBox.innerHTML = '<p class="tiny muted" style="margin:0;">No volunteer roles are configured yet in your resident record.</p>';
+      return;
+    }
+
+    hvRolesBox.innerHTML = volunteerCatalog.map(item => `
+      <div class="role-row">
+        <label class="tiny"><input data-vol-role="${item.key}" type="checkbox" value="${item.label}"/> ${item.label}</label>
+      </div>
+    `).join('');
+  }
+
   function selectedRoles(){
     const out=[];
     if(!hvRolesBox) return out;
     hvRolesBox.querySelectorAll('input[type="checkbox"]').forEach(ch=>{
-      if(ch.checked) out.push(ch.value);
+      if(ch.checked) out.push(String(ch.value || ch.getAttribute('data-vol-label') || '').trim());
     });
-    return out;
+    return out.filter(Boolean);
   }
 
   function clearVolunteerForm(){
@@ -518,6 +598,7 @@
     }
     volsNotLogged.style.display='none';
     volsContent.style.display='block';
+    renderVolunteerRoleOptions();
 
     const arr = Array.isArray(info.user.householdVolunteers) ? info.user.householdVolunteers : [];
     hvTbody.innerHTML = '';
