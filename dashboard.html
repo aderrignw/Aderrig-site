@@ -370,39 +370,45 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   function findExactUserByEmail(email){
     const target = normEmail(email || '');
-    if(!target) return null;
+    if(!target){
+      currentProfileIndexes = [];
+      return null;
+    }
 
-    const matches = (Array.isArray(users) ? users : []).filter((u) => {
-      return [
+    const matches = [];
+    (Array.isArray(users) ? users : []).forEach((u, index) => {
+      const emails = [
         normEmail(u?.email),
         normEmail(u?.userEmail),
         normEmail(u?.loginEmail),
         normEmail(u?.netlifyEmail)
-      ].includes(target);
+      ].filter(Boolean);
+      if(emails.includes(target)) matches.push({ index, user: u });
     });
 
-    if(!matches.length) return null;
+    if(!matches.length){
+      currentProfileIndexes = [];
+      return null;
+    }
 
     matches.sort((a, b) => {
-      const aApproved = ['active','approved'].includes(String(a?.status || '').toLowerCase()) || a?.approved === true || a?.active === true;
-      const bApproved = ['active','approved'].includes(String(b?.status || '').toLowerCase()) || b?.approved === true || b?.active === true;
-      const aReg = String(a?.regId || a?.regNo || a?.registrationNo || '').trim() ? 1 : 0;
-      const bReg = String(b?.regId || b?.regNo || b?.registrationNo || '').trim() ? 1 : 0;
-      const aTs = Date.parse(a?.updatedAt || a?.modifiedAt || a?.createdAt || 0) || 0;
-      const bTs = Date.parse(b?.updatedAt || b?.modifiedAt || b?.createdAt || 0) || 0;
+      const ua = a.user || {};
+      const ub = b.user || {};
+      const aApproved = ['active','approved'].includes(String(ua.status || '').toLowerCase()) || ua.approved === true || ua.active === true;
+      const bApproved = ['active','approved'].includes(String(ub.status || '').toLowerCase()) || ub.approved === true || ub.active === true;
+      const aReg = String(ua.regId || ua.regNo || ua.registrationNo || '').trim() ? 1 : 0;
+      const bReg = String(ub.regId || ub.regNo || ub.registrationNo || '').trim() ? 1 : 0;
+      const aTs = Date.parse(ua.updatedAt || ua.modifiedAt || ua.createdAt || 0) || 0;
+      const bTs = Date.parse(ub.updatedAt || ub.modifiedAt || ub.createdAt || 0) || 0;
       if (bApproved !== aApproved) return Number(bApproved) - Number(aApproved);
       if (bReg !== aReg) return bReg - aReg;
-      return bTs - aTs;
+      if (bTs !== aTs) return bTs - aTs;
+      return b.index - a.index;
     });
 
     const best = matches[0];
-    currentProfileIndexes = [];
-    if(Array.isArray(users)){
-      users.forEach((u, index) => {
-        if(u === best) currentProfileIndexes.push(index);
-      });
-    }
-    return ensureOwnerFlags(cloneUserRecord(best));
+    currentProfileIndexes = [best.index];
+    return ensureOwnerFlags(cloneUserRecord(best.user));
   }
 
   function findUserByEmail(email){
@@ -599,9 +605,12 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const patch = buildProfilePatchFromInputs();
     if(!patch) throw new Error('profile patch failed');
 
-    let indexes = collectMatchingUserIndexes(currentEmail || currentProfile.email || currentProfile.userEmail || '');
+    const emailRef = currentEmail || currentProfile.email || currentProfile.userEmail || currentProfile.loginEmail || currentProfile.netlifyEmail || '';
+    let index = (currentProfileIndexes && currentProfileIndexes.length)
+      ? Number(currentProfileIndexes[0])
+      : getCanonicalUserIndexByEmailFromList(users, emailRef);
 
-    if(!indexes.length){
+    if(!(index >= 0)){
       const base = ensureOwnerFlags({
         email: normEmail(currentProfile.email || currentEmail || ''),
         userEmail: normEmail(currentProfile.userEmail || currentEmail || ''),
@@ -610,18 +619,16 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       });
       applyProfilePatch(base, patch);
       users.push(base);
-      indexes = [users.length - 1];
+      index = users.length - 1;
     } else {
-      indexes.forEach((idx) => {
-        if(!users[idx] || typeof users[idx] !== 'object') users[idx] = {};
-        applyProfilePatch(users[idx], patch);
-        ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
-          if(currentProfile && currentProfile[key]) users[idx][key] = currentProfile[key];
-        });
+      if(!users[index] || typeof users[index] !== 'object') users[index] = {};
+      applyProfilePatch(users[index], patch);
+      ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
+        if(currentProfile && currentProfile[key]) users[index][key] = currentProfile[key];
       });
     }
 
-    currentProfileIndexes = indexes.slice();
+    currentProfileIndexes = index >= 0 ? [index] : [];
     await saveUsersAndSync();
     await loadUsersFromStore();
     currentProfile = currentEmail ? findExactUserByEmail(currentEmail) : null;
@@ -634,11 +641,12 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
     loadUsers();
 
-    let indexes = currentProfileIndexes && currentProfileIndexes.length
-      ? currentProfileIndexes.slice()
-      : collectMatchingUserIndexes(currentEmail || currentProfile.email || '');
+    const emailRef = currentEmail || currentProfile.email || currentProfile.userEmail || currentProfile.loginEmail || currentProfile.netlifyEmail || '';
+    let index = (currentProfileIndexes && currentProfileIndexes.length)
+      ? Number(currentProfileIndexes[0])
+      : getCanonicalUserIndexByEmailFromList(users, emailRef);
 
-    if(!indexes.length){
+    if(!(index >= 0)){
       const base = ensureOwnerFlags({
         email: normEmail(currentProfile.email || currentEmail || ''),
         userEmail: normEmail(currentProfile.userEmail || currentEmail || ''),
@@ -647,38 +655,35 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       });
       applyVolRolesToProfile(base, currentProfile.vol_roles || {});
       users.push(base);
-      indexes = [users.length - 1];
+      index = users.length - 1;
     }
 
     const copyObject = (value) => JSON.parse(JSON.stringify(value));
     const activeVolRoleLabels = Object.keys(currentProfile.vol_roles || {}).filter(k => currentProfile.vol_roles[k]).map(prettifyVolLabel);
 
-    indexes.forEach((idx) => {
-      if(!users[idx] || typeof users[idx] !== 'object') users[idx] = {};
-      const row = users[idx];
+    if(!users[index] || typeof users[index] !== 'object') users[index] = {};
+    const row = users[index];
 
-      const editable = ['phone','mobile','alertsConsent','termsAccepted','termsAcceptedAt','avatar','photo','profilePhoto','photoURL','interest'];
-      editable.forEach((key) => {
-        if(currentProfile[key] !== undefined) row[key] = copyObject(currentProfile[key]);
-      });
-
-      row.vol_roles = copyObject(currentProfile.vol_roles || {});
-      row.volunteerRoles = activeVolRoleLabels.slice();
-      row.volunteer_roles = copyObject(currentProfile.vol_roles || {});
-      row.volRoles = copyObject(currentProfile.vol_roles || {});
-
-      ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
-        if(currentProfile[key]) row[key] = currentProfile[key];
-      });
-
-      if(isOwnerEmail(currentEmail || currentProfile.email || row.email || row.userEmail)){
-        ensureOwnerFlags(row);
-      }
-
-      row.updatedAt = new Date().toISOString();
+    const editable = ['phone','mobile','alertsConsent','termsAccepted','termsAcceptedAt','avatar','photo','profilePhoto','photoURL','interest'];
+    editable.forEach((key) => {
+      if(currentProfile[key] !== undefined) row[key] = copyObject(currentProfile[key]);
     });
 
-    currentProfileIndexes = indexes.slice();
+    row.vol_roles = copyObject(currentProfile.vol_roles || {});
+    row.volunteerRoles = activeVolRoleLabels.slice();
+    row.volunteer_roles = copyObject(currentProfile.vol_roles || {});
+    row.volRoles = copyObject(currentProfile.vol_roles || {});
+
+    ['email','userEmail','loginEmail','netlifyEmail'].forEach((key) => {
+      if(currentProfile[key]) row[key] = currentProfile[key];
+    });
+
+    if(isOwnerEmail(currentEmail || currentProfile.email || row.email || row.userEmail)){
+      ensureOwnerFlags(row);
+    }
+
+    row.updatedAt = new Date().toISOString();
+    currentProfileIndexes = index >= 0 ? [index] : [];
   }
 
   window.anwFindDashboardUserByEmail = function(email){ return findExactUserByEmail(email); };
@@ -1462,10 +1467,15 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     const effectiveEmail = norm(identityUser?.email || email || '');
     if(!effectiveEmail){ showNotice('Please log in to access this section.'); openPanel('tabGarda'); return; }
     const profile = await getProfile(effectiveEmail);
-    if(!isApprovedProfile(profile, effectiveEmail)){ showNotice('Your account is pending approval. Garda & Safety remains available while private tabs stay locked.'); openPanel('tabGarda'); return; }
     hideNotice();
     if(typeof window.anwRefreshDashboardProfile === 'function'){ try{ await window.anwRefreshDashboardProfile(); }catch(_){} }
     openPanel(target);
+    if(target === 'tabInterest'){
+      const blocked = document.getElementById('interestBlocked');
+      const area = document.getElementById('interestArea');
+      if(!isApprovedProfile(profile, effectiveEmail)){ if(blocked) blocked.style.display='block'; if(area) area.style.display='none'; }
+      else { if(blocked) blocked.style.display='none'; if(area) area.style.display='block'; }
+    }
   }
   tabs.forEach((btn) => { btn.addEventListener('click', (event) => { event.preventDefault(); requestTab(btn.dataset.tab || 'tabProfile'); }); });
   window.anwDashboardRequestTab = requestTab; window.openDashboardTab = requestTab;
@@ -1473,9 +1483,8 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     const email = getSessionEmail();
     const identityUser = await getIdentityUser();
     const effectiveEmail = norm(identityUser?.email || email || '');
-    const profile = effectiveEmail ? await getProfile(effectiveEmail) : null;
     if(typeof window.anwRefreshDashboardProfile === 'function'){ try{ await window.anwRefreshDashboardProfile(); }catch(_){} }
-    if(effectiveEmail && isApprovedProfile(profile, effectiveEmail)) await requestTab('tabProfile'); else await requestTab('tabGarda');
+    await requestTab(effectiveEmail ? 'tabProfile' : 'tabGarda');
     try{ document.body.removeAttribute('data-acl-loading'); }catch(_){}
   }, { once:true });
 })();
