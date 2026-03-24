@@ -40,7 +40,11 @@
   #tabAccessControl .ac-wrap{ overflow:auto; border:1px solid var(--line); border-radius:14px; background:#fff; }
   #tabAccessControl table.ac-table{ width:100%; min-width:920px; border-collapse:collapse; }
   #tabAccessControl .ac-table th, #tabAccessControl .ac-table td{ padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; }
-  #tabAccessControl .ac-table thead th{ position:sticky; top:0; background:#fff; z-index:2; }
+  #tabAccessControl .ac-table thead th{ position:sticky; top:0; background:#fff; z-index:2; white-space:normal; word-break:break-word; }
+  #tabAccessControl .ac-table thead th:not(:first-child),
+  #tabAccessControl .ac-table td:not(:first-child){ text-align:center; }
+  #tabAccessControl .ac-table td:first-child{ min-width:320px; }
+  #tabAccessControl .ac-role-head{ min-width:96px; }
   #tabAccessControl .ac-item{ display:flex; align-items:flex-start; gap:10px; }
   #tabAccessControl .ac-badge{ font-size:.70rem; padding:2px 8px; border-radius:999px; border:1px solid rgba(0,0,0,.10); background:rgba(0,0,0,.03); }
   #tabAccessControl .ac-key{
@@ -223,39 +227,36 @@
   }
 
 
-  #tabTasks .tasks-layout{ display:grid; grid-template-columns:minmax(320px,360px) minmax(0,1fr); gap:18px; margin-top:12px; align-items:start; }
-  #tabTasks .tasks-layout > *{ min-width:0; }
+  #tabTasks .tasks-layout{ display:flex; flex-direction:column; gap:18px; margin-top:12px; }
+  #tabTasks .tasks-layout > *{ min-width:0; width:100%; }
   #tabTasks .task-builder-panel,
-  #tabTasks .task-list-panel{ border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:16px; background:#fff; }
+  #tabTasks .task-list-panel{ border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:18px; background:#fff; width:100%; box-sizing:border-box; }
   #tabTasks .task-builder-grid-two,
   #tabTasks .task-target-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-  #tabTasks .task-list-toolbar{ display:grid; grid-template-columns:minmax(180px,240px) minmax(260px,1fr); gap:12px; align-items:end; margin-top:10px; }
+  #tabTasks .task-list-toolbar{ display:grid; grid-template-columns:minmax(220px,280px) minmax(320px,1fr); gap:12px; align-items:end; margin-top:10px; }
   #tabTasks .task-list-toolbar .field{ margin:0; min-width:0; }
   #tabTasks .task-table-wrap{ overflow-x:auto; margin-top:10px; width:100%; }
-  #tabTasks .task-table{ width:100%; min-width:760px; border-collapse:collapse; table-layout:fixed; }
+  #tabTasks .task-table{ width:100%; min-width:980px; border-collapse:collapse; table-layout:fixed; }
   #tabTasks .task-table th,
-  #tabTasks .task-table td{ padding:10px 12px; vertical-align:top; border-bottom:1px solid rgba(17,24,39,.08); overflow-wrap:anywhere; }
+  #tabTasks .task-table td{ padding:10px 12px; vertical-align:top; border-bottom:1px solid rgba(17,24,39,.08); overflow-wrap:anywhere; word-break:break-word; }
   #tabTasks .task-table th:nth-child(1), #tabTasks .task-table td:nth-child(1){ width:90px; }
-  #tabTasks .task-table th:nth-child(2), #tabTasks .task-table td:nth-child(2){ width:22%; }
+  #tabTasks .task-table th:nth-child(2), #tabTasks .task-table td:nth-child(2){ width:24%; }
   #tabTasks .task-table th:nth-child(3), #tabTasks .task-table td:nth-child(3){ width:16%; }
   #tabTasks .task-table th:nth-child(4), #tabTasks .task-table td:nth-child(4){ width:110px; }
-  #tabTasks .task-table th:nth-child(5), #tabTasks .task-table td:nth-child(5){ width:110px; }
+  #tabTasks .task-table th:nth-child(5), #tabTasks .task-table td:nth-child(5){ width:120px; }
   #tabTasks .task-table th:nth-child(6), #tabTasks .task-table td:nth-child(6){ width:20%; }
-  #tabTasks .task-table th:nth-child(7), #tabTasks .task-table td:nth-child(7){ width:120px; }
+  #tabTasks .task-table th:nth-child(7), #tabTasks .task-table td:nth-child(7){ width:130px; }
   #tabTasks .task-table th:nth-child(8), #tabTasks .task-table td:nth-child(8){ width:120px; }
   #tabTasks .task-builder-panel textarea,
   #tabTasks .task-builder-panel input,
   #tabTasks .task-builder-panel select,
   #tabTasks .task-list-panel input,
   #tabTasks .task-list-panel select{ width:100%; max-width:100%; box-sizing:border-box; }
-  @media (max-width: 1180px){
-    #tabTasks .tasks-layout{ grid-template-columns:1fr; }
-  }
-  @media (max-width: 760px){
+  @media (max-width: 860px){
     #tabTasks .task-builder-grid-two,
     #tabTasks .task-target-grid,
     #tabTasks .task-list-toolbar{ grid-template-columns:1fr; }
-    #tabTasks .task-table{ min-width:680px; }
+    #tabTasks .task-table{ min-width:760px; }
   }
 
   @media print {
@@ -1447,7 +1448,7 @@
       <div>
         <h3 style="margin:0;">Access Control</h3>
         <p class="tiny muted" style="margin:6px 0 0;">
-          Control which pages, tabs and sub-tabs are public or require a specific site role. Roles follow the site hierarchy: resident, street coordinator, assistant area coordinator, area coordinator, projects and owner.
+          Control which pages, tabs and sub-tabs are public or require a specific site role. This view now includes Resident, Volunteer, Coordinators, Projects, Platform Support, Admin and Owner so the matrix matches what is actually released across the site.
         </p>
       </div>
       <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -1465,14 +1466,16 @@
         <thead>
           <tr>
             <th style="min-width:320px;">Page / feature</th>
-            <th>Public</th>
-            <th>Resident</th>
-            <th>Street Coord.</th>
-            <th>Volunteer</th>
-            <th>Area Coord.</th>
-            <th>Assistant</th>
-            <th>Platform</th>
-            <th>Admin</th>
+            <th class="ac-role-head">Public</th>
+            <th class="ac-role-head">Resident</th>
+            <th class="ac-role-head">Volunteer</th>
+            <th class="ac-role-head">Street coord.</th>
+            <th class="ac-role-head">Assistant</th>
+            <th class="ac-role-head">Area coord.</th>
+            <th class="ac-role-head">Projects</th>
+            <th class="ac-role-head">Platform</th>
+            <th class="ac-role-head">Admin</th>
+            <th class="ac-role-head">Owner</th>
           </tr>
         </thead>
         <tbody id="acBody"></tbody>
@@ -2318,46 +2321,58 @@
 
   
   
-  const ACL_ROLES = ['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'];
+  const ACL_ROLES = ['public','resident','volunteer','street_coordinator','assistant_area_coordinator','area_coordinator','projects','platform_support','admin','owner'];
 
   const ACL_ITEMS = [
     { key:'page:home', label:'Home', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:about', label:'About', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:report', label:'Report Incident', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'page:alerts', label:'Community Alerts', group:'Site pages', indent:0, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:projects', label:'Community Projects page', group:'Projects', indent:0, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_monitoring', label:'Projects · Monitoring', group:'Projects', indent:1, defaults:{ projects:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_builder', label:'Projects · Build project', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_published', label:'Projects · Confirm sending', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
+    { key:'page:report', label:'Report Incident', group:'Site pages', indent:0, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, platform_support:true, admin:true, owner:true } },
+    { key:'page:alerts', label:'Community Alerts', group:'Site pages', indent:0, defaults:{ assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
+    { key:'page:projects', label:'Community Projects page', group:'Projects', indent:0, defaults:{ projects:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
+    { key:'projects:tab_monitoring', label:'Projects · Monitoring', group:'Projects', indent:1, defaults:{ projects:true, assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
+    { key:'projects:tab_builder', label:'Projects · Build project', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
+    { key:'projects:tab_published', label:'Projects · Confirm sending', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
     { key:'page:handbook', label:'Handbook', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:privacy', label:'Privacy Policy', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:login', label:'Login / Register', group:'Site pages', indent:0, defaults:{ public:true } },
 
     { key:'page:dashboard', label:'Dashboard', group:'Dashboard', indent:0, defaults:{ public:true } },
-    { key:'dashboard:tab_profile', label:'Dashboard · Profile', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_interest', label:'Dashboard · Interest', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_elections', label:'Dashboard · Elections', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_notices', label:'Dashboard · Notices', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
+    { key:'dashboard:tab_profile', label:'Dashboard · Profile', group:'Dashboard', indent:1, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, platform_support:true, admin:true, owner:true } },
+    { key:'dashboard:tab_interest', label:'Dashboard · Interest', group:'Dashboard', indent:1, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, platform_support:true, admin:true, owner:true } },
+    { key:'dashboard:tab_elections', label:'Dashboard · Elections', group:'Dashboard', indent:1, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, platform_support:true, admin:true, owner:true } },
+    { key:'dashboard:tab_notices', label:'Dashboard · Notices', group:'Dashboard', indent:1, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, platform_support:true, admin:true, owner:true } },
     { key:'dashboard:tab_garda', label:'Dashboard · Garda & Safety', group:'Dashboard', indent:1, defaults:{ public:true } },
 
-    { key:'page:household', label:'Household', group:'Residents', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:resident-profile', label:'Resident profile data', group:'Residents', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:street-management', label:'Street management', group:'Residents', indent:1, defaults:{ street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:regional-management', label:'Regional management', group:'Residents', indent:1, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
+    { key:'page:household', label:'Household', group:'Residents', indent:0, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
+    { key:'page:resident-profile', label:'Resident profile data', group:'Residents', indent:1, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
+    { key:'page:street-management', label:'Street management', group:'Residents', indent:1, defaults:{ street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
+    { key:'page:regional-management', label:'Regional management', group:'Residents', indent:1, defaults:{ assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
 
-    { key:'page:admin', label:'Admin panel', group:'Owner controls', indent:0, defaults:{ owner:true } },
-    { key:'page:access-control', label:'Access Control sub-tab', group:'Owner controls', indent:1, defaults:{ owner:true } },
-    { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
+    { key:'page:admin', label:'Admin panel', group:'Admin controls', indent:0, defaults:{ platform_support:true, admin:true, owner:true } },
+    { key:'page:access-control', label:'Access Control sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
+    { key:'page:resident-registrations', label:'Resident registrations sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
+    { key:'page:volunteer-tasks', label:'Volunteer tasks sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
+    { key:'page:elections-admin', label:'Elections sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
+    { key:'page:reports-admin', label:'Reports sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
+    { key:'page:notices-admin', label:'Notices sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
+    { key:'page:handbook-admin', label:'Handbook sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
+    { key:'page:projects-monitoring-admin', label:'Projects Monitoring sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
+    { key:'page:tools-admin', label:'Tools sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
+
+    { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
   ];
 
   const ROLE_RANK = {
     public: 0,
     resident: 1,
+    volunteer: 1,
     street_coordinator: 2,
     assistant_area_coordinator: 3,
     area_coordinator: 4,
     projects: 4,
-    owner: 5
+    platform_support: 5,
+    admin: 6,
+    owner: 7
   };
 
   let ACCESS_RULES_CACHE = [];
@@ -2458,7 +2473,7 @@
       publicFeatures:[],
       __matrix:{},
       rolesMeta:{
-        order:['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'],
+        order:['public','resident','volunteer','street_coordinator','assistant_area_coordinator','area_coordinator','projects','platform_support','admin','owner'],
         rank: ROLE_RANK
       }
     };
@@ -2504,7 +2519,7 @@
     let lastGroup = '';
     body.innerHTML = rules.map((r, idx) => {
       const groupHeader = (r.group && r.group !== lastGroup)
-        ? `<tr class="ac-group"><td colspan="8"><strong>${esc(r.group)}</strong></td></tr>`
+        ? `<tr class="ac-group"><td colspan="${ACL_ROLES.length + 1}"><strong>${esc(r.group)}</strong></td></tr>`
         : '';
       lastGroup = r.group || lastGroup;
 
