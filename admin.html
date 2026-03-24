@@ -38,13 +38,15 @@
   #tabTools details.anw-acc .acc-body .grid { align-items: start; }
 
   #tabAccessControl .ac-wrap{ overflow:auto; border:1px solid var(--line); border-radius:14px; background:#fff; }
-  #tabAccessControl table.ac-table{ width:100%; min-width:920px; border-collapse:collapse; }
-  #tabAccessControl .ac-table th, #tabAccessControl .ac-table td{ padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; }
-  #tabAccessControl .ac-table thead th{ position:sticky; top:0; background:#fff; z-index:2; white-space:normal; word-break:break-word; }
+  #tabAccessControl table.ac-table{ width:100%; min-width:1000px; border-collapse:separate; border-spacing:0; table-layout:fixed; }
+  #tabAccessControl .ac-table th, #tabAccessControl .ac-table td{ padding:8px 8px; border-bottom:1px solid var(--line); vertical-align:middle; font-size:.92rem; }
+  #tabAccessControl .ac-table thead th{ position:sticky; top:0; background:#fff; z-index:2; white-space:normal; word-break:break-word; font-size:.78rem; line-height:1.2; letter-spacing:-.01em; }
   #tabAccessControl .ac-table thead th:not(:first-child),
   #tabAccessControl .ac-table td:not(:first-child){ text-align:center; }
-  #tabAccessControl .ac-table td:first-child{ min-width:320px; }
-  #tabAccessControl .ac-role-head{ min-width:96px; }
+  #tabAccessControl .ac-table th:first-child,
+  #tabAccessControl .ac-table td:first-child{ position:sticky; left:0; z-index:3; background:#fff; width:240px; min-width:240px; max-width:240px; box-shadow:2px 0 0 #eef2ef; }
+  #tabAccessControl .ac-table thead th:first-child{ z-index:4; }
+  #tabAccessControl .ac-role-head{ width:72px; min-width:72px; max-width:72px; }
   #tabAccessControl .ac-item{ display:flex; align-items:flex-start; gap:10px; }
   #tabAccessControl .ac-badge{ font-size:.70rem; padding:2px 8px; border-radius:999px; border:1px solid rgba(0,0,0,.10); background:rgba(0,0,0,.03); }
   #tabAccessControl .ac-key{
@@ -52,7 +54,13 @@
     font-size:.72rem; color: rgba(0,0,0,.55); margin-top:2px;
   }
   #tabAccessControl .ac-indent-0{ font-weight:700; }
-  #tabAccessControl .ac-indent-1{ padding-left:18px; }
+  #tabAccessControl .ac-indent-1{ padding-left:14px; }
+  #tabAccessControl .ac-indent-2{ padding-left:28px; }
+  #tabAccessControl .ac-item{ min-width:0; }
+  #tabAccessControl .ac-item > div{ min-width:0; }
+  #tabAccessControl .ac-item strong{ display:block; font-size:.94rem; line-height:1.2; overflow-wrap:anywhere; }
+  #tabAccessControl .ac-key{ font-size:.68rem; overflow-wrap:anywhere; }
+  #tabAccessControl .ac-cell-toggle{ transform:scale(.92); }
   #tabAccessControl .ac-indent-2{ padding-left:36px; }
   #tabAccessControl .ac-indent-3{ padding-left:54px; }
 
@@ -1465,13 +1473,13 @@
       <table class="ac-table">
         <thead>
           <tr>
-            <th style="min-width:320px;">Page / feature</th>
+            <th>Page / feature</th>
             <th class="ac-role-head">Public</th>
             <th class="ac-role-head">Resident</th>
-            <th class="ac-role-head">Volunteer</th>
-            <th class="ac-role-head">Street coord.</th>
-            <th class="ac-role-head">Assistant</th>
-            <th class="ac-role-head">Area coord.</th>
+            <th class="ac-role-head">Volunt.</th>
+            <th class="ac-role-head">Street</th>
+            <th class="ac-role-head">Assist.</th>
+            <th class="ac-role-head">Area</th>
             <th class="ac-role-head">Projects</th>
             <th class="ac-role-head">Platform</th>
             <th class="ac-role-head">Admin</th>
