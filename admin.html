@@ -107,16 +107,93 @@
   #tabResidents th:nth-child(6), #tabResidents td:nth-child(6){ width:20%; }
   #tabResidents th:nth-child(7), #tabResidents td:nth-child(7){ width:10%; }
   #tabResidents td:nth-child(3){ line-height:1.35; }
-  .resident-modal-top{ display:flex; gap:1rem; align-items:flex-start; justify-content:space-between; }
+  .resident-modal-top{ display:grid; grid-template-columns:minmax(0,1fr) 140px; gap:1.2rem; align-items:stretch; justify-content:space-between; }
   .resident-modal-top .resident-id-grid{ flex:1; min-width:0; }
-  .resident-photo-box{ width:108px; flex:0 0 108px; text-align:center; }
-  .resident-photo-preview{ width:88px; height:88px; border-radius:16px; border:1px solid var(--line); background:#eef3f0 center/cover no-repeat; margin:0 auto 8px; overflow:hidden; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.8rem; }
+  .resident-photo-box{
+    width:140px;
+    min-height:100%;
+    border:1px solid rgba(17,24,39,.08);
+    border-radius:24px;
+    background:linear-gradient(180deg,#ffffff,#f7faf8);
+    box-shadow:0 16px 32px rgba(17,24,39,.06);
+    padding:16px 14px;
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:8px;
+  }
+  .resident-photo-preview{ width:92px; height:92px; border-radius:22px; border:1px solid rgba(47,125,91,.12); background:#eef3f0 center/cover no-repeat; margin:0 auto; overflow:hidden; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.8rem; box-shadow:0 12px 24px rgba(47,125,91,.10); }
   .resident-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
   .resident-photo-preview.has-photo{ color:transparent; }
-  @media (max-width: 900px){
-    .resident-modal-top{ flex-direction:column; }
-    .resident-photo-box{ width:100%; flex:0 0 auto; text-align:left; }
-    .resident-photo-preview{ margin:0 0 8px; }
+  .resident-modal-shell{ display:grid; gap:18px; }
+  .resident-premium-band{
+    display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    padding:16px 18px; border-radius:24px;
+    background:linear-gradient(135deg, rgba(47,125,91,.12), rgba(47,125,91,.05) 55%, rgba(255,255,255,.96));
+    border:1px solid rgba(47,125,91,.12);
+    box-shadow:0 18px 36px rgba(47,125,91,.08);
+  }
+  .resident-premium-band-title{ display:flex; flex-direction:column; gap:4px; }
+  .resident-premium-band-title strong{ font-size:1rem; color:#183426; }
+  .resident-premium-band-title span{ font-size:.84rem; color:#617166; line-height:1.45; max-width:720px; }
+  .resident-premium-band-chip{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; border:1px solid rgba(47,125,91,.14); background:rgba(255,255,255,.88); color:var(--brand); font-weight:700; font-size:.82rem; box-shadow:0 8px 18px rgba(47,125,91,.08); }
+  .resident-premium-band-chip::before{ content:'•'; font-size:1rem; line-height:1; }
+  .resident-profile-grid{ display:grid; grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr); gap:18px; align-items:start; }
+  .resident-profile-main, .resident-profile-side{ display:grid; gap:18px; }
+  .resident-profile-side{ align-content:start; }
+  .resident-section{
+    border:1px solid rgba(17,24,39,.08);
+    border-radius:24px;
+    background:linear-gradient(180deg,#ffffff,#fbfcfb);
+    box-shadow:0 18px 36px rgba(17,24,39,.06);
+    padding:18px;
+  }
+  .resident-section-header{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+  .resident-section-title{ margin:0; font-size:1rem; color:#183426; }
+  .resident-section-subtitle{ margin:.3rem 0 0; font-size:.82rem; color:#667085; line-height:1.45; }
+  .resident-mini-badge{ display:inline-flex; align-items:center; gap:6px; padding:7px 10px; border-radius:999px; border:1px solid rgba(17,24,39,.08); background:#f8faf9; font-size:.76rem; font-weight:700; color:#51606f; white-space:nowrap; }
+  .resident-key-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+  .resident-readonly-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+  .resident-edit-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+  .resident-address-grid{ display:grid; gap:14px; }
+  .resident-role-cards{ display:grid; gap:10px; }
+  .resident-role-card{ position:relative; display:flex; align-items:center; gap:10px; padding:14px 16px; border-radius:18px; border:1px solid rgba(17,24,39,.08); background:#fff; transition:.18s ease; }
+  .resident-role-card:hover{ border-color:rgba(47,125,91,.18); box-shadow:0 12px 24px rgba(47,125,91,.07); }
+  .resident-role-card input{ accent-color:var(--brand); width:18px; height:18px; }
+  .resident-role-card span{ font-weight:600; color:#23313f; line-height:1.35; }
+  .resident-role-card.is-disabled{ background:#f8faf9; }
+  .resident-role-card.is-disabled span{ color:#667085; }
+  .resident-field-hint{ margin-top:6px; font-size:.78rem; color:#7b8794; line-height:1.4; }
+  #modalResident .modal-content{
+    max-width:1120px; width:min(1120px, calc(100vw - 40px));
+    border-radius:30px; border:1px solid rgba(17,24,39,.08);
+    box-shadow:0 28px 60px rgba(17,24,39,.16);
+    overflow:hidden;
+  }
+  #modalResident .modal-header{
+    padding:22px 24px 16px;
+    background:linear-gradient(180deg, rgba(247,250,248,.98), rgba(255,255,255,.98));
+    border-bottom:1px solid rgba(17,24,39,.06);
+  }
+  #modalResident .modal-header h3{ font-size:1.2rem; color:#183426; }
+  #modalResident .modal-header .sub{ color:#667085; max-width:760px; line-height:1.45; }
+  #modalResident .modal-body{ padding:22px 24px 24px; background:linear-gradient(180deg,#f7faf8 0%, #ffffff 100%); }
+  #residentModalActions{
+    margin-top:2px;
+    padding-top:16px;
+    border-top:1px solid rgba(17,24,39,.08);
+  }
+  #mMsg{ min-height:18px; }
+  @media (max-width: 980px){
+    .resident-profile-grid{ grid-template-columns:1fr; }
+    .resident-modal-top{ grid-template-columns:1fr; }
+    .resident-photo-box{ width:100%; }
+  }
+  @media (max-width: 760px){
+    .resident-key-grid, .resident-readonly-grid, .resident-edit-grid{ grid-template-columns:1fr; }
+    #modalResident .modal-content{ width:min(100vw - 18px, 1120px); border-radius:22px; }
+    #modalResident .modal-header, #modalResident .modal-body{ padding-left:16px; padding-right:16px; }
   }
 
   .notice-actions{
@@ -548,133 +625,177 @@
       </div>
 
       <div class="modal-body">
-        <div class="resident-modal-top">
-          <div class="resident-id-grid">
-            <div class="grid-2" style="gap:1rem;">
-              <div class="field">
-                <label>Registration No</label>
-                <input id="mRegId" type="text" disabled>
-              </div>
-              <div class="field">
-                <label>Status</label>
-                <input id="mStatus" type="text" disabled>
-              </div>
+        <div class="resident-modal-shell">
+          <div class="resident-premium-band">
+            <div class="resident-premium-band-title">
+              <strong>Resident profile workspace</strong>
+              <span>Premium Admin view for checking identity, contact details, access level and volunteer profile information without affecting other areas of the Admin panel.</span>
+            </div>
+            <span class="resident-premium-band-chip">Focused Admin editing view</span>
+          </div>
+
+          <div class="resident-profile-grid">
+            <div class="resident-profile-main">
+              <section class="resident-section">
+                <div class="resident-section-header">
+                  <div>
+                    <h4 class="resident-section-title">Resident overview</h4>
+                    <p class="resident-section-subtitle">Protected registration details stay visible here so Admin can confirm the resident identity before making any allowed updates.</p>
+                  </div>
+                  <span class="resident-mini-badge">Protected identity data</span>
+                </div>
+                <div class="resident-modal-top">
+                  <div class="resident-id-grid">
+                    <div class="resident-key-grid">
+                      <div class="field">
+                        <label>Registration No</label>
+                        <input id="mRegId" type="text" disabled>
+                      </div>
+                      <div class="field">
+                        <label>Status</label>
+                        <input id="mStatus" type="text" disabled>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="resident-photo-box">
+                    <div class="resident-photo-preview" id="mPhotoPreview">👤</div>
+                    <div class="tiny muted">Profile photo</div>
+                  </div>
+                </div>
+                <div class="resident-readonly-grid" style="margin-top:14px;">
+                  <div class="field">
+                    <label>Email</label>
+                    <input id="mEmail" type="email" disabled>
+                  </div>
+                  <div class="field">
+                    <label>Eircode</label>
+                    <input id="mEir" type="text" disabled>
+                  </div>
+                </div>
+              </section>
+
+              <section class="resident-section">
+                <div class="resident-section-header">
+                  <div>
+                    <h4 class="resident-section-title">Profile details</h4>
+                    <p class="resident-section-subtitle">Editable resident information for the Admin workflow only. This keeps the form cleaner and easier to review.</p>
+                  </div>
+                  <span class="resident-mini-badge">Admin editable</span>
+                </div>
+                <div class="resident-edit-grid">
+                  <div class="field">
+                    <label>Full name</label>
+                    <input id="mName" type="text">
+                  </div>
+                  <div class="field">
+                    <label>Phone</label>
+                    <input id="mPhone" type="text">
+                  </div>
+                </div>
+                <div class="resident-address-grid" style="margin-top:14px;">
+                  <div class="field">
+                    <label>Address</label>
+                    <input id="mAddress" type="text" disabled>
+                    <div class="resident-field-hint">Address remains visible for confirmation and cannot be changed here.</div>
+                  </div>
+                </div>
+                <div class="resident-edit-grid" style="margin-top:14px;">
+                  <div class="field">
+                    <label>Resident type</label>
+                    <select id="mType">
+                      <option value="">Select…</option>
+                      <option value="owner">Owner</option>
+                      <option value="tenant">Tenant</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>Management company</label>
+                    <input id="mMgmt" type="text">
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div class="resident-profile-side">
+              <section class="resident-section">
+                <div class="resident-section-header">
+                  <div>
+                    <h4 class="resident-section-title">Main roles</h4>
+                    <p class="resident-section-subtitle">High-level resident permissions remain available here for Admin review and allowed updates.</p>
+                  </div>
+                  <span class="resident-mini-badge">Role controls</span>
+                </div>
+                <div class="resident-role-cards">
+                  <label class="resident-role-card"><input id="mCoord" type="checkbox"> <span>Street Coordinator</span></label>
+                  <label class="resident-role-card"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
+                  <label class="resident-role-card is-disabled"><input id="mAlertAdmin" type="checkbox" disabled> <span>Community Alerts admin (set after approval)</span></label>
+                </div>
+              </section>
+
+              <section class="resident-section">
+                <div class="resident-section-header">
+                  <div>
+                    <h4 class="resident-section-title">Volunteer profile snapshot</h4>
+                    <p class="resident-section-subtitle">Read-only visibility for what the resident already selected in the Dashboard and what they can still add later.</p>
+                  </div>
+                  <span class="resident-mini-badge">Read-only Admin view</span>
+                </div>
+                <div id="mVolunteerRolesWrap" class="admin-volunteer-panel" aria-label="Volunteer roles, admin view only">
+                  <div class="admin-readonly-note tiny">Volunteer roles are no longer editable in Admin. This avoids changes here that do not sync back to the resident Dashboard profile.</div>
+                  <div class="admin-role-legend">
+                    <span class="admin-role-pill selected"><span class="dot"></span> Selected by resident</span>
+                    <span class="admin-role-pill"><span class="dot"></span> Available for future selection</span>
+                  </div>
+                  <div class="admin-volunteer-grid">
+                    <label class="admin-readonly-role" data-vol-role-item>
+                      <input id="mVStreet" type="checkbox" disabled>
+                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Street watch / patrols</span><span class="admin-readonly-role-help">Neighbourhood patrol and street observation support.</span></span>
+                    </label>
+                    <label class="admin-readonly-role" data-vol-role-item>
+                      <input id="mVLeaf" type="checkbox" disabled>
+                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Distribute leaflets</span><span class="admin-readonly-role-help">Delivery support for notices, campaigns and updates.</span></span>
+                    </label>
+                    <label class="admin-readonly-role" data-vol-role-item>
+                      <input id="mVTech" type="checkbox" disabled>
+                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Tech support</span><span class="admin-readonly-role-help">Help residents with basic digital or platform-related issues.</span></span>
+                    </label>
+                    <label class="admin-readonly-role" data-vol-role-item>
+                      <input id="mVEld" type="checkbox" disabled>
+                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Elderly checks</span><span class="admin-readonly-role-help">Friendly check-ins and support for elderly residents.</span></span>
+                    </label>
+                    <label class="admin-readonly-role" data-vol-role-item>
+                      <input id="mVClean" type="checkbox" disabled>
+                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Community clean-up</span><span class="admin-readonly-role-help">Join clean-up actions and environmental improvement days.</span></span>
+                    </label>
+                    <label class="admin-readonly-role" data-vol-role-item>
+                      <input id="mVPark" type="checkbox" disabled>
+                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Parking assistance</span><span class="admin-readonly-role-help">Support with parking flow, events and local access guidance.</span></span>
+                    </label>
+                    <label class="admin-readonly-role" data-vol-role-item>
+                      <input id="mVMeet" type="checkbox" disabled>
+                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Meeting organiser</span><span class="admin-readonly-role-help">Help arrange meetings, coordination and community sessions.</span></span>
+                    </label>
+                    <label class="admin-readonly-role" data-vol-role-item>
+                      <input id="mVTrans" type="checkbox" disabled>
+                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Translation</span><span class="admin-readonly-role-help">Language support for communication with residents.</span></span>
+                    </label>
+                  </div>
+                </div>
+              </section>
             </div>
           </div>
-          <div class="resident-photo-box">
-            <div class="resident-photo-preview" id="mPhotoPreview">👤</div>
-            <div class="tiny muted">Profile photo</div>
-          </div>
-        </div>
 
-        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
-          <div class="field">
-            <label>Email</label>
-            <input id="mEmail" type="email" disabled>
-          </div>
-          <div class="field">
-            <label>Eircode</label>
-            <input id="mEir" type="text" disabled>
-          </div>
-        </div>
+          <p class="tiny muted" id="mMsg" style="margin-top:0;"></p>
 
-        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
-          <div class="field">
-            <label>Full name</label>
-            <input id="mName" type="text">
+          <div class="actions" id="residentModalActions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+            <button type="button" class="btn-line small" id="btnReject">Reject</button>
+            <button type="button" class="btn-line small" id="btnSuspendResident">Suspend</button>
+            <button type="button" class="btn-line small" id="btnRemoveResident">Remove</button>
+            <button type="button" class="btn small" id="btnSaveResident">Save</button>
+            <button type="button" class="btn-line small logout-btn-inline" id="btnLogoutAdmin">Logout</button>
+            <button type="button" class="btn small" id="btnApprove">Approve</button>
           </div>
-          <div class="field">
-            <label>Phone</label>
-            <input id="mPhone" type="text">
-          </div>
-        </div>
-
-        <div class="field" style="margin-top:1rem;">
-          <label>Address</label>
-          <input id="mAddress" type="text" disabled>
-        </div>
-
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Resident type</label>
-            <select id="mType">
-              <option value="">Select…</option>
-              <option value="owner">Owner</option>
-              <option value="tenant">Tenant</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Management company</label>
-            <input id="mMgmt" type="text">
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Roles</label>
-          <label class="chk"><input id="mCoord" type="checkbox"> <span>Street Coordinator</span></label>
-          <label class="chk"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
-          <label class="chk"><input id="mAlertAdmin" type="checkbox" disabled> <span>Community Alerts admin (set after approval)</span></label>
-
-          <div id="mVolunteerRolesWrap" class="admin-volunteer-panel" aria-label="Volunteer roles, admin view only">
-            <div class="admin-volunteer-header">
-              <div>
-                <h4 class="admin-volunteer-title">Volunteer profile snapshot</h4>
-                <p class="admin-volunteer-subtitle tiny">This area is for Admin viewing only, showing what the resident already selected in the Dashboard and what can still be added later by the resident.</p>
-              </div>
-              <span class="admin-volunteer-badge">Read-only Admin view</span>
-            </div>
-            <div class="admin-readonly-note tiny">Volunteer roles are no longer editable in Admin. This avoids changes here that do not sync back to the resident Dashboard profile.</div>
-            <div class="admin-role-legend">
-              <span class="admin-role-pill selected"><span class="dot"></span> Selected by resident</span>
-              <span class="admin-role-pill"><span class="dot"></span> Available for future selection</span>
-            </div>
-            <div class="admin-volunteer-grid">
-              <label class="admin-readonly-role" data-vol-role-item>
-                <input id="mVStreet" type="checkbox" disabled>
-                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Street watch / patrols</span><span class="admin-readonly-role-help">Neighbourhood patrol and street observation support.</span></span>
-              </label>
-              <label class="admin-readonly-role" data-vol-role-item>
-                <input id="mVLeaf" type="checkbox" disabled>
-                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Distribute leaflets</span><span class="admin-readonly-role-help">Delivery support for notices, campaigns and updates.</span></span>
-              </label>
-              <label class="admin-readonly-role" data-vol-role-item>
-                <input id="mVTech" type="checkbox" disabled>
-                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Tech support</span><span class="admin-readonly-role-help">Help residents with basic digital or platform-related issues.</span></span>
-              </label>
-              <label class="admin-readonly-role" data-vol-role-item>
-                <input id="mVEld" type="checkbox" disabled>
-                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Elderly checks</span><span class="admin-readonly-role-help">Friendly check-ins and support for elderly residents.</span></span>
-              </label>
-              <label class="admin-readonly-role" data-vol-role-item>
-                <input id="mVClean" type="checkbox" disabled>
-                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Community clean-up</span><span class="admin-readonly-role-help">Join clean-up actions and environmental improvement days.</span></span>
-              </label>
-              <label class="admin-readonly-role" data-vol-role-item>
-                <input id="mVPark" type="checkbox" disabled>
-                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Parking assistance</span><span class="admin-readonly-role-help">Support with parking flow, events and local access guidance.</span></span>
-              </label>
-              <label class="admin-readonly-role" data-vol-role-item>
-                <input id="mVMeet" type="checkbox" disabled>
-                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Meeting organiser</span><span class="admin-readonly-role-help">Help arrange meetings, coordination and community sessions.</span></span>
-              </label>
-              <label class="admin-readonly-role" data-vol-role-item>
-                <input id="mVTrans" type="checkbox" disabled>
-                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Translation</span><span class="admin-readonly-role-help">Language support for communication with residents.</span></span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <p class="tiny muted" id="mMsg" style="margin-top:0.5rem;"></p>
-
-        <div class="actions" id="residentModalActions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn-line small" id="btnReject">Reject</button>
-          <button type="button" class="btn-line small" id="btnSuspendResident">Suspend</button>
-          <button type="button" class="btn-line small" id="btnRemoveResident">Remove</button>
-          <button type="button" class="btn small" id="btnSaveResident">Save</button>
-          <button type="button" class="btn-line small logout-btn-inline" id="btnLogoutAdmin">Logout</button>
-          <button type="button" class="btn small" id="btnApprove">Approve</button>
         </div>
       </div>
     </div>
