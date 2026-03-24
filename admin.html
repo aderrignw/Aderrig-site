@@ -839,12 +839,12 @@
   </div>
 
   <!-- ================= TASKS ================= -->
-  <section class="card admin-tab-content" id="tabTasks" style="display:none;">
-    <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+  <section class="card admin-tab-content" id="tabTasks" style="display:none;" hidden>
+    <div class="row" style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
       <div>
         <h3 style="margin:0;">Volunteer tasks</h3>
         <p class="tiny muted" style="margin:6px 0 0;">
-          Create and manage volunteer tasks for the community. Households can accept open tasks in the Household page.
+          Create tasks in a clean workflow: start a new task at the top, review active tasks in the middle, and keep closed tasks below for reference.
         </p>
       </div>
       <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -855,10 +855,13 @@
 
     <div class="tasks-layout">
       <div class="task-builder-panel">
-        <h4 style="margin:0;">Task builder</h4>
-        <p class="tiny muted" style="margin:6px 0 10px;">
-          Use targeting to limit tasks to specific Eircodes or streets, and set suitable volunteer roles.
-        </p>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <div>
+            <h4 style="margin:0;">New / edit task</h4>
+            <p class="tiny muted" style="margin:6px 0 0;">Task code is generated automatically and is not editable.</p>
+          </div>
+          <div class="tiny muted" id="admTaskBuilderHint">Ready to create a new task.</div>
+        </div>
 
         <div class="task-builder-grid-two">
           <div class="field">
@@ -869,6 +872,8 @@
             <label>Status</label>
             <select id="admTaskStatus">
               <option value="open">Open</option>
+              <option value="assigned">Assigned</option>
+              <option value="completed">Completed</option>
               <option value="archived">Archived</option>
             </select>
           </div>
@@ -926,8 +931,11 @@
       </div>
 
       <div class="task-list-panel">
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-          <h4 style="margin:0;">Tasks</h4>
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <div>
+            <h4 style="margin:0;">Active tasks</h4>
+            <p class="tiny muted" style="margin:6px 0 0;">Open and assigned tasks currently available for volunteers.</p>
+          </div>
           <div class="tiny muted" id="admTasksSummary"></div>
         </div>
 
@@ -935,7 +943,7 @@
           <div class="field" style="min-width:220px; margin:0;">
             <label class="tiny muted" for="admTasksFilter">Status filter</label>
             <select id="admTasksFilter" class="input" style="width:100%;">
-              <option value="all">All</option>
+              <option value="all">All active and closed</option>
               <option value="open">Open</option>
               <option value="assigned">Assigned</option>
               <option value="completed">Completed</option>
@@ -963,10 +971,39 @@
                 <th style="text-align:left;">Actions</th>
               </tr>
             </thead>
-            <tbody id="admTasksTbody"></tbody>
+            <tbody id="admTasksOpenTbody"></tbody>
           </table>
         </div>
-        <p id="admTasksEmpty" class="tiny muted" style="display:none; margin-top:0.75rem;">No tasks found.</p>
+        <p id="admTasksOpenEmpty" class="tiny muted" style="display:none; margin-top:0.75rem;">No active tasks found.</p>
+      </div>
+
+      <div class="task-list-panel">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <div>
+            <h4 style="margin:0;">Closed tasks</h4>
+            <p class="tiny muted" style="margin:6px 0 0;">Completed and archived tasks stay here for reference.</p>
+          </div>
+          <div class="tiny muted" id="admTasksClosedSummary"></div>
+        </div>
+
+        <div class="task-table-wrap">
+          <table class="task-table">
+            <thead>
+              <tr>
+                <th style="text-align:left;">Code</th>
+                <th style="text-align:left;">Title</th>
+                <th style="text-align:left;">Target</th>
+                <th style="text-align:left;">Due</th>
+                <th style="text-align:left;">Status</th>
+                <th style="text-align:left;">Assigned to</th>
+                <th style="text-align:left;">Updated</th>
+                <th style="text-align:left;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admTasksClosedTbody"></tbody>
+          </table>
+        </div>
+        <p id="admTasksClosedEmpty" class="tiny muted" style="display:none; margin-top:0.75rem;">No closed tasks found.</p>
       </div>
     </div>
   </section>
@@ -1805,8 +1842,17 @@
   }
 
   function showAdminTab(tabId){
+    if(typeof closeResidentModal === 'function') closeResidentModal();
     $$('.admin-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId));
-    $$('.admin-tab-content').forEach(p => { p.style.display = (p.id === tabId) ? 'block' : 'none'; });
+    $$('.admin-tab-content').forEach(p => {
+      const isActive = p.id === tabId;
+      p.style.display = isActive ? 'block' : 'none';
+      p.hidden = !isActive;
+      p.classList.toggle('is-active', isActive);
+    });
+    if(tabId === 'tabTasks' && typeof ensureVolunteerTasksUi === 'function'){
+      ensureVolunteerTasksUi().catch(err => console.error(err));
+    }
   }
 
   function showResidentSubtab(id){
@@ -2601,6 +2647,348 @@
 
 
 
+  // ---------- Volunteer tasks ----------
+  let TASKS_CACHE = [];
+  let CURRENT_TASK_ID = null;
+  let TASKS_UI_READY = false;
+
+  function taskStatusLabel(status){
+    const normalized = String(status || 'open').toLowerCase();
+    if(normalized === 'assigned') return 'Assigned';
+    if(normalized === 'completed') return 'Completed';
+    if(normalized === 'archived') return 'Archived';
+    return 'Open';
+  }
+
+  function normalizeTaskListInput(value){
+    if(Array.isArray(value)) return value.map(v => String(v || '').trim()).filter(Boolean);
+    if(value == null || value === '') return [];
+    return String(value).split(/[;\n,|]/).map(v => v.trim()).filter(Boolean);
+  }
+
+  function normalizeTaskRecord(task, index){
+    const row = (task && typeof task === 'object') ? Object.assign({}, task) : {};
+    const status = String(row.status || 'open').toLowerCase();
+    row.id = String(row.id || row.code || ('task-record-' + index));
+    row.code = String(row.code || '').trim();
+    row.status = ['open','assigned','completed','archived'].includes(status) ? status : 'open';
+    row.title = String(row.title || '').trim();
+    row.description = String(row.description || row.desc || '').trim();
+    row.type = ['general','eircode','street'].includes(String(row.type || '').toLowerCase()) ? String(row.type).toLowerCase() : 'general';
+    row.due = parseFlexibleDate(row.due || row.preferredCompletionDate || row.deadline || '');
+    row.eircodes = normalizeTaskListInput(row.eircodes || row.eircodesList || row.eircodeList);
+    row.streets = normalizeTaskListInput(row.streets || row.streetList);
+    row.roles = normalizeTaskListInput(row.roles || row.suitableRoles || row.volunteerRoles);
+    row.assignedTo = row.assignedTo || row.volunteerEmail || row.acceptedBy || '';
+    row.updatedAt = row.updatedAt || row.modifiedAt || row.createdAt || new Date().toISOString();
+    row.createdAt = row.createdAt || row.updatedAt;
+    return row;
+  }
+
+  function taskCodeNumber(code){
+    const match = String(code || '').trim().toLowerCase().match(/^task-(\d+)$/);
+    return match ? Number(match[1]) : 0;
+  }
+
+  function getNextTaskCode(list){
+    const max = (Array.isArray(list) ? list : []).reduce((acc, item) => Math.max(acc, taskCodeNumber(item && item.code)), 0);
+    return 'task-' + String(max + 1).padStart(4, '0');
+  }
+
+  function taskTargetLabel(task){
+    const row = task || {};
+    if(row.type === 'eircode'){
+      return row.eircodes && row.eircodes.length ? row.eircodes.join(', ') : 'Eircode target';
+    }
+    if(row.type === 'street'){
+      return row.streets && row.streets.length ? row.streets.join(', ') : 'Street target';
+    }
+    if(row.roles && row.roles.length){
+      return 'General · ' + row.roles.join(', ');
+    }
+    return 'General';
+  }
+
+  function taskAssignedLabel(task){
+    const assigned = String((task && task.assignedTo) || '').trim();
+    return assigned || '—';
+  }
+
+  function escapeAttr(value){
+    return esc(value).replace(/`/g, '&#96;');
+  }
+
+  function setTaskBuilderHint(text){
+    const el = byId('admTaskBuilderHint');
+    if(el) el.textContent = text || '';
+  }
+
+  function setTaskMessage(text){
+    const el = byId('admTaskMsg');
+    if(el) el.textContent = text || '';
+  }
+
+  function resetTaskForm(opts){
+    const options = Object.assign({ keepMessage:false }, opts || {});
+    CURRENT_TASK_ID = null;
+    if(byId('admTaskCode')) byId('admTaskCode').value = getNextTaskCode(TASKS_CACHE);
+    if(byId('admTaskStatus')) byId('admTaskStatus').value = 'open';
+    if(byId('admTaskTitle')) byId('admTaskTitle').value = '';
+    if(byId('admTaskDesc')) byId('admTaskDesc').value = '';
+    if(byId('admTaskType')) byId('admTaskType').value = 'general';
+    if(byId('admTaskDue')) byId('admTaskDue').value = '';
+    if(byId('admTaskEircodes')) byId('admTaskEircodes').value = '';
+    if(byId('admTaskStreets')) byId('admTaskStreets').value = '';
+    if(byId('admTaskRoles')) byId('admTaskRoles').value = '';
+    if(byId('btnTaskDelete')) byId('btnTaskDelete').style.display = 'none';
+    setTaskBuilderHint('Ready to create a new task.');
+    if(!options.keepMessage) setTaskMessage('');
+  }
+
+  function fillTaskForm(task){
+    const row = normalizeTaskRecord(task, 0);
+    CURRENT_TASK_ID = row.id;
+    if(byId('admTaskCode')) byId('admTaskCode').value = row.code || getNextTaskCode(TASKS_CACHE);
+    if(byId('admTaskStatus')) byId('admTaskStatus').value = row.status || 'open';
+    if(byId('admTaskTitle')) byId('admTaskTitle').value = row.title || '';
+    if(byId('admTaskDesc')) byId('admTaskDesc').value = row.description || '';
+    if(byId('admTaskType')) byId('admTaskType').value = row.type || 'general';
+    if(byId('admTaskDue')) byId('admTaskDue').value = row.due || '';
+    if(byId('admTaskEircodes')) byId('admTaskEircodes').value = (row.eircodes || []).join('; ');
+    if(byId('admTaskStreets')) byId('admTaskStreets').value = (row.streets || []).join('; ');
+    if(byId('admTaskRoles')) byId('admTaskRoles').value = (row.roles || []).join('; ');
+    if(byId('btnTaskDelete')) byId('btnTaskDelete').style.display = 'inline-flex';
+    setTaskBuilderHint('Editing ' + (row.code || 'task') + '.');
+    setTaskMessage('');
+    byId('admTaskTitle')?.focus();
+    window.scrollTo({ top: byId('tabTasks')?.offsetTop ? Math.max(0, byId('tabTasks').offsetTop - 24) : 0, behavior: 'smooth' });
+  }
+
+  function collectTaskForm(){
+    const code = String(byId('admTaskCode')?.value || '').trim() || getNextTaskCode(TASKS_CACHE);
+    return normalizeTaskRecord({
+      id: CURRENT_TASK_ID || code,
+      code,
+      status: byId('admTaskStatus')?.value || 'open',
+      title: byId('admTaskTitle')?.value || '',
+      description: byId('admTaskDesc')?.value || '',
+      type: byId('admTaskType')?.value || 'general',
+      due: byId('admTaskDue')?.value || '',
+      eircodes: byId('admTaskEircodes')?.value || '',
+      streets: byId('admTaskStreets')?.value || '',
+      roles: byId('admTaskRoles')?.value || '',
+      assignedTo: ''
+    }, 0);
+  }
+
+  function taskMatchesFilters(task, search, filterValue){
+    const row = task || {};
+    const status = String(row.status || 'open').toLowerCase();
+    if(filterValue && filterValue !== 'all' && status !== filterValue) return false;
+    if(!search) return true;
+    const haystack = [
+      row.code,
+      row.title,
+      row.description,
+      row.type,
+      (row.eircodes || []).join(' '),
+      (row.streets || []).join(' '),
+      (row.roles || []).join(' '),
+      row.assignedTo
+    ].join(' ').toLowerCase();
+    return haystack.includes(search);
+  }
+
+  function sortTasksNewestFirst(a, b){
+    const timeA = Date.parse(a && (a.updatedAt || a.createdAt) || 0) || 0;
+    const timeB = Date.parse(b && (b.updatedAt || b.createdAt) || 0) || 0;
+    if(timeA !== timeB) return timeB - timeA;
+    return String(a && a.code || '').localeCompare(String(b && b.code || ''));
+  }
+
+  function renderTaskRows(tasks, closed){
+    return tasks.map(task => {
+      const editBtn = `<button type="button" class="btn-line small" data-task-action="edit" data-task-id="${escapeAttr(task.id)}">Edit</button>`;
+      const secondaryBtn = closed
+        ? `<button type="button" class="btn-line small" data-task-action="reopen" data-task-id="${escapeAttr(task.id)}">Reopen</button>`
+        : `<button type="button" class="btn-line small" data-task-action="complete" data-task-id="${escapeAttr(task.id)}">Complete</button>`;
+      const archiveBtn = closed
+        ? ''
+        : `<button type="button" class="btn-line small" data-task-action="archive" data-task-id="${escapeAttr(task.id)}">Archive</button>`;
+      return `
+        <tr>
+          <td>${esc(task.code || '—')}</td>
+          <td>
+            <strong>${esc(task.title || 'Untitled task')}</strong>
+            ${task.description ? `<div class="tiny muted" style="margin-top:4px;">${esc(task.description)}</div>` : ''}
+          </td>
+          <td>${esc(taskTargetLabel(task))}</td>
+          <td>${esc(fmtDateShort(task.due || ''))}</td>
+          <td>${esc(taskStatusLabel(task.status))}</td>
+          <td>${esc(taskAssignedLabel(task))}</td>
+          <td>${esc(fmtDate(task.updatedAt || task.createdAt || ''))}</td>
+          <td>
+            <div class="actions" style="justify-content:flex-start; gap:6px; flex-wrap:wrap;">
+              ${editBtn}
+              ${secondaryBtn}
+              ${archiveBtn}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function renderTasks(){
+    const filterValue = String(byId('admTasksFilter')?.value || 'all').toLowerCase();
+    const search = String(byId('admTasksSearch')?.value || '').trim().toLowerCase();
+    const allTasks = TASKS_CACHE.slice().sort(sortTasksNewestFirst);
+    const filtered = allTasks.filter(task => taskMatchesFilters(task, search, filterValue));
+
+    const activeRows = filtered.filter(task => ['open','assigned'].includes(String(task.status || '').toLowerCase()));
+    const closedRows = filtered.filter(task => ['completed','archived'].includes(String(task.status || '').toLowerCase()));
+
+    const openTbody = byId('admTasksOpenTbody');
+    const closedTbody = byId('admTasksClosedTbody');
+    if(openTbody) openTbody.innerHTML = renderTaskRows(activeRows, false);
+    if(closedTbody) closedTbody.innerHTML = renderTaskRows(closedRows, true);
+
+    if(byId('admTasksOpenEmpty')) byId('admTasksOpenEmpty').style.display = activeRows.length ? 'none' : 'block';
+    if(byId('admTasksClosedEmpty')) byId('admTasksClosedEmpty').style.display = closedRows.length ? 'none' : 'block';
+
+    if(byId('admTasksSummary')){
+      byId('admTasksSummary').textContent = `${activeRows.length} active of ${allTasks.length} total`;
+    }
+    if(byId('admTasksClosedSummary')){
+      byId('admTasksClosedSummary').textContent = `${closedRows.length} closed`;
+    }
+  }
+
+  async function loadTasks(){
+    const raw = await anwLoadSafe(KEY_TASKS, []);
+    const incoming = Array.isArray(raw) ? raw : [];
+    let changed = false;
+    TASKS_CACHE = incoming.map((task, index) => {
+      const normalized = normalizeTaskRecord(task, index);
+      if(!normalized.code){
+        normalized.code = getNextTaskCode(incoming.slice(0, index).map((item, idx) => normalizeTaskRecord(item, idx)).concat([]));
+        normalized.id = normalized.code;
+        changed = true
+      }
+      if(normalized.id !== String(task && (task.id || task.code || '')) || normalized.code !== String(task && task.code || '').trim()){
+        changed = true;
+      }
+      return normalized;
+    });
+    const codes = new Set();
+    TASKS_CACHE.forEach((task, index) => {
+      if(!task.code || codes.has(task.code)){
+        task.code = 'task-' + String(index + 1).padStart(4, '0');
+        task.id = task.code;
+        changed = true;
+      }
+      codes.add(task.code);
+    });
+    if(changed){
+      await anwSaveSafe(KEY_TASKS, TASKS_CACHE);
+    }
+    renderTasks();
+    if(!CURRENT_TASK_ID && byId('admTaskCode') && !String(byId('admTaskCode').value || '').trim()){
+      resetTaskForm({ keepMessage:true });
+    }
+  }
+
+  async function saveTask(){
+    const draft = collectTaskForm();
+    if(!draft.title){
+      setTaskMessage('Please add a task title before saving.');
+      byId('admTaskTitle')?.focus();
+      return;
+    }
+    const now = new Date().toISOString();
+    let list = TASKS_CACHE.slice();
+    const idx = list.findIndex(task => String(task.id) === String(draft.id));
+    if(idx >= 0){
+      draft.createdAt = list[idx].createdAt || now;
+      draft.assignedTo = list[idx].assignedTo || '';
+      draft.updatedAt = now;
+      list[idx] = draft;
+    }else{
+      draft.id = draft.code;
+      draft.createdAt = now;
+      draft.updatedAt = now;
+      list.push(draft);
+    }
+    list = list.map((task, index) => normalizeTaskRecord(task, index)).sort((a, b) => taskCodeNumber(a.code) - taskCodeNumber(b.code));
+    TASKS_CACHE = list;
+    await anwSaveSafe(KEY_TASKS, TASKS_CACHE);
+    setTaskMessage('Task saved successfully.');
+    renderTasks();
+    resetTaskForm({ keepMessage:true });
+  }
+
+  async function deleteCurrentTask(){
+    if(!CURRENT_TASK_ID) return;
+    const existing = TASKS_CACHE.find(task => String(task.id) === String(CURRENT_TASK_ID));
+    if(!existing) return;
+    if(!window.confirm(`Delete ${existing.code || 'this task'}?`)) return;
+    TASKS_CACHE = TASKS_CACHE.filter(task => String(task.id) !== String(CURRENT_TASK_ID));
+    await anwSaveSafe(KEY_TASKS, TASKS_CACHE);
+    setTaskMessage('Task deleted.');
+    resetTaskForm({ keepMessage:true });
+    renderTasks();
+  }
+
+  async function updateTaskStatus(taskId, nextStatus){
+    const idx = TASKS_CACHE.findIndex(task => String(task.id) === String(taskId));
+    if(idx < 0) return;
+    TASKS_CACHE[idx] = Object.assign({}, TASKS_CACHE[idx], {
+      status: nextStatus,
+      updatedAt: new Date().toISOString()
+    });
+    await anwSaveSafe(KEY_TASKS, TASKS_CACHE);
+    renderTasks();
+    if(String(CURRENT_TASK_ID || '') === String(taskId)){
+      fillTaskForm(TASKS_CACHE[idx]);
+      setTaskMessage('Task updated.');
+    }
+  }
+
+  async function ensureVolunteerTasksUi(){
+    if(!TASKS_UI_READY){
+      byId('btnTaskRefresh')?.addEventListener('click', loadTasks);
+      byId('btnTaskNew')?.addEventListener('click', () => resetTaskForm());
+      byId('btnTaskClear')?.addEventListener('click', () => resetTaskForm());
+      byId('btnTaskSave')?.addEventListener('click', saveTask);
+      byId('btnTaskDelete')?.addEventListener('click', deleteCurrentTask);
+      byId('admTasksFilter')?.addEventListener('change', renderTasks);
+      byId('admTasksSearch')?.addEventListener('input', renderTasks);
+
+      document.addEventListener('click', ev => {
+        const taskBtn = ev.target.closest('[data-task-action]');
+        if(!taskBtn) return;
+        const taskId = taskBtn.getAttribute('data-task-id');
+        const action = taskBtn.getAttribute('data-task-action');
+        const task = TASKS_CACHE.find(item => String(item.id) === String(taskId));
+        if(!task) return;
+        if(action === 'edit'){
+          fillTaskForm(task);
+        }else if(action === 'complete'){
+          updateTaskStatus(taskId, 'completed').catch(err => console.error(err));
+        }else if(action === 'archive'){
+          updateTaskStatus(taskId, 'archived').catch(err => console.error(err));
+        }else if(action === 'reopen'){
+          updateTaskStatus(taskId, 'open').catch(err => console.error(err));
+        }
+      });
+      TASKS_UI_READY = true;
+    }
+    await loadTasks();
+    if(!CURRENT_TASK_ID) resetTaskForm({ keepMessage:true });
+  }
+
+
+
   async function loadDiagnostics(){
     const data = {
       users: (await anwLoadSafe(KEY_USERS, [])).length,
@@ -2823,6 +3211,7 @@
         loadReports(),
         loadProjects(),
         loadAccessControl(),
+        ensureVolunteerTasksUi(),
         loadDiagnostics()
       ]);
     }catch(err){
