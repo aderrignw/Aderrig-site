@@ -222,6 +222,42 @@
     font-size:.82rem;
   }
 
+
+  #tabTasks .tasks-layout{ display:grid; grid-template-columns:minmax(320px,360px) minmax(0,1fr); gap:18px; margin-top:12px; align-items:start; }
+  #tabTasks .tasks-layout > *{ min-width:0; }
+  #tabTasks .task-builder-panel,
+  #tabTasks .task-list-panel{ border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:16px; background:#fff; }
+  #tabTasks .task-builder-grid-two,
+  #tabTasks .task-target-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  #tabTasks .task-list-toolbar{ display:grid; grid-template-columns:minmax(180px,240px) minmax(260px,1fr); gap:12px; align-items:end; margin-top:10px; }
+  #tabTasks .task-list-toolbar .field{ margin:0; min-width:0; }
+  #tabTasks .task-table-wrap{ overflow-x:auto; margin-top:10px; width:100%; }
+  #tabTasks .task-table{ width:100%; min-width:760px; border-collapse:collapse; table-layout:fixed; }
+  #tabTasks .task-table th,
+  #tabTasks .task-table td{ padding:10px 12px; vertical-align:top; border-bottom:1px solid rgba(17,24,39,.08); overflow-wrap:anywhere; }
+  #tabTasks .task-table th:nth-child(1), #tabTasks .task-table td:nth-child(1){ width:90px; }
+  #tabTasks .task-table th:nth-child(2), #tabTasks .task-table td:nth-child(2){ width:22%; }
+  #tabTasks .task-table th:nth-child(3), #tabTasks .task-table td:nth-child(3){ width:16%; }
+  #tabTasks .task-table th:nth-child(4), #tabTasks .task-table td:nth-child(4){ width:110px; }
+  #tabTasks .task-table th:nth-child(5), #tabTasks .task-table td:nth-child(5){ width:110px; }
+  #tabTasks .task-table th:nth-child(6), #tabTasks .task-table td:nth-child(6){ width:20%; }
+  #tabTasks .task-table th:nth-child(7), #tabTasks .task-table td:nth-child(7){ width:120px; }
+  #tabTasks .task-table th:nth-child(8), #tabTasks .task-table td:nth-child(8){ width:120px; }
+  #tabTasks .task-builder-panel textarea,
+  #tabTasks .task-builder-panel input,
+  #tabTasks .task-builder-panel select,
+  #tabTasks .task-list-panel input,
+  #tabTasks .task-list-panel select{ width:100%; max-width:100%; box-sizing:border-box; }
+  @media (max-width: 1180px){
+    #tabTasks .tasks-layout{ grid-template-columns:1fr; }
+  }
+  @media (max-width: 760px){
+    #tabTasks .task-builder-grid-two,
+    #tabTasks .task-target-grid,
+    #tabTasks .task-list-toolbar{ grid-template-columns:1fr; }
+    #tabTasks .task-table{ min-width:680px; }
+  }
+
   @media print {
     body.print-access-control header,
     body.print-access-control nav,
@@ -808,14 +844,14 @@
       </div>
     </div>
 
-    <div class="grid" style="grid-template-columns: 1fr 1fr; gap:14px; margin-top:12px;">
-      <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
+    <div class="tasks-layout">
+      <div class="task-builder-panel">
         <h4 style="margin:0;">Task builder</h4>
         <p class="tiny muted" style="margin:6px 0 10px;">
           Use targeting to limit tasks to specific Eircodes or streets, and set suitable volunteer roles.
         </p>
 
-        <div class="grid-2" style="gap:12px;">
+        <div class="task-builder-grid-two">
           <div class="field">
             <label>Task code</label>
             <input id="admTaskCode" type="text" disabled>
@@ -839,7 +875,7 @@
           <textarea id="admTaskDesc" rows="4" placeholder="What needs to be done, any instructions, and who to contact."></textarea>
         </div>
 
-        <div class="grid-2" style="gap:12px;">
+        <div class="task-target-grid">
           <div class="field">
             <label>Targeting</label>
             <select id="admTaskType">
@@ -854,7 +890,7 @@
           </div>
         </div>
 
-        <div class="grid-2" style="gap:12px;">
+        <div class="task-target-grid">
           <div class="field">
             <label>Eircode(s) (semicolon separated)</label>
             <input id="admTaskEircodes" type="text" placeholder="e.g., K78XXXX; K78YYYY">
@@ -880,13 +916,13 @@
         </div>
       </div>
 
-      <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
+      <div class="task-list-panel">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <h4 style="margin:0;">Tasks</h4>
           <div class="tiny muted" id="admTasksSummary"></div>
         </div>
 
-        <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
+        <div class="task-list-toolbar">
           <div class="field" style="min-width:220px; margin:0;">
             <label class="tiny muted" for="admTasksFilter">Status filter</label>
             <select id="admTasksFilter" class="input" style="width:100%;">
@@ -904,8 +940,8 @@
           </div>
         </div>
 
-        <div style="overflow-x:auto; margin-top:10px;">
-          <table style="width:100%; min-width:920px;">
+        <div class="task-table-wrap">
+          <table class="task-table">
             <thead>
               <tr>
                 <th style="text-align:left;">Code</th>
@@ -2565,7 +2601,7 @@
   });
 
   byId('btnCloseResident')?.addEventListener('click', closeResidentModal);
-  byId('btnSaveResident')?.addEventListener('click', () => saveCurrentResident());
+  byId('btnSaveResident')?.addEventListener('click', async () => { await saveCurrentResident(); closeResidentModal(); });
   byId('btnApprove')?.addEventListener('click', async () => { await saveCurrentResident('approved'); closeResidentModal(); });
   byId('btnReject')?.addEventListener('click', async () => { await saveCurrentResident('rejected'); closeResidentModal(); });
   byId('btnSuspendResident')?.addEventListener('click', async () => { await saveCurrentResident('suspended'); closeResidentModal(); });
