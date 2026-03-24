@@ -253,57 +253,28 @@
   }
 
   .admin-volunteer-panel{
-    margin:0.9rem 0 0 1.25rem;
+    margin:0.85rem 0 0;
     padding:16px;
-    border:1px solid rgba(47,125,91,.12);
-    border-radius:18px;
-    background:linear-gradient(180deg, rgba(248,251,249,.98), rgba(243,247,244,.96));
-    box-shadow:0 14px 34px rgba(17,24,39,.05);
-  }
-  .admin-volunteer-header{
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap:14px;
-    margin-bottom:12px;
-  }
-  .admin-volunteer-title{
-    margin:0;
-    font-size:1rem;
-    color:#173d2d;
-  }
-  .admin-volunteer-subtitle{
-    margin:4px 0 0;
-    color:var(--muted);
-    line-height:1.45;
-  }
-  .admin-volunteer-badge{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    flex-shrink:0;
-    padding:7px 12px;
-    border-radius:999px;
-    border:1px solid rgba(47,125,91,.16);
-    background:rgba(47,125,91,.08);
-    color:var(--brand);
-    font-size:.8rem;
-    font-weight:700;
+    border:1px solid rgba(47,125,91,.10);
+    border-radius:20px;
+    background:linear-gradient(180deg, rgba(250,252,251,.98), rgba(245,248,246,.96));
+    box-shadow:0 14px 30px rgba(17,24,39,.05);
+    overflow:hidden;
   }
   .admin-readonly-note{
-    margin:0 0 12px;
+    margin:0 0 14px;
     padding:12px 14px;
-    border:1px solid rgba(47,125,91,.14);
-    background:rgba(255,255,255,.72);
+    border:1px solid rgba(47,125,91,.12);
+    background:rgba(255,255,255,.75);
     border-radius:14px;
     color:var(--muted);
-    line-height:1.5;
+    line-height:1.45;
   }
   .admin-role-legend{
     display:flex;
     gap:10px;
     flex-wrap:wrap;
-    margin:0 0 12px;
+    margin:0 0 14px;
   }
   .admin-role-pill{
     display:inline-flex;
@@ -311,107 +282,82 @@
     gap:8px;
     border-radius:999px;
     padding:7px 12px;
-    font-size:.82rem;
+    font-size:.8rem;
     font-weight:600;
     border:1px solid rgba(17,24,39,.08);
-    background:#f5f7f6;
+    background:#fff;
+    color:#4b5563;
   }
   .admin-role-pill .dot{
-    width:10px;
-    height:10px;
-    border-radius:50%;
+    width:12px;
+    height:12px;
+    border-radius:4px;
     display:inline-block;
-    background:#c5d1ca;
+    background:#ffffff;
+    border:1.5px solid #c8d1cc;
   }
   .admin-role-pill.selected{
-    background:rgba(47,125,91,.10);
-    border-color:rgba(47,125,91,.22);
+    background:rgba(47,125,91,.08);
+    border-color:rgba(47,125,91,.18);
     color:var(--brand);
   }
   .admin-role-pill.selected .dot{
-    background:var(--brand);
+    background:rgba(47,125,91,.84);
+    border-color:rgba(47,125,91,.84);
   }
   .admin-volunteer-grid{
     display:grid;
-    grid-template-columns:repeat(2, minmax(220px, 1fr));
-    gap:12px 14px;
+    grid-template-columns:1fr;
+    gap:10px;
   }
   .admin-readonly-role{
-    position:relative;
     display:flex;
-    align-items:flex-start;
+    align-items:center;
     gap:12px;
-    min-height:84px;
-    padding:14px 14px 12px;
-    border-radius:16px;
+    width:100%;
+    min-width:0;
+    padding:12px 14px;
+    border-radius:15px;
     border:1px solid rgba(17,24,39,.08);
-    background:rgba(255,255,255,.9);
-    box-shadow:0 8px 20px rgba(17,24,39,.04);
-    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
-  }
-  .admin-readonly-role:hover{
-    transform:translateY(-1px);
-    box-shadow:0 12px 24px rgba(17,24,39,.06);
+    background:#ffffff;
+    box-shadow:0 6px 16px rgba(17,24,39,.04);
+    overflow:hidden;
   }
   .admin-readonly-role input{
     pointer-events:none;
+    flex:0 0 auto;
+    width:18px;
+    height:18px;
+    margin:0;
     accent-color:var(--brand);
-    margin-top:3px;
   }
   .admin-readonly-role-copy{
-    display:flex;
-    flex-direction:column;
-    gap:4px;
+    display:block;
     min-width:0;
-    padding-right:108px;
+    flex:1 1 auto;
   }
   .admin-readonly-role-title{
+    display:block;
     font-weight:700;
+    color:#24313b;
     line-height:1.35;
-    color:#1f2937;
+    overflow-wrap:anywhere;
+    word-break:break-word;
   }
-  .admin-readonly-role-help{
-    font-size:.79rem;
-    color:var(--muted);
-    line-height:1.4;
-  }
-  .admin-readonly-role::after{
-    content:'Available for future selection';
-    position:absolute;
-    right:12px;
-    top:12px;
-    max-width:96px;
-    text-align:center;
-    font-size:.71rem;
-    font-weight:700;
-    line-height:1.2;
-    border-radius:999px;
-    padding:6px 9px;
-    border:1px solid rgba(17,24,39,.08);
-    color:#51606f;
-    background:#fff;
-  }
+  .admin-readonly-role-help{ display:none; }
+  .admin-readonly-role::after{ content:none; }
   .admin-readonly-role.is-selected{
-    background:linear-gradient(180deg, rgba(47,125,91,.10), rgba(47,125,91,.05));
-    border-color:rgba(47,125,91,.22);
-    box-shadow:0 12px 28px rgba(47,125,91,.10);
+    background:linear-gradient(180deg, rgba(47,125,91,.12), rgba(47,125,91,.06));
+    border-color:rgba(47,125,91,.20);
+    box-shadow:0 10px 22px rgba(47,125,91,.09);
   }
   .admin-readonly-role.is-selected .admin-readonly-role-title{
     color:var(--brand);
   }
-  .admin-readonly-role.is-selected::after{
-    content:'Selected by resident';
-    color:var(--brand);
-    border-color:rgba(47,125,91,.18);
-    background:rgba(255,255,255,.92);
-  }
-  @media (max-width: 900px){
-    .admin-volunteer-header{ flex-direction:column; }
-  }
   @media (max-width: 760px){
-    .admin-volunteer-panel{ margin-left:0; }
-    .admin-volunteer-grid{ grid-template-columns:1fr; }
-    .admin-readonly-role-copy{ padding-right:96px; }
+    .admin-volunteer-panel{ margin-left:0; padding:14px; }
+    .admin-role-legend{ gap:8px; }
+    .admin-role-pill{ font-size:.77rem; }
   }
 </style>
 
@@ -742,10 +688,10 @@
                   <span class="resident-mini-badge">Read-only Admin view</span>
                 </div>
                 <div id="mVolunteerRolesWrap" class="admin-volunteer-panel" aria-label="Volunteer roles, admin view only">
-                  <div class="admin-readonly-note tiny">Volunteer roles are no longer editable in Admin. This avoids changes here that do not sync back to the resident Dashboard profile.</div>
+                  <div class="admin-readonly-note tiny">Filled boxes show the roles already chosen by the resident. Empty boxes show future options the resident can add later in the Dashboard.</div>
                   <div class="admin-role-legend">
-                    <span class="admin-role-pill selected"><span class="dot"></span> Selected by resident</span>
-                    <span class="admin-role-pill"><span class="dot"></span> Available for future selection</span>
+                    <span class="admin-role-pill selected"><span class="dot"></span> Selected</span>
+                    <span class="admin-role-pill"><span class="dot"></span> Available</span>
                   </div>
                   <div class="admin-volunteer-grid">
                     <label class="admin-readonly-role" data-vol-role-item>
@@ -1958,10 +1904,14 @@
 
   function syncAdminVolunteerRoleView(){
     const selectors = ['mVStreet','mVLeaf','mVTech','mVEld','mVClean','mVPark','mVMeet','mVTrans'];
-    selectors.forEach(id => {
+    selectors.forEach((id, index) => {
       const input = byId(id);
       const card = input ? input.closest('[data-vol-role-item]') : null;
-      if(card) card.classList.toggle('is-selected', !!(input && input.checked));
+      const checked = !!(input && input.checked);
+      if(card){
+        card.classList.toggle('is-selected', checked);
+        card.style.order = checked ? String(index + 1) : String(index + 101);
+      }
     });
   }
 
