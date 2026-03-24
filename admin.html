@@ -174,6 +174,168 @@
   #tabAccessControl .ac-group td{
     background:#fafcfb;
   }
+
+  .admin-volunteer-panel{
+    margin:0.9rem 0 0 1.25rem;
+    padding:16px;
+    border:1px solid rgba(47,125,91,.12);
+    border-radius:18px;
+    background:linear-gradient(180deg, rgba(248,251,249,.98), rgba(243,247,244,.96));
+    box-shadow:0 14px 34px rgba(17,24,39,.05);
+  }
+  .admin-volunteer-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:12px;
+  }
+  .admin-volunteer-title{
+    margin:0;
+    font-size:1rem;
+    color:#173d2d;
+  }
+  .admin-volunteer-subtitle{
+    margin:4px 0 0;
+    color:var(--muted);
+    line-height:1.45;
+  }
+  .admin-volunteer-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    flex-shrink:0;
+    padding:7px 12px;
+    border-radius:999px;
+    border:1px solid rgba(47,125,91,.16);
+    background:rgba(47,125,91,.08);
+    color:var(--brand);
+    font-size:.8rem;
+    font-weight:700;
+  }
+  .admin-readonly-note{
+    margin:0 0 12px;
+    padding:12px 14px;
+    border:1px solid rgba(47,125,91,.14);
+    background:rgba(255,255,255,.72);
+    border-radius:14px;
+    color:var(--muted);
+    line-height:1.5;
+  }
+  .admin-role-legend{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin:0 0 12px;
+  }
+  .admin-role-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border-radius:999px;
+    padding:7px 12px;
+    font-size:.82rem;
+    font-weight:600;
+    border:1px solid rgba(17,24,39,.08);
+    background:#f5f7f6;
+  }
+  .admin-role-pill .dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    display:inline-block;
+    background:#c5d1ca;
+  }
+  .admin-role-pill.selected{
+    background:rgba(47,125,91,.10);
+    border-color:rgba(47,125,91,.22);
+    color:var(--brand);
+  }
+  .admin-role-pill.selected .dot{
+    background:var(--brand);
+  }
+  .admin-volunteer-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(220px, 1fr));
+    gap:12px 14px;
+  }
+  .admin-readonly-role{
+    position:relative;
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    min-height:84px;
+    padding:14px 14px 12px;
+    border-radius:16px;
+    border:1px solid rgba(17,24,39,.08);
+    background:rgba(255,255,255,.9);
+    box-shadow:0 8px 20px rgba(17,24,39,.04);
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+  }
+  .admin-readonly-role:hover{
+    transform:translateY(-1px);
+    box-shadow:0 12px 24px rgba(17,24,39,.06);
+  }
+  .admin-readonly-role input{
+    pointer-events:none;
+    accent-color:var(--brand);
+    margin-top:3px;
+  }
+  .admin-readonly-role-copy{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width:0;
+    padding-right:108px;
+  }
+  .admin-readonly-role-title{
+    font-weight:700;
+    line-height:1.35;
+    color:#1f2937;
+  }
+  .admin-readonly-role-help{
+    font-size:.79rem;
+    color:var(--muted);
+    line-height:1.4;
+  }
+  .admin-readonly-role::after{
+    content:'Available for future selection';
+    position:absolute;
+    right:12px;
+    top:12px;
+    max-width:96px;
+    text-align:center;
+    font-size:.71rem;
+    font-weight:700;
+    line-height:1.2;
+    border-radius:999px;
+    padding:6px 9px;
+    border:1px solid rgba(17,24,39,.08);
+    color:#51606f;
+    background:#fff;
+  }
+  .admin-readonly-role.is-selected{
+    background:linear-gradient(180deg, rgba(47,125,91,.10), rgba(47,125,91,.05));
+    border-color:rgba(47,125,91,.22);
+    box-shadow:0 12px 28px rgba(47,125,91,.10);
+  }
+  .admin-readonly-role.is-selected .admin-readonly-role-title{
+    color:var(--brand);
+  }
+  .admin-readonly-role.is-selected::after{
+    content:'Selected by resident';
+    color:var(--brand);
+    border-color:rgba(47,125,91,.18);
+    background:rgba(255,255,255,.92);
+  }
+  @media (max-width: 900px){
+    .admin-volunteer-header{ flex-direction:column; }
+  }
+  @media (max-width: 760px){
+    .admin-volunteer-panel{ margin-left:0; }
+    .admin-volunteer-grid{ grid-template-columns:1fr; }
+    .admin-readonly-role-copy{ padding-right:96px; }
+  }
 </style>
 
 <style id="page-access-style">
@@ -454,17 +616,52 @@
           <label class="chk"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
           <label class="chk"><input id="mAlertAdmin" type="checkbox" disabled> <span>Community Alerts admin (set after approval)</span></label>
 
-          <div id="mVolunteerRolesWrap" style="margin:0.5rem 0 0 1.25rem;">
-            <p class="tiny muted" style="margin:0 0 0.25rem;">Volunteer roles (8): select one or more extra functions for this resident.</p>
-            <div style="display:grid; grid-template-columns:repeat(2, minmax(180px, 1fr)); column-gap:18px; row-gap:4px;">
-              <label class="chk"><input id="mVStreet" type="checkbox"> <span>Street watch / patrols</span></label>
-              <label class="chk"><input id="mVLeaf" type="checkbox"> <span>Distribute leaflets</span></label>
-              <label class="chk"><input id="mVTech" type="checkbox"> <span>Tech support</span></label>
-              <label class="chk"><input id="mVEld" type="checkbox"> <span>Elderly checks</span></label>
-              <label class="chk"><input id="mVClean" type="checkbox"> <span>Community clean-up</span></label>
-              <label class="chk"><input id="mVPark" type="checkbox"> <span>Parking assistance</span></label>
-              <label class="chk"><input id="mVMeet" type="checkbox"> <span>Meeting organiser</span></label>
-              <label class="chk"><input id="mVTrans" type="checkbox"> <span>Translation</span></label>
+          <div id="mVolunteerRolesWrap" class="admin-volunteer-panel" aria-label="Volunteer roles, admin view only">
+            <div class="admin-volunteer-header">
+              <div>
+                <h4 class="admin-volunteer-title">Volunteer profile snapshot</h4>
+                <p class="admin-volunteer-subtitle tiny">This area is for Admin viewing only, showing what the resident already selected in the Dashboard and what can still be added later by the resident.</p>
+              </div>
+              <span class="admin-volunteer-badge">Read-only Admin view</span>
+            </div>
+            <div class="admin-readonly-note tiny">Volunteer roles are no longer editable in Admin. This avoids changes here that do not sync back to the resident Dashboard profile.</div>
+            <div class="admin-role-legend">
+              <span class="admin-role-pill selected"><span class="dot"></span> Selected by resident</span>
+              <span class="admin-role-pill"><span class="dot"></span> Available for future selection</span>
+            </div>
+            <div class="admin-volunteer-grid">
+              <label class="admin-readonly-role" data-vol-role-item>
+                <input id="mVStreet" type="checkbox" disabled>
+                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Street watch / patrols</span><span class="admin-readonly-role-help">Neighbourhood patrol and street observation support.</span></span>
+              </label>
+              <label class="admin-readonly-role" data-vol-role-item>
+                <input id="mVLeaf" type="checkbox" disabled>
+                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Distribute leaflets</span><span class="admin-readonly-role-help">Delivery support for notices, campaigns and updates.</span></span>
+              </label>
+              <label class="admin-readonly-role" data-vol-role-item>
+                <input id="mVTech" type="checkbox" disabled>
+                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Tech support</span><span class="admin-readonly-role-help">Help residents with basic digital or platform-related issues.</span></span>
+              </label>
+              <label class="admin-readonly-role" data-vol-role-item>
+                <input id="mVEld" type="checkbox" disabled>
+                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Elderly checks</span><span class="admin-readonly-role-help">Friendly check-ins and support for elderly residents.</span></span>
+              </label>
+              <label class="admin-readonly-role" data-vol-role-item>
+                <input id="mVClean" type="checkbox" disabled>
+                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Community clean-up</span><span class="admin-readonly-role-help">Join clean-up actions and environmental improvement days.</span></span>
+              </label>
+              <label class="admin-readonly-role" data-vol-role-item>
+                <input id="mVPark" type="checkbox" disabled>
+                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Parking assistance</span><span class="admin-readonly-role-help">Support with parking flow, events and local access guidance.</span></span>
+              </label>
+              <label class="admin-readonly-role" data-vol-role-item>
+                <input id="mVMeet" type="checkbox" disabled>
+                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Meeting organiser</span><span class="admin-readonly-role-help">Help arrange meetings, coordination and community sessions.</span></span>
+              </label>
+              <label class="admin-readonly-role" data-vol-role-item>
+                <input id="mVTrans" type="checkbox" disabled>
+                <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Translation</span><span class="admin-readonly-role-help">Language support for communication with residents.</span></span>
+              </label>
             </div>
           </div>
         </div>
@@ -1638,6 +1835,15 @@
     });
   }
 
+  function syncAdminVolunteerRoleView(){
+    const selectors = ['mVStreet','mVLeaf','mVTech','mVEld','mVClean','mVPark','mVMeet','mVTrans'];
+    selectors.forEach(id => {
+      const input = byId(id);
+      const card = input ? input.closest('[data-vol-role-item]') : null;
+      if(card) card.classList.toggle('is-selected', !!(input && input.checked));
+    });
+  }
+
   function openResidentModal(user){
     CURRENT_RESIDENT = user || null;
     if(!CURRENT_RESIDENT) return;
@@ -1667,6 +1873,7 @@
     byId('mVPark').checked = vrList.includes('Parking assistance') || !!vrObj.parkingAssistance || !!vrObj.parking;
     byId('mVMeet').checked = vrList.includes('Meeting organiser') || !!vrObj.meetings;
     byId('mVTrans').checked = vrList.includes('Translation') || !!vrObj.translation;
+    syncAdminVolunteerRoleView();
 
     const photoUrl = CURRENT_RESIDENT.profilePhoto || CURRENT_RESIDENT.photo || CURRENT_RESIDENT.photoURL || '';
     const photoBox = byId('mPhotoPreview');
@@ -1709,26 +1916,15 @@
     if(byId('mVol').checked) roles.push('volunteer');
     if(normList(users[idx].roles).includes('admin')) roles.push('admin');
 
-    const volunteerRoles = [
-      byId('mVStreet').checked ? 'Street watch / patrols' : '',
-      byId('mVLeaf').checked ? 'Distribute leaflets' : '',
-      byId('mVTech').checked ? 'Tech support' : '',
-      byId('mVEld').checked ? 'Elderly checks' : '',
-      byId('mVClean').checked ? 'Community clean-up' : '',
-      byId('mVPark').checked ? 'Parking assistance' : '',
-      byId('mVMeet').checked ? 'Meeting organiser' : '',
-      byId('mVTrans').checked ? 'Translation' : ''
-    ].filter(Boolean);
-    const volunteerRoleFlags = {
-      streetWatch: byId('mVStreet').checked,
-      leaflets: byId('mVLeaf').checked,
-      tech: byId('mVTech').checked,
-      elderly: byId('mVEld').checked,
-      cleanUp: byId('mVClean').checked,
-      parkingAssistance: byId('mVPark').checked,
-      meetings: byId('mVMeet').checked,
-      translation: byId('mVTrans').checked
-    };
+    const volunteerRoles = Array.isArray(users[idx].volunteerRoles)
+      ? users[idx].volunteerRoles.slice()
+      : Array.isArray(CURRENT_RESIDENT.volunteerRoles)
+        ? CURRENT_RESIDENT.volunteerRoles.slice()
+        : [];
+    const volunteerRoleFlags = Object.assign({},
+      users[idx].vol_roles || users[idx].volunteer_roles || {},
+      CURRENT_RESIDENT.vol_roles || CURRENT_RESIDENT.volunteer_roles || {}
+    );
 
     users[idx].name = byId('mName').value.trim();
     users[idx].phone = byId('mPhone').value.trim();
@@ -1756,7 +1952,7 @@
     assignMissingResidentNumbers(users);
     await anwSaveSafe(KEY_USERS, users);
     RESIDENTS_CACHE = users;
-    byId('mMsg').textContent = 'Resident saved.';
+    byId('mMsg').textContent = 'Resident saved. Volunteer roles remain view-only in Admin.';
     renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
       : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
       : 'pending');
