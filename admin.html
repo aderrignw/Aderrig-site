@@ -107,16 +107,112 @@
   #tabResidents th:nth-child(6), #tabResidents td:nth-child(6){ width:20%; }
   #tabResidents th:nth-child(7), #tabResidents td:nth-child(7){ width:10%; }
   #tabResidents td:nth-child(3){ line-height:1.35; }
-  .resident-modal-top{ display:flex; gap:1rem; align-items:flex-start; justify-content:space-between; }
+  .resident-modal-top{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 120px;
+    gap:18px;
+    align-items:start;
+    justify-content:space-between;
+    padding:0 0 10px;
+    border-bottom:1px solid rgba(17,24,39,.08);
+    margin-bottom:12px;
+  }
   .resident-modal-top .resident-id-grid{ flex:1; min-width:0; }
-  .resident-photo-box{ width:108px; flex:0 0 108px; text-align:center; }
-  .resident-photo-preview{ width:88px; height:88px; border-radius:16px; border:1px solid var(--line); background:#eef3f0 center/cover no-repeat; margin:0 auto 8px; overflow:hidden; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.8rem; }
+  #modalResident .modal-content{
+    max-width:980px;
+    border-radius:24px;
+    box-shadow:0 24px 70px rgba(15,23,42,.14);
+  }
+  #modalResident .modal-header{
+    align-items:flex-start;
+    padding-bottom:10px;
+    border-bottom:1px solid rgba(17,24,39,.08);
+    margin-bottom:4px;
+  }
+  #modalResident .modal-body{
+    padding-top:4px;
+  }
+  #modalResident .field{
+    margin-bottom:12px;
+  }
+  #modalResident .field > label:first-child{
+    display:block;
+    margin-bottom:6px;
+    font-weight:700;
+  }
+  #modalResident input,
+  #modalResident select,
+  #modalResident textarea{
+    border-radius:14px;
+  }
+  .resident-photo-box{
+    width:120px;
+    flex:0 0 120px;
+    text-align:center;
+    background:#f7faf8;
+    border:1px solid rgba(17,24,39,.08);
+    border-radius:18px;
+    padding:12px 10px;
+  }
+  .resident-photo-preview{
+    width:88px;
+    height:88px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:#eef3f0 center/cover no-repeat;
+    margin:0 auto 8px;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--muted);
+    font-size:1.8rem;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+  }
   .resident-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
   .resident-photo-preview.has-photo{ color:transparent; }
+  #modalResident #mVolunteerRolesWrap{
+    margin:10px 0 0 0 !important;
+    padding:12px 14px;
+    border:1px solid rgba(17,24,39,.08);
+    border-radius:16px;
+    background:#fafcfb;
+  }
+  #modalResident #mVolunteerRolesWrap > div{
+    display:grid !important;
+    grid-template-columns:repeat(2, minmax(220px, 1fr)) !important;
+    gap:8px 20px !important;
+  }
+  #modalResident .chk{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    margin:6px 0;
+  }
+  #modalResident .chk input{
+    margin-top:3px;
+    flex:0 0 auto;
+  }
+  #residentModalActions{
+    justify-content:flex-end;
+    gap:10px !important;
+    margin-top:14px;
+    padding-top:12px;
+    border-top:1px solid rgba(17,24,39,.08);
+  }
   @media (max-width: 900px){
-    .resident-modal-top{ flex-direction:column; }
-    .resident-photo-box{ width:100%; flex:0 0 auto; text-align:left; }
+    .resident-modal-top{
+      grid-template-columns:1fr;
+    }
+    .resident-photo-box{
+      width:100%;
+      flex:0 0 auto;
+      text-align:left;
+    }
     .resident-photo-preview{ margin:0 0 8px; }
+    #modalResident #mVolunteerRolesWrap > div{
+      grid-template-columns:1fr !important;
+    }
   }
 
   .notice-actions{
@@ -291,6 +387,56 @@
     #tabTasks .grid-2{
       grid-template-columns:1fr;
     }
+  }
+  /* Volunteer tasks form refinement */
+  #tabTasks .admin-tasks-stack{
+    gap:18px !important;
+  }
+  #tabTasks .admin-tasks-stack > .panel:first-child{
+    background:linear-gradient(180deg, rgba(248,251,249,.95), rgba(255,255,255,1));
+    border-radius:18px !important;
+    padding:18px !important;
+  }
+  #tabTasks .admin-tasks-stack > .panel:last-child{
+    border-radius:18px !important;
+    padding:16px !important;
+  }
+  #tabTasks .task-code-field{
+    max-width:260px;
+  }
+  #tabTasks #admTaskCode{
+    max-width:220px;
+    font-weight:700;
+    letter-spacing:.04em;
+    background:#f6f8f7;
+  }
+  #tabTasks .task-code-help{
+    max-width:240px;
+  }
+  #tabTasks .grid-2{
+    gap:14px !important;
+    align-items:start;
+  }
+  #tabTasks .field{
+    margin-bottom:12px;
+  }
+  #tabTasks .panel h4{
+    margin-bottom:4px !important;
+  }
+  #tabTasks #admTaskDesc{
+    min-height:132px;
+  }
+  #tabTasks .actions[style*="justify-content:flex-end"]{
+    margin-top:14px !important;
+    padding-top:10px;
+    border-top:1px solid rgba(17,24,39,.08);
+  }
+  #tabTasks .actions[style*="justify-content:flex-start"]{
+    gap:12px !important;
+  }
+  #tabTasks #admTasksFilter,
+  #tabTasks #admTasksSearch{
+    min-height:42px;
   }
 </style>
 
@@ -666,13 +812,14 @@
       <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
         <h4 style="margin:0;">Task builder</h4>
         <p class="tiny muted" style="margin:6px 0 10px;">
-          Use targeting to limit tasks to specific Eircodes or streets, and set suitable volunteer roles.
+          Create the task details below. The code is generated automatically in the format Task-000001.
         </p>
 
         <div class="grid-2" style="gap:12px;">
-          <div class="field">
+          <div class="field task-code-field">
             <label>Task code</label>
-            <input id="admTaskCode" type="text" disabled>
+            <input id="admTaskCode" type="text" disabled readonly placeholder="Task-000001">
+            <p class="tiny muted task-code-help" style="margin:6px 0 0;">Generated automatically when the task is saved.</p>
           </div>
           <div class="field">
             <label>Status</label>
@@ -1562,17 +1709,20 @@
   }
 
   function showAdminTab(tabId){
+    closeResidentModal();
     $$('.admin-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId));
     $$('.admin-tab-content').forEach(p => { p.style.display = (p.id === tabId) ? 'block' : 'none'; });
   }
 
   function showResidentSubtab(id){
+    closeResidentModal();
     $$('.resident-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-subtab') === id));
     const mode = id === 'subPending' ? 'pending' : id === 'subApproved' ? 'approved' : 'all';
     renderResidents(mode);
   }
 
   function showElectionSubtab(id){
+    closeResidentModal();
     $$('.elect-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-subtab') === id));
     $$('.elect-subtab').forEach(p => p.style.display = (p.id === id ? 'block' : 'none'));
   }
@@ -2370,6 +2520,9 @@
   });
 
   byId('btnCloseResident')?.addEventListener('click', closeResidentModal);
+  byId('modalResident')?.addEventListener('click', (ev) => {
+    if(ev.target === byId('modalResident')) closeResidentModal();
+  });
   byId('btnSaveResident')?.addEventListener('click', () => saveCurrentResident());
   byId('btnApprove')?.addEventListener('click', async () => { await saveCurrentResident('approved'); closeResidentModal(); });
   byId('btnReject')?.addEventListener('click', async () => { await saveCurrentResident('rejected'); closeResidentModal(); });
@@ -2638,6 +2791,280 @@ document.addEventListener("DOMContentLoaded", function(){
     }
   }catch(e){}
 });
+</script>
+
+
+<script>
+(function(){
+  'use strict';
+
+  const byId = (id) => document.getElementById(id);
+  const TASK_KEY = (window.ANW_KEYS && window.ANW_KEYS.TASKS) || 'anw_tasks';
+  const TASK_SEQ_KEY = 'anw_task_sequence_global';
+  let currentTaskId = null;
+  let taskCache = [];
+
+  async function loadStore(key, fallback){
+    try{
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
+      const data = await res.json();
+      try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){}
+      return data;
+    }catch(_){
+      try{
+        if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback);
+      }catch(__){}
+      try{
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      }catch(__){
+        return fallback;
+      }
+    }
+  }
+
+  async function saveStore(key, value){
+    try{
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(value)
+      });
+      if(!res.ok) throw new Error('store save failed');
+    }catch(_){}
+    try{ if(typeof window.anwSave === 'function') window.anwSave(key, value); }catch(__){}
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(__){}
+  }
+
+  function normList(v){
+    if(Array.isArray(v)) return v.filter(Boolean);
+    return String(v || '').split(/[;,|]/).map(s => s.trim()).filter(Boolean);
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  function formatDateShort(v){
+    if(!v) return '—';
+    const d = new Date(String(v).length <= 10 ? (v + 'T12:00:00') : v);
+    if(Number.isNaN(d.getTime())) return String(v);
+    return d.toLocaleDateString();
+  }
+
+  function formatDateTime(v){
+    if(!v) return '—';
+    const d = new Date(v);
+    if(Number.isNaN(d.getTime())) return String(v);
+    return d.toLocaleString();
+  }
+
+  function taskTargetLabel(task){
+    const eircodes = normList(task.eircodes);
+    const streets = normList(task.streets);
+    if(task.type === 'eircode' && eircodes.length) return 'Eircode: ' + eircodes.join(', ');
+    if(task.type === 'street' && streets.length) return 'Street: ' + streets.join(', ');
+    return 'General';
+  }
+
+  function zeroPad(num, size){
+    return String(num).padStart(size, '0');
+  }
+
+  async function nextTaskCode(){
+    let seq = Number(await loadStore(TASK_SEQ_KEY, 0)) || 0;
+    seq += 1;
+    await saveStore(TASK_SEQ_KEY, seq);
+    return `Task-${zeroPad(seq, 6)}`;
+  }
+
+  function taskFormIds(){
+    return ['admTaskCode','admTaskTitle','admTaskDesc','admTaskType','admTaskDue','admTaskEircodes','admTaskStreets','admTaskRoles','admTaskStatus'];
+  }
+
+  function clearTaskMessage(){
+    const el = byId('admTaskMsg');
+    if(el) el.textContent = '';
+  }
+
+  function setTaskMessage(msg){
+    const el = byId('admTaskMsg');
+    if(el) el.textContent = msg || '';
+  }
+
+  function fillTaskForm(task){
+    currentTaskId = task && task.id ? task.id : null;
+    byId('admTaskCode').value = task && task.code ? task.code : '';
+    byId('admTaskTitle').value = task && task.title ? task.title : '';
+    byId('admTaskDesc').value = task && task.description ? task.description : '';
+    byId('admTaskType').value = task && task.type ? task.type : 'general';
+    byId('admTaskDue').value = task && task.dueDate ? task.dueDate : '';
+    byId('admTaskEircodes').value = task && Array.isArray(task.eircodes) ? task.eircodes.join('; ') : '';
+    byId('admTaskStreets').value = task && Array.isArray(task.streets) ? task.streets.join('; ') : '';
+    byId('admTaskRoles').value = task && Array.isArray(task.roles) ? task.roles.join('; ') : '';
+    byId('admTaskStatus').value = task && task.status ? task.status : 'open';
+    const delBtn = byId('btnTaskDelete');
+    if(delBtn) delBtn.style.display = currentTaskId ? 'inline-flex' : 'none';
+    clearTaskMessage();
+  }
+
+  function collectTaskForm(){
+    return {
+      title: byId('admTaskTitle').value.trim(),
+      description: byId('admTaskDesc').value.trim(),
+      type: byId('admTaskType').value || 'general',
+      dueDate: byId('admTaskDue').value || '',
+      eircodes: normList(byId('admTaskEircodes').value),
+      streets: normList(byId('admTaskStreets').value),
+      roles: normList(byId('admTaskRoles').value),
+      status: byId('admTaskStatus').value || 'open'
+    };
+  }
+
+  async function loadTasks(){
+    const raw = await loadStore(TASK_KEY, []);
+    taskCache = Array.isArray(raw) ? raw : [];
+    renderTasks();
+  }
+
+  function filteredTasks(){
+    const statusFilter = (byId('admTasksFilter') && byId('admTasksFilter').value) || 'all';
+    const q = ((byId('admTasksSearch') && byId('admTasksSearch').value) || '').trim().toLowerCase();
+    return taskCache.filter(task => {
+      if(statusFilter !== 'all' && String(task.status || '').toLowerCase() !== statusFilter) return false;
+      if(!q) return true;
+      const hay = [
+        task.code, task.title, task.description, task.assignedTo,
+        ...(Array.isArray(task.eircodes) ? task.eircodes : []),
+        ...(Array.isArray(task.streets) ? task.streets : []),
+        ...(Array.isArray(task.roles) ? task.roles : [])
+      ].join(' ').toLowerCase();
+      return hay.includes(q);
+    }).sort((a,b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+  }
+
+  function renderTasks(){
+    const body = byId('admTasksTbody');
+    const empty = byId('admTasksEmpty');
+    const summary = byId('admTasksSummary');
+    if(!body) return;
+    const rows = filteredTasks();
+    body.innerHTML = rows.map(task => `
+      <tr>
+        <td><strong>${esc(task.code || '—')}</strong></td>
+        <td>${esc(task.title || '—')}</td>
+        <td>${esc(taskTargetLabel(task))}</td>
+        <td>${esc(formatDateShort(task.dueDate))}</td>
+        <td>${esc(task.status || 'open')}</td>
+        <td>${esc(task.assignedTo || '—')}</td>
+        <td>${esc(formatDateTime(task.updatedAt || task.createdAt))}</td>
+        <td>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn-line small" data-task-edit="${esc(task.id)}">Edit</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    if(summary) summary.textContent = `${rows.length} task(s) shown`;
+    if(empty) empty.style.display = rows.length ? 'none' : 'block';
+
+    body.querySelectorAll('[data-task-edit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const task = taskCache.find(t => String(t.id) === String(btn.getAttribute('data-task-edit')));
+        fillTaskForm(task || null);
+        const panel = byId('tabTasks');
+        if(panel) panel.scrollIntoView({ behavior:'smooth', block:'start' });
+      });
+    });
+  }
+
+  async function saveTask(){
+    const form = collectTaskForm();
+    if(!form.title){
+      setTaskMessage('Title is required.');
+      return;
+    }
+    if(form.type === 'eircode' && !form.eircodes.length){
+      setTaskMessage('Add at least one Eircode for this targeting mode.');
+      return;
+    }
+    if(form.type === 'street' && !form.streets.length){
+      setTaskMessage('Add at least one street for this targeting mode.');
+      return;
+    }
+
+    let code = byId('admTaskCode').value.trim();
+    const now = new Date().toISOString();
+    if(!currentTaskId){
+      code = await nextTaskCode();
+    }
+
+    const task = {
+      id: currentTaskId || ('task_' + Date.now() + '_' + Math.random().toString(36).slice(2,8)),
+      code,
+      title: form.title,
+      description: form.description,
+      type: form.type,
+      dueDate: form.dueDate,
+      eircodes: form.eircodes,
+      streets: form.streets,
+      roles: form.roles,
+      status: form.status,
+      assignedTo: '',
+      createdAt: currentTaskId ? (taskCache.find(t => t.id === currentTaskId)?.createdAt || now) : now,
+      updatedAt: now
+    };
+
+    const next = taskCache.filter(t => t.id !== task.id);
+    next.unshift(task);
+    taskCache = next;
+    await saveStore(TASK_KEY, taskCache);
+    fillTaskForm(task);
+    setTaskMessage(currentTaskId ? 'Task updated.' : 'Task created.');
+    renderTasks();
+  }
+
+  async function deleteTask(){
+    if(!currentTaskId) return;
+    taskCache = taskCache.filter(t => t.id !== currentTaskId);
+    await saveStore(TASK_KEY, taskCache);
+    fillTaskForm(null);
+    setTaskMessage('Task removed.');
+    renderTasks();
+  }
+
+  function bindTaskEvents(){
+    byId('btnTaskNew')?.addEventListener('click', () => fillTaskForm(null));
+    byId('btnTaskClear')?.addEventListener('click', () => fillTaskForm(null));
+    byId('btnTaskRefresh')?.addEventListener('click', loadTasks);
+    byId('btnTaskSave')?.addEventListener('click', saveTask);
+    byId('btnTaskDelete')?.addEventListener('click', deleteTask);
+    byId('admTasksFilter')?.addEventListener('change', renderTasks);
+    byId('admTasksSearch')?.addEventListener('input', renderTasks);
+  }
+
+  function init(){
+    if(!byId('tabTasks') || !byId('admTaskCode')) return;
+    const codeInput = byId('admTaskCode');
+    codeInput.setAttribute('readonly', 'readonly');
+    codeInput.setAttribute('disabled', 'disabled');
+    fillTaskForm(null);
+    bindTaskEvents();
+    loadTasks();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init, { once:true });
+  }else{
+    init();
+  }
+})();
 </script>
 
 </body>
