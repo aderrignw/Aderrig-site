@@ -257,66 +257,94 @@
   #modalResident .admin-review-grid{
     display:grid;
     grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:16px 20px;
+    gap:18px 22px;
     margin-top:18px;
   }
   #modalResident .admin-review-card{
-    border:1px solid rgba(17,24,39,.08);
-    border-radius:18px;
-    padding:16px 16px 14px;
-    background:#fff;
+    border:1px solid rgba(52,92,73,.14);
+    border-radius:22px;
+    padding:18px 18px 16px;
+    background:linear-gradient(180deg, #fbfdfc 0%, #f7faf8 100%);
   }
   #modalResident .admin-review-card h4{
-    margin:0 0 10px;
+    margin:0 0 8px;
     font-size:1rem;
+    color:#1f2b3d;
   }
   #modalResident .admin-review-note{
-    margin:0 0 10px;
+    margin:0 0 12px;
     color:#6a7b90;
     font-size:.92rem;
+    line-height:1.5;
+  }
+  #modalResident .role-chip-section{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  #modalResident .role-chip.current{
+    background:#eef7f1;
+    color:#2f6d50;
+    border-color:rgba(52,92,73,.18);
+  }
+  #modalResident .role-chip.available{
+    background:#f8faf9;
+    color:#6a7b90;
+    border-color:rgba(106,123,144,.16);
   }
   #modalResident #mVolunteerRolesWrap{
-    margin:0 !important;
+    position:absolute !important;
+    width:1px !important;
+    height:1px !important;
+    overflow:hidden !important;
+    clip:rect(1px,1px,1px,1px) !important;
+    white-space:nowrap !important;
+  }
+  #modalResident #mVolunteerRolesWrap > div{
+    display:block !important;
+  }
+  #modalResident .chk{
+    display:block;
+    margin:0;
     padding:0;
     border:0;
     background:transparent;
   }
-  #modalResident #mVolunteerRolesWrap > div{
-    display:grid !important;
-    grid-template-columns:repeat(2,minmax(220px,1fr)) !important;
-    gap:10px 18px !important;
-  }
-  #modalResident .chk{
-    display:flex;
-    align-items:flex-start;
-    gap:10px;
-    margin:0;
-    padding:11px 12px;
-    border:1px solid rgba(17,24,39,.08);
-    border-radius:14px;
-    background:#fafcfb;
-  }
   #modalResident .chk input{
-    margin-top:3px;
-    flex:0 0 auto;
-  }
-  #modalResident .chk.off{
-    opacity:.72;
-    background:#fbfbfb;
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
   }
   #modalResident .admin-readonly-tip{
     margin-top:12px;
     color:#6a7b90;
     font-size:.92rem;
   }
-  #modalResident .admin-edit-grid{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:14px 18px;
+  #modalResident .admin-controls-strip{
     margin-top:18px;
+    padding:16px 18px;
+    border:1px solid rgba(17,24,39,.08);
+    border-radius:18px;
+    background:#fff;
+    display:grid;
+    grid-template-columns:240px minmax(0,1fr);
+    gap:18px;
+    align-items:end;
   }
-  #modalResident .admin-edit-grid .field.full{
-    grid-column:1 / -1;
+  #modalResident .admin-status-field{
+    margin:0;
+  }
+  #modalResident .admin-status-field select{
+    min-height:46px;
+  }
+  #modalResident .admin-controls-note{
+    color:#6a7b90;
+    font-size:.95rem;
+    line-height:1.55;
+    padding-bottom:4px;
+  }
+  #modalResident .admin-hidden-fields{
+    display:none !important;
   }
   #residentModalActions{
     justify-content:flex-end;
@@ -339,9 +367,11 @@
     }
     #modalResident .resident-summary-card,
     #modalResident .admin-review-grid,
-    #modalResident .admin-edit-grid,
     #modalResident #mVolunteerRolesWrap > div{
       grid-template-columns:1fr !important;
+    }
+    #modalResident .admin-controls-strip{
+      grid-template-columns:1fr;
     }
   }
 
@@ -830,19 +860,17 @@
 <div class="admin-review-grid">
   <section class="admin-review-card">
     <h4>Current access</h4>
-    <p class="admin-review-note">These are the roles the resident currently performs.</p>
-    <div class="field">
-      <label style="margin-bottom:8px;">Operational roles</label>
-      <div style="display:grid; gap:10px;">
-        <label class="chk"><input id="mCoord" type="checkbox"> <span>Street Coordinator</span></label>
-        <label class="chk"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
-      </div>
-    </div>
+    <p class="admin-review-note">A quick admin summary of the resident’s active community roles.</p>
+    <div class="role-chip-section" id="mCurrentAccessChips"></div>
   </section>
 
   <section class="admin-review-card">
     <h4>Volunteer roles overview</h4>
-    <p class="admin-review-note">The admin can review what the resident already does and which extra roles could be added later by the resident.</p>
+    <p class="admin-review-note">Active roles appear first. The remaining roles show what the resident could still add later from their own profile.</p>
+    <div class="summary-label" style="margin-bottom:8px;">Current volunteer roles</div>
+    <div class="role-chip-section" id="mVolunteerCurrentChips"></div>
+    <div class="summary-label" style="margin:16px 0 8px;">Available to add later</div>
+    <div class="role-chip-section" id="mVolunteerAvailableChips"></div>
     <div id="mVolunteerRolesWrap">
       <div>
         <label class="chk" data-role-box="mVStreet"><input id="mVStreet" type="checkbox"> <span>Street watch / patrols</span></label>
@@ -855,41 +883,12 @@
         <label class="chk" data-role-box="mVTrans"><input id="mVTrans" type="checkbox"> <span>Translation</span></label>
       </div>
     </div>
-    <p class="admin-readonly-tip">Checked items show what the resident already performs. Unchecked items indicate what could still be added by the resident later.</p>
+    <p class="admin-readonly-tip">The admin follows these roles here. Any additional volunteer role is still chosen by the resident in their own dashboard profile.</p>
   </section>
 </div>
 
-<div class="admin-edit-grid">
-  <div class="field full">
-    <label>Address</label>
-    <input id="mAddress" type="text">
-  </div>
-
-  <div class="field">
-    <label>Resident type</label>
-    <select id="mType">
-      <option value="">Select…</option>
-      <option value="owner">Owner</option>
-      <option value="tenant">Tenant</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>Management company</label>
-    <input id="mMgmt" type="text">
-  </div>
-
-  <div class="field">
-    <label>Phone</label>
-    <input id="mPhone" type="text">
-  </div>
-
-  <div class="field">
-    <label>Email</label>
-    <input id="mEmail" type="email" disabled>
-  </div>
-
-  <div class="field">
+<div class="admin-controls-strip">
+  <div class="field admin-status-field">
     <label>Status</label>
     <select id="mStatus">
       <option value="pending">Pending</option>
@@ -899,11 +898,22 @@
       <option value="suspended">Suspended</option>
     </select>
   </div>
-
-  <div class="field">
-    <label>Eircode</label>
-    <input id="mEir" type="text">
+  <div class="admin-controls-note">
+    The admin reviews the resident profile here. Volunteer roles are shown for follow-up, while any extra role choices remain under the resident’s own control.
   </div>
+</div>
+
+<div class="admin-hidden-fields" aria-hidden="true">
+  <input id="mAddress" type="hidden">
+  <select id="mType" tabindex="-1">
+    <option value="">Select…</option>
+    <option value="owner">Owner</option>
+    <option value="tenant">Tenant</option>
+  </select>
+  <input id="mMgmt" type="hidden">
+  <input id="mPhone" type="hidden">
+  <input id="mEmail" type="hidden" disabled>
+  <input id="mEir" type="hidden">
 </div>
 <div class="actions" id="residentModalActions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
           <button type="button" class="btn-line small" id="btnReject">Reject</button>
@@ -2063,31 +2073,56 @@
     byId('mVMeet').checked = vrList.includes('Meeting organiser') || !!vrObj.meetings;
     byId('mVTrans').checked = vrList.includes('Translation') || !!vrObj.translation;
 
-    ['mVStreet','mVLeaf','mVTech','mVEld','mVClean','mVPark','mVMeet','mVTrans'].forEach((id) => {
+    const volunteerRoleMap = [
+      ['mVStreet', 'Street watch / patrols'],
+      ['mVLeaf', 'Distribute leaflets'],
+      ['mVTech', 'Tech support'],
+      ['mVEld', 'Elderly checks'],
+      ['mVClean', 'Community clean-up'],
+      ['mVPark', 'Parking assistance'],
+      ['mVMeet', 'Meeting organiser'],
+      ['mVTrans', 'Translation']
+    ];
+
+    volunteerRoleMap.forEach(([id]) => {
       const input = byId(id);
-      if(input){
-        input.disabled = true;
-        const box = document.querySelector(`[data-role-box="${id}"]`);
-        if(box) box.classList.toggle('off', !input.checked);
-      }
+      if(input) input.disabled = true;
     });
 
-    const activeVolunteerRoles = [
-      byId('mVStreet').checked ? 'Street watch / patrols' : '',
-      byId('mVLeaf').checked ? 'Distribute leaflets' : '',
-      byId('mVTech').checked ? 'Tech support' : '',
-      byId('mVEld').checked ? 'Elderly checks' : '',
-      byId('mVClean').checked ? 'Community clean-up' : '',
-      byId('mVPark').checked ? 'Parking assistance' : '',
-      byId('mVMeet').checked ? 'Meeting organiser' : '',
-      byId('mVTrans').checked ? 'Translation' : ''
-    ].filter(Boolean);
+    const activeVolunteerRoles = volunteerRoleMap.filter(([id]) => byId(id).checked).map(([, label]) => label);
+    const availableVolunteerRoles = volunteerRoleMap.filter(([id]) => !byId(id).checked).map(([, label]) => label);
 
     const chips = byId('mVolunteerRolesChips');
     if(chips){
       chips.innerHTML = activeVolunteerRoles.length
         ? activeVolunteerRoles.map(label => `<span class="role-chip">${esc(label)}</span>`).join('')
-        : `<span class="role-chip" style="color:#6a7b90;">No volunteer roles yet</span>`;
+        : `<span class="role-chip available">No volunteer roles yet</span>`;
+    }
+
+    const currentAccess = [];
+    if(byId('mCoord').checked) currentAccess.push('Street Coordinator');
+    if(byId('mVol').checked) currentAccess.push('Volunteer');
+    if(primaryRole && !currentAccess.includes(primaryRole)) currentAccess.unshift(primaryRole);
+
+    const accessBox = byId('mCurrentAccessChips');
+    if(accessBox){
+      accessBox.innerHTML = currentAccess.length
+        ? currentAccess.map(label => `<span class="role-chip current">${esc(label)}</span>`).join('')
+        : `<span class="role-chip available">Resident</span>`;
+    }
+
+    const currentVolBox = byId('mVolunteerCurrentChips');
+    if(currentVolBox){
+      currentVolBox.innerHTML = activeVolunteerRoles.length
+        ? activeVolunteerRoles.map(label => `<span class="role-chip current">${esc(label)}</span>`).join('')
+        : `<span class="role-chip available">No volunteer roles yet</span>`;
+    }
+
+    const availableVolBox = byId('mVolunteerAvailableChips');
+    if(availableVolBox){
+      availableVolBox.innerHTML = availableVolunteerRoles.length
+        ? availableVolunteerRoles.map(label => `<span class="role-chip available">${esc(label)}</span>`).join('')
+        : `<span class="role-chip current">All volunteer roles already active</span>`;
     }
 
     if(byId('mRegIdBadge')) byId('mRegIdBadge').textContent = regLabel;
