@@ -109,107 +109,237 @@
   #tabResidents td:nth-child(3){ line-height:1.35; }
   .resident-modal-top{
     display:grid;
-    grid-template-columns:minmax(0,1fr) 120px;
-    gap:18px;
+    grid-template-columns:minmax(0,1fr) 168px;
+    gap:24px;
     align-items:start;
-    justify-content:space-between;
-    padding:0 0 10px;
-    border-bottom:1px solid rgba(17,24,39,.08);
-    margin-bottom:12px;
+    margin-bottom:18px;
   }
-  .resident-modal-top .resident-id-grid{ flex:1; min-width:0; }
+  .resident-modal-top .resident-id-grid{
+    min-width:0;
+    display:grid;
+    gap:14px;
+  }
   #modalResident .modal-content{
-    max-width:980px;
-    border-radius:24px;
-    box-shadow:0 24px 70px rgba(15,23,42,.14);
+    max-width:1080px;
+    border-radius:28px;
+    border:1px solid rgba(16,24,40,.08);
+    box-shadow:0 24px 72px rgba(15,23,42,.16);
+    overflow:hidden;
   }
   #modalResident .modal-header{
     align-items:flex-start;
-    padding-bottom:10px;
-    border-bottom:1px solid rgba(17,24,39,.08);
-    margin-bottom:4px;
+    padding:22px 24px 12px;
+    border-bottom:0;
+    margin-bottom:0;
   }
   #modalResident .modal-body{
-    padding-top:4px;
+    padding:0 24px 24px;
   }
   #modalResident .field{
-    margin-bottom:12px;
+    margin-bottom:14px;
   }
   #modalResident .field > label:first-child{
     display:block;
     margin-bottom:6px;
-    font-weight:700;
+    font-weight:800;
+    letter-spacing:.01em;
   }
   #modalResident input,
   #modalResident select,
   #modalResident textarea{
-    border-radius:14px;
+    border-radius:15px;
+  }
+  #modalResident .resident-hero{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 168px;
+    gap:24px;
+    padding:6px 0 18px;
+    align-items:start;
+  }
+  #modalResident .resident-hero-copy{
+    min-width:0;
+  }
+  #modalResident .resident-badges{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin:0 0 10px;
+  }
+  #modalResident .resident-badge{
+    display:inline-flex;
+    align-items:center;
+    min-height:40px;
+    padding:0 16px;
+    border-radius:999px;
+    border:1px solid rgba(52,92,73,.18);
+    background:#f7faf8;
+    color:#32455a;
+    font-weight:700;
+  }
+  #modalResident .resident-name{
+    margin:0;
+    font-size:2rem;
+    line-height:1.08;
+    font-weight:800;
+    color:#1f2b3d;
+  }
+  #modalResident .resident-summary-card{
+    border:1px solid rgba(52,92,73,.14);
+    background:linear-gradient(180deg, #fbfdfc 0%, #f7faf8 100%);
+    border-radius:24px;
+    padding:20px;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:18px 28px;
+    margin-top:14px;
+  }
+  #modalResident .summary-label{
+    font-size:.8rem;
+    line-height:1.2;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    color:#6a7b90;
+    font-weight:800;
+    margin-bottom:6px;
+  }
+  #modalResident .summary-value{
+    color:#1f2b3d;
+    font-size:1rem;
+    font-weight:700;
+  }
+  #modalResident .summary-sub{
+    color:#6a7b90;
+    margin-top:6px;
+    font-weight:600;
+  }
+  #modalResident .roles-chip-wrap{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  #modalResident .role-chip{
+    display:inline-flex;
+    align-items:center;
+    min-height:38px;
+    padding:0 14px;
+    border-radius:999px;
+    border:1px solid rgba(52,92,73,.18);
+    background:#f7faf8;
+    color:#2f6d50;
+    font-weight:700;
   }
   .resident-photo-box{
-    width:120px;
-    flex:0 0 120px;
+    width:168px;
     text-align:center;
-    background:#f7faf8;
-    border:1px solid rgba(17,24,39,.08);
-    border-radius:18px;
-    padding:12px 10px;
   }
   .resident-photo-preview{
-    width:88px;
-    height:88px;
-    border-radius:18px;
-    border:1px solid var(--line);
+    width:152px;
+    height:152px;
+    border-radius:24px;
+    border:1px solid rgba(52,92,73,.14);
     background:#eef3f0 center/cover no-repeat;
-    margin:0 auto 8px;
+    margin:0 auto 12px;
     overflow:hidden;
     display:flex;
     align-items:center;
     justify-content:center;
     color:var(--muted);
-    font-size:1.8rem;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+    font-size:2.1rem;
+    box-shadow:0 10px 24px rgba(15,23,42,.10);
   }
   .resident-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
   .resident-photo-preview.has-photo{ color:transparent; }
-  #modalResident #mVolunteerRolesWrap{
-    margin:10px 0 0 0 !important;
-    padding:12px 14px;
+  #modalResident .resident-photo-note{
+    color:#6a7b90;
+    font-size:.92rem;
+    font-weight:600;
+  }
+  #modalResident .admin-review-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:16px 20px;
+    margin-top:18px;
+  }
+  #modalResident .admin-review-card{
     border:1px solid rgba(17,24,39,.08);
-    border-radius:16px;
-    background:#fafcfb;
+    border-radius:18px;
+    padding:16px 16px 14px;
+    background:#fff;
+  }
+  #modalResident .admin-review-card h4{
+    margin:0 0 10px;
+    font-size:1rem;
+  }
+  #modalResident .admin-review-note{
+    margin:0 0 10px;
+    color:#6a7b90;
+    font-size:.92rem;
+  }
+  #modalResident #mVolunteerRolesWrap{
+    margin:0 !important;
+    padding:0;
+    border:0;
+    background:transparent;
   }
   #modalResident #mVolunteerRolesWrap > div{
     display:grid !important;
-    grid-template-columns:repeat(2, minmax(220px, 1fr)) !important;
-    gap:8px 20px !important;
+    grid-template-columns:repeat(2,minmax(220px,1fr)) !important;
+    gap:10px 18px !important;
   }
   #modalResident .chk{
     display:flex;
     align-items:flex-start;
     gap:10px;
-    margin:6px 0;
+    margin:0;
+    padding:11px 12px;
+    border:1px solid rgba(17,24,39,.08);
+    border-radius:14px;
+    background:#fafcfb;
   }
   #modalResident .chk input{
     margin-top:3px;
     flex:0 0 auto;
   }
+  #modalResident .chk.off{
+    opacity:.72;
+    background:#fbfbfb;
+  }
+  #modalResident .admin-readonly-tip{
+    margin-top:12px;
+    color:#6a7b90;
+    font-size:.92rem;
+  }
+  #modalResident .admin-edit-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px 18px;
+    margin-top:18px;
+  }
+  #modalResident .admin-edit-grid .field.full{
+    grid-column:1 / -1;
+  }
   #residentModalActions{
     justify-content:flex-end;
     gap:10px !important;
-    margin-top:14px;
-    padding-top:12px;
+    margin-top:18px;
+    padding-top:14px;
     border-top:1px solid rgba(17,24,39,.08);
   }
   @media (max-width: 900px){
+    #modalResident .resident-hero,
     .resident-modal-top{
       grid-template-columns:1fr;
     }
     .resident-photo-box{
       width:100%;
-      flex:0 0 auto;
       text-align:left;
     }
-    .resident-photo-preview{ margin:0 0 8px; }
+    .resident-photo-preview{
+      margin:0 0 12px;
+    }
+    #modalResident .resident-summary-card,
+    #modalResident .admin-review-grid,
+    #modalResident .admin-edit-grid,
     #modalResident #mVolunteerRolesWrap > div{
       grid-template-columns:1fr !important;
     }
@@ -393,42 +523,44 @@
     gap:18px !important;
   }
   #tabTasks .admin-tasks-stack > .panel:first-child{
-    background:linear-gradient(180deg, rgba(248,251,249,.95), rgba(255,255,255,1));
-    border-radius:18px !important;
-    padding:18px !important;
+    background:linear-gradient(180deg, rgba(248,251,249,.96), rgba(255,255,255,1));
+    border-radius:20px !important;
+    padding:20px !important;
   }
   #tabTasks .admin-tasks-stack > .panel:last-child{
     border-radius:18px !important;
     padding:16px !important;
   }
   #tabTasks .task-code-field{
-    max-width:260px;
+    max-width:190px;
   }
   #tabTasks #admTaskCode{
-    max-width:220px;
+    max-width:170px;
+    min-height:44px;
     font-weight:700;
-    letter-spacing:.04em;
+    letter-spacing:.03em;
     background:#f6f8f7;
-  }
-  #tabTasks .task-code-help{
-    max-width:240px;
+    text-align:center;
   }
   #tabTasks .grid-2{
-    gap:14px !important;
-    align-items:start;
+    gap:16px !important;
+    align-items:end;
   }
   #tabTasks .field{
-    margin-bottom:12px;
+    margin-bottom:14px;
   }
   #tabTasks .panel h4{
     margin-bottom:4px !important;
+  }
+  #tabTasks .panel > .tiny.muted{
+    margin-bottom:16px !important;
   }
   #tabTasks #admTaskDesc{
     min-height:132px;
   }
   #tabTasks .actions[style*="justify-content:flex-end"]{
-    margin-top:14px !important;
-    padding-top:10px;
+    margin-top:16px !important;
+    padding-top:12px;
     border-top:1px solid rgba(17,24,39,.08);
   }
   #tabTasks .actions[style*="justify-content:flex-start"]{
@@ -437,6 +569,15 @@
   #tabTasks #admTasksFilter,
   #tabTasks #admTasksSearch{
     min-height:42px;
+  }
+  #tabTasks .task-code-field + .field{
+    flex:1;
+  }
+  @media (min-width: 901px){
+    #tabTasks .admin-tasks-stack > .panel:first-child .grid-2:first-of-type{
+      grid-template-columns:190px minmax(260px, 1fr) !important;
+      align-items:end;
+    }
   }
 </style>
 
@@ -650,92 +791,121 @@
       </div>
 
       <div class="modal-body">
-        <div class="resident-modal-top">
-          <div class="resident-id-grid">
-            <div class="grid-2" style="gap:1rem;">
-              <div class="field">
-                <label>Registration No</label>
-                <input id="mRegId" type="text" disabled>
-              </div>
-              <div class="field">
-                <label>Status</label>
-                <input id="mStatus" type="text" disabled>
-              </div>
-            </div>
-          </div>
-          <div class="resident-photo-box">
-            <div class="resident-photo-preview" id="mPhotoPreview">👤</div>
-            <div class="tiny muted">Profile photo</div>
-          </div>
-        </div>
+        
+<div class="resident-hero">
+  <div class="resident-hero-copy">
+    <div class="resident-badges">
+      <span class="resident-badge">Registration No <strong style="margin-left:8px;" id="mRegIdBadge">—</strong></span>
+      <span class="resident-badge">Status <strong style="margin-left:8px;" id="mStatusBadge">—</strong></span>
+    </div>
+    <h3 class="resident-name" id="mNameHeading">Resident profile</h3>
 
-        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
-          <div class="field">
-            <label>Email</label>
-            <input id="mEmail" type="email" disabled>
-          </div>
-          <div class="field">
-            <label>Eircode</label>
-            <input id="mEir" type="text" disabled>
-          </div>
-        </div>
+    <div class="resident-summary-card">
+      <div>
+        <div class="summary-label">Primary role</div>
+        <div class="summary-value" id="mPrimaryRoleView">—</div>
+      </div>
+      <div>
+        <div class="summary-label">Volunteer positions</div>
+        <div class="roles-chip-wrap" id="mVolunteerRolesChips"></div>
+      </div>
+      <div>
+        <div class="summary-label">Registered address</div>
+        <div class="summary-value" id="mAddressView">—</div>
+        <div class="summary-sub">Eircode: <span id="mEirView">—</span></div>
+      </div>
+      <div>
+        <div class="summary-label">Resident type</div>
+        <div class="summary-value" id="mTypeView">—</div>
+      </div>
+    </div>
+  </div>
 
-        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
-          <div class="field">
-            <label>Full name</label>
-            <input id="mName" type="text">
-          </div>
-          <div class="field">
-            <label>Phone</label>
-            <input id="mPhone" type="text">
-          </div>
-        </div>
+  <div class="resident-photo-box">
+    <div class="resident-photo-preview" id="mPhotoPreview">👤</div>
+    <div class="resident-photo-note">Resident profile photo</div>
+  </div>
+</div>
 
-        <div class="field" style="margin-top:1rem;">
-          <label>Address</label>
-          <input id="mAddress" type="text" disabled>
-        </div>
+<div class="admin-review-grid">
+  <section class="admin-review-card">
+    <h4>Current access</h4>
+    <p class="admin-review-note">These are the roles the resident currently performs.</p>
+    <div class="field">
+      <label style="margin-bottom:8px;">Operational roles</label>
+      <div style="display:grid; gap:10px;">
+        <label class="chk"><input id="mCoord" type="checkbox"> <span>Street Coordinator</span></label>
+        <label class="chk"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
+      </div>
+    </div>
+  </section>
 
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Resident type</label>
-            <select id="mType">
-              <option value="">Select…</option>
-              <option value="owner">Owner</option>
-              <option value="tenant">Tenant</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Management company</label>
-            <input id="mMgmt" type="text">
-          </div>
-        </div>
+  <section class="admin-review-card">
+    <h4>Volunteer roles overview</h4>
+    <p class="admin-review-note">The admin can review what the resident already does and which extra roles could be added later by the resident.</p>
+    <div id="mVolunteerRolesWrap">
+      <div>
+        <label class="chk" data-role-box="mVStreet"><input id="mVStreet" type="checkbox"> <span>Street watch / patrols</span></label>
+        <label class="chk" data-role-box="mVLeaf"><input id="mVLeaf" type="checkbox"> <span>Distribute leaflets</span></label>
+        <label class="chk" data-role-box="mVTech"><input id="mVTech" type="checkbox"> <span>Tech support</span></label>
+        <label class="chk" data-role-box="mVEld"><input id="mVEld" type="checkbox"> <span>Elderly checks</span></label>
+        <label class="chk" data-role-box="mVClean"><input id="mVClean" type="checkbox"> <span>Community clean-up</span></label>
+        <label class="chk" data-role-box="mVPark"><input id="mVPark" type="checkbox"> <span>Parking assistance</span></label>
+        <label class="chk" data-role-box="mVMeet"><input id="mVMeet" type="checkbox"> <span>Meeting organiser</span></label>
+        <label class="chk" data-role-box="mVTrans"><input id="mVTrans" type="checkbox"> <span>Translation</span></label>
+      </div>
+    </div>
+    <p class="admin-readonly-tip">Checked items show what the resident already performs. Unchecked items indicate what could still be added by the resident later.</p>
+  </section>
+</div>
 
-        <div class="field">
-          <label>Roles</label>
-          <label class="chk"><input id="mCoord" type="checkbox"> <span>Street Coordinator</span></label>
-          <label class="chk"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
-          <label class="chk"><input id="mAlertAdmin" type="checkbox" disabled> <span>Community Alerts admin (set after approval)</span></label>
+<div class="admin-edit-grid">
+  <div class="field full">
+    <label>Address</label>
+    <input id="mAddress" type="text">
+  </div>
 
-          <div id="mVolunteerRolesWrap" style="margin:0.5rem 0 0 1.25rem;">
-            <p class="tiny muted" style="margin:0 0 0.25rem;">Volunteer roles (8): select one or more extra functions for this resident.</p>
-            <div style="display:grid; grid-template-columns:repeat(2, minmax(180px, 1fr)); column-gap:18px; row-gap:4px;">
-              <label class="chk"><input id="mVStreet" type="checkbox"> <span>Street watch / patrols</span></label>
-              <label class="chk"><input id="mVLeaf" type="checkbox"> <span>Distribute leaflets</span></label>
-              <label class="chk"><input id="mVTech" type="checkbox"> <span>Tech support</span></label>
-              <label class="chk"><input id="mVEld" type="checkbox"> <span>Elderly checks</span></label>
-              <label class="chk"><input id="mVClean" type="checkbox"> <span>Community clean-up</span></label>
-              <label class="chk"><input id="mVPark" type="checkbox"> <span>Parking assistance</span></label>
-              <label class="chk"><input id="mVMeet" type="checkbox"> <span>Meeting organiser</span></label>
-              <label class="chk"><input id="mVTrans" type="checkbox"> <span>Translation</span></label>
-            </div>
-          </div>
-        </div>
+  <div class="field">
+    <label>Resident type</label>
+    <select id="mType">
+      <option value="">Select…</option>
+      <option value="owner">Owner</option>
+      <option value="tenant">Tenant</option>
+    </select>
+  </div>
 
-        <p class="tiny muted" id="mMsg" style="margin-top:0.5rem;"></p>
+  <div class="field">
+    <label>Management company</label>
+    <input id="mMgmt" type="text">
+  </div>
 
-        <div class="actions" id="residentModalActions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+  <div class="field">
+    <label>Phone</label>
+    <input id="mPhone" type="text">
+  </div>
+
+  <div class="field">
+    <label>Email</label>
+    <input id="mEmail" type="email" disabled>
+  </div>
+
+  <div class="field">
+    <label>Status</label>
+    <select id="mStatus">
+      <option value="pending">Pending</option>
+      <option value="approved">Approved</option>
+      <option value="active">Active</option>
+      <option value="rejected">Rejected</option>
+      <option value="suspended">Suspended</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Eircode</label>
+    <input id="mEir" type="text">
+  </div>
+</div>
+<div class="actions" id="residentModalActions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
           <button type="button" class="btn-line small" id="btnReject">Reject</button>
           <button type="button" class="btn-line small" id="btnSuspendResident">Suspend</button>
           <button type="button" class="btn-line small" id="btnRemoveResident">Remove</button>
@@ -810,16 +980,16 @@
 
     <div class="grid admin-tasks-stack" style="grid-template-columns: 1fr; gap:14px; margin-top:12px;">
       <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
-        <h4 style="margin:0;">Task builder</h4>
+        <h4 style="margin:0 0 2px 0;">Task builder</h4>
         <p class="tiny muted" style="margin:6px 0 10px;">
-          Create the task details below. The code is generated automatically in the format Task-000001.
+          Fill in the task details below.
         </p>
 
         <div class="grid-2" style="gap:12px;">
           <div class="field task-code-field">
             <label>Task code</label>
-            <input id="admTaskCode" type="text" disabled readonly placeholder="Task-000001">
-            <p class="tiny muted task-code-help" style="margin:6px 0 0;">Generated automatically when the task is saved.</p>
+            <input id="admTaskCode" type="text" disabled readonly placeholder="Task-001">
+            
           </div>
           <div class="field">
             <label>Status</label>
@@ -1861,17 +2031,24 @@
     if(!CURRENT_RESIDENT) return;
 
     byId('modalResident').style.display = 'block';
-    byId('mRegId').value = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
-    byId('mStatus').value = CURRENT_RESIDENT.status || 'pending';
+    const regLabel = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
+    const statusLabel = CURRENT_RESIDENT.status || 'pending';
+    byId('mStatus').value = statusLabel;
     byId('mEmail').value = CURRENT_RESIDENT.email || '';
     byId('mEir').value = CURRENT_RESIDENT.eircode || '';
-    byId('mName').value = CURRENT_RESIDENT.name || '';
     byId('mPhone').value = CURRENT_RESIDENT.phone || '';
     byId('mAddress').value = CURRENT_RESIDENT.address || '';
     byId('mType').value = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '';
     byId('mMgmt').value = CURRENT_RESIDENT.managementCompany || CURRENT_RESIDENT.mgmt || '';
 
     const roles = normList(CURRENT_RESIDENT.roles).concat(normList(CURRENT_RESIDENT.role));
+    const residentType = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '—';
+    const primaryRole = roles.includes('admin') ? 'Admin'
+      : roles.includes('owner') ? 'Owner'
+      : roles.includes('street_admin') ? 'Street Coordinator'
+      : roles.includes('volunteer') ? 'Volunteer'
+      : (residentType || 'Resident');
+
     byId('mCoord').checked = roles.includes('street_admin') || !!CURRENT_RESIDENT.streetCoordinator;
     byId('mVol').checked = roles.includes('volunteer') || !!CURRENT_RESIDENT.volunteer;
 
@@ -1885,6 +2062,41 @@
     byId('mVPark').checked = vrList.includes('Parking assistance') || !!vrObj.parkingAssistance || !!vrObj.parking;
     byId('mVMeet').checked = vrList.includes('Meeting organiser') || !!vrObj.meetings;
     byId('mVTrans').checked = vrList.includes('Translation') || !!vrObj.translation;
+
+    ['mVStreet','mVLeaf','mVTech','mVEld','mVClean','mVPark','mVMeet','mVTrans'].forEach((id) => {
+      const input = byId(id);
+      if(input){
+        input.disabled = true;
+        const box = document.querySelector(`[data-role-box="${id}"]`);
+        if(box) box.classList.toggle('off', !input.checked);
+      }
+    });
+
+    const activeVolunteerRoles = [
+      byId('mVStreet').checked ? 'Street watch / patrols' : '',
+      byId('mVLeaf').checked ? 'Distribute leaflets' : '',
+      byId('mVTech').checked ? 'Tech support' : '',
+      byId('mVEld').checked ? 'Elderly checks' : '',
+      byId('mVClean').checked ? 'Community clean-up' : '',
+      byId('mVPark').checked ? 'Parking assistance' : '',
+      byId('mVMeet').checked ? 'Meeting organiser' : '',
+      byId('mVTrans').checked ? 'Translation' : ''
+    ].filter(Boolean);
+
+    const chips = byId('mVolunteerRolesChips');
+    if(chips){
+      chips.innerHTML = activeVolunteerRoles.length
+        ? activeVolunteerRoles.map(label => `<span class="role-chip">${esc(label)}</span>`).join('')
+        : `<span class="role-chip" style="color:#6a7b90;">No volunteer roles yet</span>`;
+    }
+
+    if(byId('mRegIdBadge')) byId('mRegIdBadge').textContent = regLabel;
+    if(byId('mStatusBadge')) byId('mStatusBadge').textContent = String(statusLabel || 'pending').replace(/^./, c => c.toUpperCase());
+    if(byId('mNameHeading')) byId('mNameHeading').textContent = CURRENT_RESIDENT.name || 'Resident profile';
+    if(byId('mPrimaryRoleView')) byId('mPrimaryRoleView').textContent = primaryRole || '—';
+    if(byId('mAddressView')) byId('mAddressView').textContent = CURRENT_RESIDENT.address || '—';
+    if(byId('mEirView')) byId('mEirView').textContent = CURRENT_RESIDENT.eircode || '—';
+    if(byId('mTypeView')) byId('mTypeView').textContent = residentType || '—';
 
     const photoUrl = CURRENT_RESIDENT.profilePhoto || CURRENT_RESIDENT.photo || CURRENT_RESIDENT.photoURL || '';
     const photoBox = byId('mPhotoPreview');
@@ -2881,7 +3093,7 @@ document.addEventListener("DOMContentLoaded", function(){
     let seq = Number(await loadStore(TASK_SEQ_KEY, 0)) || 0;
     seq += 1;
     await saveStore(TASK_SEQ_KEY, seq);
-    return `Task-${zeroPad(seq, 6)}`;
+    return `Task-${zeroPad(seq, 3)}`;
   }
 
   function taskFormIds(){
