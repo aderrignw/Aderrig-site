@@ -68,6 +68,49 @@
     text-align:center;
   }
 
+
+  /* Volunteer task header row refinement */
+  #tabTasks .task-top-row{
+    display:grid;
+    grid-template-columns:160px 190px minmax(0,1fr);
+    gap:16px;
+    align-items:end;
+    margin-bottom:6px;
+  }
+  #tabTasks .task-code-field,
+  #tabTasks .task-status-field,
+  #tabTasks .task-title-field{
+    margin-bottom:0;
+  }
+  #tabTasks .task-code-field input{
+    max-width:160px;
+    min-height:46px;
+    text-align:center;
+    font-weight:700;
+    letter-spacing:.02em;
+    background:#f6f8f7;
+  }
+  #tabTasks .task-status-field select{
+    max-width:190px;
+    min-height:46px;
+  }
+  #tabTasks .task-title-field input{
+    min-height:46px;
+  }
+  #tabTasks .admin-tasks-stack > .panel:first-child .field{
+    margin-bottom:14px;
+  }
+  @media (max-width: 980px){
+    #tabTasks .task-top-row{
+      grid-template-columns:1fr;
+    }
+    #tabTasks .task-code-field input,
+    #tabTasks .task-status-field select{
+      max-width:none;
+      width:100%;
+    }
+  }
+
 </style>
 
 <style>
@@ -956,8 +999,7 @@
           <button type="button" class="btn-line small" id="btnReject">Reject</button>
           <button type="button" class="btn-line small" id="btnSuspendResident">Suspend</button>
           <button type="button" class="btn-line small" id="btnRemoveResident">Remove</button>
-          <button type="button" class="btn small" id="btnSaveResident">Save</button>
-          <button type="button" class="btn-line small logout-btn-inline" id="btnLogoutAdmin">Logout</button>
+                    <button type="button" class="btn-line small logout-btn-inline" id="btnLogoutAdmin">Logout</button>
           <button type="button" class="btn small" id="btnApprove">Approve</button>
         </div>
       </div>
@@ -1028,28 +1070,24 @@
     <div class="grid admin-tasks-stack" style="grid-template-columns: 1fr; gap:14px; margin-top:12px;">
       <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
         <h4 style="margin:0 0 2px 0;">Task builder</h4>
-        <p class="tiny muted" style="margin:6px 0 10px;">
-          Fill in the task details below.
-        </p>
+        
 
-        <div class="grid-2" style="gap:12px;">
+        <div class="task-top-row">
           <div class="field task-code-field">
             <label>Task code</label>
             <input id="admTaskCode" type="text" disabled readonly placeholder="Task-001">
-            
           </div>
-          <div class="field">
+          <div class="field task-status-field">
             <label>Status</label>
             <select id="admTaskStatus">
               <option value="open">Open</option>
               <option value="archived">Archived</option>
             </select>
           </div>
-        </div>
-
-        <div class="field">
-          <label>Title</label>
-          <input id="admTaskTitle" type="text" placeholder="e.g., Leaflet drop on Street A">
+          <div class="field task-title-field">
+            <label>Title</label>
+            <input id="admTaskTitle" type="text" placeholder="e.g., Leaflet drop on Street A">
+          </div>
         </div>
 
         <div class="field">
