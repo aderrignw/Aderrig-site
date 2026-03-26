@@ -21,9 +21,7 @@
   #tabResidents{display:block;}
   .elect-subtab{display:none;}
   #subManage{display:block;}
-
-.logout-btn-inline{min-width:104px;}
-
+  .logout-btn-inline{min-width:104px;}
 </style>
 
 <style>
@@ -107,12 +105,14 @@
   #tabResidents th:nth-child(6), #tabResidents td:nth-child(6){ width:20%; }
   #tabResidents th:nth-child(7), #tabResidents td:nth-child(7){ width:10%; }
   #tabResidents td:nth-child(3){ line-height:1.35; }
+
   .resident-modal-top{ display:flex; gap:1rem; align-items:flex-start; justify-content:space-between; }
   .resident-modal-top .resident-id-grid{ flex:1; min-width:0; }
   .resident-photo-box{ width:108px; flex:0 0 108px; text-align:center; }
   .resident-photo-preview{ width:88px; height:88px; border-radius:16px; border:1px solid var(--line); background:#eef3f0 center/cover no-repeat; margin:0 auto 8px; overflow:hidden; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.8rem; }
   .resident-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
   .resident-photo-preview.has-photo{ color:transparent; }
+
   @media (max-width: 900px){
     .resident-modal-top{ flex-direction:column; }
     .resident-photo-box{ width:100%; flex:0 0 auto; text-align:left; }
@@ -163,7 +163,8 @@
     }
     body.print-access-control main.wrap { max-width: 100% !important; padding: 0 !important; }
   }
-#tabAccessControl .ac-note{
+
+  #tabAccessControl .ac-note{
     margin-top:8px;
     font-size:.82rem;
     color:var(--muted);
@@ -661,6 +662,7 @@
       </div>
     </div>
   </section>
+
   <!-- ================= ELECTIONS ================= -->
   <section class="card admin-tab-content" id="tabElections" style="display:none;">
     <h3>Elections</h3>
@@ -756,1811 +758,1322 @@
       <div id="resultsBox"></div>
     </div>
   </section>
-
   <!-- ================= REPORTS ================= -->
   <section class="card admin-tab-content" id="tabReports" style="display:none;">
-    <h3>Reports</h3>
-    <p class="tiny muted" style="margin-top:0;">
-      View and manage incident reports submitted via the <a href="report.html">Report</a> page.
-    </p>
+    <h3>Reports (incidents)</h3>
 
-    <div class="actions" style="justify-content:flex-start; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem;">
-      <div class="field" style="min-width:220px; margin:0;">
-        <label class="tiny muted" for="repStatusFilter">Status</label>
-        <select id="repStatusFilter" class="input" style="width:100%;">
-          <option value="all">All</option>
-          <option value="submitted">Submitted</option>
-          <option value="in_review">In review</option>
-          <option value="sent_to_garda">Sent to Gardaí</option>
-          <option value="closed">Closed</option>
-        </select>
-      </div>
-
-      <div class="field" style="min-width:280px; margin:0;">
-        <label class="tiny muted" for="repSearch">Search (ID / email / location)</label>
-        <input id="repSearch" type="text" placeholder="e.g., RPT-0003 or someone@email.com" />
-      </div>
-
-      <div style="display:flex; gap:0.5rem; align-items:flex-end;">
-        <button type="button" class="btn" id="btnRepRefresh">Refresh</button>
-        <button type="button" class="btn btn-line" id="btnRepExport">Export file</button>
-      </div>
+    <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
+      <button class="btn small" id="btnReportsRefresh" type="button">Refresh</button>
     </div>
 
-    <p id="repMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
-
-    <div class="resident-table-wrap">
+    <div style="overflow-x:auto; margin-top:0.75rem;">
       <table style="width:100%;">
         <thead>
           <tr>
             <th>ID</th>
-            <th>Created</th>
+            <th>Date</th>
             <th>Category</th>
             <th>Location</th>
-            <th>Reporter email</th>
             <th>Status</th>
-            <th style="width:260px;">Actions</th>
+            <th>Email</th>
           </tr>
         </thead>
-        <tbody id="repBody"></tbody>
+        <tbody id="reportsBody"></tbody>
       </table>
     </div>
 
-    <p id="repEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No reports found.</p>
+    <p id="reportsEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">
+      No reports found.
+    </p>
   </section>
 
   <!-- ================= NOTICES ================= -->
   <section class="card admin-tab-content" id="tabNotices" style="display:none;">
-    <h3>Notices</h3>
-    <p class="tiny muted" style="margin-top:0;">Create official notices that appear on member dashboards. Messages are read-only for residents.</p>
+    <h3>Community notices</h3>
 
-    <div class="grid-2" style="gap:1rem; align-items:flex-start;">
-      <div>
-        <h4 style="margin-top:0;">Create / Update notice</h4>
-        <div class="field">
-          <label>Title</label>
-          <input id="ntTitle" type="text" maxlength="120" placeholder="e.g., Visits to elderly residents" />
-        </div>
-        <div class="field">
-          <label>Message</label>
-          <textarea id="ntMessage" rows="5" maxlength="600" placeholder="Short reminder for members..."></textarea>
-        </div>
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Category (optional)</label>
-            <select id="ntCategory">
-              <option value="General">General</option>
-              <option value="Volunteer">Volunteer</option>
-              <option value="Safety">Safety</option>
-              <option value="Meeting">Meeting</option>
-              <option value="Garda">Garda</option>
-              <option value="Bins">Bins</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Expiry (optional)</label>
-            <input id="ntExpires" type="date" />
-          </div>
-        </div>
-
-        <h4 style="margin:0.75rem 0 0.25rem;">Home carousel</h4>
-        <p class="tiny muted" style="margin-top:0;">Optional. If enabled, this notice can appear as a compact carousel banner on the Home page.</p>
-        <div class="grid-2" style="gap:1rem; align-items:flex-end;">
-          <div class="field" style="margin:0;">
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
-              <input id="ntHomeEnabled" type="checkbox">
-              <span>Show on Home</span>
-            </label>
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Home visibility</label>
-            <select id="ntHomeVisibility">
-              <option value="private" selected>Private (members only)</option>
-              <option value="public">Public (everyone)</option>
-            </select>
-          </div>
-        </div>
-
-        <h4 style="margin:0.75rem 0 0.25rem;">Send to</h4>
-        <p class="tiny muted" style="margin-top:0;">Choose one or more targeting options. If you select nothing, the notice will be visible to all logged-in members.</p>
-
-        <div class="field" style="margin:0.25rem 0 0.5rem;">
-          <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
-            <input id="ntAllLogged" type="checkbox" checked>
-            <span>All logged-in members</span>
-          </label>
-        </div>
-
-        <div class="field" style="margin:0.25rem 0 0.5rem;">
-          <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
-            <input id="ntNonAdminOnly" type="checkbox">
-            <span>Residents only (exclude admins/owners)</span>
-          </label>
-        </div>
-
-        <div class="field">
-          <label>By role (optional)</label>
-          <div class="grid-2" style="gap:0.5rem;">
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="resident"> <span>Residents</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="street_admin"> <span>Street Coordinators</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="area_coordinator"> <span>Area Coordinators</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="aux_coordinator"> <span>Assistant Area Coordinators</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="volunteer"> <span>Project Volunteers</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="platform_support"> <span>Platform/Admin Support</span></label>
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;"><input type="checkbox" class="ntRole" value="admin"> <span>Admins</span></label>
-          </div>
-        </div>
-
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Eircode prefix (optional)</label>
-            <input id="ntEirPrefixes" type="text" placeholder="e.g., K78 (comma separated)" />
-          </div>
-          <div class="field">
-            <label>Street name(s) (optional)</label>
-            <input id="ntStreets" type="text" placeholder="e.g., Aderrig Park, Castlegate Way" />
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Specific Eircodes (optional, one per line)</label>
-          <textarea id="ntEircodes" rows="3" placeholder="K78XXXX&#10;K78YYYY"></textarea>
-        </div>
-
-        <div class="field">
-          <label>Specific member emails (optional, one per line)</label>
-          <textarea id="ntEmails" rows="3" placeholder="person@email.com"></textarea>
-        </div>
-
-        <p id="ntMsg" class="tiny muted"></p>
-
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnNtClear">Clear</button>
-          <button type="button" class="btn" id="btnNtPublish">Publish notice</button>
-        </div>
+    <div class="grid-2" style="gap:1rem;">
+      <div class="field">
+        <label>Title</label>
+        <input id="noticeTitle" type="text">
       </div>
-
-      <div class="card" style="padding:1rem; margin-top:1rem;">
-        <h4 style="margin-top:0;">Bin collection import</h4>
-        <p class="tiny muted" style="margin-top:0;">
-          Use only the CSV file. Imported bin notices are saved automatically as public Home notices and will be shown for <strong>this week and next week</strong>.
-        </p>
-
-        <div class="field" style="display:none;">
-          <label>Schedule lines</label>
-          <textarea id="binCsv" rows="6"></textarea>
-        </div>
-
-        <div class="field">
-          <label>Collection CSV file</label>
-          <input id="binCsvFile" type="file" accept=".csv,text/csv" />
-          <p class="tiny muted" style="margin-top:6px;">Select the collection CSV and click <strong>Import collection CSV</strong>.</p>
-        </div>
-
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnClearBinNotices">Clear imported bin notices</button>
-          <button type="button" class="btn" id="btnBinImport">Import collection CSV</button>
-        </div>
-
-        <p id="binMsg" class="tiny muted"></p>
-      </div>
-
-      <div>
-        <h4 style="margin-top:0;">Existing notices</h4>
-        <p class="tiny muted" id="ntListMsg" style="margin-top:0.5rem;"></p>
-        <div id="ntList"></div>
+      <div class="field">
+        <label>Type</label>
+        <select id="noticeType">
+          <option value="info">Info</option>
+          <option value="alert">Alert</option>
+        </select>
       </div>
     </div>
+
+    <div class="field">
+      <label>Message</label>
+      <textarea id="noticeMsg" rows="4"></textarea>
+    </div>
+
+    <div class="actions" style="justify-content:flex-end; gap:0.5rem;">
+      <button class="btn small" id="btnNoticeSave" type="button">Save notice</button>
+    </div>
+
+    <div id="noticesList" style="margin-top:1rem;"></div>
   </section>
 
   <!-- ================= HANDBOOK ================= -->
   <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
-    <h3>Handbook</h3>
-    <p class="tiny muted" style="margin-top:0;">Create categories and items for the resident Handbook. Residents can view published items only. Prefer external links for large PDFs.</p>
+    <h3>Handbook management</h3>
 
-    <div class="grid-2" style="gap:1rem; align-items:flex-start;">
-      <div>
-        <h4 style="margin-top:0;">Categories</h4>
-        <div class="field">
-          <label>Category title</label>
-          <input id="hbCatTitle" type="text" maxlength="80" placeholder="e.g., Waste & Recycling" />
-        </div>
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Icon (emoji)</label>
-            <input id="hbCatIcon" type="text" maxlength="8" placeholder="🗑️" />
-          </div>
-          <div class="field">
-            <label>Order</label>
-            <input id="hbCatOrder" type="number" min="1" step="1" placeholder="1" />
-          </div>
-        </div>
-        <div class="field">
-          <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
-            <input id="hbCatActive" type="checkbox" checked>
-            <span>Active</span>
-          </label>
-        </div>
-        <p id="hbCatMsg" class="tiny muted"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnHbCatClear">Clear</button>
-          <button type="button" class="btn" id="btnHbCatSave">Save category</button>
-        </div>
+    <div class="field">
+      <label>Content</label>
+      <textarea id="handbookContent" rows="10"></textarea>
+    </div>
 
-        <div class="resident-table-wrap">
-          <table style="width:100%;">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th style="width:90px;">Order</th>
-                <th style="width:90px;">Status</th>
-                <th style="width:160px;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="hbCatBody"></tbody>
-          </table>
-        </div>
-        <p id="hbCatEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No categories yet.</p>
-      </div>
-
-      <div>
-        <h4 style="margin-top:0;">Items</h4>
-        <div class="field">
-          <label>Category</label>
-          <select id="hbItemCategory"></select>
-        </div>
-        <div class="field">
-          <label>Item title</label>
-          <input id="hbItemTitle" type="text" maxlength="120" placeholder="e.g., Visitor Parking Locations" />
-        </div>
-        <div class="field">
-          <label>Summary (optional)</label>
-          <input id="hbItemSummary" type="text" maxlength="160" placeholder="Short description shown in the list" />
-        </div>
-
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Type</label>
-            <select id="hbItemType">
-              <option value="page" selected>Page (content on site)</option>
-              <option value="link">External link</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Status</label>
-            <select id="hbItemStatus">
-              <option value="published" selected>Published</option>
-              <option value="draft">Draft</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>External URL (for Link type)</label>
-          <input id="hbItemUrl" type="url" placeholder="https://..." />
-        </div>
-
-        <div class="field">
-          <label>Hero image (optional)</label>
-          <input id="hbItemHeroUrl" type="url" placeholder="https://... (recommended)" />
-          <div class="tiny muted" style="margin-top:6px;">Tip: prefer a link (Netlify Large Media/Drive) to avoid storing large files in the KV store.</div>
-        </div>
-
-        <div class="field">
-          <label>Content (HTML allowed)</label>
-          <textarea id="hbItemContent" rows="7" placeholder="Write the page content here..."></textarea>
-        </div>
-
-        <div class="field">
-          <label>Attachments (one per line: Label | URL)</label>
-          <textarea id="hbItemAttachments" rows="4" placeholder="Map PDF | https://...&#10;Bin schedule | https://..."></textarea>
-        </div>
-
-        <p id="hbItemMsg" class="tiny muted"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnHbItemClear">Clear</button>
-          <button type="button" class="btn" id="btnHbItemSave">Save item</button>
-        </div>
-
-        <div class="card" style="padding:1rem; margin-top:1rem;">
-          <h4 style="margin-top:0;">Items in selected category</h4>
-          <div id="hbItemList" class="grid" style="gap:10px;"></div>
-          <p id="hbItemEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No items in this category.</p>
-        </div>
-      </div>
+    <div class="actions" style="justify-content:flex-end;">
+      <button class="btn" id="btnHandbookSave" type="button">Save</button>
     </div>
   </section>
+
   <!-- ================= PROJECTS ================= -->
   <section class="card admin-tab-content" id="tabProjects" style="display:none;">
-    <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-      <div>
-        <h3 style="margin:0;">Projects Monitoring</h3>
-        <p class="tiny muted" style="margin:6px 0 0;">
-          Review projects and recipient-tracking entries saved in the central store.
-        </p>
-        <div id="pmStoreNote" class="tiny" style="margin-top:8px;"></div>
-      </div>
-      <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button type="button" class="btn small btn-line" id="btnPmRefresh">Refresh</button>
-        <button type="button" class="btn small" id="btnPmExport">Export</button>
-      </div>
+    <h3>Projects monitoring</h3>
+
+    <div class="actions" style="justify-content:flex-end;">
+      <button class="btn small" id="btnProjectsRefresh" type="button">Refresh</button>
     </div>
 
-    <div class="grid-2" style="gap:1rem; margin-top:1rem;">
-      <div class="field">
-        <label>Filter by status</label>
-        <select id="pmStatusFilter">
-          <option value="all">All</option>
-          <option value="planned">Planned</option>
-          <option value="active">Active</option>
-          <option value="on_hold">On hold</option>
-          <option value="completed">Completed</option>
-          <option value="archived">Archived</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Search</label>
-        <input id="pmSearch" type="text" placeholder="Project title, owner, street, recipient...">
-      </div>
-    </div>
-
-    <div class="resident-table-wrap">
-      <table style="width:100%;">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Project</th>
-            <th>Status</th>
-            <th>Owner</th>
-            <th>Updated</th>
-            <th style="width:160px;">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="pmBody"></tbody>
-      </table>
-    </div>
-    <p id="pmEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No projects found.</p>
-
-    <div class="card" style="padding:1rem; margin-top:1rem;">
-      <h4 style="margin-top:0;">Recipient tracking</h4>
-      <div style="overflow-x:auto;">
-        <table style="width:100%;">
-          <thead>
-            <tr>
-              <th>Project</th>
-              <th>Recipient</th>
-              <th>Address / Eircode</th>
-              <th>Status</th>
-              <th>Updated</th>
-            </tr>
-          </thead>
-          <tbody id="pmRecipientsBody"></tbody>
-        </table>
-      </div>
-      <p id="pmRecipientsEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No recipient records found.</p>
-    </div>
+    <div id="projectsList" style="margin-top:1rem;"></div>
   </section>
 
   <!-- ================= ACCESS CONTROL ================= -->
   <section class="card admin-tab-content" id="tabAccessControl" style="display:none;">
-    <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-      <div>
-        <h3 style="margin:0;">Access Control</h3>
-        <p class="tiny muted" style="margin:6px 0 0;">
-          Control which pages, tabs and sub-tabs are public or require a specific site role. Roles follow the site hierarchy: resident, street coordinator, assistant area coordinator, area coordinator, projects and owner.
-        </p>
-      </div>
-      <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button type="button" class="btn small btn-line" id="btnAcRefresh">Refresh</button>
-        <button type="button" class="btn small btn-line" id="btnAcPrint">Print</button>
-        <button type="button" class="btn small" id="btnAcSave">Save access rules</button>
-      </div>
-    </div>
+    <h3>Access control</h3>
 
-    <p id="acMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
-    <p class="ac-note">Tip: use <strong>Public</strong> to open something for visitors. Everything else stays private by default. You can also give access to a single sub-tab without opening the whole section.</p>
-
-    <div class="ac-wrap" style="margin-top:0.75rem;">
+    <div class="ac-wrap">
       <table class="ac-table">
         <thead>
           <tr>
-            <th style="min-width:320px;">Page / feature</th>
-            <th>Public</th>
-            <th>Resident</th>
-            <th>Street Coord.</th>
-            <th>Volunteer</th>
-            <th>Area Coord.</th>
-            <th>Assistant</th>
-            <th>Platform</th>
-            <th>Admin</th>
+            <th>Item</th>
+            <th>Access</th>
           </tr>
         </thead>
         <tbody id="acBody"></tbody>
       </table>
     </div>
+
+    <p class="ac-note">
+      Toggle access permissions for different modules of the system.
+    </p>
   </section>
 
   <!-- ================= TOOLS ================= -->
   <section class="card admin-tab-content" id="tabTools" style="display:none;">
     <h3>Tools</h3>
-    <p class="tiny muted" style="margin-top:0;">
-      Maintenance tools for backups, restore, exports and diagnostics.
-    </p>
 
-    <details class="anw-acc" open>
-      <summary><strong>Backups</strong></summary>
+    <details class="anw-acc">
+      <summary>Backup & Restore</summary>
       <div class="acc-body">
-        <div class="card" style="padding:1rem;">
-          <div class="grid" style="grid-template-columns: 1fr 1fr; gap:14px;">
-            <div>
-              <h4 style="margin-top:0;">Backup status</h4>
-              <p class="tiny muted" id="backupStatusText">Checking backup status…</p>
-              <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
-                <span id="backupStatusBadge" class="tag gray">Unknown</span>
-                <span id="backupLastRun" class="tag gray">Last run: —</span>
-              </div>
-            </div>
+        <div class="card">
+          <p class="tiny muted">
+            Export or import system data for backup purposes.
+          </p>
 
-            <div>
-              <h4 style="margin-top:0;">Actions</h4>
-              <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-                <button type="button" class="btn small" id="btnBackupNow">Run backup now</button>
-                <button type="button" class="btn small btn-line" id="btnBackupRefresh">Refresh status</button>
-              </div>
-
-              <div class="field" style="margin-top:1rem;">
-                <label for="restoreBackupFile">Restore backup file</label>
-                <input id="restoreBackupFile" type="file" accept=".json,application/json" />
-              </div>
-
-              <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-                <button type="button" class="btn small btn-line" id="btnRestoreBackup">Restore backup</button>
-              </div>
-
-              <p id="backupMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
-            </div>
+          <div class="actions" style="gap:0.5rem;">
+            <button class="btn small" id="btnExport" type="button">Export</button>
+            <button class="btn small btn-line" id="btnImport" type="button">Import</button>
           </div>
-        </div>
-      </div>
-    </details>
-
-    <details class="anw-acc" style="margin-top:12px;">
-      <summary><strong>Exports</strong></summary>
-      <div class="acc-body">
-        <div class="card" style="padding:1rem;">
-          <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-            <button type="button" class="btn small btn-line" id="btnExportUsers">Export residents</button>
-            <button type="button" class="btn small btn-line" id="btnExportNotices">Export notices</button>
-            <button type="button" class="btn small btn-line" id="btnExportReports">Export reports</button>
-            <button type="button" class="btn small btn-line" id="btnExportProjects">Export projects</button>
-          </div>
-          <p id="exportMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
-        </div>
-      </div>
-    </details>
-
-    <details class="anw-acc" style="margin-top:12px;">
-      <summary><strong>Diagnostics</strong></summary>
-      <div class="acc-body">
-        <div class="card" style="padding:1rem;">
-          <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-            <button type="button" class="btn small btn-line" id="btnDiagRun">Run diagnostics</button>
-          </div>
-          <pre id="diagOut" style="white-space:pre-wrap; overflow:auto; margin-top:10px; background:#f8faf8; border:1px solid var(--line); border-radius:12px; padding:12px; min-height:120px;"></pre>
         </div>
       </div>
     </details>
   </section>
-</main>
+  <script>
+  (function(){
+    'use strict';
 
-<footer class="site-footer">
-  <div class="footer-row">
-    <div class="footer-left">
-      <span class="page-access">Admin Page</span>
-    </div>
-    <div class="footer-center">
-      © 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a>
-    </div>
-  </div>
-</footer>
+    const KEY_USERS = (window.ANW_KEYS && window.ANW_KEYS.USERS) || 'anw_users';
+    const KEY_TASKS = (window.ANW_KEYS && window.ANW_KEYS.TASKS) || 'anw_tasks';
+    const KEY_ELECTIONS = (window.ANW_KEYS && window.ANW_KEYS.ELECTIONS) || 'anw_elections';
+    const KEY_INCIDENTS = (window.ANW_KEYS && (window.ANW_KEYS.REPORTS || window.ANW_KEYS.INCIDENTS)) || 'anw_incidents';
+    const KEY_NOTICES = (window.ANW_KEYS && window.ANW_KEYS.NOTICES) || 'anw_notices';
+    const KEY_HANDBOOK = (window.ANW_KEYS && window.ANW_KEYS.HANDBOOK) || 'anw_handbook';
+    const KEY_PROJECTS = (window.ANW_KEYS && window.ANW_KEYS.PROJECTS) || 'anw_projects';
+    const KEY_ACL = (window.ANW_KEYS && window.ANW_KEYS.ACL) || 'acl';
 
-<script>
-(function(){
-  'use strict';
+    const state = {
+      users: [],
+      tasks: [],
+      elections: [],
+      incidents: [],
+      notices: [],
+      handbook: '',
+      projects: [],
+      acl: {},
+      residentFilter: 'pending',
+      editingResidentIndex: -1,
+      editingTaskId: '',
+      interestEditing: null
+    };
 
-  const KEYS = window.ANW_KEYS || {};
-  const KEY_USERS = KEYS.USERS || 'anw_users';
-  const KEY_ELECTIONS = KEYS.ELECTIONS || 'anw_elections';
-  const KEY_ELECTION_INTEREST = KEYS.ELECTION_INTEREST || 'anw_election_interest';
-  const KEY_REPORTS = KEYS.REPORTS || 'anw_reports';
-  const KEY_PROJECTS = KEYS.PROJECTS || 'anw_projects';
-  const KEY_PROJECT_RECIPIENTS = KEYS.PROJECT_RECIPIENTS || 'anw_project_recipients';
-  const KEY_HANDBOOK_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
-  const KEY_HANDBOOK_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
-  const KEY_ACCESS = KEYS.ACL || KEYS.ACCESS || 'acl';
-  const KEY_TASKS = KEYS.TASKS || 'anw_tasks';
-  const KEY_NOTICES = window.getNoticesKey();
+    function byId(id){ return document.getElementById(id); }
+    function text(v){ return String(v == null ? '' : v); }
+    function lower(v){ return text(v).toLowerCase().trim(); }
+    function normEmail(v){ return (window.anwNormEmail ? window.anwNormEmail(v) : lower(v)); }
+    function nowIso(){ return new Date().toISOString(); }
+    function esc(s){
+      return text(s)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#039;');
+    }
 
-  const $ = (sel, root=document) => root.querySelector(sel);
-  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-  const byId = id => document.getElementById(id);
-
-  const ADMIN_ALLOWED_ROLES = ['admin','owner','platform_support','area_coordinator','aux_coordinator','assistant_area_coordinator'];
-  const OWNER_EMAIL = 'claudiosantos1968@gmail.com';
-
-  function hasAllowedAdminRole(roles){
-    const list = Array.isArray(roles) ? roles : [roles];
-    const normalized = list
-      .map(v => (typeof window.anwGetCanonicalRole === 'function') ? window.anwGetCanonicalRole({ role:v }, '') : String(v||'').toLowerCase())
-      .filter(Boolean);
-    return normalized.some(v => ADMIN_ALLOWED_ROLES.includes(v));
-  }
-
-  async function anwLoadSafe(key, fallback){
-    try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, { cache:'no-store' });
-      if(!res.ok) throw new Error('store load failed');
-      const data = await res.json();
-      try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){ }
-      return data;
-    }catch(_){
+    function toast(msg, type){
       try{
-        if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback);
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      }catch(__){
-        return fallback;
-      }
+        if(window.ANW && ANW.ui && typeof ANW.ui.toast === 'function'){
+          ANW.ui.toast(text(msg), type || 'info');
+          return;
+        }
+      }catch(_){}
+      console.log(text(msg));
     }
-  }
 
-  async function anwSaveSafe(key, value){
-    try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify(value)
+    function modalAlert(message, title){
+      try{
+        if(window.ANW && ANW.ui && typeof ANW.ui.alert === 'function'){
+          ANW.ui.alert(text(message), { title: title || 'Message' });
+          return;
+        }
+      }catch(_){}
+      alert(text(message));
+    }
+
+    async function ask(message, title){
+      try{
+        if(typeof window.anwConfirm === 'function'){
+          return await window.anwConfirm(text(message), { title: title || 'Confirm' });
+        }
+      }catch(_){}
+      return confirm(text(message));
+    }
+
+    async function loadSafe(key, fallback){
+      if(typeof window.anwLoadSafe === 'function'){
+        return await window.anwLoadSafe(key, fallback);
+      }
+      if(typeof window.anwLoad === 'function'){
+        return window.anwLoad(key, fallback);
+      }
+      return fallback;
+    }
+
+    async function saveSafe(key, value){
+      if(key === KEY_USERS && typeof window.anwAdminSaveUsers === 'function'){
+        return await window.anwAdminSaveUsers(value);
+      }
+      if(typeof window.anwSaveSafe === 'function'){
+        return await window.anwSaveSafe(key, value);
+      }
+      if(typeof window.anwSave === 'function'){
+        window.anwSave(key, value);
+        return { ok:true };
+      }
+      return { ok:false };
+    }
+
+    function getCurrentEmail(){
+      try { return lower(window.anwGetLoggedEmail ? window.anwGetLoggedEmail() : ''); } catch { return ''; }
+    }
+
+    function getCurrentRole(){
+      try { return lower(window.anwGetLoggedRole ? window.anwGetLoggedRole() : 'resident'); } catch { return 'resident'; }
+    }
+
+    function roleListForUser(u){
+      const parts = [];
+      try{
+        if(typeof window.anwCollectProfileRoles === 'function'){
+          return window.anwCollectProfileRoles(u).map(v => text(v)).filter(Boolean);
+        }
+      }catch(_){}
+      [u && u.type, u && u.role, u && u.roles, u && u.userRole, u && u.userRoles].forEach(v=>{
+        if(Array.isArray(v)) v.forEach(x=> parts.push(text(x)));
+        else if(v) text(v).split(/[;,|]/).forEach(x=> parts.push(text(x)));
       });
-      if(!res.ok) throw new Error('store save failed');
-      try{ if(typeof window.anwSave === 'function') window.anwSave(key, value); }catch(_){ }
-      return true;
-    }catch(err){
-      try{ localStorage.setItem(key, JSON.stringify(value)); }catch(_){ }
-      console.error(err);
-      throw err;
+      return parts.filter(Boolean);
     }
-  }
 
-  function downloadText(filename, text, type='application/json'){
-    const blob = new Blob([text], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 500);
-  }
+    function displayRoles(u){
+      const tags = [];
+      const list = roleListForUser(u).map(x => lower(x));
+      if(list.some(v => v.includes('admin'))) tags.push('Admin');
+      if(list.some(v => v.includes('street') || v.includes('coordinator'))) tags.push('Street Coordinator');
+      if(list.some(v => v.includes('volunteer'))) tags.push('Volunteer');
+      if(list.some(v => v.includes('project'))) tags.push('Projects');
+      return tags.join(', ') || 'Resident';
+    }
 
-  function esc(s){
-    return String(s == null ? '' : s)
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'",'&#39;');
-  }
+    function residentStatus(u){
+      const s = lower(u && (u.status || u.accountStatus || ''));
+      if(u && (u.approved === true || u.active === true)) return 'approved';
+      if(s === 'approved' || s === 'active') return 'approved';
+      if(s === 'rejected') return 'rejected';
+      if(s === 'suspended') return 'suspended';
+      return 'pending';
+    }
 
-  function fmtDate(v){
-    if(!v) return '—';
-    const d = new Date(v);
-    if(Number.isNaN(d.getTime())) return String(v);
-    return d.toLocaleString();
-  }
+    function isAdminUser(u){
+      const email = lower(u && u.email);
+      if(email && lower(window.ANW_MASTER_EMAIL) === email) return true;
+      const roles = roleListForUser(u).map(v => lower(v));
+      return roles.some(v => v.includes('admin') || v.includes('owner') || v.includes('platform_support') || v.includes('programmer_support'));
+    }
 
-  function fmtDateShort(v){
-    if(!v) return '—';
-    const d = new Date(v + 'T12:00:00');
-    if(Number.isNaN(d.getTime())) return String(v);
-    return d.toLocaleDateString();
-  }
+    function setGateMessage(msg){
+      const el = byId('adminGateMsg');
+      if(!el) return;
+      el.style.display = msg ? 'block' : 'none';
+      el.textContent = msg || '';
+    }
 
-  function normList(v){
-    if(Array.isArray(v)) return v.filter(Boolean);
-    if(v == null || v === '') return [];
-    return String(v).split(/[;,|]/).map(s => s.trim()).filter(Boolean);
-  }
+    const MAIN_TABS = ['tabResidents','tabTasks','tabElections','tabReports','tabNotices','tabHandbook','tabProjects','tabAccessControl','tabTools'];
 
-  function uniqueBy(arr, getKey){
-    const seen = new Set();
-    return arr.filter(item => {
-      const k = getKey(item);
-      if(seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-  }
+    function getValidMainTab(id){
+      return MAIN_TABS.includes(String(id || '').trim()) ? String(id).trim() : 'tabResidents';
+    }
 
-  function slugify(v){
-    return String(v||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-  }
+    function syncMainTabHash(id){
+      try{
+        const tabId = getValidMainTab(id);
+        const newHash = '#' + tabId;
+        if(location.hash !== newHash){
+          history.replaceState(null, '', newHash);
+        }
+      }catch(_){}
+    }
 
-  function parseCsvLine(line){
-    const out = [];
-    let cur = '';
-    let quote = false;
-    for(let i=0;i<line.length;i++){
-      const ch = line[i];
-      if(ch === '"'){
-        if(quote && line[i+1] === '"'){ cur += '"'; i++; }
-        else quote = !quote;
-      } else if(!quote && (ch === ',' || ch === ';' || ch === '\t')){
-        out.push(cur.trim());
-        cur = '';
-      } else {
-        cur += ch;
+    function tabFromHash(){
+      const raw = String(location.hash || '').replace(/^#/, '').trim();
+      return getValidMainTab(raw);
+    }
+
+    function clearAclLoading(){
+      try{ document.body?.removeAttribute('data-acl-loading'); }catch(_){}
+      try{ document.documentElement?.classList.remove('anw-preauth-hide'); }catch(_){}
+    }
+
+    function showMainTab(id){
+      const tabId = getValidMainTab(id);
+      document.querySelectorAll('.admin-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabId);
+      });
+      document.querySelectorAll('.admin-tab-content').forEach(sec => {
+        sec.style.display = sec.id === tabId ? 'block' : 'none';
+      });
+      syncMainTabHash(tabId);
+    }
+
+    function showResidentSubtab(name){
+      state.residentFilter = name;
+      document.querySelectorAll('.resident-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.subtab === (
+          name === 'pending' ? 'subPending' :
+          name === 'approved' ? 'subApproved' : 'subAll'
+        ));
+      });
+      renderResidents();
+    }
+
+    function showElectionSubtab(id){
+      document.querySelectorAll('.elect-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.subtab === id);
+      });
+      document.querySelectorAll('.elect-subtab').forEach(el => {
+        el.style.display = el.id === id ? 'block' : 'none';
+      });
+    }
+
+    async function loadAll(){
+      try { await window.anwInitStore?.([KEY_USERS, KEY_ACL], 0); } catch(_){}
+
+      state.users = Array.isArray(await loadSafe(KEY_USERS, [])) ? await loadSafe(KEY_USERS, []) : [];
+      state.tasks = Array.isArray(await loadSafe(KEY_TASKS, [])) ? await loadSafe(KEY_TASKS, []) : [];
+      state.elections = Array.isArray(await loadSafe(KEY_ELECTIONS, [])) ? await loadSafe(KEY_ELECTIONS, []) : [];
+      state.incidents = Array.isArray(await loadSafe(KEY_INCIDENTS, [])) ? await loadSafe(KEY_INCIDENTS, []) : [];
+      state.notices = Array.isArray(await loadSafe(KEY_NOTICES, [])) ? await loadSafe(KEY_NOTICES, []) : [];
+      state.projects = Array.isArray(await loadSafe(KEY_PROJECTS, [])) ? await loadSafe(KEY_PROJECTS, []) : [];
+      state.acl = await loadSafe(KEY_ACL, {}) || {};
+      state.handbook = await loadSafe(KEY_HANDBOOK, '');
+
+      assignMissingResidentNumbers(state.users);
+      renderAll();
+    }
+
+    function renderAll(){
+      renderResidents();
+      renderTasks();
+      renderElections();
+      renderCandidates();
+      renderResults();
+      renderReports();
+      renderNotices();
+      renderHandbook();
+      renderProjects();
+      renderAccessControl();
+    }
+
+    function renderResidents(){
+      const tbody = byId('resBody');
+      const empty = byId('resEmpty');
+      const summary = byId('resSummary');
+      if(!tbody) return;
+
+      let list = state.users.slice();
+      if(state.residentFilter === 'pending'){
+        list = list.filter(u => residentStatus(u) === 'pending');
+      } else if(state.residentFilter === 'approved'){
+        list = list.filter(u => residentStatus(u) === 'approved');
       }
+
+      list.sort((a,b)=>{
+        const an = getResidentNumericReg(a.regId || a.regNo);
+        const bn = getResidentNumericReg(b.regId || b.regNo);
+        if(an && bn && an !== bn) return an - bn;
+        return text(a.name).localeCompare(text(b.name));
+      });
+
+      tbody.innerHTML = '';
+      if(summary){
+        const pending = state.users.filter(u => residentStatus(u) === 'pending').length;
+        const approved = state.users.filter(u => residentStatus(u) === 'approved').length;
+        summary.textContent = `Total: ${state.users.length} · Pending: ${pending} · Approved: ${approved}`;
+      }
+
+      if(!list.length){
+        if(empty) empty.style.display = 'block';
+        return;
+      }
+      if(empty) empty.style.display = 'none';
+
+      list.forEach((u)=>{
+        const tr = document.createElement('tr');
+        const reg = formatResidentRegId(u.regId || u.regNo);
+        const status = residentStatus(u);
+        tr.innerHTML = `
+          <td>${esc(reg || '—')}</td>
+          <td>${esc(u.name || '—')}</td>
+          <td>${esc(u.email || '—')}</td>
+          <td>${esc(u.eircode || u.eir || '—')}</td>
+          <td><span class="tag ${status === 'approved' ? 'ok' : 'gray'}">${esc(status)}</span></td>
+          <td>${esc(displayRoles(u))}</td>
+          <td class="resident-actions-col">
+            <div class="resident-action-cell">
+              <button class="btn-line small" type="button" data-action="resident-open" data-email="${esc(u.email || '')}">Open</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
-    out.push(cur.trim());
-    return out;
-  }
 
-  function parseFlexibleDate(v){
-    const s = String(v||'').trim();
-    if(!s) return '';
-    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-    const m1 = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if(m1) return `${m1[3]}-${m1[2]}-${m1[1]}`;
-    const m2 = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-    if(m2) return `${m2[3]}-${m2[2]}-${m2[1]}`;
-    const d = new Date(s);
-    if(!Number.isNaN(d.getTime())){
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    }
-    return s;
-  }
+    function openResidentByEmail(email){
+      const idx = state.users.findIndex(u => lower(u.email) === lower(email));
+      if(idx === -1) return;
+      state.editingResidentIndex = idx;
+      const u = state.users[idx];
 
-  function startOfWeekMonday(dateStr){
-    const d = new Date(dateStr + 'T12:00:00');
-    if(Number.isNaN(d.getTime())) return dateStr;
-    const day = d.getDay();
-    const offset = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + offset);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
+      byId('mRegId').value = formatResidentRegId(u.regId || u.regNo);
+      byId('mStatus').value = residentStatus(u);
+      byId('mEmail').value = u.email || '';
+      byId('mEir').value = u.eircode || u.eir || '';
+      byId('mName').value = u.name || '';
+      byId('mPhone').value = u.phone || '';
+      byId('mAddress').value = u.address || u.fullAddress || '';
+      byId('mType').value = u.residentType || u.type || '';
+      byId('mMgmt').value = u.managementCompany || '';
 
-  function endOfNextWeekSunday(dateStr){
-    const d = new Date(dateStr + 'T12:00:00');
-    if(Number.isNaN(d.getTime())) return dateStr;
-    const day = d.getDay();
-    const offsetToMonday = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + offsetToMonday + 13);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
+      byId('mCoord').checked = !!(
+        (typeof window.anwProfileHasRole === 'function' && window.anwProfileHasRole(u, 'street_coordinator')) ||
+        roleListForUser(u).map(v=>lower(v)).some(v => v.includes('street') || v.includes('coordinator'))
+      );
+      byId('mVol').checked = !!(
+        (typeof window.anwProfileHasRole === 'function' && window.anwProfileHasRole(u, 'volunteer')) ||
+        roleListForUser(u).map(v=>lower(v)).includes('volunteer')
+      );
+      byId('mAlertAdmin').checked = roleListForUser(u).map(v=>lower(v)).some(v => v.includes('alert') && v.includes('admin'));
 
-  function getCurrentAdminTabId(){
-    const active = document.querySelector('.admin-tab.active');
-    return active ? active.getAttribute('data-tab') : 'tabResidents';
-  }
+      const vr = u.vol_roles || u.volunteerRoles || {};
+      byId('mVStreet').checked = !!vr.streetWatch;
+      byId('mVLeaf').checked = !!vr.leaflets;
+      byId('mVTech').checked = !!(vr.tech || vr.techSupport);
+      byId('mVEld').checked = !!vr.elderly;
+      byId('mVClean').checked = !!(vr.cleanUp || vr.cleanup);
+      byId('mVPark').checked = !!(vr.parkingAssistance || vr.parking);
+      byId('mVMeet').checked = !!(vr.meetings || vr.meetingOrganiser || vr.organiser);
+      byId('mVTrans').checked = !!vr.translation;
+      byId('mMsg').textContent = '';
 
-  function showAdminTab(tabId){
-    $$('.admin-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId));
-    $$('.admin-tab-content').forEach(p => { p.style.display = (p.id === tabId) ? 'block' : 'none'; });
-  }
-
-  function showResidentSubtab(id){
-    $$('.resident-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-subtab') === id));
-    const mode = id === 'subPending' ? 'pending' : id === 'subApproved' ? 'approved' : 'all';
-    renderResidents(mode);
-  }
-
-  function showElectionSubtab(id){
-    $$('.elect-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-subtab') === id));
-    $$('.elect-subtab').forEach(p => p.style.display = (p.id === id ? 'block' : 'none'));
-  }
-
-  function adminApplyRoleVisibility(role){
-    const normalized = String(role||'').toLowerCase();
-    const allowAll = hasAllowedAdminRole(normalized);
-    document.body.classList.toggle('admin-allowed', allowAll);
-  }
-
-  function adminMarkReady(){
-    document.documentElement.classList.remove('admin-booting');
-    document.body.classList.remove('admin-booting');
-  }
-
-  async function runAdminGate(){
-    const msg = byId('adminGateMsg');
-    try{
-      let allowed = false;
-      let role = '';
-      const currentUser = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
-        ? window.netlifyIdentity.currentUser()
-        : null;
-
-      if(currentUser && currentUser.email){
-        const email = String(currentUser.email || '').trim().toLowerCase();
-        if(email === OWNER_EMAIL.toLowerCase()){
-          allowed = true;
-          role = 'owner';
-        }else{
-          const users = await anwLoadSafe(KEY_USERS, []);
-          const row = users.find(u => String((u && (u.email || u.userEmail || '')) || '').trim().toLowerCase() === email);
-          if(row){
-            const roles = []
-              .concat(normList(row.type))
-              .concat(normList(row.role))
-              .concat(normList(row.roles))
-              .concat(normList(row.userRole))
-              .concat(normList(row.userRoles))
-              .concat(normList(row.residentType));
-            allowed = hasAllowedAdminRole(roles);
-            role = (typeof window.anwGetCanonicalRole === 'function') ? window.anwGetCanonicalRole(row, email) : (roles[0] || '');
-          }
+      const photo = u.photoUrl || u.photo || '';
+      const p = byId('mPhotoPreview');
+      if(p){
+        if(photo){
+          p.classList.add('has-photo');
+          p.innerHTML = `<img src="${esc(photo)}" alt="Profile photo">`;
+        } else {
+          p.classList.remove('has-photo');
+          p.textContent = '👤';
         }
       }
 
-      adminApplyRoleVisibility(role);
-
-      if(msg){
-        if(allowed){
-          msg.style.display = 'none';
-          msg.textContent = '';
-        }else{
-          msg.style.display = 'block';
-          msg.textContent = 'Admin access is restricted to approved admin roles. Some sections may be hidden until your role is confirmed.';
-        }
-      }
-    }catch(err){
-      console.error(err);
-      if(msg){
-        msg.style.display = 'block';
-        msg.textContent = 'Unable to fully verify admin access right now. Local admin tools are still available.';
-      }
-    }finally{
-      showAdminTab(getCurrentAdminTabId());
-      showElectionSubtab('subManage');
-      adminMarkReady();
+      byId('modalResident').style.display = 'block';
     }
-  }
-  // ---------- Residents ----------
-  let RESIDENTS_CACHE = [];
-  let CURRENT_RESIDENT = null;
 
-  async function loadResidents(){
-    RESIDENTS_CACHE = await anwLoadSafe(KEY_USERS, []);
-    if(assignMissingResidentNumbers(RESIDENTS_CACHE)){
-      await anwSaveSafe(KEY_USERS, RESIDENTS_CACHE);
+    function closeResidentModal(){
+      byId('modalResident').style.display = 'none';
+      state.editingResidentIndex = -1;
     }
-    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
-      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
-      : 'pending');
-  }
 
-  function getResidentRolesLabel(u){
-    const roles = [];
-    if(u.streetCoordinator || u.isStreetCoordinator || normList(u.roles).includes('street_admin') || normList(u.role).includes('street_admin')) roles.push('Street Coordinator');
-    if(u.volunteer || normList(u.roles).includes('volunteer') || normList(u.role).includes('volunteer')) roles.push('Volunteer');
-    if(normList(u.roles).includes('admin') || normList(u.role).includes('admin')) roles.push('Admin');
-    return roles.length ? roles.join(', ') : '—';
-  }
-
-  function renderResidents(mode){
-    const body = byId('resBody');
-    const empty = byId('resEmpty');
-    const summary = byId('resSummary');
-    if(!body) return;
-
-    const rows = (RESIDENTS_CACHE || []).filter(u => {
-      const status = String((u && u.status) || '').toLowerCase();
-      if(mode === 'pending') return !['approved','active'].includes(status);
-      if(mode === 'approved') return ['approved','active'].includes(status);
-      return true;
-    });
-
-    body.innerHTML = rows.map((u, idx) => `
-      <tr>
-        <td>${esc(formatResidentRegId(u.regId || u.regNo) || '—')}</td>
-        <td>${esc(u.name || '—')}</td>
-        <td>${esc(u.email || '—')}</td>
-        <td>${esc(u.eircode || '—')}</td>
-        <td>${esc(u.status || 'pending')}</td>
-        <td>${esc(getResidentRolesLabel(u))}</td>
-        <td class="resident-actions-col">
-          <div class="resident-action-cell">
-            <button type="button" class="btn-line small" data-res-index="${idx}" data-act="openResident">
-              ${String((u.status||'')).toLowerCase() === 'approved' || String((u.status||'')).toLowerCase() === 'active' ? 'Edit' : 'Open'}
-            </button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-
-    summary.textContent = `${rows.length} resident(s) shown`;
-    empty.style.display = rows.length ? 'none' : 'block';
-
-    $$('[data-act="openResident"]', body).forEach(btn => {
-      btn.addEventListener('click', () => {
-        const u = rows[Number(btn.getAttribute('data-res-index'))];
-        openResidentModal(u);
+    function composeRolesForResident(baseUser){
+      const set = new Set();
+      roleListForUser(baseUser).forEach(v => set.add(text(v).trim()));
+      ['street_coordinator','volunteer','alert_admin'].forEach(v => {
+        [...set].forEach(x => { if(lower(x) === v) set.delete(x); });
       });
-    });
-  }
 
-  function openResidentModal(user){
-    CURRENT_RESIDENT = user || null;
-    if(!CURRENT_RESIDENT) return;
+      if(byId('mCoord').checked) set.add('street_coordinator');
+      if(byId('mVol').checked) set.add('volunteer');
+      if(byId('mAlertAdmin').checked) set.add('alert_admin');
 
-    byId('modalResident').style.display = 'block';
-    byId('mRegId').value = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
-    byId('mStatus').value = CURRENT_RESIDENT.status || 'pending';
-    byId('mEmail').value = CURRENT_RESIDENT.email || '';
-    byId('mEir').value = CURRENT_RESIDENT.eircode || '';
-    byId('mName').value = CURRENT_RESIDENT.name || '';
-    byId('mPhone').value = CURRENT_RESIDENT.phone || '';
-    byId('mAddress').value = CURRENT_RESIDENT.address || '';
-    byId('mType').value = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '';
-    byId('mMgmt').value = CURRENT_RESIDENT.managementCompany || CURRENT_RESIDENT.mgmt || '';
-
-    const roles = normList(CURRENT_RESIDENT.roles).concat(normList(CURRENT_RESIDENT.role));
-    byId('mCoord').checked = roles.includes('street_admin') || !!CURRENT_RESIDENT.streetCoordinator;
-    byId('mVol').checked = roles.includes('volunteer') || !!CURRENT_RESIDENT.volunteer;
-
-    const vrList = normList(CURRENT_RESIDENT.volunteerRoles);
-    const vrObj = CURRENT_RESIDENT.vol_roles || CURRENT_RESIDENT.volunteer_roles || {};
-    byId('mVStreet').checked = vrList.includes('Street watch / patrols') || !!vrObj.streetWatch;
-    byId('mVLeaf').checked = vrList.includes('Distribute leaflets') || !!vrObj.leaflets;
-    byId('mVTech').checked = vrList.includes('Tech support') || !!vrObj.tech || !!vrObj.techSupport;
-    byId('mVEld').checked = vrList.includes('Elderly checks') || !!vrObj.elderly;
-    byId('mVClean').checked = vrList.includes('Community clean-up') || !!vrObj.cleanUp || !!vrObj.cleanup;
-    byId('mVPark').checked = vrList.includes('Parking assistance') || !!vrObj.parkingAssistance || !!vrObj.parking;
-    byId('mVMeet').checked = vrList.includes('Meeting organiser') || !!vrObj.meetings;
-    byId('mVTrans').checked = vrList.includes('Translation') || !!vrObj.translation;
-
-    const photoUrl = CURRENT_RESIDENT.profilePhoto || CURRENT_RESIDENT.photo || CURRENT_RESIDENT.photoURL || '';
-    const photoBox = byId('mPhotoPreview');
-    if(photoBox){
-      if(photoUrl){
-        photoBox.classList.add('has-photo');
-        photoBox.innerHTML = `<img src="${esc(photoUrl)}" alt="Resident profile photo">`;
-      }else{
-        photoBox.classList.remove('has-photo');
-        photoBox.textContent = '👤';
-      }
+      return Array.from(set).filter(Boolean);
     }
 
-    byId('mMsg').textContent = '';
+    async function saveResident(){
+      if(state.editingResidentIndex < 0) return;
+      const u = state.users[state.editingResidentIndex];
+      if(!u) return;
 
-    const status = String(CURRENT_RESIDENT.status || '').toLowerCase();
-    const alreadyApproved = ['approved','active'].includes(status);
-    if(byId('btnApprove')){
-      byId('btnApprove').style.display = alreadyApproved ? 'none' : 'inline-flex';
-    }
-    if(byId('btnReject')){
-      byId('btnReject').style.display = alreadyApproved ? 'none' : 'inline-flex';
-    }
-  }
+      u.name = text(byId('mName').value).trim();
+      u.phone = text(byId('mPhone').value).trim();
+      u.residentType = text(byId('mType').value).trim();
+      u.managementCompany = text(byId('mMgmt').value).trim();
+      u.roles = composeRolesForResident(u);
+      u.role = u.roles[0] || (u.role || '');
+      u.userRoles = u.roles.slice();
 
-  function closeResidentModal(){
-    byId('modalResident').style.display = 'none';
-    CURRENT_RESIDENT = null;
-  }
+      u.vol_roles = {
+        streetWatch: byId('mVStreet').checked,
+        leaflets: byId('mVLeaf').checked,
+        tech: byId('mVTech').checked,
+        elderly: byId('mVEld').checked,
+        cleanUp: byId('mVClean').checked,
+        parkingAssistance: byId('mVPark').checked,
+        meetings: byId('mVMeet').checked,
+        translation: byId('mVTrans').checked
+      };
 
-  async function saveCurrentResident(nextStatus){
-    if(!CURRENT_RESIDENT) return;
-    const users = await anwLoadSafe(KEY_USERS, []);
-    const idx = users.findIndex(u => String(u.email||'').toLowerCase() === String(CURRENT_RESIDENT.email||'').toLowerCase());
-    if(idx < 0) return;
-
-    const roles = [];
-    if(byId('mCoord').checked) roles.push('street_admin');
-    if(byId('mVol').checked) roles.push('volunteer');
-    if(normList(users[idx].roles).includes('admin')) roles.push('admin');
-
-    const volunteerRoles = [
-      byId('mVStreet').checked ? 'Street watch / patrols' : '',
-      byId('mVLeaf').checked ? 'Distribute leaflets' : '',
-      byId('mVTech').checked ? 'Tech support' : '',
-      byId('mVEld').checked ? 'Elderly checks' : '',
-      byId('mVClean').checked ? 'Community clean-up' : '',
-      byId('mVPark').checked ? 'Parking assistance' : '',
-      byId('mVMeet').checked ? 'Meeting organiser' : '',
-      byId('mVTrans').checked ? 'Translation' : ''
-    ].filter(Boolean);
-    const volunteerRoleFlags = {
-      streetWatch: byId('mVStreet').checked,
-      leaflets: byId('mVLeaf').checked,
-      tech: byId('mVTech').checked,
-      elderly: byId('mVEld').checked,
-      cleanUp: byId('mVClean').checked,
-      parkingAssistance: byId('mVPark').checked,
-      meetings: byId('mVMeet').checked,
-      translation: byId('mVTrans').checked
-    };
-
-    users[idx].name = byId('mName').value.trim();
-    users[idx].phone = byId('mPhone').value.trim();
-    users[idx].residentType = byId('mType').value;
-    users[idx].type = byId('mType').value;
-    users[idx].managementCompany = byId('mMgmt').value.trim();
-    users[idx].roles = uniqueBy(roles, x => x);
-    users[idx].role = users[idx].roles[0] || '';
-    users[idx].volunteerRoles = volunteerRoles;
-    users[idx].vol_roles = volunteerRoleFlags;
-    users[idx].volunteer_roles = volunteerRoleFlags;
-    users[idx].streetCoordinator = byId('mCoord').checked;
-    users[idx].volunteer = byId('mVol').checked;
-
-    if(nextStatus){
-      users[idx].status = nextStatus;
-      if(['approved','active'].includes(nextStatus) && !(users[idx].regId || users[idx].regNo)){
-        const nextId = anwNextRegId(users);
-        users[idx].regId = nextId;
-        users[idx].regNo = nextId;
-      }
-    }
-
-    assignMissingResidentNumbers(users);
-    await anwSaveSafe(KEY_USERS, users);
-    RESIDENTS_CACHE = users;
-    byId('mMsg').textContent = 'Resident saved.';
-    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
-      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
-      : 'pending');
-  }
-
-  // ---------- Notices ----------
-  function sanitizeNoticeCollection(list){
-    const now = Date.now();
-    const seen = new Set();
-    return (Array.isArray(list) ? list : []).filter(n => {
-      if(!n || typeof n !== 'object') return false;
-      const title = String(n.title || '').trim();
-      const message = String(n.message || '').trim();
-      const isBinImport = !!(n.meta && n.meta.type === 'bin_collection_import');
-      if(isBinImport) return false;
-      if(!title && !message) return false;
-      if(/^\d+$/.test(title)) return false;
-      if(/^(null|undefined|untitled)$/i.test(title)) return false;
-      const exp = n.expires || n.expiresAt || n.endsOn || n.endDate;
-      if(exp){
-        const t = Date.parse(exp);
-        if(!Number.isNaN(t) && t < now) return false;
-      }
-      const key = [String(n.id || ''), title.toLowerCase(), message.toLowerCase()].join('|');
-      if(seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }
-
-  async function loadNoticesFresh(){
-    const key = window.getNoticesKey();
-    const raw = await anwLoadSafe(key, []);
-    const cleaned = sanitizeNoticeCollection(raw);
-    if(JSON.stringify(cleaned) !== JSON.stringify(Array.isArray(raw) ? raw : [])){
-      try{ await anwSaveSafe(key, cleaned); }catch(_){}
-    }
-    return cleaned;
-  }
-
-  function collectNoticeForm(){
-    return {
-      title: byId('ntTitle').value.trim(),
-      message: byId('ntMessage').value.trim(),
-      category: byId('ntCategory').value || 'General',
-      expires: byId('ntExpires').value || '',
-      targets: {
-        allLogged: !!byId('ntAllLogged').checked,
-        nonAdminOnly: !!byId('ntNonAdminOnly').checked,
-        roles: $$('.ntRole').filter(x => x.checked).map(x => x.value),
-        eirPrefixes: normList(byId('ntEirPrefixes').value),
-        streets: normList(byId('ntStreets').value),
-        eircodes: byId('ntEircodes').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean),
-        emails: byId('ntEmails').value.split(/\r?\n/).map(s => s.trim().toLowerCase()).filter(Boolean)
-      },
-      home: {
-        enabled: !!byId('ntHomeEnabled').checked,
-        visibility: byId('ntHomeVisibility').value || 'private'
-      }
-    };
-  }
-
-  async function publishNotice(){
-    const msg = byId('ntMsg');
-    const form = collectNoticeForm();
-    if(!form.title || !form.message){
-      msg.textContent = 'Title and message are required.';
-      return;
-    }
-
-    const list = await loadNoticesFresh();
-    const next = [{
-      id: 'nt_' + Date.now(),
-      title: form.title,
-      message: form.message,
-      category: form.category,
-      createdAt: new Date().toISOString(),
-      expires: form.expires,
-      public: form.home.enabled && form.home.visibility === 'public',
-      isPublic: form.home.enabled && form.home.visibility === 'public',
-      showOnHome: !!form.home.enabled,
-      published: true,
-      status: (form.home.enabled && form.home.visibility === 'public') ? 'public' : 'private',
-      targets: form.targets,
-      home: form.home
-    }].concat(list || []);
-
-    await anwSaveSafe(window.getNoticesKey(), next);
-    msg.textContent = 'Notice published.';
-    await renderNoticesList();
-  }
-
-  function renderNoticeRowActions(n){
-    const isBinImport = !!(n && n.meta && n.meta.type === 'bin_collection_import');
-    if(!isBinImport) return '';
-    return `
-      <div class="notice-actions">
-        <button type="button" class="btn btn-line small" data-del-notice="${esc(n.id || '')}">Delete</button>
-      </div>
-    `;
-  }
-
-  async function deleteNoticeById(id){
-    const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => String((n && n.id) || '') !== String(id || ''));
-    await anwSaveSafe(window.getNoticesKey(), next);
-    await renderNoticesList();
-  }
-
-  async function clearImportedBinNotices(){
-    const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
-    await anwSaveSafe(window.getNoticesKey(), next);
-    byId('binMsg').textContent = 'Imported bin notices removed from dashboard notices.';
-    await renderNoticesList();
-  }
-
-  async function renderNoticesList(){
-    const listEl = byId('ntList');
-    const notes = await loadNoticesFresh();
-    const sorted = (notes || []).slice().sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
-
-    if(byId('ntListMsg')){
-      byId('ntListMsg').textContent = sorted.length ? `${sorted.length} notice(s) saved.` : 'No notices found.';
-    }
-
-    listEl.innerHTML = sorted.map(n => `
-      <div class="card" style="padding:12px; margin-bottom:10px;">
-        <div>
-          <strong>${esc(n.title || 'Untitled')}</strong>
-          <div class="tiny muted">${esc(n.category || 'General')} · ${esc(fmtDate(n.createdAt || n.date || ''))}</div>
-          <div style="margin-top:6px;">${esc(n.message || '')}</div>
-
-          <div class="notice-card-meta">
-            <span class="notice-chip">Home: ${(n.home && n.home.enabled) ? esc(n.home.visibility || 'private') : 'disabled'}</span>
-            ${n.date ? `<span class="notice-chip">Collection date: ${esc(fmtDateShort(n.date))}</span>` : ''}
-            ${n.startsOn ? `<span class="notice-chip">Show from: ${esc(fmtDateShort(n.startsOn))}</span>` : ''}
-            ${n.endsOn ? `<span class="notice-chip">Show until: ${esc(fmtDateShort(n.endsOn))}</span>` : ''}
-          </div>
-
-          ${renderNoticeRowActions(n)}
-        </div>
-      </div>
-    `).join('') || '<p class="tiny muted">No notices found.</p>';
-
-    $$('[data-del-notice]', listEl).forEach(btn => {
-      btn.addEventListener('click', async () => {
-        await deleteNoticeById(btn.getAttribute('data-del-notice'));
-      });
-    });
-  }
-
-  async function importPandaSchedule(){
-    const fileEl = byId('binCsvFile');
-    const msg = byId('binMsg');
-    const file = fileEl && fileEl.files && fileEl.files[0];
-    if(!file){
-      msg.textContent = 'Please select the CSV file first.';
-      return;
-    }
-
-    const text = await file.text();
-    const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-
-    const imported = [];
-    for(const line of lines){
-      const cols = parseCsvLine(line);
-      if(!cols.length) continue;
-
-      const headerLike = cols.join(' ').toLowerCase();
-      if(headerLike.includes('date') && headerLike.includes('provider')) continue;
-      if(cols.length < 3) continue;
-
-      const date = parseFlexibleDate(cols[0]);
-      if(!date) continue;
-
-      const provider = String(cols[1] || '').trim();
-      const bin = String(cols[2] || '').trim();
-      const visibility = String(cols[3] || 'public').trim().toLowerCase();
-
-      const startsOn = startOfWeekMonday(date);
-      const endsOn = endOfNextWeekSunday(date);
-
-      imported.push({
-        id: `bin_${date}_${slugify(bin)}`,
-        title: 'Bin collection update',
-        message: `${bin} bin collection scheduled for ${date}.`,
-        category: 'Bins',
-        provider,
-        bin,
-        date,
-        startsOn,
-        endsOn,
-        startDate: startsOn,
-        endDate: endsOn,
-        createdAt: new Date().toISOString(),
-        showOnHome: true,
-        public: true,
-        isPublic: true,
-        published: true,
-        status: visibility === 'private' ? 'private' : 'public',
-        home: { enabled: true, visibility: 'public' },
-        meta: { type: 'bin_collection_import' }
-      });
-    }
-
-    msg.textContent = `${imported.length} collection row(s) processed. Bin collection imports are no longer saved into dashboard notices.`;
-    await renderNoticesList();
-  }
-
-  // ---------- Light stubs for remaining tabs ----------
-  async function renderSimpleTable(key, tbodyId, emptyId, mapRow){
-    const rows = await anwLoadSafe(key, []);
-    const body = byId(tbodyId);
-    const empty = byId(emptyId);
-    if(!body) return;
-    body.innerHTML = rows.map(mapRow).join('');
-    if(empty) empty.style.display = rows.length ? 'none' : 'block';
-  }
-
-  async function loadReports(){
-    await renderSimpleTable(KEY_REPORTS, 'repBody', 'repEmpty', r => `
-      <tr>
-        <td>${esc(r.id || '—')}</td>
-        <td>${esc(fmtDate(r.createdAt || r.created || ''))}</td>
-        <td>${esc(r.category || '—')}</td>
-        <td>${esc(r.location || r.address || '—')}</td>
-        <td>${esc(r.email || r.reporterEmail || '—')}</td>
-        <td>${esc(r.status || 'submitted')}</td>
-        <td><button type="button" class="btn-line small" disabled>View</button></td>
-      </tr>
-    `);
-  }
-
-  async function loadProjects(){
-    await renderSimpleTable(KEY_PROJECTS, 'pmBody', 'pmEmpty', p => `
-      <tr>
-        <td>${esc(p.id || '—')}</td>
-        <td>${esc(p.title || p.project || '—')}</td>
-        <td>${esc(p.status || '—')}</td>
-        <td>${esc(p.owner || '—')}</td>
-        <td>${esc(fmtDate(p.updatedAt || p.updated || ''))}</td>
-        <td><button type="button" class="btn-line small" disabled>View</button></td>
-      </tr>
-    `);
-    await renderSimpleTable(KEY_PROJECT_RECIPIENTS, 'pmRecipientsBody', 'pmRecipientsEmpty', p => `
-      <tr>
-        <td>${esc(p.project || p.projectTitle || '—')}</td>
-        <td>${esc(p.recipient || p.name || '—')}</td>
-        <td>${esc([p.address, p.eircode].filter(Boolean).join(' · ') || '—')}</td>
-        <td>${esc(p.status || '—')}</td>
-        <td>${esc(fmtDate(p.updatedAt || p.updated || ''))}</td>
-      </tr>
-    `);
-  }
-
-  
-  
-  const ACL_ROLES = ['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'];
-
-  const ACL_ITEMS = [
-    { key:'page:home', label:'Home', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:about', label:'About', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:report', label:'Report Incident', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'page:alerts', label:'Community Alerts', group:'Site pages', indent:0, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:projects', label:'Community Projects page', group:'Projects', indent:0, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_monitoring', label:'Projects · Monitoring', group:'Projects', indent:1, defaults:{ projects:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_builder', label:'Projects · Build project', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_published', label:'Projects · Confirm sending', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'page:handbook', label:'Handbook', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:privacy', label:'Privacy Policy', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:login', label:'Login / Register', group:'Site pages', indent:0, defaults:{ public:true } },
-
-    { key:'page:dashboard', label:'Dashboard', group:'Dashboard', indent:0, defaults:{ public:true } },
-    { key:'dashboard:tab_profile', label:'Dashboard · Profile', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_interest', label:'Dashboard · Interest', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_elections', label:'Dashboard · Elections', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_notices', label:'Dashboard · Notices', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_garda', label:'Dashboard · Garda & Safety', group:'Dashboard', indent:1, defaults:{ public:true } },
-
-    { key:'page:household', label:'Household', group:'Residents', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:resident-profile', label:'Resident profile data', group:'Residents', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:street-management', label:'Street management', group:'Residents', indent:1, defaults:{ street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:regional-management', label:'Regional management', group:'Residents', indent:1, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-
-    { key:'page:admin', label:'Admin panel', group:'Owner controls', indent:0, defaults:{ owner:true } },
-    { key:'page:access-control', label:'Access Control sub-tab', group:'Owner controls', indent:1, defaults:{ owner:true } },
-    { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-  ];
-
-  const ROLE_RANK = {
-    public: 0,
-    resident: 1,
-    street_coordinator: 2,
-    assistant_area_coordinator: 3,
-    area_coordinator: 4,
-    projects: 4,
-    owner: 5
-  };
-
-  let ACCESS_RULES_CACHE = [];
-
-  function aclEmptyRule(item){
-    const out = { key:item.key, label:item.label, group:item.group || '', indent:Number(item.indent || 0) };
-    ACL_ROLES.forEach(role => { out[role] = false; });
-    const defaults = item.defaults || {};
-    Object.keys(defaults).forEach(k => { out[k] = !!defaults[k]; });
-    return out;
-  }
-
-  function classifyMatrixToRule(entry){
-    if(entry.public) return 'Public';
-
-    const selected = ACL_ROLES.filter(role => role !== 'public' && !!entry[role]);
-    if(!selected.length) return 'owner';
-
-    if(selected.length === ACL_ROLES.length - 1) return 'Authenticated';
-
-    const rankMap = selected.map(role => ROLE_RANK[role] ?? 999);
-    const minRank = Math.min(...rankMap);
-    const rankMatchedRoles = selected.filter(role => (ROLE_RANK[role] ?? 999) === minRank);
-
-    if(rankMatchedRoles.length === 1){
-      return rankMatchedRoles[0];
-    }
-
-    if(rankMatchedRoles.includes('projects') && rankMatchedRoles.length === 1){
-      return 'projects';
-    }
-
-    return 'Authenticated';
-  }
-
-  function applyRuleToRow(row, rule){
-    const clean = String(rule == null ? '' : rule).trim();
-    ACL_ROLES.forEach(role => { row[role] = false; });
-
-    if(clean === 'Public'){
-      row.public = true;
-      return;
-    }
-
-    if(clean === 'Authenticated'){
-      ACL_ROLES.filter(role => role !== 'public').forEach(role => { row[role] = true; });
-      return;
-    }
-
-    if(clean === 'projects'){
-      row.projects = true;
-      row.owner = true;
-      return;
-    }
-
-    const rank = ROLE_RANK[clean];
-    if(typeof rank === 'number'){
-      ACL_ROLES.filter(role => role !== 'public').forEach(role => {
-        const roleRank = ROLE_RANK[role];
-        if(typeof roleRank === 'number' && roleRank >= rank){
-          row[role] = true;
-        }
-      });
-    }
-  }
-
-  function mapSavedAclToMatrix(saved){
-    const matrix = ACL_ITEMS.map(aclEmptyRule);
-
-    const source = (saved && typeof saved === 'object' && !Array.isArray(saved)) ? saved : {};
-    const matrixSource = (source.__matrix && typeof source.__matrix === 'object') ? source.__matrix : {};
-
-    matrix.forEach((row) => {
-      const fromMatrix = matrixSource[row.key];
-      if(fromMatrix && typeof fromMatrix === 'object'){
-        ACL_ROLES.forEach(role => {
-          if(role in fromMatrix) row[role] = !!fromMatrix[role];
-        });
+      u.updatedAt = nowIso();
+      const out = await saveSafe(KEY_USERS, state.users);
+      if(out && out.ok === false){
+        byId('mMsg').textContent = 'Could not save resident right now.';
+        toast('Could not save resident right now.', 'error');
         return;
       }
 
-      const direct = (
-        Object.prototype.hasOwnProperty.call(source, row.key) ? source[row.key] :
-        source.features && Object.prototype.hasOwnProperty.call(source.features, row.key) ? source.features[row.key] :
-        null
-      );
+      byId('mMsg').textContent = 'Resident saved.';
+      toast('Resident saved.', 'success');
+      closeResidentModal();
+      renderResidents();
+      renderCandidates();
+    }
 
-      applyRuleToRow(row, direct);
-    });
+    async function changeResidentState(kind){
+      if(state.editingResidentIndex < 0) return;
+      const u = state.users[state.editingResidentIndex];
+      if(!u) return;
 
-    return matrix;
-  }
-
-  function matrixToAclPayload(matrix){
-    const payload = {
-      features:{},
-      pages:{},
-      publicFeatures:[],
-      __matrix:{},
-      rolesMeta:{
-        order:['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'],
-        rank: ROLE_RANK
-      }
-    };
-
-    matrix.forEach((row) => {
-      const rule = classifyMatrixToRule(row);
-      payload[row.key] = rule;
-      payload.__matrix[row.key] = Object.fromEntries(ACL_ROLES.map(role => [role, !!row[role]]));
-
-      if(row.key.startsWith('dashboard:') || row.key.startsWith('projects:')){
-        payload.features[row.key] = rule;
-        if(row.public) payload.publicFeatures.push(row.key);
-      }
-
-      if(row.key === 'page:dashboard'){
-        payload.pages['page:dashboard'] = payload.pages['page:dashboard'] || { shell: rule, features:{} };
-        payload.pages['page:dashboard'].shell = rule;
+      if(kind === 'approve'){
+        u.status = 'approved';
+        u.active = true;
+        u.approved = true;
+        if(!u.regId && !u.regNo){
+          const id = anwNextRegId(state.users);
+          u.regId = id;
+          u.regNo = id;
+        }
+      } else if(kind === 'reject'){
+        u.status = 'rejected';
+        u.active = false;
+        u.approved = false;
+      } else if(kind === 'suspend'){
+        u.status = 'suspended';
+        u.active = false;
+      } else if(kind === 'remove'){
+        const ok = await ask('Remove this resident record permanently?', 'Remove resident');
+        if(!ok) return;
+        state.users.splice(state.editingResidentIndex, 1);
       }
 
-      if(row.key.startsWith('dashboard:tab_')){
-        payload.pages['page:dashboard'] = payload.pages['page:dashboard'] || { shell:'resident', features:{} };
-        payload.pages['page:dashboard'].features[row.key] = rule;
+      const out = await saveSafe(KEY_USERS, state.users);
+      if(out && out.ok === false){
+        byId('mMsg').textContent = 'Could not update resident state.';
+        return;
       }
 
-      if(row.key === 'page:projects'){
-        payload.pages['page:projects'] = payload.pages['page:projects'] || { shell: rule, features:{} };
-        payload.pages['page:projects'].shell = rule;
+      closeResidentModal();
+      renderResidents();
+      renderCandidates();
+      toast(`Resident ${kind}d successfully.`, 'success');
+    }
+
+    function taskTargetLabel(t){
+      if((t.type || 'general') === 'eircode') return `Eircode: ${text(t.eircodes || '—')}`;
+      if((t.type || 'general') === 'street') return `Street: ${text(t.streets || '—')}`;
+      return 'General';
+    }
+
+    function nextTaskCode(){
+      const nums = state.tasks.map(t => {
+        const m = text(t.code).match(/TASK-(\d+)/i);
+        return m ? Number(m[1]) : 0;
+      });
+      const max = nums.length ? Math.max(...nums) : 0;
+      return `TASK-${String(max + 1).padStart(4, '0')}`;
+    }
+
+    function fillTaskForm(task){
+      byId('admTaskCode').value = task ? (task.code || '') : nextTaskCode();
+      byId('admTaskTitle').value = task ? (task.title || '') : '';
+      byId('admTaskDesc').value = task ? (task.description || '') : '';
+      byId('admTaskType').value = task ? (task.type || 'general') : 'general';
+      byId('admTaskDue').value = task ? ((task.dueDate || '').slice(0,10)) : '';
+      byId('admTaskEircodes').value = task ? (task.eircodes || '') : '';
+      byId('admTaskStreets').value = task ? (task.streets || '') : '';
+      byId('admTaskRoles').value = task ? (task.roles || '') : '';
+      byId('admTaskStatus').value = task ? (task.status || 'open') : 'open';
+      byId('admTaskMsg').textContent = '';
+      byId('btnTaskDelete').style.display = task ? 'inline-block' : 'none';
+      state.editingTaskId = task ? task.id : '';
+    }
+
+    function renderTasks(){
+      const tbody = byId('admTasksTbody');
+      const empty = byId('admTasksEmpty');
+      const summary = byId('admTasksSummary');
+      if(!tbody) return;
+
+      const filter = lower(byId('admTasksFilter') ? byId('admTasksFilter').value : 'all');
+      const search = lower(byId('admTasksSearch') ? byId('admTasksSearch').value : '');
+
+      let list = state.tasks.slice();
+      if(filter !== 'all'){
+        list = list.filter(t => lower(t.status) === filter);
+      }
+      if(search){
+        list = list.filter(t => {
+          const hay = lower([
+            t.code, t.title, t.description, t.eircodes, t.streets, t.roles,
+            t.assignedToName, t.assignedToEmail
+          ].join(' '));
+          return hay.includes(search);
+        });
       }
 
-      if(row.key.startsWith('projects:tab_')){
-        payload.pages['page:projects'] = payload.pages['page:projects'] || { shell:'projects', features:{} };
-        payload.pages['page:projects'].features[row.key] = rule;
+      list.sort((a,b)=> text(b.updatedAt || '').localeCompare(text(a.updatedAt || '')));
+      tbody.innerHTML = '';
+
+      if(summary) summary.textContent = `${state.tasks.length} task(s)`;
+      if(!list.length){
+        if(empty) empty.style.display = 'block';
+        return;
       }
-    });
+      if(empty) empty.style.display = 'none';
 
-    return payload;
-  }
+      list.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${esc(t.code || '—')}</td>
+          <td>${esc(t.title || '—')}</td>
+          <td>${esc(taskTargetLabel(t))}</td>
+          <td>${esc((t.dueDate || '').slice(0,10) || '—')}</td>
+          <td>${esc(t.status || 'open')}</td>
+          <td>${esc(t.assignedToName || t.assignedToEmail || '—')}</td>
+          <td>${esc((t.updatedAt || '').slice(0,10) || '—')}</td>
+          <td><button class="btn-line small" type="button" data-action="task-edit" data-id="${esc(t.id || '')}">Edit</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
-  function renderAccessControlFromData(rules){
-    const body = byId('acBody');
-    if(!body) return;
+    async function saveTask(){
+      const code = text(byId('admTaskCode').value).trim() || nextTaskCode();
+      const title = text(byId('admTaskTitle').value).trim();
+      if(!title){
+        byId('admTaskMsg').textContent = 'Task title is required.';
+        return;
+      }
 
-    let lastGroup = '';
-    body.innerHTML = rules.map((r, idx) => {
-      const groupHeader = (r.group && r.group !== lastGroup)
-        ? `<tr class="ac-group"><td colspan="8"><strong>${esc(r.group)}</strong></td></tr>`
-        : '';
-      lastGroup = r.group || lastGroup;
+      const task = {
+        id: state.editingTaskId || `task_${Date.now()}`,
+        code,
+        title,
+        description: text(byId('admTaskDesc').value).trim(),
+        type: text(byId('admTaskType').value).trim() || 'general',
+        dueDate: text(byId('admTaskDue').value).trim(),
+        eircodes: text(byId('admTaskEircodes').value).trim(),
+        streets: text(byId('admTaskStreets').value).trim(),
+        roles: text(byId('admTaskRoles').value).trim(),
+        status: text(byId('admTaskStatus').value).trim() || 'open',
+        updatedAt: nowIso()
+      };
 
-      return `${groupHeader}
-      <tr data-ac-row="${idx}">
-        <td>
-          <div class="ac-item">
-            <div>
-              <div class="ac-indent-${Math.min(Number(r.indent || 0), 3)}">${esc(r.label)}</div>
-              <div class="ac-key">${esc(r.key)}</div>
-            </div>
-          </div>
-        </td>
-        ${ACL_ROLES.map(role => `
+      const idx = state.tasks.findIndex(t => t.id === task.id);
+      if(idx >= 0) state.tasks[idx] = Object.assign({}, state.tasks[idx], task);
+      else state.tasks.push(task);
+
+      const out = await saveSafe(KEY_TASKS, state.tasks);
+      if(out && out.ok === false){
+        byId('admTaskMsg').textContent = 'Could not save task.';
+        return;
+      }
+
+      byId('admTaskMsg').textContent = 'Task saved.';
+      toast('Task saved.', 'success');
+      fillTaskForm(null);
+      renderTasks();
+    }
+
+    async function deleteTask(){
+      if(!state.editingTaskId) return;
+      const ok = await ask('Delete this task?', 'Delete task');
+      if(!ok) return;
+
+      state.tasks = state.tasks.filter(t => t.id !== state.editingTaskId);
+      const out = await saveSafe(KEY_TASKS, state.tasks);
+      if(out && out.ok === false){
+        byId('admTaskMsg').textContent = 'Could not delete task.';
+        return;
+      }
+
+      fillTaskForm(null);
+      renderTasks();
+      toast('Task deleted.', 'success');
+    }
+
+    function nextElectionId(){
+      const max = state.elections.reduce((m,e)=>{
+        const n = Number(String(e.id || '').replace(/\D+/g,'')) || 0;
+        return Math.max(m, n);
+      }, 0);
+      return `EL-${String(max + 1).padStart(3, '0')}`;
+    }
+
+    async function saveElection(){
+      const role = text(byId('elRole').value).trim();
+      if(!role){
+        byId('elMsg').textContent = 'Select a role.';
+        return;
+      }
+
+      const startDate = text(byId('elStart').value).trim();
+      const endDate = text(byId('elEnd').value).trim();
+
+      let existing = state.elections.find(e => e.role === role);
+      if(existing){
+        existing.status = text(byId('elStatus').value).trim() || 'open';
+        existing.startDate = startDate;
+        existing.endDate = endDate;
+        existing.updatedAt = nowIso();
+      } else {
+        state.elections.push({
+          id: nextElectionId(),
+          role,
+          status: text(byId('elStatus').value).trim() || 'open',
+          startDate,
+          endDate,
+          candidates: [],
+          votes: [],
+          updatedAt: nowIso()
+        });
+      }
+
+      const out = await saveSafe(KEY_ELECTIONS, state.elections);
+      if(out && out.ok === false){
+        byId('elMsg').textContent = 'Could not save election.';
+        return;
+      }
+
+      byId('elMsg').textContent = 'Election saved.';
+      toast('Election saved.', 'success');
+      renderElections();
+      renderResults();
+    }
+
+    function renderElections(){
+      const tbody = byId('elBody');
+      const empty = byId('elEmpty');
+      if(!tbody) return;
+      tbody.innerHTML = '';
+
+      if(!state.elections.length){
+        if(empty) empty.style.display = 'block';
+        return;
+      }
+      if(empty) empty.style.display = 'none';
+
+      state.elections.forEach(e=>{
+        const winner = text(e.winnerName || e.winner || '');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${esc(e.id || '—')}</td>
+          <td>${esc(e.role || '—')}</td>
+          <td>${esc((e.startDate || '—') + ' → ' + (e.endDate || '—'))}</td>
+          <td>${esc(e.status || 'open')}</td>
+          <td>${esc(winner || '—')}</td>
           <td>
-            <button
-              type="button"
-              class="ac-toggle ${r[role] ? 'allowed' : 'denied'}"
-              data-role="${role}"
-              data-row="${idx}"
-              title="${role === 'public' ? 'Visible without login' : role.replaceAll('_',' ')}"
-            >${r[role] ? '✓' : '—'}</button>
+            <button class="btn-line small" type="button" data-action="el-close" data-id="${esc(e.id || '')}">Close</button>
           </td>
-        `).join('')}
-      </tr>`;
-    }).join('');
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
-    $$('.ac-toggle', body).forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const row = Number(btn.getAttribute('data-row'));
-        const role = btn.getAttribute('data-role');
-        if(!Number.isFinite(row) || !rules[row]) return;
+    function getInterestItems(){
+      const out = [];
+      state.users.forEach(u=>{
+        const interest = u && (u.electionInterest || u.interest || null);
+        if(interest && typeof interest === 'object'){
+          out.push({
+            user: u,
+            role: interest.role || '',
+            status: interest.status || 'submitted',
+            text: interest.text || interest.message || '',
+            createdAt: interest.createdAt || ''
+          });
+        }
+      });
+      return out;
+    }
 
-        if(role === 'public'){
-          const next = !rules[row].public;
-          ACL_ROLES.forEach(k => { rules[row][k] = false; });
-          rules[row].public = next;
-        } else {
-          rules[row][role] = !rules[row][role];
-          if(rules[row][role]) rules[row].public = false;
+    function renderCandidates(){
+      const tbody = byId('candBody');
+      const empty = byId('candEmpty');
+      if(!tbody) return;
+
+      const items = getInterestItems();
+      tbody.innerHTML = '';
+
+      if(!items.length){
+        if(empty) empty.style.display = 'block';
+        return;
+      }
+      if(empty) empty.style.display = 'none';
+
+      items.forEach(item=>{
+        const u = item.user;
+        const reg = formatResidentRegId(u.regId || u.regNo);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${esc(item.role || '—')}</td>
+          <td>${esc(reg || '—')}</td>
+          <td>${esc(u.name || '—')}</td>
+          <td>${esc(u.email || '—')}</td>
+          <td>${esc(item.status || 'submitted')}</td>
+          <td><button class="btn-line small" type="button" data-action="interest-open" data-email="${esc(u.email || '')}">Open</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openInterestByEmail(email){
+      const u = state.users.find(x => lower(x.email) === lower(email));
+      if(!u || !u.electionInterest) return;
+
+      state.interestEditing = u.email;
+      byId('iName').value = u.name || '';
+      byId('iEmail').value = u.email || '';
+      byId('iRole').value = u.electionInterest.role || '';
+      byId('iStatus').value = u.electionInterest.status || 'submitted';
+      byId('iDate').value = u.electionInterest.createdAt || '';
+      byId('iText').value = u.electionInterest.text || u.electionInterest.message || '';
+      byId('modalInterest').style.display = 'block';
+    }
+
+    function closeInterestModal(){
+      byId('modalInterest').style.display = 'none';
+      state.interestEditing = null;
+    }
+
+    async function changeInterestStatus(status){
+      const email = state.interestEditing;
+      if(!email) return;
+      const u = state.users.find(x => lower(x.email) === lower(email));
+      if(!u || !u.electionInterest) return;
+
+      u.electionInterest.status = status;
+      u.updatedAt = nowIso();
+
+      const out = await saveSafe(KEY_USERS, state.users);
+      if(out && out.ok === false){
+        modalAlert('Could not update candidate interest.', 'Error');
+        return;
+      }
+
+      closeInterestModal();
+      renderCandidates();
+      toast(`Candidate ${status}.`, 'success');
+    }
+
+    function renderResults(){
+      const box = byId('resultsBox');
+      if(!box) return;
+      const approvedHouseholds = state.users.filter(u => residentStatus(u) === 'approved').length || 0;
+
+      if(!state.elections.length){
+        box.innerHTML = '<p class="tiny muted">No election data.</p>';
+        return;
+      }
+
+      const chunks = state.elections.map(e => {
+        const votes = Array.isArray(e.votes) ? e.votes : [];
+        const tally = {};
+        votes.forEach(v => {
+          const cand = text(v.candidateEmail || v.candidate || '').trim();
+          if(!cand) return;
+          tally[cand] = (tally[cand] || 0) + 1;
+        });
+
+        const ranked = Object.entries(tally).sort((a,b)=> b[1]-a[1]);
+        const top = ranked[0];
+        let winnerLine = 'No winner declared.';
+        if(top && approvedHouseholds){
+          const pct = (top[1] / approvedHouseholds) * 100;
+          if(pct >= 60){
+            winnerLine = `Winner threshold reached: ${esc(top[0])} with ${top[1]} vote(s) (${pct.toFixed(1)}%).`;
+          } else {
+            winnerLine = `Leading candidate ${esc(top[0])} has ${top[1]} vote(s) (${pct.toFixed(1)}%) — below 60% threshold.`;
+          }
         }
 
-        ACCESS_RULES_CACHE = rules;
-        renderAccessControlFromData(rules);
+        return `
+          <div class="card" style="margin-top:0.75rem;">
+            <h4 style="margin-top:0;">${esc(e.role || e.id || 'Election')}</h4>
+            <p class="tiny muted">Approved households baseline: ${approvedHouseholds}</p>
+            <div>${winnerLine}</div>
+            <div style="margin-top:0.5rem;">
+              ${ranked.length ? ranked.map(([name,count]) => `<div>${esc(name)} — ${count}</div>`).join('') : '<div class="tiny muted">No votes recorded.</div>'}
+            </div>
+          </div>
+        `;
       });
-    });
 
-    byId('btnAcSave').onclick = async () => {
-      const payload = matrixToAclPayload(rules);
-      await anwSaveSafe(KEY_ACCESS, payload);
-      try{
-        if(typeof window.anwSave === 'function') window.anwSave(KEY_ACCESS, payload);
-      }catch(_){}
-      byId('acMsg').textContent = 'Access rules saved. Pages and sub-tabs are now linked to the new role-based ACL.';
-    };
+      box.innerHTML = chunks.join('');
+    }
 
-    byId('btnAcPrint').onclick = () => {
-      document.body.classList.add('print-access-control');
-      window.print();
-      setTimeout(() => document.body.classList.remove('print-access-control'), 200);
-    };
+    function renderReports(){
+      const tbody = byId('reportsBody');
+      const empty = byId('reportsEmpty');
+      if(!tbody) return;
+      tbody.innerHTML = '';
 
-    byId('btnAcRefresh').onclick = loadAccessControl;
-  }
-
-  async function loadAccessControl(){
-    const saved = await anwLoadSafe(KEY_ACCESS, {});
-    ACCESS_RULES_CACHE = mapSavedAclToMatrix(saved);
-    renderAccessControlFromData(ACCESS_RULES_CACHE);
-  }
-
-
-
-  async function loadDiagnostics(){
-    const data = {
-      users: (await anwLoadSafe(KEY_USERS, [])).length,
-      notices: (await anwLoadSafe(window.getNoticesKey(), [])).length,
-      reports: (await anwLoadSafe(KEY_REPORTS, [])).length,
-      projects: (await anwLoadSafe(KEY_PROJECTS, [])).length
-    };
-    byId('diagOut').textContent = JSON.stringify(data, null, 2);
-  }
-
-  // ---------- Events ----------
-  document.addEventListener('click', ev => {
-    const btn = ev.target.closest('.admin-tab');
-    if(btn){ showAdminTab(btn.getAttribute('data-tab')); }
-
-    const rtab = ev.target.closest('.resident-tab');
-    if(rtab){ showResidentSubtab(rtab.getAttribute('data-subtab')); }
-
-    const etab = ev.target.closest('.elect-tab');
-    if(etab){ showElectionSubtab(etab.getAttribute('data-subtab')); }
-  });
-
-  byId('btnCloseResident')?.addEventListener('click', closeResidentModal);
-  byId('btnSaveResident')?.addEventListener('click', () => saveCurrentResident());
-  byId('btnApprove')?.addEventListener('click', async () => { await saveCurrentResident('approved'); closeResidentModal(); });
-  byId('btnReject')?.addEventListener('click', async () => { await saveCurrentResident('rejected'); closeResidentModal(); });
-  byId('btnSuspendResident')?.addEventListener('click', async () => { await saveCurrentResident('suspended'); closeResidentModal(); });
-  byId('btnRemoveResident')?.addEventListener('click', async () => {
-    if(!CURRENT_RESIDENT) return;
-    const users = await anwLoadSafe(KEY_USERS, []);
-    const next = users.filter(u => String(u.email||'').toLowerCase() !== String(CURRENT_RESIDENT.email||'').toLowerCase());
-    await anwSaveSafe(KEY_USERS, next);
-    RESIDENTS_CACHE = next;
-    closeResidentModal();
-    renderResidents('all');
-  });
-
-  byId('btnNtPublish')?.addEventListener('click', publishNotice);
-  byId('btnNtClear')?.addEventListener('click', () => {
-    ['ntTitle','ntMessage','ntExpires','ntEirPrefixes','ntStreets','ntEircodes','ntEmails'].forEach(id => { if(byId(id)) byId(id).value = ''; });
-    if(byId('ntCategory')) byId('ntCategory').value = 'General';
-    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = false;
-    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = 'private';
-    if(byId('ntAllLogged')) byId('ntAllLogged').checked = true;
-    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = false;
-    $$('.ntRole').forEach(x => x.checked = false);
-    byId('ntMsg').textContent = '';
-  });
-
-  byId('btnBinImport')?.addEventListener('click', importPandaSchedule);
-  byId('btnClearBinNotices')?.addEventListener('click', clearImportedBinNotices);
-
-  byId('btnRepRefresh')?.addEventListener('click', loadReports);
-  byId('btnPmRefresh')?.addEventListener('click', loadProjects);
-  byId('btnAcRefresh')?.addEventListener('click', loadAccessControl);
-  byId('btnDiagRun')?.addEventListener('click', loadDiagnostics);
-
-  byId('btnExportUsers')?.addEventListener('click', async () => downloadText('residents.json', JSON.stringify(await anwLoadSafe(KEY_USERS, []), null, 2)));
-  byId('btnExportNotices')?.addEventListener('click', async () => downloadText('notices.json', JSON.stringify(await loadNoticesFresh(), null, 2)));
-  byId('btnExportReports')?.addEventListener('click', async () => downloadText('reports.json', JSON.stringify(await anwLoadSafe(KEY_REPORTS, []), null, 2)));
-  byId('btnExportProjects')?.addEventListener('click', async () => downloadText('projects.json', JSON.stringify(await anwLoadSafe(KEY_PROJECTS, []), null, 2)));
-
-  
-  async function getAdminAuthHeaders(extra){
-    const headers = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
-    try{
-      const u = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
-        ? window.netlifyIdentity.currentUser()
-        : null;
-      if(u && typeof u.jwt === 'function'){
-        const token = await u.jwt();
-        if(token) headers.Authorization = 'Bearer ' + token;
+      const list = state.incidents.slice().sort((a,b)=> text(b.createdAt).localeCompare(text(a.createdAt)));
+      if(!list.length){
+        if(empty) empty.style.display = 'block';
+        return;
       }
-    }catch(_){}
-    return headers;
-  }
+      if(empty) empty.style.display = 'none';
 
-  async function ensureBackupSettings(){
-    try{
-      const current = await anwLoadSafe('anw_backup_settings', null);
-      if(current && typeof current === 'object' && current.enabled === true) return current;
-      const next = Object.assign({}, current || {}, {
-        enabled: true,
-        schedule: '0 2 * * *',
-        timezone: 'UTC',
-        updatedAt: new Date().toISOString()
+      list.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${esc(r.id || '—')}</td>
+          <td>${esc((r.date || (r.createdAt || '').slice(0,10) || '—'))}</td>
+          <td>${esc(r.category || '—')}</td>
+          <td>${esc(r.location || r.formattedAddress || '—')}</td>
+          <td>${esc(r.status || 'submitted')}</td>
+          <td>${esc(r.reporterEmail || '—')}</td>
+        `;
+        tbody.appendChild(tr);
       });
-      await anwSaveSafe('anw_backup_settings', next);
-      return next;
-    }catch(_){
-      return { enabled:true, schedule:'0 2 * * *', timezone:'UTC' };
     }
-  }
 
-  async function refreshBackupStatus(){
-    const statusText = byId('backupStatusText');
-    const statusBadge = byId('backupStatusBadge');
-    const lastRun = byId('backupLastRun');
-    const msg = byId('backupMsg');
-    if(statusText) statusText.textContent = 'Checking backup status…';
-    if(statusBadge){
-      statusBadge.textContent = 'Checking';
-      statusBadge.className = 'tag gray';
+    async function saveNotice(){
+      const title = text(byId('noticeTitle').value).trim();
+      const message = text(byId('noticeMsg').value).trim();
+      const type = text(byId('noticeType').value).trim() || 'info';
+      if(!title || !message){
+        modalAlert('Title and message are required.', 'Notice');
+        return;
+      }
+
+      const item = {
+        id: `notice_${Date.now()}`,
+        title,
+        message,
+        type,
+        createdAt: nowIso(),
+        updatedAt: nowIso()
+      };
+
+      state.notices.unshift(item);
+      const out = await saveSafe(KEY_NOTICES, state.notices);
+      if(out && out.ok === false){
+        modalAlert('Could not save notice.', 'Error');
+        return;
+      }
+
+      byId('noticeTitle').value = '';
+      byId('noticeMsg').value = '';
+      renderNotices();
+      toast('Notice saved.', 'success');
     }
-    if(lastRun) lastRun.textContent = 'Last run: —';
 
-    try{
-      const settings = await ensureBackupSettings();
-      const headers = await getAdminAuthHeaders();
-      const res = await fetch('/.netlify/functions/backup-list', {
-        method: 'GET',
-        headers,
-        cache: 'no-store'
+    async function deleteNotice(id){
+      const ok = await ask('Delete this notice?', 'Delete notice');
+      if(!ok) return;
+
+      state.notices = state.notices.filter(n => n.id !== id);
+      const out = await saveSafe(KEY_NOTICES, state.notices);
+      if(out && out.ok === false){
+        modalAlert('Could not delete notice.', 'Error');
+        return;
+      }
+      renderNotices();
+      toast('Notice deleted.', 'success');
+    }
+
+    function renderNotices(){
+      const box = byId('noticesList');
+      if(!box) return;
+
+      if(!state.notices.length){
+        box.innerHTML = '<p class="tiny muted">No notices saved.</p>';
+        return;
+      }
+
+      box.innerHTML = state.notices.map(n => `
+        <div class="card" style="margin-top:0.75rem;">
+          <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div>
+              <h4 style="margin:0;">${esc(n.title || 'Untitled')}</h4>
+              <div class="notice-card-meta">
+                <span class="notice-chip">${esc(n.type || 'info')}</span>
+                <span class="notice-chip">${esc((n.createdAt || '').slice(0,10) || '—')}</span>
+              </div>
+            </div>
+            <div class="notice-actions">
+              <button class="btn-line small" type="button" data-action="notice-delete" data-id="${esc(n.id || '')}">Delete</button>
+            </div>
+          </div>
+          <p style="margin:0.75rem 0 0;">${esc(n.message || '')}</p>
+        </div>
+      `).join('');
+    }
+
+    function renderHandbook(){
+      const el = byId('handbookContent');
+      if(el) el.value = typeof state.handbook === 'string' ? state.handbook : JSON.stringify(state.handbook, null, 2);
+    }
+
+    async function saveHandbook(){
+      const value = byId('handbookContent').value;
+      const out = await saveSafe(KEY_HANDBOOK, value);
+      if(out && out.ok === false){
+        modalAlert('Could not save handbook.', 'Error');
+        return;
+      }
+      state.handbook = value;
+      toast('Handbook saved.', 'success');
+    }
+
+    function renderProjects(){
+      const box = byId('projectsList');
+      if(!box) return;
+
+      if(!state.projects.length){
+        box.innerHTML = '<p class="tiny muted">No project records found.</p>';
+        return;
+      }
+
+      box.innerHTML = state.projects.map(p => `
+        <div class="card" style="margin-top:0.75rem;">
+          <h4 style="margin:0;">${esc(p.title || p.name || 'Project')}</h4>
+          <div class="tiny muted" style="margin-top:0.25rem;">Status: ${esc(p.status || '—')}</div>
+          <p style="margin:0.5rem 0 0;">${esc(p.description || '')}</p>
+        </div>
+      `).join('');
+    }
+
+    function accessItems(){
+      return [
+        { key:'page:dashboard', label:'Dashboard', indent:0 },
+        { key:'page:household', label:'Household', indent:0 },
+        { key:'page:report', label:'Report', indent:0 },
+        { key:'page:report-map', label:'Report map', indent:1 },
+        { key:'page:alerts', label:'Community Alerts', indent:0 },
+        { key:'page:projects', label:'Projects', indent:0 },
+        { key:'page:handbook', label:'Handbook', indent:0 },
+        { key:'page:admin', label:'Admin', indent:0 }
+      ];
+    }
+
+    function aclAllowed(key){
+      const value = state.acl && typeof state.acl === 'object' ? state.acl[key] : undefined;
+      return value !== false;
+    }
+
+    function renderAccessControl(){
+      const body = byId('acBody');
+      if(!body) return;
+      body.innerHTML = '';
+
+      accessItems().forEach(item => {
+        const tr = document.createElement('tr');
+        const allowed = aclAllowed(item.key);
+        tr.className = item.indent === 0 ? 'ac-group' : '';
+        tr.innerHTML = `
+          <td>
+            <div class="ac-item ac-indent-${item.indent || 0}">
+              <div>
+                <div class="ac-indent-${item.indent || 0}">${esc(item.label)}</div>
+                <div class="ac-key">${esc(item.key)}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <button type="button"
+              class="ac-toggle ${allowed ? 'allowed' : 'denied'}"
+              data-action="acl-toggle"
+              data-key="${esc(item.key)}">${allowed ? '✓' : '—'}</button>
+          </td>
+        `;
+        body.appendChild(tr);
       });
-      const data = await res.json().catch(() => ({}));
-      if(!res.ok || data.ok === false){
-        throw new Error(data.error || 'Unable to load backup status');
-      }
-      const items = Array.isArray(data.items) ? data.items : [];
-      const latest = items[0] || null;
-      if(statusText){
-        statusText.textContent = settings.enabled
-          ? 'Automatic backup is active (daily at 02:00 UTC). You can also run a manual backup now.'
-          : 'Automatic backup is disabled.';
-      }
-      if(statusBadge){
-        statusBadge.textContent = settings.enabled ? 'Active' : 'Disabled';
-        statusBadge.className = settings.enabled ? 'tag ok' : 'tag gray';
-      }
-      if(lastRun){
-        lastRun.textContent = latest && latest.createdAt
-          ? ('Last run: ' + fmtDate(latest.createdAt))
-          : 'Last run: none yet';
-      }
-      if(msg && latest && latest.id){
-        msg.textContent = 'Latest backup ID: ' + latest.id;
-      }else if(msg){
-        msg.textContent = '';
-      }
-    }catch(err){
-      if(statusText) statusText.textContent = 'Backup status could not be loaded.';
-      if(statusBadge){
-        statusBadge.textContent = 'Error';
-        statusBadge.className = 'tag gray';
-      }
-      if(lastRun) lastRun.textContent = 'Last run: unavailable';
-      if(msg) msg.textContent = String(err && err.message ? err.message : err || 'Unknown backup error');
     }
-  }
 
-  byId('btnBackupRefresh')?.addEventListener('click', refreshBackupStatus);
+    async function toggleAcl(key){
+      state.acl = state.acl && typeof state.acl === 'object' ? state.acl : {};
+      state.acl[key] = !aclAllowed(key);
+      const out = await saveSafe(KEY_ACL, state.acl);
+      if(out && out.ok === false){
+        modalAlert('Could not save ACL changes.', 'Error');
+        return;
+      }
+      renderAccessControl();
+      toast('Access control updated.', 'success');
+    }
 
-  byId('btnBackupNow')?.addEventListener('click', async () => {
-    const msg = byId('backupMsg');
-    if(msg) msg.textContent = 'Running backup now…';
-    try{
-      await ensureBackupSettings();
-      const headers = await getAdminAuthHeaders();
-      const res = await fetch('/.netlify/functions/backup-now', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ source: 'admin-manual' })
+    async function exportData(){
+      const blob = new Blob([JSON.stringify({
+        users: state.users,
+        tasks: state.tasks,
+        elections: state.elections,
+        incidents: state.incidents,
+        notices: state.notices,
+        handbook: state.handbook,
+        projects: state.projects,
+        acl: state.acl
+      }, null, 2)], { type:'application/json' });
+
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `aderrig-backup-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=> URL.revokeObjectURL(a.href), 1000);
+    }
+
+    async function importData(){
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json';
+      input.onchange = async () => {
+        const file = input.files && input.files[0];
+        if(!file) return;
+
+        try{
+          const textData = await file.text();
+          const data = JSON.parse(textData);
+
+          if(Array.isArray(data.users)) state.users = data.users;
+          if(Array.isArray(data.tasks)) state.tasks = data.tasks;
+          if(Array.isArray(data.elections)) state.elections = data.elections;
+          if(Array.isArray(data.incidents)) state.incidents = data.incidents;
+          if(Array.isArray(data.notices)) state.notices = data.notices;
+          if(typeof data.handbook === 'string') state.handbook = data.handbook;
+          if(Array.isArray(data.projects)) state.projects = data.projects;
+          if(data.acl && typeof data.acl === 'object') state.acl = data.acl;
+
+          await Promise.all([
+            saveSafe(KEY_USERS, state.users),
+            saveSafe(KEY_TASKS, state.tasks),
+            saveSafe(KEY_ELECTIONS, state.elections),
+            saveSafe(KEY_INCIDENTS, state.incidents),
+            saveSafe(KEY_NOTICES, state.notices),
+            saveSafe(KEY_HANDBOOK, state.handbook),
+            saveSafe(KEY_PROJECTS, state.projects),
+            saveSafe(KEY_ACL, state.acl)
+          ]);
+
+          renderAll();
+          toast('Import completed.', 'success');
+        }catch(err){
+          modalAlert('Could not import file.', 'Import error');
+        }
+      };
+      input.click();
+    }
+
+    function bindEvents(){
+      document.querySelectorAll('.admin-tab').forEach(btn => {
+        btn.addEventListener('click', ()=> showMainTab(btn.dataset.tab));
       });
-      const data = await res.json().catch(() => ({}));
-      if(!res.ok || data.ok === false){
-        throw new Error(data.error || 'Backup failed');
-      }
-      if(msg) msg.textContent = 'Backup created successfully. Backup ID: ' + (data.id || 'unknown');
-      await refreshBackupStatus();
-    }catch(err){
-      if(msg) msg.textContent = 'Backup failed: ' + String(err && err.message ? err.message : err || 'Unknown error');
-    }
-  });
 
-  byId('btnRestoreBackup')?.addEventListener('click', async () => {
-    const msg = byId('backupMsg');
-    const input = byId('restoreBackupFile');
-    const file = input && input.files && input.files[0] ? input.files[0] : null;
-    if(!file){
-      if(msg) msg.textContent = 'Select a backup JSON file first.';
-      return;
-    }
-    if(msg) msg.textContent = 'Restoring backup…';
-    try{
-      const text = await file.text();
-      const snapshot = JSON.parse(text);
-      const headers = await getAdminAuthHeaders();
-      const res = await fetch('/.netlify/functions/restore-backup', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ snapshot })
+      window.addEventListener('hashchange', ()=>{
+        showMainTab(tabFromHash());
       });
-      const data = await res.json().catch(() => ({}));
-      if(!res.ok || data.ok === false){
-        throw new Error(data.error || 'Restore failed');
-      }
-      if(msg){
-        msg.textContent = 'Restore completed successfully from backup ' +
-          String(data.id || snapshot.id || 'uploaded file') +
-          (data.safetyBackupId ? (' (safety backup: ' + data.safetyBackupId + ')') : '');
-      }
-      if(input) input.value = '';
-      await refreshBackupStatus();
-    }catch(err){
-      if(msg) msg.textContent = 'Restore failed: ' + String(err && err.message ? err.message : err || 'Unknown error');
-    }
-  });
 
-  // ---------- Init ----------
-  document.addEventListener('DOMContentLoaded', async () => {
-    try{
-      showAdminTab('tabResidents');
+      document.querySelectorAll('.resident-tab').forEach(btn => {
+        btn.addEventListener('click', ()=>{
+          const map = { subPending:'pending', subApproved:'approved', subAll:'all' };
+          showResidentSubtab(map[btn.dataset.subtab] || 'pending');
+        });
+      });
+
+      document.querySelectorAll('.elect-tab').forEach(btn => {
+        btn.addEventListener('click', ()=> showElectionSubtab(btn.dataset.subtab));
+      });
+
+      byId('btnCloseResident')?.addEventListener('click', closeResidentModal);
+      byId('btnSaveResident')?.addEventListener('click', saveResident);
+      byId('btnApprove')?.addEventListener('click', ()=> changeResidentState('approve'));
+      byId('btnReject')?.addEventListener('click', ()=> changeResidentState('reject'));
+      byId('btnSuspendResident')?.addEventListener('click', ()=> changeResidentState('suspend'));
+      byId('btnRemoveResident')?.addEventListener('click', ()=> changeResidentState('remove'));
+      byId('btnLogoutAdmin')?.addEventListener('click', ()=> window.anwLogout && window.anwLogout());
+
+      byId('btnTaskNew')?.addEventListener('click', ()=> fillTaskForm(null));
+      byId('btnTaskClear')?.addEventListener('click', ()=> fillTaskForm(null));
+      byId('btnTaskSave')?.addEventListener('click', saveTask);
+      byId('btnTaskDelete')?.addEventListener('click', deleteTask);
+      byId('btnTaskRefresh')?.addEventListener('click', loadAll);
+      byId('admTasksFilter')?.addEventListener('change', renderTasks);
+      byId('admTasksSearch')?.addEventListener('input', renderTasks);
+
+      byId('btnCreateElection')?.addEventListener('click', saveElection);
+      byId('btnCloseInterest')?.addEventListener('click', closeInterestModal);
+      byId('btnInterestApprove')?.addEventListener('click', ()=> changeInterestStatus('approved'));
+      byId('btnInterestReject')?.addEventListener('click', ()=> changeInterestStatus('rejected'));
+
+      byId('btnReportsRefresh')?.addEventListener('click', async ()=>{
+        state.incidents = Array.isArray(await loadSafe(KEY_INCIDENTS, [])) ? await loadSafe(KEY_INCIDENTS, []) : [];
+        renderReports();
+      });
+
+      byId('btnNoticeSave')?.addEventListener('click', saveNotice);
+      byId('btnHandbookSave')?.addEventListener('click', saveHandbook);
+      byId('btnProjectsRefresh')?.addEventListener('click', async ()=>{
+        state.projects = Array.isArray(await loadSafe(KEY_PROJECTS, [])) ? await loadSafe(KEY_PROJECTS, []) : [];
+        renderProjects();
+      });
+
+      byId('btnExport')?.addEventListener('click', exportData);
+      byId('btnImport')?.addEventListener('click', importData);
+
+      document.addEventListener('click', async (e)=>{
+        const btn = e.target.closest('button');
+        if(!btn) return;
+
+        const action = btn.dataset.action || '';
+        if(action === 'resident-open'){
+          openResidentByEmail(btn.dataset.email || '');
+        } else if(action === 'task-edit'){
+          const task = state.tasks.find(t => t.id === btn.dataset.id);
+          if(task) fillTaskForm(task);
+        } else if(action === 'interest-open'){
+          openInterestByEmail(btn.dataset.email || '');
+        } else if(action === 'notice-delete'){
+          await deleteNotice(btn.dataset.id || '');
+        } else if(action === 'acl-toggle'){
+          await toggleAcl(btn.dataset.key || '');
+        } else if(action === 'el-close'){
+          const el = state.elections.find(x => x.id === btn.dataset.id);
+          if(el){
+            el.status = 'closed';
+            el.updatedAt = nowIso();
+            const out = await saveSafe(KEY_ELECTIONS, state.elections);
+            if(!(out && out.ok === false)){
+              renderElections();
+              renderResults();
+            }
+          }
+        }
+      });
+
+      window.addEventListener('click', (e)=>{
+        if(e.target === byId('modalResident')) closeResidentModal();
+        if(e.target === byId('modalInterest')) closeInterestModal();
+      });
+    }
+
+    async function ensureAdminAccess(){
+      const email = getCurrentEmail();
+      const role = getCurrentRole();
+
+      if(!email){
+        setGateMessage('You must be logged in to access the admin panel.');
+        modalAlert('You must be logged in to access the admin panel.', 'Access denied');
+        return false;
+      }
+
+      const me = state.users.find(u => lower(u.email) === email) || null;
+      if(!me){
+        setGateMessage('Your account is logged in but not registered in the residents database.');
+        return false;
+      }
+
+      const approved = residentStatus(me) === 'approved';
+      if(!approved){
+        setGateMessage('Your account is not approved yet.');
+        return false;
+      }
+
+      if(!(role === 'admin' || role === 'owner' || isAdminUser(me))){
+        setGateMessage('Your account does not have admin permission.');
+        return false;
+      }
+
+      setGateMessage('');
+      return true;
+    }
+
+    async function boot(){
+      bindEvents();
+      fillTaskForm(null);
+      showMainTab(tabFromHash());
+      showResidentSubtab('pending');
       showElectionSubtab('subManage');
-      await Promise.all([
-        loadResidents(),
-        renderNoticesList(),
-        loadReports(),
-        loadProjects(),
-        loadAccessControl(),
-        loadDiagnostics()
-      ]);
-    }catch(err){
-      console.error(err);
-    }finally{
-      runAdminGate();
-    }
-  });
 
-  window.addEventListener('load', () => {
-    adminMarkReady();
-  });
-})();
-</script>
+      try{
+        await loadAll();
 
-<script>
-(function(){
-  const INACTIVITY_LIMIT_MS = 10 * 60 * 1000;
-  let logoutTimer = null;
+        const ok = await ensureAdminAccess();
+        if(!ok){
+          document.querySelectorAll('.admin-tab-content').forEach(el => el.style.display = 'none');
+          return;
+        }
 
-  async function doLogout(){
-    try{ if(window.netlifyIdentity && typeof window.netlifyIdentity.logout === 'function'){ await window.netlifyIdentity.logout(); } }catch(_){}
-    window.location.href = 'login.html';
-  }
-
-  function resetInactivity(){
-    if(logoutTimer) clearTimeout(logoutTimer);
-    logoutTimer = setTimeout(doLogout, INACTIVITY_LIMIT_MS);
-  }
-
-  function initAdminSessionUi(){
-    document.getElementById('btnLogoutAdmin')?.addEventListener('click', doLogout);
-    ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach((evt)=>{
-      window.addEventListener(evt, resetInactivity, { passive:true });
-    });
-    resetInactivity();
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', initAdminSessionUi, { once:true });
-  }else{
-    initAdminSessionUi();
-  }
-})();
-</script>
-
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-  try{
-    const tabResidents = document.getElementById("tabResidents");
-    const subManage = document.getElementById("subManage");
-    if (tabResidents) {
-      tabResidents.style.display = "block";
-      tabResidents.hidden = false;
-    }
-    if (subManage) {
-      subManage.style.display = "block";
-      subManage.hidden = false;
-    }
-    const allTabs = document.querySelectorAll(".admin-tab-content");
-    if (allTabs.length) {
-      let anyVisible = false;
-      allTabs.forEach(el => {
-        const st = window.getComputedStyle(el);
-        if (st.display !== "none" && st.visibility !== "hidden") anyVisible = true;
-      });
-      if (!anyVisible && tabResidents) tabResidents.style.display = "block";
-    }
-  }catch(e){}
-});
-</script>
-
-
-<script>
-// FIX: persist bin imports into anw_notices
-(function(){
-  function saveBins(imported){
-    try{
-      const KEY = 'anw_notices';
-      let existing = JSON.parse(localStorage.getItem(KEY) || '[]');
-
-      // remove old bin imports
-      existing = existing.filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
-
-      // add new
-      const now = new Date().toISOString();
-      const mapped = (imported || []).map(item => ({
-        id: 'bin_' + Math.random().toString(36).slice(2),
-        title: item.title || 'Bin Collection',
-        message: item.message || '',
-        category: 'Bins',
-        created_at: now,
-        meta: { type: 'bin_collection_import', raw: item }
-      }));
-
-      const updated = [...existing, ...mapped];
-      localStorage.setItem(KEY, JSON.stringify(updated));
-      console.log('[BIN FIX] Saved', mapped.length, 'items');
-    }catch(e){
-      console.error('[BIN FIX ERROR]', e);
-    }
-  }
-
-  // hook into global if exists
-  const original = window.importPandaSchedule;
-  if(typeof original === 'function'){
-    window.importPandaSchedule = async function(){
-      const result = await original.apply(this, arguments);
-      if(window.imported){
-        saveBins(window.imported);
+        updateAdminLoginNavLabel();
+      } finally {
+        clearAclLoading();
       }
-      return result;
     }
-  }
-})();
-</script>
 
+    document.addEventListener('DOMContentLoaded', boot);
+  })();
+  </script>
+
+  <footer class="site-footer">
+    <div class="page-access">Private Page</div>
+    <p>© 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a></p>
+  </footer>
+</main>
 </body>
 </html>
