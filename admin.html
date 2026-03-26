@@ -111,6 +111,16 @@
     }
   }
 
+
+  #modalResident .household-line{
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  #modalResident .household-line .muted{
+    color:#6a7b90;
+    font-weight:500;
+  }
+
 </style>
 
 <style>
@@ -2187,6 +2197,21 @@
       accessBox.innerHTML = currentAccess.length
         ? currentAccess.map(label => `<span class="role-chip current">${esc(label)}</span>`).join('')
         : `<span class="role-chip available">Resident</span>`;
+    }
+
+    const householdBox = byId('mHouseholdList');
+    if(householdBox){
+      const members = Array.isArray(CURRENT_RESIDENT.household) ? CURRENT_RESIDENT.household : [];
+      if(members.length){
+        householdBox.innerHTML = members.map(m => {
+          const name = m.name || '';
+          const phone = m.phone || '';
+          const email = m.email || '';
+          return `<div class="household-line">${esc(name)} · <span class="muted">${esc(phone)} · ${esc(email)}</span></div>`;
+        }).join('');
+      } else {
+        householdBox.innerHTML = `<div class="muted">No household members</div>`;
+      }
     }
 
     const currentVolBox = byId('mVolunteerCurrentChips');
