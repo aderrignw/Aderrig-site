@@ -38,15 +38,9 @@
   #tabTools details.anw-acc .acc-body .grid { align-items: start; }
 
   #tabAccessControl .ac-wrap{ overflow:auto; border:1px solid var(--line); border-radius:14px; background:#fff; }
-  #tabAccessControl table.ac-table{ width:100%; min-width:1000px; border-collapse:separate; border-spacing:0; table-layout:fixed; }
-  #tabAccessControl .ac-table th, #tabAccessControl .ac-table td{ padding:8px 8px; border-bottom:1px solid var(--line); vertical-align:middle; font-size:.92rem; }
-  #tabAccessControl .ac-table thead th{ position:sticky; top:0; background:#fff; z-index:2; white-space:normal; word-break:break-word; font-size:.78rem; line-height:1.2; letter-spacing:-.01em; }
-  #tabAccessControl .ac-table thead th:not(:first-child),
-  #tabAccessControl .ac-table td:not(:first-child){ text-align:center; }
-  #tabAccessControl .ac-table th:first-child,
-  #tabAccessControl .ac-table td:first-child{ position:sticky; left:0; z-index:3; background:#fff; width:240px; min-width:240px; max-width:240px; box-shadow:2px 0 0 #eef2ef; }
-  #tabAccessControl .ac-table thead th:first-child{ z-index:4; }
-  #tabAccessControl .ac-role-head{ width:72px; min-width:72px; max-width:72px; }
+  #tabAccessControl table.ac-table{ width:100%; min-width:920px; border-collapse:collapse; }
+  #tabAccessControl .ac-table th, #tabAccessControl .ac-table td{ padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  #tabAccessControl .ac-table thead th{ position:sticky; top:0; background:#fff; z-index:2; }
   #tabAccessControl .ac-item{ display:flex; align-items:flex-start; gap:10px; }
   #tabAccessControl .ac-badge{ font-size:.70rem; padding:2px 8px; border-radius:999px; border:1px solid rgba(0,0,0,.10); background:rgba(0,0,0,.03); }
   #tabAccessControl .ac-key{
@@ -54,13 +48,7 @@
     font-size:.72rem; color: rgba(0,0,0,.55); margin-top:2px;
   }
   #tabAccessControl .ac-indent-0{ font-weight:700; }
-  #tabAccessControl .ac-indent-1{ padding-left:14px; }
-  #tabAccessControl .ac-indent-2{ padding-left:28px; }
-  #tabAccessControl .ac-item{ min-width:0; }
-  #tabAccessControl .ac-item > div{ min-width:0; }
-  #tabAccessControl .ac-item strong{ display:block; font-size:.94rem; line-height:1.2; overflow-wrap:anywhere; }
-  #tabAccessControl .ac-key{ font-size:.68rem; overflow-wrap:anywhere; }
-  #tabAccessControl .ac-cell-toggle{ transform:scale(.92); }
+  #tabAccessControl .ac-indent-1{ padding-left:18px; }
   #tabAccessControl .ac-indent-2{ padding-left:36px; }
   #tabAccessControl .ac-indent-3{ padding-left:54px; }
 
@@ -119,93 +107,16 @@
   #tabResidents th:nth-child(6), #tabResidents td:nth-child(6){ width:20%; }
   #tabResidents th:nth-child(7), #tabResidents td:nth-child(7){ width:10%; }
   #tabResidents td:nth-child(3){ line-height:1.35; }
-  .resident-modal-top{ display:grid; grid-template-columns:minmax(0,1fr) 140px; gap:1.2rem; align-items:stretch; justify-content:space-between; }
+  .resident-modal-top{ display:flex; gap:1rem; align-items:flex-start; justify-content:space-between; }
   .resident-modal-top .resident-id-grid{ flex:1; min-width:0; }
-  .resident-photo-box{
-    width:140px;
-    min-height:100%;
-    border:1px solid rgba(17,24,39,.08);
-    border-radius:24px;
-    background:linear-gradient(180deg,#ffffff,#f7faf8);
-    box-shadow:0 16px 32px rgba(17,24,39,.06);
-    padding:16px 14px;
-    text-align:center;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    gap:8px;
-  }
-  .resident-photo-preview{ width:92px; height:92px; border-radius:22px; border:1px solid rgba(47,125,91,.12); background:#eef3f0 center/cover no-repeat; margin:0 auto; overflow:hidden; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.8rem; box-shadow:0 12px 24px rgba(47,125,91,.10); }
+  .resident-photo-box{ width:108px; flex:0 0 108px; text-align:center; }
+  .resident-photo-preview{ width:88px; height:88px; border-radius:16px; border:1px solid var(--line); background:#eef3f0 center/cover no-repeat; margin:0 auto 8px; overflow:hidden; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.8rem; }
   .resident-photo-preview img{ width:100%; height:100%; object-fit:cover; display:block; }
   .resident-photo-preview.has-photo{ color:transparent; }
-  .resident-modal-shell{ display:grid; gap:18px; }
-  .resident-premium-band{
-    display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
-    padding:16px 18px; border-radius:24px;
-    background:linear-gradient(135deg, rgba(47,125,91,.12), rgba(47,125,91,.05) 55%, rgba(255,255,255,.96));
-    border:1px solid rgba(47,125,91,.12);
-    box-shadow:0 18px 36px rgba(47,125,91,.08);
-  }
-  .resident-premium-band-title{ display:flex; flex-direction:column; gap:4px; }
-  .resident-premium-band-title strong{ font-size:1rem; color:#183426; }
-  .resident-premium-band-title span{ font-size:.84rem; color:#617166; line-height:1.45; max-width:720px; }
-  .resident-premium-band-chip{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; border:1px solid rgba(47,125,91,.14); background:rgba(255,255,255,.88); color:var(--brand); font-weight:700; font-size:.82rem; box-shadow:0 8px 18px rgba(47,125,91,.08); }
-  .resident-premium-band-chip::before{ content:'•'; font-size:1rem; line-height:1; }
-  .resident-profile-grid{ display:grid; grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr); gap:18px; align-items:start; }
-  .resident-profile-main, .resident-profile-side{ display:grid; gap:18px; }
-  .resident-profile-side{ align-content:start; }
-  .resident-section{
-    border:1px solid rgba(17,24,39,.08);
-    border-radius:24px;
-    background:linear-gradient(180deg,#ffffff,#fbfcfb);
-    box-shadow:0 18px 36px rgba(17,24,39,.06);
-    padding:18px;
-  }
-  .resident-section-header{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
-  .resident-section-title{ margin:0; font-size:1rem; color:#183426; }
-  .resident-section-subtitle{ margin:.3rem 0 0; font-size:.82rem; color:#667085; line-height:1.45; }
-  .resident-mini-badge{ display:inline-flex; align-items:center; gap:6px; padding:7px 10px; border-radius:999px; border:1px solid rgba(17,24,39,.08); background:#f8faf9; font-size:.76rem; font-weight:700; color:#51606f; white-space:nowrap; }
-  .resident-key-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
-  .resident-readonly-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
-  .resident-edit-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
-  .resident-address-grid{ display:grid; gap:14px; }
-  .resident-role-cards{ display:grid; gap:10px; }
-  .resident-role-card{ position:relative; display:flex; align-items:center; gap:10px; padding:14px 16px; border-radius:18px; border:1px solid rgba(17,24,39,.08); background:#fff; transition:.18s ease; }
-  .resident-role-card:hover{ border-color:rgba(47,125,91,.18); box-shadow:0 12px 24px rgba(47,125,91,.07); }
-  .resident-role-card input{ accent-color:var(--brand); width:18px; height:18px; }
-  .resident-role-card span{ font-weight:600; color:#23313f; line-height:1.35; }
-  .resident-role-card.is-disabled{ background:#f8faf9; }
-  .resident-role-card.is-disabled span{ color:#667085; }
-  .resident-field-hint{ margin-top:6px; font-size:.78rem; color:#7b8794; line-height:1.4; }
-  #modalResident .modal-content{
-    max-width:1120px; width:min(1120px, calc(100vw - 40px));
-    border-radius:30px; border:1px solid rgba(17,24,39,.08);
-    box-shadow:0 28px 60px rgba(17,24,39,.16);
-    overflow:hidden;
-  }
-  #modalResident .modal-header{
-    padding:22px 24px 16px;
-    background:linear-gradient(180deg, rgba(247,250,248,.98), rgba(255,255,255,.98));
-    border-bottom:1px solid rgba(17,24,39,.06);
-  }
-  #modalResident .modal-header h3{ font-size:1.2rem; color:#183426; }
-  #modalResident .modal-header .sub{ color:#667085; max-width:760px; line-height:1.45; }
-  #modalResident .modal-body{ padding:22px 24px 24px; background:linear-gradient(180deg,#f7faf8 0%, #ffffff 100%); }
-  #residentModalActions{
-    margin-top:2px;
-    padding-top:16px;
-    border-top:1px solid rgba(17,24,39,.08);
-  }
-  #mMsg{ min-height:18px; }
-  @media (max-width: 980px){
-    .resident-profile-grid{ grid-template-columns:1fr; }
-    .resident-modal-top{ grid-template-columns:1fr; }
-    .resident-photo-box{ width:100%; }
-  }
-  @media (max-width: 760px){
-    .resident-key-grid, .resident-readonly-grid, .resident-edit-grid{ grid-template-columns:1fr; }
-    #modalResident .modal-content{ width:min(100vw - 18px, 1120px); border-radius:22px; }
-    #modalResident .modal-header, #modalResident .modal-body{ padding-left:16px; padding-right:16px; }
+  @media (max-width: 900px){
+    .resident-modal-top{ flex-direction:column; }
+    .resident-photo-box{ width:100%; flex:0 0 auto; text-align:left; }
+    .resident-photo-preview{ margin:0 0 8px; }
   }
 
   .notice-actions{
@@ -232,39 +143,6 @@
     background:#f4f7f5;
     border:1px solid rgba(17,24,39,.08);
     font-size:.82rem;
-  }
-
-
-  #tabTasks .tasks-layout{ display:flex; flex-direction:column; gap:18px; margin-top:12px; }
-  #tabTasks .tasks-layout > *{ min-width:0; width:100%; }
-  #tabTasks .task-builder-panel,
-  #tabTasks .task-list-panel{ border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:18px; background:#fff; width:100%; box-sizing:border-box; }
-  #tabTasks .task-builder-grid-two,
-  #tabTasks .task-target-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-  #tabTasks .task-list-toolbar{ display:grid; grid-template-columns:minmax(220px,280px) minmax(320px,1fr); gap:12px; align-items:end; margin-top:10px; }
-  #tabTasks .task-list-toolbar .field{ margin:0; min-width:0; }
-  #tabTasks .task-table-wrap{ overflow-x:auto; margin-top:10px; width:100%; }
-  #tabTasks .task-table{ width:100%; min-width:980px; border-collapse:collapse; table-layout:fixed; }
-  #tabTasks .task-table th,
-  #tabTasks .task-table td{ padding:10px 12px; vertical-align:top; border-bottom:1px solid rgba(17,24,39,.08); overflow-wrap:anywhere; word-break:break-word; }
-  #tabTasks .task-table th:nth-child(1), #tabTasks .task-table td:nth-child(1){ width:90px; }
-  #tabTasks .task-table th:nth-child(2), #tabTasks .task-table td:nth-child(2){ width:24%; }
-  #tabTasks .task-table th:nth-child(3), #tabTasks .task-table td:nth-child(3){ width:16%; }
-  #tabTasks .task-table th:nth-child(4), #tabTasks .task-table td:nth-child(4){ width:110px; }
-  #tabTasks .task-table th:nth-child(5), #tabTasks .task-table td:nth-child(5){ width:120px; }
-  #tabTasks .task-table th:nth-child(6), #tabTasks .task-table td:nth-child(6){ width:20%; }
-  #tabTasks .task-table th:nth-child(7), #tabTasks .task-table td:nth-child(7){ width:130px; }
-  #tabTasks .task-table th:nth-child(8), #tabTasks .task-table td:nth-child(8){ width:120px; }
-  #tabTasks .task-builder-panel textarea,
-  #tabTasks .task-builder-panel input,
-  #tabTasks .task-builder-panel select,
-  #tabTasks .task-list-panel input,
-  #tabTasks .task-list-panel select{ width:100%; max-width:100%; box-sizing:border-box; }
-  @media (max-width: 860px){
-    #tabTasks .task-builder-grid-two,
-    #tabTasks .task-target-grid,
-    #tabTasks .task-list-toolbar{ grid-template-columns:1fr; }
-    #tabTasks .task-table{ min-width:760px; }
   }
 
   @media print {
@@ -295,114 +173,6 @@
   }
   #tabAccessControl .ac-group td{
     background:#fafcfb;
-  }
-
-  .admin-volunteer-panel{
-    margin:0.85rem 0 0;
-    padding:16px;
-    border:1px solid rgba(47,125,91,.10);
-    border-radius:20px;
-    background:linear-gradient(180deg, rgba(250,252,251,.98), rgba(245,248,246,.96));
-    box-shadow:0 14px 30px rgba(17,24,39,.05);
-    overflow:hidden;
-  }
-  .admin-readonly-note{
-    margin:0 0 14px;
-    padding:12px 14px;
-    border:1px solid rgba(47,125,91,.12);
-    background:rgba(255,255,255,.75);
-    border-radius:14px;
-    color:var(--muted);
-    line-height:1.45;
-  }
-  .admin-role-legend{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin:0 0 14px;
-  }
-  .admin-role-pill{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    border-radius:999px;
-    padding:7px 12px;
-    font-size:.8rem;
-    font-weight:600;
-    border:1px solid rgba(17,24,39,.08);
-    background:#fff;
-    color:#4b5563;
-  }
-  .admin-role-pill .dot{
-    width:12px;
-    height:12px;
-    border-radius:4px;
-    display:inline-block;
-    background:#ffffff;
-    border:1.5px solid #c8d1cc;
-  }
-  .admin-role-pill.selected{
-    background:rgba(47,125,91,.08);
-    border-color:rgba(47,125,91,.18);
-    color:var(--brand);
-  }
-  .admin-role-pill.selected .dot{
-    background:rgba(47,125,91,.84);
-    border-color:rgba(47,125,91,.84);
-  }
-  .admin-volunteer-grid{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:10px;
-  }
-  .admin-readonly-role{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    width:100%;
-    min-width:0;
-    padding:12px 14px;
-    border-radius:15px;
-    border:1px solid rgba(17,24,39,.08);
-    background:#ffffff;
-    box-shadow:0 6px 16px rgba(17,24,39,.04);
-    overflow:hidden;
-  }
-  .admin-readonly-role input{
-    pointer-events:none;
-    flex:0 0 auto;
-    width:18px;
-    height:18px;
-    margin:0;
-    accent-color:var(--brand);
-  }
-  .admin-readonly-role-copy{
-    display:block;
-    min-width:0;
-    flex:1 1 auto;
-  }
-  .admin-readonly-role-title{
-    display:block;
-    font-weight:700;
-    color:#24313b;
-    line-height:1.35;
-    overflow-wrap:anywhere;
-    word-break:break-word;
-  }
-  .admin-readonly-role-help{ display:none; }
-  .admin-readonly-role::after{ content:none; }
-  .admin-readonly-role.is-selected{
-    background:linear-gradient(180deg, rgba(47,125,91,.12), rgba(47,125,91,.06));
-    border-color:rgba(47,125,91,.20);
-    box-shadow:0 10px 22px rgba(47,125,91,.09);
-  }
-  .admin-readonly-role.is-selected .admin-readonly-role-title{
-    color:var(--brand);
-  }
-  @media (max-width: 760px){
-    .admin-volunteer-panel{ margin-left:0; padding:14px; }
-    .admin-role-legend{ gap:8px; }
-    .admin-role-pill{ font-size:.77rem; }
   }
 </style>
 
@@ -616,177 +386,98 @@
       </div>
 
       <div class="modal-body">
-        <div class="resident-modal-shell">
-          <div class="resident-premium-band">
-            <div class="resident-premium-band-title">
-              <strong>Resident profile workspace</strong>
-              <span>Premium Admin view for checking identity, contact details, access level and volunteer profile information without affecting other areas of the Admin panel.</span>
-            </div>
-            <span class="resident-premium-band-chip">Focused Admin editing view</span>
-          </div>
-
-          <div class="resident-profile-grid">
-            <div class="resident-profile-main">
-              <section class="resident-section">
-                <div class="resident-section-header">
-                  <div>
-                    <h4 class="resident-section-title">Resident overview</h4>
-                    <p class="resident-section-subtitle">Protected registration details stay visible here so Admin can confirm the resident identity before making any allowed updates.</p>
-                  </div>
-                  <span class="resident-mini-badge">Protected identity data</span>
-                </div>
-                <div class="resident-modal-top">
-                  <div class="resident-id-grid">
-                    <div class="resident-key-grid">
-                      <div class="field">
-                        <label>Registration No</label>
-                        <input id="mRegId" type="text" disabled>
-                      </div>
-                      <div class="field">
-                        <label>Status</label>
-                        <input id="mStatus" type="text" disabled>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="resident-photo-box">
-                    <div class="resident-photo-preview" id="mPhotoPreview">👤</div>
-                    <div class="tiny muted">Profile photo</div>
-                  </div>
-                </div>
-                <div class="resident-readonly-grid" style="margin-top:14px;">
-                  <div class="field">
-                    <label>Email</label>
-                    <input id="mEmail" type="email" disabled>
-                  </div>
-                  <div class="field">
-                    <label>Eircode</label>
-                    <input id="mEir" type="text" disabled>
-                  </div>
-                </div>
-              </section>
-
-              <section class="resident-section">
-                <div class="resident-section-header">
-                  <div>
-                    <h4 class="resident-section-title">Profile details</h4>
-                    <p class="resident-section-subtitle">Editable resident information for the Admin workflow only. This keeps the form cleaner and easier to review.</p>
-                  </div>
-                  <span class="resident-mini-badge">Admin editable</span>
-                </div>
-                <div class="resident-edit-grid">
-                  <div class="field">
-                    <label>Full name</label>
-                    <input id="mName" type="text">
-                  </div>
-                  <div class="field">
-                    <label>Phone</label>
-                    <input id="mPhone" type="text">
-                  </div>
-                </div>
-                <div class="resident-address-grid" style="margin-top:14px;">
-                  <div class="field">
-                    <label>Address</label>
-                    <input id="mAddress" type="text" disabled>
-                    <div class="resident-field-hint">Address remains visible for confirmation and cannot be changed here.</div>
-                  </div>
-                </div>
-                <div class="resident-edit-grid" style="margin-top:14px;">
-                  <div class="field">
-                    <label>Resident type</label>
-                    <select id="mType">
-                      <option value="">Select…</option>
-                      <option value="owner">Owner</option>
-                      <option value="tenant">Tenant</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label>Management company</label>
-                    <input id="mMgmt" type="text">
-                  </div>
-                </div>
-              </section>
-            </div>
-
-            <div class="resident-profile-side">
-              <section class="resident-section">
-                <div class="resident-section-header">
-                  <div>
-                    <h4 class="resident-section-title">Main roles</h4>
-                    <p class="resident-section-subtitle">High-level resident permissions remain available here for Admin review and allowed updates.</p>
-                  </div>
-                  <span class="resident-mini-badge">Role controls</span>
-                </div>
-                <div class="resident-role-cards">
-                  <label class="resident-role-card"><input id="mCoord" type="checkbox"> <span>Street Coordinator</span></label>
-                  <label class="resident-role-card"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
-                  <label class="resident-role-card is-disabled"><input id="mAlertAdmin" type="checkbox" disabled> <span>Community Alerts admin (set after approval)</span></label>
-                </div>
-              </section>
-
-              <section class="resident-section">
-                <div class="resident-section-header">
-                  <div>
-                    <h4 class="resident-section-title">Volunteer profile snapshot</h4>
-                    <p class="resident-section-subtitle">Read-only visibility for what the resident already selected in the Dashboard and what they can still add later.</p>
-                  </div>
-                  <span class="resident-mini-badge">Read-only Admin view</span>
-                </div>
-                <div id="mVolunteerRolesWrap" class="admin-volunteer-panel" aria-label="Volunteer roles, admin view only">
-                  <div class="admin-readonly-note tiny">Filled boxes show the roles already chosen by the resident. Empty boxes show future options the resident can add later in the Dashboard.</div>
-                  <div class="admin-role-legend">
-                    <span class="admin-role-pill selected"><span class="dot"></span> Selected</span>
-                    <span class="admin-role-pill"><span class="dot"></span> Available</span>
-                  </div>
-                  <div class="admin-volunteer-grid">
-                    <label class="admin-readonly-role" data-vol-role-item>
-                      <input id="mVStreet" type="checkbox" disabled>
-                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Street watch / patrols</span><span class="admin-readonly-role-help">Neighbourhood patrol and street observation support.</span></span>
-                    </label>
-                    <label class="admin-readonly-role" data-vol-role-item>
-                      <input id="mVLeaf" type="checkbox" disabled>
-                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Distribute leaflets</span><span class="admin-readonly-role-help">Delivery support for notices, campaigns and updates.</span></span>
-                    </label>
-                    <label class="admin-readonly-role" data-vol-role-item>
-                      <input id="mVTech" type="checkbox" disabled>
-                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Tech support</span><span class="admin-readonly-role-help">Help residents with basic digital or platform-related issues.</span></span>
-                    </label>
-                    <label class="admin-readonly-role" data-vol-role-item>
-                      <input id="mVEld" type="checkbox" disabled>
-                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Elderly checks</span><span class="admin-readonly-role-help">Friendly check-ins and support for elderly residents.</span></span>
-                    </label>
-                    <label class="admin-readonly-role" data-vol-role-item>
-                      <input id="mVClean" type="checkbox" disabled>
-                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Community clean-up</span><span class="admin-readonly-role-help">Join clean-up actions and environmental improvement days.</span></span>
-                    </label>
-                    <label class="admin-readonly-role" data-vol-role-item>
-                      <input id="mVPark" type="checkbox" disabled>
-                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Parking assistance</span><span class="admin-readonly-role-help">Support with parking flow, events and local access guidance.</span></span>
-                    </label>
-                    <label class="admin-readonly-role" data-vol-role-item>
-                      <input id="mVMeet" type="checkbox" disabled>
-                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Meeting organiser</span><span class="admin-readonly-role-help">Help arrange meetings, coordination and community sessions.</span></span>
-                    </label>
-                    <label class="admin-readonly-role" data-vol-role-item>
-                      <input id="mVTrans" type="checkbox" disabled>
-                      <span class="admin-readonly-role-copy"><span class="admin-readonly-role-title">Translation</span><span class="admin-readonly-role-help">Language support for communication with residents.</span></span>
-                    </label>
-                  </div>
-                </div>
-              </section>
+        <div class="resident-modal-top">
+          <div class="resident-id-grid">
+            <div class="grid-2" style="gap:1rem;">
+              <div class="field">
+                <label>Registration No</label>
+                <input id="mRegId" type="text" disabled>
+              </div>
+              <div class="field">
+                <label>Status</label>
+                <input id="mStatus" type="text" disabled>
+              </div>
             </div>
           </div>
-
-          <p class="tiny muted" id="mMsg" style="margin-top:0;"></p>
-
-          <div class="actions" id="residentModalActions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-            <button type="button" class="btn-line small" id="btnReject">Reject</button>
-            <button type="button" class="btn-line small" id="btnSuspendResident">Suspend</button>
-            <button type="button" class="btn-line small" id="btnRemoveResident">Remove</button>
-            <button type="button" class="btn small" id="btnSaveResident">Save</button>
-            <button type="button" class="btn-line small logout-btn-inline" id="btnLogoutAdmin">Logout</button>
-            <button type="button" class="btn small" id="btnApprove">Approve</button>
+          <div class="resident-photo-box">
+            <div class="resident-photo-preview" id="mPhotoPreview">👤</div>
+            <div class="tiny muted">Profile photo</div>
           </div>
+        </div>
+
+        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
+          <div class="field">
+            <label>Email</label>
+            <input id="mEmail" type="email" disabled>
+          </div>
+          <div class="field">
+            <label>Eircode</label>
+            <input id="mEir" type="text" disabled>
+          </div>
+        </div>
+
+        <div class="grid-2" style="gap:1rem; margin-top:1rem;">
+          <div class="field">
+            <label>Full name</label>
+            <input id="mName" type="text">
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input id="mPhone" type="text">
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:1rem;">
+          <label>Address</label>
+          <input id="mAddress" type="text" disabled>
+        </div>
+
+        <div class="grid-2" style="gap:1rem;">
+          <div class="field">
+            <label>Resident type</label>
+            <select id="mType">
+              <option value="">Select…</option>
+              <option value="owner">Owner</option>
+              <option value="tenant">Tenant</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Management company</label>
+            <input id="mMgmt" type="text">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Roles</label>
+          <label class="chk"><input id="mCoord" type="checkbox"> <span>Street Coordinator</span></label>
+          <label class="chk"><input id="mVol" type="checkbox"> <span>Volunteer</span></label>
+          <label class="chk"><input id="mAlertAdmin" type="checkbox" disabled> <span>Community Alerts admin (set after approval)</span></label>
+
+          <div id="mVolunteerRolesWrap" style="margin:0.5rem 0 0 1.25rem;">
+            <p class="tiny muted" style="margin:0 0 0.25rem;">Volunteer roles (8): select one or more extra functions for this resident.</p>
+            <div style="display:grid; grid-template-columns:repeat(2, minmax(180px, 1fr)); column-gap:18px; row-gap:4px;">
+              <label class="chk"><input id="mVStreet" type="checkbox"> <span>Street watch / patrols</span></label>
+              <label class="chk"><input id="mVLeaf" type="checkbox"> <span>Distribute leaflets</span></label>
+              <label class="chk"><input id="mVTech" type="checkbox"> <span>Tech support</span></label>
+              <label class="chk"><input id="mVEld" type="checkbox"> <span>Elderly checks</span></label>
+              <label class="chk"><input id="mVClean" type="checkbox"> <span>Community clean-up</span></label>
+              <label class="chk"><input id="mVPark" type="checkbox"> <span>Parking assistance</span></label>
+              <label class="chk"><input id="mVMeet" type="checkbox"> <span>Meeting organiser</span></label>
+              <label class="chk"><input id="mVTrans" type="checkbox"> <span>Translation</span></label>
+            </div>
+          </div>
+        </div>
+
+        <p class="tiny muted" id="mMsg" style="margin-top:0.5rem;"></p>
+
+        <div class="actions" id="residentModalActions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn-line small" id="btnReject">Reject</button>
+          <button type="button" class="btn-line small" id="btnSuspendResident">Suspend</button>
+          <button type="button" class="btn-line small" id="btnRemoveResident">Remove</button>
+          <button type="button" class="btn small" id="btnSaveResident">Save</button>
+          <button type="button" class="btn-line small logout-btn-inline" id="btnLogoutAdmin">Logout</button>
+          <button type="button" class="btn small" id="btnApprove">Approve</button>
         </div>
       </div>
     </div>
@@ -839,12 +530,12 @@
   </div>
 
   <!-- ================= TASKS ================= -->
-  <section class="card admin-tab-content" id="tabTasks" style="display:none;" hidden>
-    <div class="row" style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+  <section class="card admin-tab-content" id="tabTasks" style="display:none;">
+    <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
       <div>
         <h3 style="margin:0;">Volunteer tasks</h3>
         <p class="tiny muted" style="margin:6px 0 0;">
-          Create tasks in a clean workflow: start a new task at the top, review active tasks in the middle, and keep closed tasks below for reference.
+          Create and manage volunteer tasks for the community. Households can accept open tasks in the Household page.
         </p>
       </div>
       <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -853,17 +544,14 @@
       </div>
     </div>
 
-    <div class="tasks-layout">
-      <div class="task-builder-panel">
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-          <div>
-            <h4 style="margin:0;">New / edit task</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Task code is generated automatically and is not editable.</p>
-          </div>
-          <div class="tiny muted" id="admTaskBuilderHint">Ready to create a new task.</div>
-        </div>
+    <div class="grid" style="grid-template-columns: 1fr 1fr; gap:14px; margin-top:12px;">
+      <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
+        <h4 style="margin:0;">Task builder</h4>
+        <p class="tiny muted" style="margin:6px 0 10px;">
+          Use targeting to limit tasks to specific Eircodes or streets, and set suitable volunteer roles.
+        </p>
 
-        <div class="task-builder-grid-two">
+        <div class="grid-2" style="gap:12px;">
           <div class="field">
             <label>Task code</label>
             <input id="admTaskCode" type="text" disabled>
@@ -872,8 +560,6 @@
             <label>Status</label>
             <select id="admTaskStatus">
               <option value="open">Open</option>
-              <option value="assigned">Assigned</option>
-              <option value="completed">Completed</option>
               <option value="archived">Archived</option>
             </select>
           </div>
@@ -889,7 +575,7 @@
           <textarea id="admTaskDesc" rows="4" placeholder="What needs to be done, any instructions, and who to contact."></textarea>
         </div>
 
-        <div class="task-target-grid">
+        <div class="grid-2" style="gap:12px;">
           <div class="field">
             <label>Targeting</label>
             <select id="admTaskType">
@@ -904,7 +590,7 @@
           </div>
         </div>
 
-        <div class="task-target-grid">
+        <div class="grid-2" style="gap:12px;">
           <div class="field">
             <label>Eircode(s) (semicolon separated)</label>
             <input id="admTaskEircodes" type="text" placeholder="e.g., K78XXXX; K78YYYY">
@@ -930,20 +616,17 @@
         </div>
       </div>
 
-      <div class="task-list-panel">
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-          <div>
-            <h4 style="margin:0;">Active tasks</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Open and assigned tasks currently available for volunteers.</p>
-          </div>
+      <div class="panel" style="border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <h4 style="margin:0;">Tasks</h4>
           <div class="tiny muted" id="admTasksSummary"></div>
         </div>
 
-        <div class="task-list-toolbar">
+        <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
           <div class="field" style="min-width:220px; margin:0;">
             <label class="tiny muted" for="admTasksFilter">Status filter</label>
             <select id="admTasksFilter" class="input" style="width:100%;">
-              <option value="all">All active and closed</option>
+              <option value="all">All</option>
               <option value="open">Open</option>
               <option value="assigned">Assigned</option>
               <option value="completed">Completed</option>
@@ -957,8 +640,8 @@
           </div>
         </div>
 
-        <div class="task-table-wrap">
-          <table class="task-table">
+        <div style="overflow-x:auto; margin-top:10px;">
+          <table style="width:100%; min-width:920px;">
             <thead>
               <tr>
                 <th style="text-align:left;">Code</th>
@@ -971,39 +654,10 @@
                 <th style="text-align:left;">Actions</th>
               </tr>
             </thead>
-            <tbody id="admTasksOpenTbody"></tbody>
+            <tbody id="admTasksTbody"></tbody>
           </table>
         </div>
-        <p id="admTasksOpenEmpty" class="tiny muted" style="display:none; margin-top:0.75rem;">No active tasks found.</p>
-      </div>
-
-      <div class="task-list-panel">
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-          <div>
-            <h4 style="margin:0;">Closed tasks</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Completed and archived tasks stay here for reference.</p>
-          </div>
-          <div class="tiny muted" id="admTasksClosedSummary"></div>
-        </div>
-
-        <div class="task-table-wrap">
-          <table class="task-table">
-            <thead>
-              <tr>
-                <th style="text-align:left;">Code</th>
-                <th style="text-align:left;">Title</th>
-                <th style="text-align:left;">Target</th>
-                <th style="text-align:left;">Due</th>
-                <th style="text-align:left;">Status</th>
-                <th style="text-align:left;">Assigned to</th>
-                <th style="text-align:left;">Updated</th>
-                <th style="text-align:left;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="admTasksClosedTbody"></tbody>
-          </table>
-        </div>
-        <p id="admTasksClosedEmpty" class="tiny muted" style="display:none; margin-top:0.75rem;">No closed tasks found.</p>
+        <p id="admTasksEmpty" class="tiny muted" style="display:none; margin-top:0.75rem;">No tasks found.</p>
       </div>
     </div>
   </section>
@@ -1493,7 +1147,7 @@
       <div>
         <h3 style="margin:0;">Access Control</h3>
         <p class="tiny muted" style="margin:6px 0 0;">
-          Control which pages, tabs and sub-tabs are public or require a specific site role. This view now includes Resident, Volunteer, Coordinators, Projects, Platform Support, Admin and Owner so the matrix matches what is actually released across the site.
+          Control which pages, tabs and sub-tabs are public or require a specific site role. Roles follow the site hierarchy: resident, street coordinator, assistant area coordinator, area coordinator, projects and owner.
         </p>
       </div>
       <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -1510,17 +1164,15 @@
       <table class="ac-table">
         <thead>
           <tr>
-            <th>Page / feature</th>
-            <th class="ac-role-head">Public</th>
-            <th class="ac-role-head">Resident</th>
-            <th class="ac-role-head">Volunt.</th>
-            <th class="ac-role-head">Street</th>
-            <th class="ac-role-head">Assist.</th>
-            <th class="ac-role-head">Area</th>
-            <th class="ac-role-head">Projects</th>
-            <th class="ac-role-head">Platform</th>
-            <th class="ac-role-head">Admin</th>
-            <th class="ac-role-head">Owner</th>
+            <th style="min-width:320px;">Page / feature</th>
+            <th>Public</th>
+            <th>Resident</th>
+            <th>Street Coord.</th>
+            <th>Volunteer</th>
+            <th>Area Coord.</th>
+            <th>Assistant</th>
+            <th>Platform</th>
+            <th>Admin</th>
           </tr>
         </thead>
         <tbody id="acBody"></tbody>
@@ -1720,55 +1372,6 @@
     return String(v).split(/[;,|]/).map(s => s.trim()).filter(Boolean);
   }
 
-  function normEmail(v){
-    return String(v || '').trim().toLowerCase();
-  }
-
-  function residentRowEmails(u){
-    return Array.from(new Set([
-      normEmail(u && u.email),
-      normEmail(u && u.userEmail),
-      normEmail(u && u.loginEmail),
-      normEmail(u && u.netlifyEmail)
-    ].filter(Boolean)));
-  }
-
-  function residentEmailCandidates(email){
-    const norm = normEmail(email);
-    const local = norm.split('@')[0] || '';
-    return Array.from(new Set([norm, local].filter(Boolean)));
-  }
-
-  function scoreResidentRecord(u, targetEmail){
-    const normTarget = normEmail(targetEmail || '');
-    const localTarget = normTarget.split('@')[0] || '';
-    const emails = residentRowEmails(u);
-    const exact = emails.includes(normTarget);
-    const local = emails.some(e => (e.split('@')[0] || '') === localTarget);
-    const status = String(u?.status || u?.accountStatus || u?.registrationStatus || '').trim().toLowerCase();
-    const approved = !!(u?.approved === true || u?.active === true || status === 'active' || status === 'approved');
-    const ownerish = !!(emails.includes(normEmail(OWNER_EMAIL)) || [u?.role, u?.type, u?.residentType, u?.access]
-      .map(v => String(v || '').trim().toLowerCase())
-      .some(v => ['owner','admin'].includes(v)));
-    const richness = [u?.name, u?.fullName, u?.address, u?.fullAddress, u?.eircode, u?.eir, u?.managementCompany, u?.regId, u?.regNo, u?.registrationNo, u?.type, u?.residentType, u?.phone, u?.mobile]
-      .filter(v => String(v || '').trim()).length;
-    const updated = Date.parse(u?.updatedAt || u?.modifiedAt || u?.createdAt || 0) || 0;
-    return (exact ? 1000 : 0) + (local ? 200 : 0) + (approved ? 120 : 0) + (ownerish ? 80 : 0) + (richness * 2) + Math.floor(updated / 1000);
-  }
-
-  function getCanonicalResidentIndex(users, email){
-    const list = Array.isArray(users) ? users : [];
-    const candidates = residentEmailCandidates(email);
-    if(!candidates.length) return -1;
-    const localTarget = candidates[0].split('@')[0] || '';
-    const matches = list.reduce((acc, u, index) => {
-      if(residentRowEmails(u).some(e => candidates.includes(e) || ((e.split('@')[0] || '') === localTarget))) acc.push(index);
-      return acc;
-    }, []);
-    if(!matches.length) return -1;
-    return matches.slice().sort((a, b) => scoreResidentRecord(list[b], email) - scoreResidentRecord(list[a], email))[0];
-  }
-
   function uniqueBy(arr, getKey){
     const seen = new Set();
     return arr.filter(item => {
@@ -1842,17 +1445,8 @@
   }
 
   function showAdminTab(tabId){
-    if(typeof closeResidentModal === 'function') closeResidentModal();
     $$('.admin-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId));
-    $$('.admin-tab-content').forEach(p => {
-      const isActive = p.id === tabId;
-      p.style.display = isActive ? 'block' : 'none';
-      p.hidden = !isActive;
-      p.classList.toggle('is-active', isActive);
-    });
-    if(tabId === 'tabTasks' && typeof ensureVolunteerTasksUi === 'function'){
-      ensureVolunteerTasksUi().catch(err => console.error(err));
-    }
+    $$('.admin-tab-content').forEach(p => { p.style.display = (p.id === tabId) ? 'block' : 'none'; });
   }
 
   function showResidentSubtab(id){
@@ -1995,19 +1589,6 @@
     });
   }
 
-  function syncAdminVolunteerRoleView(){
-    const selectors = ['mVStreet','mVLeaf','mVTech','mVEld','mVClean','mVPark','mVMeet','mVTrans'];
-    selectors.forEach((id, index) => {
-      const input = byId(id);
-      const card = input ? input.closest('[data-vol-role-item]') : null;
-      const checked = !!(input && input.checked);
-      if(card){
-        card.classList.toggle('is-selected', checked);
-        card.style.order = checked ? String(index + 1) : String(index + 101);
-      }
-    });
-  }
-
   function openResidentModal(user){
     CURRENT_RESIDENT = user || null;
     if(!CURRENT_RESIDENT) return;
@@ -2037,7 +1618,6 @@
     byId('mVPark').checked = vrList.includes('Parking assistance') || !!vrObj.parkingAssistance || !!vrObj.parking;
     byId('mVMeet').checked = vrList.includes('Meeting organiser') || !!vrObj.meetings;
     byId('mVTrans').checked = vrList.includes('Translation') || !!vrObj.translation;
-    syncAdminVolunteerRoleView();
 
     const photoUrl = CURRENT_RESIDENT.profilePhoto || CURRENT_RESIDENT.photo || CURRENT_RESIDENT.photoURL || '';
     const photoBox = byId('mPhotoPreview');
@@ -2071,8 +1651,7 @@
   async function saveCurrentResident(nextStatus){
     if(!CURRENT_RESIDENT) return;
     const users = await anwLoadSafe(KEY_USERS, []);
-    const targetEmail = normEmail(CURRENT_RESIDENT.email || CURRENT_RESIDENT.userEmail || CURRENT_RESIDENT.loginEmail || CURRENT_RESIDENT.netlifyEmail || '');
-    const idx = getCanonicalResidentIndex(users, targetEmail);
+    const idx = users.findIndex(u => String(u.email||'').toLowerCase() === String(CURRENT_RESIDENT.email||'').toLowerCase());
     if(idx < 0) return;
 
     const roles = [];
@@ -2080,15 +1659,26 @@
     if(byId('mVol').checked) roles.push('volunteer');
     if(normList(users[idx].roles).includes('admin')) roles.push('admin');
 
-    const volunteerRoles = Array.isArray(users[idx].volunteerRoles)
-      ? users[idx].volunteerRoles.slice()
-      : Array.isArray(CURRENT_RESIDENT.volunteerRoles)
-        ? CURRENT_RESIDENT.volunteerRoles.slice()
-        : [];
-    const volunteerRoleFlags = Object.assign({},
-      users[idx].vol_roles || users[idx].volunteer_roles || {},
-      CURRENT_RESIDENT.vol_roles || CURRENT_RESIDENT.volunteer_roles || {}
-    );
+    const volunteerRoles = [
+      byId('mVStreet').checked ? 'Street watch / patrols' : '',
+      byId('mVLeaf').checked ? 'Distribute leaflets' : '',
+      byId('mVTech').checked ? 'Tech support' : '',
+      byId('mVEld').checked ? 'Elderly checks' : '',
+      byId('mVClean').checked ? 'Community clean-up' : '',
+      byId('mVPark').checked ? 'Parking assistance' : '',
+      byId('mVMeet').checked ? 'Meeting organiser' : '',
+      byId('mVTrans').checked ? 'Translation' : ''
+    ].filter(Boolean);
+    const volunteerRoleFlags = {
+      streetWatch: byId('mVStreet').checked,
+      leaflets: byId('mVLeaf').checked,
+      tech: byId('mVTech').checked,
+      elderly: byId('mVEld').checked,
+      cleanUp: byId('mVClean').checked,
+      parkingAssistance: byId('mVPark').checked,
+      meetings: byId('mVMeet').checked,
+      translation: byId('mVTrans').checked
+    };
 
     users[idx].name = byId('mName').value.trim();
     users[idx].phone = byId('mPhone').value.trim();
@@ -2102,7 +1692,6 @@
     users[idx].volunteer_roles = volunteerRoleFlags;
     users[idx].streetCoordinator = byId('mCoord').checked;
     users[idx].volunteer = byId('mVol').checked;
-    users[idx].updatedAt = new Date().toISOString();
 
     if(nextStatus){
       users[idx].status = nextStatus;
@@ -2116,7 +1705,7 @@
     assignMissingResidentNumbers(users);
     await anwSaveSafe(KEY_USERS, users);
     RESIDENTS_CACHE = users;
-    byId('mMsg').textContent = 'Resident saved. Volunteer roles remain view-only in Admin.';
+    byId('mMsg').textContent = 'Resident saved.';
     renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
       : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
       : 'pending');
@@ -2375,58 +1964,46 @@
 
   
   
-  const ACL_ROLES = ['public','resident','volunteer','street_coordinator','assistant_area_coordinator','area_coordinator','projects','platform_support','admin','owner'];
+  const ACL_ROLES = ['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'];
 
   const ACL_ITEMS = [
     { key:'page:home', label:'Home', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:about', label:'About', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:report', label:'Report Incident', group:'Site pages', indent:0, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, platform_support:true, admin:true, owner:true } },
-    { key:'page:alerts', label:'Community Alerts', group:'Site pages', indent:0, defaults:{ assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
-    { key:'page:projects', label:'Community Projects page', group:'Projects', indent:0, defaults:{ projects:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
-    { key:'projects:tab_monitoring', label:'Projects · Monitoring', group:'Projects', indent:1, defaults:{ projects:true, assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
-    { key:'projects:tab_builder', label:'Projects · Build project', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
-    { key:'projects:tab_published', label:'Projects · Confirm sending', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
+    { key:'page:report', label:'Report Incident', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
+    { key:'page:alerts', label:'Community Alerts', group:'Site pages', indent:0, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
+    { key:'page:projects', label:'Community Projects page', group:'Projects', indent:0, defaults:{ projects:true, area_coordinator:true, owner:true } },
+    { key:'projects:tab_monitoring', label:'Projects · Monitoring', group:'Projects', indent:1, defaults:{ projects:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
+    { key:'projects:tab_builder', label:'Projects · Build project', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
+    { key:'projects:tab_published', label:'Projects · Confirm sending', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
     { key:'page:handbook', label:'Handbook', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:privacy', label:'Privacy Policy', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:login', label:'Login / Register', group:'Site pages', indent:0, defaults:{ public:true } },
 
     { key:'page:dashboard', label:'Dashboard', group:'Dashboard', indent:0, defaults:{ public:true } },
-    { key:'dashboard:tab_profile', label:'Dashboard · Profile', group:'Dashboard', indent:1, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, platform_support:true, admin:true, owner:true } },
-    { key:'dashboard:tab_interest', label:'Dashboard · Interest', group:'Dashboard', indent:1, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, platform_support:true, admin:true, owner:true } },
-    { key:'dashboard:tab_elections', label:'Dashboard · Elections', group:'Dashboard', indent:1, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, platform_support:true, admin:true, owner:true } },
-    { key:'dashboard:tab_notices', label:'Dashboard · Notices', group:'Dashboard', indent:1, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, platform_support:true, admin:true, owner:true } },
+    { key:'dashboard:tab_profile', label:'Dashboard · Profile', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
+    { key:'dashboard:tab_interest', label:'Dashboard · Interest', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
+    { key:'dashboard:tab_elections', label:'Dashboard · Elections', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
+    { key:'dashboard:tab_notices', label:'Dashboard · Notices', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
     { key:'dashboard:tab_garda', label:'Dashboard · Garda & Safety', group:'Dashboard', indent:1, defaults:{ public:true } },
 
-    { key:'page:household', label:'Household', group:'Residents', indent:0, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
-    { key:'page:resident-profile', label:'Resident profile data', group:'Residents', indent:1, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
-    { key:'page:street-management', label:'Street management', group:'Residents', indent:1, defaults:{ street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
-    { key:'page:regional-management', label:'Regional management', group:'Residents', indent:1, defaults:{ assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
+    { key:'page:household', label:'Household', group:'Residents', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
+    { key:'page:resident-profile', label:'Resident profile data', group:'Residents', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
+    { key:'page:street-management', label:'Street management', group:'Residents', indent:1, defaults:{ street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
+    { key:'page:regional-management', label:'Regional management', group:'Residents', indent:1, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
 
-    { key:'page:admin', label:'Admin panel', group:'Admin controls', indent:0, defaults:{ platform_support:true, admin:true, owner:true } },
-    { key:'page:access-control', label:'Access Control sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
-    { key:'page:resident-registrations', label:'Resident registrations sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
-    { key:'page:volunteer-tasks', label:'Volunteer tasks sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
-    { key:'page:elections-admin', label:'Elections sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
-    { key:'page:reports-admin', label:'Reports sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
-    { key:'page:notices-admin', label:'Notices sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
-    { key:'page:handbook-admin', label:'Handbook sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
-    { key:'page:projects-monitoring-admin', label:'Projects Monitoring sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
-    { key:'page:tools-admin', label:'Tools sub-tab', group:'Admin controls', indent:1, defaults:{ platform_support:true, admin:true, owner:true } },
-
-    { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, volunteer:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, platform_support:true, admin:true, owner:true } },
+    { key:'page:admin', label:'Admin panel', group:'Owner controls', indent:0, defaults:{ owner:true } },
+    { key:'page:access-control', label:'Access Control sub-tab', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
   ];
 
   const ROLE_RANK = {
     public: 0,
     resident: 1,
-    volunteer: 1,
     street_coordinator: 2,
     assistant_area_coordinator: 3,
     area_coordinator: 4,
     projects: 4,
-    platform_support: 5,
-    admin: 6,
-    owner: 7
+    owner: 5
   };
 
   let ACCESS_RULES_CACHE = [];
@@ -2527,7 +2104,7 @@
       publicFeatures:[],
       __matrix:{},
       rolesMeta:{
-        order:['public','resident','volunteer','street_coordinator','assistant_area_coordinator','area_coordinator','projects','platform_support','admin','owner'],
+        order:['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'],
         rank: ROLE_RANK
       }
     };
@@ -2573,7 +2150,7 @@
     let lastGroup = '';
     body.innerHTML = rules.map((r, idx) => {
       const groupHeader = (r.group && r.group !== lastGroup)
-        ? `<tr class="ac-group"><td colspan="${ACL_ROLES.length + 1}"><strong>${esc(r.group)}</strong></td></tr>`
+        ? `<tr class="ac-group"><td colspan="8"><strong>${esc(r.group)}</strong></td></tr>`
         : '';
       lastGroup = r.group || lastGroup;
 
@@ -2647,348 +2224,6 @@
 
 
 
-  // ---------- Volunteer tasks ----------
-  let TASKS_CACHE = [];
-  let CURRENT_TASK_ID = null;
-  let TASKS_UI_READY = false;
-
-  function taskStatusLabel(status){
-    const normalized = String(status || 'open').toLowerCase();
-    if(normalized === 'assigned') return 'Assigned';
-    if(normalized === 'completed') return 'Completed';
-    if(normalized === 'archived') return 'Archived';
-    return 'Open';
-  }
-
-  function normalizeTaskListInput(value){
-    if(Array.isArray(value)) return value.map(v => String(v || '').trim()).filter(Boolean);
-    if(value == null || value === '') return [];
-    return String(value).split(/[;\n,|]/).map(v => v.trim()).filter(Boolean);
-  }
-
-  function normalizeTaskRecord(task, index){
-    const row = (task && typeof task === 'object') ? Object.assign({}, task) : {};
-    const status = String(row.status || 'open').toLowerCase();
-    row.id = String(row.id || row.code || ('task-record-' + index));
-    row.code = String(row.code || '').trim();
-    row.status = ['open','assigned','completed','archived'].includes(status) ? status : 'open';
-    row.title = String(row.title || '').trim();
-    row.description = String(row.description || row.desc || '').trim();
-    row.type = ['general','eircode','street'].includes(String(row.type || '').toLowerCase()) ? String(row.type).toLowerCase() : 'general';
-    row.due = parseFlexibleDate(row.due || row.preferredCompletionDate || row.deadline || '');
-    row.eircodes = normalizeTaskListInput(row.eircodes || row.eircodesList || row.eircodeList);
-    row.streets = normalizeTaskListInput(row.streets || row.streetList);
-    row.roles = normalizeTaskListInput(row.roles || row.suitableRoles || row.volunteerRoles);
-    row.assignedTo = row.assignedTo || row.volunteerEmail || row.acceptedBy || '';
-    row.updatedAt = row.updatedAt || row.modifiedAt || row.createdAt || new Date().toISOString();
-    row.createdAt = row.createdAt || row.updatedAt;
-    return row;
-  }
-
-  function taskCodeNumber(code){
-    const match = String(code || '').trim().toLowerCase().match(/^task-(\d+)$/);
-    return match ? Number(match[1]) : 0;
-  }
-
-  function getNextTaskCode(list){
-    const max = (Array.isArray(list) ? list : []).reduce((acc, item) => Math.max(acc, taskCodeNumber(item && item.code)), 0);
-    return 'task-' + String(max + 1).padStart(4, '0');
-  }
-
-  function taskTargetLabel(task){
-    const row = task || {};
-    if(row.type === 'eircode'){
-      return row.eircodes && row.eircodes.length ? row.eircodes.join(', ') : 'Eircode target';
-    }
-    if(row.type === 'street'){
-      return row.streets && row.streets.length ? row.streets.join(', ') : 'Street target';
-    }
-    if(row.roles && row.roles.length){
-      return 'General · ' + row.roles.join(', ');
-    }
-    return 'General';
-  }
-
-  function taskAssignedLabel(task){
-    const assigned = String((task && task.assignedTo) || '').trim();
-    return assigned || '—';
-  }
-
-  function escapeAttr(value){
-    return esc(value).replace(/`/g, '&#96;');
-  }
-
-  function setTaskBuilderHint(text){
-    const el = byId('admTaskBuilderHint');
-    if(el) el.textContent = text || '';
-  }
-
-  function setTaskMessage(text){
-    const el = byId('admTaskMsg');
-    if(el) el.textContent = text || '';
-  }
-
-  function resetTaskForm(opts){
-    const options = Object.assign({ keepMessage:false }, opts || {});
-    CURRENT_TASK_ID = null;
-    if(byId('admTaskCode')) byId('admTaskCode').value = getNextTaskCode(TASKS_CACHE);
-    if(byId('admTaskStatus')) byId('admTaskStatus').value = 'open';
-    if(byId('admTaskTitle')) byId('admTaskTitle').value = '';
-    if(byId('admTaskDesc')) byId('admTaskDesc').value = '';
-    if(byId('admTaskType')) byId('admTaskType').value = 'general';
-    if(byId('admTaskDue')) byId('admTaskDue').value = '';
-    if(byId('admTaskEircodes')) byId('admTaskEircodes').value = '';
-    if(byId('admTaskStreets')) byId('admTaskStreets').value = '';
-    if(byId('admTaskRoles')) byId('admTaskRoles').value = '';
-    if(byId('btnTaskDelete')) byId('btnTaskDelete').style.display = 'none';
-    setTaskBuilderHint('Ready to create a new task.');
-    if(!options.keepMessage) setTaskMessage('');
-  }
-
-  function fillTaskForm(task){
-    const row = normalizeTaskRecord(task, 0);
-    CURRENT_TASK_ID = row.id;
-    if(byId('admTaskCode')) byId('admTaskCode').value = row.code || getNextTaskCode(TASKS_CACHE);
-    if(byId('admTaskStatus')) byId('admTaskStatus').value = row.status || 'open';
-    if(byId('admTaskTitle')) byId('admTaskTitle').value = row.title || '';
-    if(byId('admTaskDesc')) byId('admTaskDesc').value = row.description || '';
-    if(byId('admTaskType')) byId('admTaskType').value = row.type || 'general';
-    if(byId('admTaskDue')) byId('admTaskDue').value = row.due || '';
-    if(byId('admTaskEircodes')) byId('admTaskEircodes').value = (row.eircodes || []).join('; ');
-    if(byId('admTaskStreets')) byId('admTaskStreets').value = (row.streets || []).join('; ');
-    if(byId('admTaskRoles')) byId('admTaskRoles').value = (row.roles || []).join('; ');
-    if(byId('btnTaskDelete')) byId('btnTaskDelete').style.display = 'inline-flex';
-    setTaskBuilderHint('Editing ' + (row.code || 'task') + '.');
-    setTaskMessage('');
-    byId('admTaskTitle')?.focus();
-    window.scrollTo({ top: byId('tabTasks')?.offsetTop ? Math.max(0, byId('tabTasks').offsetTop - 24) : 0, behavior: 'smooth' });
-  }
-
-  function collectTaskForm(){
-    const code = String(byId('admTaskCode')?.value || '').trim() || getNextTaskCode(TASKS_CACHE);
-    return normalizeTaskRecord({
-      id: CURRENT_TASK_ID || code,
-      code,
-      status: byId('admTaskStatus')?.value || 'open',
-      title: byId('admTaskTitle')?.value || '',
-      description: byId('admTaskDesc')?.value || '',
-      type: byId('admTaskType')?.value || 'general',
-      due: byId('admTaskDue')?.value || '',
-      eircodes: byId('admTaskEircodes')?.value || '',
-      streets: byId('admTaskStreets')?.value || '',
-      roles: byId('admTaskRoles')?.value || '',
-      assignedTo: ''
-    }, 0);
-  }
-
-  function taskMatchesFilters(task, search, filterValue){
-    const row = task || {};
-    const status = String(row.status || 'open').toLowerCase();
-    if(filterValue && filterValue !== 'all' && status !== filterValue) return false;
-    if(!search) return true;
-    const haystack = [
-      row.code,
-      row.title,
-      row.description,
-      row.type,
-      (row.eircodes || []).join(' '),
-      (row.streets || []).join(' '),
-      (row.roles || []).join(' '),
-      row.assignedTo
-    ].join(' ').toLowerCase();
-    return haystack.includes(search);
-  }
-
-  function sortTasksNewestFirst(a, b){
-    const timeA = Date.parse(a && (a.updatedAt || a.createdAt) || 0) || 0;
-    const timeB = Date.parse(b && (b.updatedAt || b.createdAt) || 0) || 0;
-    if(timeA !== timeB) return timeB - timeA;
-    return String(a && a.code || '').localeCompare(String(b && b.code || ''));
-  }
-
-  function renderTaskRows(tasks, closed){
-    return tasks.map(task => {
-      const editBtn = `<button type="button" class="btn-line small" data-task-action="edit" data-task-id="${escapeAttr(task.id)}">Edit</button>`;
-      const secondaryBtn = closed
-        ? `<button type="button" class="btn-line small" data-task-action="reopen" data-task-id="${escapeAttr(task.id)}">Reopen</button>`
-        : `<button type="button" class="btn-line small" data-task-action="complete" data-task-id="${escapeAttr(task.id)}">Complete</button>`;
-      const archiveBtn = closed
-        ? ''
-        : `<button type="button" class="btn-line small" data-task-action="archive" data-task-id="${escapeAttr(task.id)}">Archive</button>`;
-      return `
-        <tr>
-          <td>${esc(task.code || '—')}</td>
-          <td>
-            <strong>${esc(task.title || 'Untitled task')}</strong>
-            ${task.description ? `<div class="tiny muted" style="margin-top:4px;">${esc(task.description)}</div>` : ''}
-          </td>
-          <td>${esc(taskTargetLabel(task))}</td>
-          <td>${esc(fmtDateShort(task.due || ''))}</td>
-          <td>${esc(taskStatusLabel(task.status))}</td>
-          <td>${esc(taskAssignedLabel(task))}</td>
-          <td>${esc(fmtDate(task.updatedAt || task.createdAt || ''))}</td>
-          <td>
-            <div class="actions" style="justify-content:flex-start; gap:6px; flex-wrap:wrap;">
-              ${editBtn}
-              ${secondaryBtn}
-              ${archiveBtn}
-            </div>
-          </td>
-        </tr>
-      `;
-    }).join('');
-  }
-
-  function renderTasks(){
-    const filterValue = String(byId('admTasksFilter')?.value || 'all').toLowerCase();
-    const search = String(byId('admTasksSearch')?.value || '').trim().toLowerCase();
-    const allTasks = TASKS_CACHE.slice().sort(sortTasksNewestFirst);
-    const filtered = allTasks.filter(task => taskMatchesFilters(task, search, filterValue));
-
-    const activeRows = filtered.filter(task => ['open','assigned'].includes(String(task.status || '').toLowerCase()));
-    const closedRows = filtered.filter(task => ['completed','archived'].includes(String(task.status || '').toLowerCase()));
-
-    const openTbody = byId('admTasksOpenTbody');
-    const closedTbody = byId('admTasksClosedTbody');
-    if(openTbody) openTbody.innerHTML = renderTaskRows(activeRows, false);
-    if(closedTbody) closedTbody.innerHTML = renderTaskRows(closedRows, true);
-
-    if(byId('admTasksOpenEmpty')) byId('admTasksOpenEmpty').style.display = activeRows.length ? 'none' : 'block';
-    if(byId('admTasksClosedEmpty')) byId('admTasksClosedEmpty').style.display = closedRows.length ? 'none' : 'block';
-
-    if(byId('admTasksSummary')){
-      byId('admTasksSummary').textContent = `${activeRows.length} active of ${allTasks.length} total`;
-    }
-    if(byId('admTasksClosedSummary')){
-      byId('admTasksClosedSummary').textContent = `${closedRows.length} closed`;
-    }
-  }
-
-  async function loadTasks(){
-    const raw = await anwLoadSafe(KEY_TASKS, []);
-    const incoming = Array.isArray(raw) ? raw : [];
-    let changed = false;
-    TASKS_CACHE = incoming.map((task, index) => {
-      const normalized = normalizeTaskRecord(task, index);
-      if(!normalized.code){
-        normalized.code = getNextTaskCode(incoming.slice(0, index).map((item, idx) => normalizeTaskRecord(item, idx)).concat([]));
-        normalized.id = normalized.code;
-        changed = true
-      }
-      if(normalized.id !== String(task && (task.id || task.code || '')) || normalized.code !== String(task && task.code || '').trim()){
-        changed = true;
-      }
-      return normalized;
-    });
-    const codes = new Set();
-    TASKS_CACHE.forEach((task, index) => {
-      if(!task.code || codes.has(task.code)){
-        task.code = 'task-' + String(index + 1).padStart(4, '0');
-        task.id = task.code;
-        changed = true;
-      }
-      codes.add(task.code);
-    });
-    if(changed){
-      await anwSaveSafe(KEY_TASKS, TASKS_CACHE);
-    }
-    renderTasks();
-    if(!CURRENT_TASK_ID && byId('admTaskCode') && !String(byId('admTaskCode').value || '').trim()){
-      resetTaskForm({ keepMessage:true });
-    }
-  }
-
-  async function saveTask(){
-    const draft = collectTaskForm();
-    if(!draft.title){
-      setTaskMessage('Please add a task title before saving.');
-      byId('admTaskTitle')?.focus();
-      return;
-    }
-    const now = new Date().toISOString();
-    let list = TASKS_CACHE.slice();
-    const idx = list.findIndex(task => String(task.id) === String(draft.id));
-    if(idx >= 0){
-      draft.createdAt = list[idx].createdAt || now;
-      draft.assignedTo = list[idx].assignedTo || '';
-      draft.updatedAt = now;
-      list[idx] = draft;
-    }else{
-      draft.id = draft.code;
-      draft.createdAt = now;
-      draft.updatedAt = now;
-      list.push(draft);
-    }
-    list = list.map((task, index) => normalizeTaskRecord(task, index)).sort((a, b) => taskCodeNumber(a.code) - taskCodeNumber(b.code));
-    TASKS_CACHE = list;
-    await anwSaveSafe(KEY_TASKS, TASKS_CACHE);
-    setTaskMessage('Task saved successfully.');
-    renderTasks();
-    resetTaskForm({ keepMessage:true });
-  }
-
-  async function deleteCurrentTask(){
-    if(!CURRENT_TASK_ID) return;
-    const existing = TASKS_CACHE.find(task => String(task.id) === String(CURRENT_TASK_ID));
-    if(!existing) return;
-    if(!window.confirm(`Delete ${existing.code || 'this task'}?`)) return;
-    TASKS_CACHE = TASKS_CACHE.filter(task => String(task.id) !== String(CURRENT_TASK_ID));
-    await anwSaveSafe(KEY_TASKS, TASKS_CACHE);
-    setTaskMessage('Task deleted.');
-    resetTaskForm({ keepMessage:true });
-    renderTasks();
-  }
-
-  async function updateTaskStatus(taskId, nextStatus){
-    const idx = TASKS_CACHE.findIndex(task => String(task.id) === String(taskId));
-    if(idx < 0) return;
-    TASKS_CACHE[idx] = Object.assign({}, TASKS_CACHE[idx], {
-      status: nextStatus,
-      updatedAt: new Date().toISOString()
-    });
-    await anwSaveSafe(KEY_TASKS, TASKS_CACHE);
-    renderTasks();
-    if(String(CURRENT_TASK_ID || '') === String(taskId)){
-      fillTaskForm(TASKS_CACHE[idx]);
-      setTaskMessage('Task updated.');
-    }
-  }
-
-  async function ensureVolunteerTasksUi(){
-    if(!TASKS_UI_READY){
-      byId('btnTaskRefresh')?.addEventListener('click', loadTasks);
-      byId('btnTaskNew')?.addEventListener('click', () => resetTaskForm());
-      byId('btnTaskClear')?.addEventListener('click', () => resetTaskForm());
-      byId('btnTaskSave')?.addEventListener('click', saveTask);
-      byId('btnTaskDelete')?.addEventListener('click', deleteCurrentTask);
-      byId('admTasksFilter')?.addEventListener('change', renderTasks);
-      byId('admTasksSearch')?.addEventListener('input', renderTasks);
-
-      document.addEventListener('click', ev => {
-        const taskBtn = ev.target.closest('[data-task-action]');
-        if(!taskBtn) return;
-        const taskId = taskBtn.getAttribute('data-task-id');
-        const action = taskBtn.getAttribute('data-task-action');
-        const task = TASKS_CACHE.find(item => String(item.id) === String(taskId));
-        if(!task) return;
-        if(action === 'edit'){
-          fillTaskForm(task);
-        }else if(action === 'complete'){
-          updateTaskStatus(taskId, 'completed').catch(err => console.error(err));
-        }else if(action === 'archive'){
-          updateTaskStatus(taskId, 'archived').catch(err => console.error(err));
-        }else if(action === 'reopen'){
-          updateTaskStatus(taskId, 'open').catch(err => console.error(err));
-        }
-      });
-      TASKS_UI_READY = true;
-    }
-    await loadTasks();
-    if(!CURRENT_TASK_ID) resetTaskForm({ keepMessage:true });
-  }
-
-
-
   async function loadDiagnostics(){
     const data = {
       users: (await anwLoadSafe(KEY_USERS, [])).length,
@@ -3012,19 +2247,16 @@
   });
 
   byId('btnCloseResident')?.addEventListener('click', closeResidentModal);
-  byId('btnSaveResident')?.addEventListener('click', async () => { await saveCurrentResident(); closeResidentModal(); });
+  byId('btnSaveResident')?.addEventListener('click', () => saveCurrentResident());
   byId('btnApprove')?.addEventListener('click', async () => { await saveCurrentResident('approved'); closeResidentModal(); });
   byId('btnReject')?.addEventListener('click', async () => { await saveCurrentResident('rejected'); closeResidentModal(); });
   byId('btnSuspendResident')?.addEventListener('click', async () => { await saveCurrentResident('suspended'); closeResidentModal(); });
   byId('btnRemoveResident')?.addEventListener('click', async () => {
     if(!CURRENT_RESIDENT) return;
     const users = await anwLoadSafe(KEY_USERS, []);
-    const targetEmail = normEmail(CURRENT_RESIDENT.email || CURRENT_RESIDENT.userEmail || CURRENT_RESIDENT.loginEmail || CURRENT_RESIDENT.netlifyEmail || '');
-    const idx = getCanonicalResidentIndex(users, targetEmail);
-    if(idx < 0) return;
-    users.splice(idx, 1);
-    await anwSaveSafe(KEY_USERS, users);
-    RESIDENTS_CACHE = users;
+    const next = users.filter(u => String(u.email||'').toLowerCase() !== String(CURRENT_RESIDENT.email||'').toLowerCase());
+    await anwSaveSafe(KEY_USERS, next);
+    RESIDENTS_CACHE = next;
     closeResidentModal();
     renderResidents('all');
   });
@@ -3211,7 +2443,6 @@
         loadReports(),
         loadProjects(),
         loadAccessControl(),
-        ensureVolunteerTasksUi(),
         loadDiagnostics()
       ]);
     }catch(err){
@@ -3284,6 +2515,51 @@ document.addEventListener("DOMContentLoaded", function(){
     }
   }catch(e){}
 });
+</script>
+
+
+<script>
+// FIX: persist bin imports into anw_notices
+(function(){
+  function saveBins(imported){
+    try{
+      const KEY = 'anw_notices';
+      let existing = JSON.parse(localStorage.getItem(KEY) || '[]');
+
+      // remove old bin imports
+      existing = existing.filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
+
+      // add new
+      const now = new Date().toISOString();
+      const mapped = (imported || []).map(item => ({
+        id: 'bin_' + Math.random().toString(36).slice(2),
+        title: item.title || 'Bin Collection',
+        message: item.message || '',
+        category: 'Bins',
+        created_at: now,
+        meta: { type: 'bin_collection_import', raw: item }
+      }));
+
+      const updated = [...existing, ...mapped];
+      localStorage.setItem(KEY, JSON.stringify(updated));
+      console.log('[BIN FIX] Saved', mapped.length, 'items');
+    }catch(e){
+      console.error('[BIN FIX ERROR]', e);
+    }
+  }
+
+  // hook into global if exists
+  const original = window.importPandaSchedule;
+  if(typeof original === 'function'){
+    window.importPandaSchedule = async function(){
+      const result = await original.apply(this, arguments);
+      if(window.imported){
+        saveBins(window.imported);
+      }
+      return result;
+    }
+  }
+})();
 </script>
 
 </body>
