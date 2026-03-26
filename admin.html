@@ -24,6 +24,50 @@
 
 .logout-btn-inline{min-width:104px;}
 
+
+  /* Full-screen resident profile modal */
+  #modalResident{
+    position:fixed !important;
+    inset:0 !important;
+    z-index:9999 !important;
+    background:rgba(15,23,42,.38) !important;
+    padding:28px 20px !important;
+    overflow:auto !important;
+  }
+  #modalResident .modal-content{
+    width:min(1100px, calc(100vw - 40px)) !important;
+    margin:0 auto !important;
+    background:#fff !important;
+  }
+  #modalResident .modal-header{
+    position:sticky;
+    top:0;
+    z-index:2;
+    display:flex;
+    justify-content:flex-end;
+    padding:16px 20px 0 !important;
+    background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.94));
+    backdrop-filter:blur(6px);
+  }
+  #modalResident .modal-header > div{
+    display:none !important;
+  }
+  #modalResident .modal-body{
+    padding:8px 24px 24px !important;
+  }
+  #modalResident .resident-hero{
+    padding-top:0 !important;
+  }
+  #modalResident .resident-summary-card{
+    margin-top:12px !important;
+  }
+  #modalResident .admin-controls-strip{
+    display:none !important;
+  }
+  #modalResident .resident-photo-note{
+    text-align:center;
+  }
+
 </style>
 
 <style>
@@ -817,7 +861,7 @@
           <h3 style="margin:0;">Resident details</h3>
           <p class="sub" style="margin-top:0.25rem;">Email, Eircode and Registration No are protected and cannot be changed.</p>
         </div>
-        <button type="button" class="btn-line small" id="btnCloseResident">Close</button>
+        <button type="button" class="btn-line small" id="btnCloseResident">Done</button>
       </div>
 
       <div class="modal-body">
@@ -887,22 +931,6 @@
   </section>
 </div>
 
-<div class="admin-controls-strip">
-  <div class="field admin-status-field">
-    <label>Status</label>
-    <select id="mStatus">
-      <option value="pending">Pending</option>
-      <option value="approved">Approved</option>
-      <option value="active">Active</option>
-      <option value="rejected">Rejected</option>
-      <option value="suspended">Suspended</option>
-    </select>
-  </div>
-  <div class="admin-controls-note">
-    The admin reviews the resident profile here. Volunteer roles are shown for follow-up, while any extra role choices remain under the resident’s own control.
-  </div>
-</div>
-
 <div class="admin-hidden-fields" aria-hidden="true">
   <input id="mAddress" type="hidden">
   <select id="mType" tabindex="-1">
@@ -914,6 +942,15 @@
   <input id="mPhone" type="hidden">
   <input id="mEmail" type="hidden" disabled>
   <input id="mEir" type="hidden">
+  <select id="mStatus" tabindex="-1">
+    <option value="pending">Pending</option>
+    <option value="approved">Approved</option>
+    <option value="active">Active</option>
+    <option value="rejected">Rejected</option>
+    <option value="suspended">Suspended</option>
+  </select>
+  <input id="mCoord" type="checkbox" hidden>
+  <input id="mVol" type="checkbox" hidden>
 </div>
 <div class="actions" id="residentModalActions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
           <button type="button" class="btn-line small" id="btnReject">Reject</button>
@@ -2040,38 +2077,41 @@
     CURRENT_RESIDENT = user || null;
     if(!CURRENT_RESIDENT) return;
 
-    byId('modalResident').style.display = 'block';
+    const modal = byId('modalResident');
+    if(modal) modal.style.display = 'block';
+
     const regLabel = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
     const statusLabel = CURRENT_RESIDENT.status || 'pending';
-    byId('mStatus').value = statusLabel;
-    byId('mEmail').value = CURRENT_RESIDENT.email || '';
-    byId('mEir').value = CURRENT_RESIDENT.eircode || '';
-    byId('mPhone').value = CURRENT_RESIDENT.phone || '';
-    byId('mAddress').value = CURRENT_RESIDENT.address || '';
-    byId('mType').value = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '';
-    byId('mMgmt').value = CURRENT_RESIDENT.managementCompany || CURRENT_RESIDENT.mgmt || '';
+    const residentType = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '—';
+
+    if(byId('mStatus')) byId('mStatus').value = statusLabel;
+    if(byId('mEmail')) byId('mEmail').value = CURRENT_RESIDENT.email || '';
+    if(byId('mEir')) byId('mEir').value = CURRENT_RESIDENT.eircode || '';
+    if(byId('mPhone')) byId('mPhone').value = CURRENT_RESIDENT.phone || '';
+    if(byId('mAddress')) byId('mAddress').value = CURRENT_RESIDENT.address || '';
+    if(byId('mType')) byId('mType').value = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '';
+    if(byId('mMgmt')) byId('mMgmt').value = CURRENT_RESIDENT.managementCompany || CURRENT_RESIDENT.mgmt || '';
 
     const roles = normList(CURRENT_RESIDENT.roles).concat(normList(CURRENT_RESIDENT.role));
-    const residentType = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '—';
     const primaryRole = roles.includes('admin') ? 'Admin'
       : roles.includes('owner') ? 'Owner'
       : roles.includes('street_admin') ? 'Street Coordinator'
       : roles.includes('volunteer') ? 'Volunteer'
       : (residentType || 'Resident');
 
-    byId('mCoord').checked = roles.includes('street_admin') || !!CURRENT_RESIDENT.streetCoordinator;
-    byId('mVol').checked = roles.includes('volunteer') || !!CURRENT_RESIDENT.volunteer;
+    if(byId('mCoord')) byId('mCoord').checked = roles.includes('street_admin') || !!CURRENT_RESIDENT.streetCoordinator;
+    if(byId('mVol')) byId('mVol').checked = roles.includes('volunteer') || !!CURRENT_RESIDENT.volunteer;
 
     const vrList = normList(CURRENT_RESIDENT.volunteerRoles);
     const vrObj = CURRENT_RESIDENT.vol_roles || CURRENT_RESIDENT.volunteer_roles || {};
-    byId('mVStreet').checked = vrList.includes('Street watch / patrols') || !!vrObj.streetWatch;
-    byId('mVLeaf').checked = vrList.includes('Distribute leaflets') || !!vrObj.leaflets;
-    byId('mVTech').checked = vrList.includes('Tech support') || !!vrObj.tech || !!vrObj.techSupport;
-    byId('mVEld').checked = vrList.includes('Elderly checks') || !!vrObj.elderly;
-    byId('mVClean').checked = vrList.includes('Community clean-up') || !!vrObj.cleanUp || !!vrObj.cleanup;
-    byId('mVPark').checked = vrList.includes('Parking assistance') || !!vrObj.parkingAssistance || !!vrObj.parking;
-    byId('mVMeet').checked = vrList.includes('Meeting organiser') || !!vrObj.meetings;
-    byId('mVTrans').checked = vrList.includes('Translation') || !!vrObj.translation;
+    if(byId('mVStreet')) byId('mVStreet').checked = vrList.includes('Street watch / patrols') || !!vrObj.streetWatch;
+    if(byId('mVLeaf')) byId('mVLeaf').checked = vrList.includes('Distribute leaflets') || !!vrObj.leaflets;
+    if(byId('mVTech')) byId('mVTech').checked = vrList.includes('Tech support') || !!vrObj.tech || !!vrObj.techSupport;
+    if(byId('mVEld')) byId('mVEld').checked = vrList.includes('Elderly checks') || !!vrObj.elderly;
+    if(byId('mVClean')) byId('mVClean').checked = vrList.includes('Community clean-up') || !!vrObj.cleanUp || !!vrObj.cleanup;
+    if(byId('mVPark')) byId('mVPark').checked = vrList.includes('Parking assistance') || !!vrObj.parkingAssistance || !!vrObj.parking;
+    if(byId('mVMeet')) byId('mVMeet').checked = vrList.includes('Meeting organiser') || !!vrObj.meetings;
+    if(byId('mVTrans')) byId('mVTrans').checked = vrList.includes('Translation') || !!vrObj.translation;
 
     const volunteerRoleMap = [
       ['mVStreet', 'Street watch / patrols'],
@@ -2089,8 +2129,8 @@
       if(input) input.disabled = true;
     });
 
-    const activeVolunteerRoles = volunteerRoleMap.filter(([id]) => byId(id).checked).map(([, label]) => label);
-    const availableVolunteerRoles = volunteerRoleMap.filter(([id]) => !byId(id).checked).map(([, label]) => label);
+    const activeVolunteerRoles = volunteerRoleMap.filter(([id]) => byId(id) && byId(id).checked).map(([, label]) => label);
+    const availableVolunteerRoles = volunteerRoleMap.filter(([id]) => byId(id) && !byId(id).checked).map(([, label]) => label);
 
     const chips = byId('mVolunteerRolesChips');
     if(chips){
@@ -2100,8 +2140,8 @@
     }
 
     const currentAccess = [];
-    if(byId('mCoord').checked) currentAccess.push('Street Coordinator');
-    if(byId('mVol').checked) currentAccess.push('Volunteer');
+    if(byId('mCoord') && byId('mCoord').checked) currentAccess.push('Street Coordinator');
+    if(byId('mVol') && byId('mVol').checked) currentAccess.push('Volunteer');
     if(primaryRole && !currentAccess.includes(primaryRole)) currentAccess.unshift(primaryRole);
 
     const accessBox = byId('mCurrentAccessChips');
@@ -2145,20 +2185,19 @@
       }
     }
 
-    byId('mMsg').textContent = '';
+    if(byId('mMsg')) byId('mMsg').textContent = '';
 
     const status = String(CURRENT_RESIDENT.status || '').toLowerCase();
     const alreadyApproved = ['approved','active'].includes(status);
-    if(byId('btnApprove')){
-      byId('btnApprove').style.display = alreadyApproved ? 'none' : 'inline-flex';
-    }
-    if(byId('btnReject')){
-      byId('btnReject').style.display = alreadyApproved ? 'none' : 'inline-flex';
-    }
+    if(byId('btnApprove')) byId('btnApprove').style.display = alreadyApproved ? 'none' : 'inline-flex';
+    if(byId('btnReject')) byId('btnReject').style.display = alreadyApproved ? 'none' : 'inline-flex';
+
+    try{ document.body.style.overflow = 'hidden'; }catch(_){}
   }
 
   function closeResidentModal(){
-    byId('modalResident').style.display = 'none';
+    if(byId('modalResident')) byId('modalResident').style.display = 'none';
+    try{ document.body.style.overflow = ''; }catch(_){}
     CURRENT_RESIDENT = null;
   }
 
