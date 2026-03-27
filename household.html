@@ -168,6 +168,75 @@
   }
 }
 
+
+/* Household volunteer photo block */
+#volsContent .grid-2{
+  align-items:start;
+}
+#volsContent .field{
+  min-width:0;
+}
+#hvPhotoBlock{
+  margin-top:14px;
+}
+#hvPhotoBlock > label{
+  display:block;
+  margin-bottom:8px;
+}
+#volsContent .hv-photo-row{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+#volsContent .hv-photo-preview-wrap{
+  width:88px;
+  height:88px;
+  border-radius:18px;
+  border:1px solid rgba(0,0,0,.08);
+  background:#eef3f0;
+  overflow:hidden;
+  flex:0 0 88px;
+  position:relative;
+}
+#volsContent #hvPhotoPreview{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:none;
+}
+#volsContent .hv-photo-fallback{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:2rem;
+  color:#6a7b90;
+}
+#volsContent .hv-photo-actions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-width:0;
+}
+#volsContent #hvPhotoInput{
+  max-width:240px;
+}
+#volsContent .hv-name-cell{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+#volsContent .hv-name-thumb{
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  object-fit:cover;
+  border:1px solid rgba(0,0,0,.08);
+  background:#eef3f0;
+  flex:0 0 36px;
+}
+
 </style>
 <style id="page-access-style">
   footer.site-footer { position: relative; text-align: center; }
@@ -245,6 +314,21 @@
 <option value="Carer">Carer</option>
 <option value="Other">Other</option>
 </select>
+
+<div id="hvPhotoBlock" class="hv-photo-block">
+  <label for="hvPhotoInput">Volunteer photo</label>
+  <div class="hv-photo-row">
+    <div class="hv-photo-preview-wrap">
+      <img id="hvPhotoPreview" alt="Volunteer profile photo preview"/>
+      <div id="hvPhotoFallback" class="hv-photo-fallback">👤</div>
+    </div>
+    <div class="hv-photo-actions">
+      <input id="hvPhotoInput" type="file" accept="image/jpeg,image/png"/>
+      <div class="tiny muted">JPG / PNG</div>
+      <button class="btn btn-line small" id="hvRemovePhoto" type="button">Remove photo</button>
+    </div>
+  </div>
+</div>
 </div>
 <div class="field">
 <label>Activities they can help with</label>
@@ -505,6 +589,11 @@
   const hvMsg = document.getElementById('hvMsg');
   const hvTbody = document.getElementById('hvTbody');
   const hvEmpty = document.getElementById('hvEmpty');
+  const hvPhotoInput = document.getElementById('hvPhotoInput');
+  const hvPhotoPreview = document.getElementById('hvPhotoPreview');
+  const hvPhotoFallback = document.getElementById('hvPhotoFallback');
+  const hvRemovePhoto = document.getElementById('hvRemovePhoto');
+  let __hvPhotoData = '';
 
   const VOL_ROLE_LABEL_ALIASES = {
     streetwatch:'Street watch / patrols',
@@ -618,9 +707,55 @@
     return out.filter(Boolean);
   }
 
+
+  function setVolunteerPhotoPreview(src){
+    __hvPhotoData = src || '';
+    if(hvPhotoPreview){
+      if(__hvPhotoData){
+        hvPhotoPreview.src = __hvPhotoData;
+        hvPhotoPreview.style.display = 'block';
+      }else{
+        hvPhotoPreview.src = '';
+        hvPhotoPreview.style.display = 'none';
+      }
+    }
+    if(hvPhotoFallback){
+      hvPhotoFallback.style.display = __hvPhotoData ? 'none' : 'flex';
+    }
+    if(hvRemovePhoto){
+      hvRemovePhoto.style.display = __hvPhotoData ? 'inline-flex' : 'none';
+    }
+  }
+
+  if(hvPhotoInput){
+    hvPhotoInput.addEventListener('change', function(){
+      const file = this.files && this.files[0];
+      if(!file) return;
+      if(!/^image\/(jpeg|png)$/i.test(file.type)){
+        hvMsg.textContent = 'Please choose a JPG or PNG image.';
+        this.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        setVolunteerPhotoPreview(String(ev.target && ev.target.result || ''));
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if(hvRemovePhoto){
+    hvRemovePhoto.addEventListener('click', function(){
+      if(hvPhotoInput) hvPhotoInput.value = '';
+      setVolunteerPhotoPreview('');
+    });
+  }
+
   function clearVolunteerForm(){
     hvName.value=''; hvEmail.value=''; hvPhone.value=''; hvRel.value='';
     hvRolesBox.querySelectorAll('input[type="checkbox"]').forEach(ch=> ch.checked=false);
+    if(hvPhotoInput) hvPhotoInput.value='';
+    setVolunteerPhotoPreview('');
     hvMsg.textContent='';
   }
 
@@ -647,6 +782,7 @@
       name, email, phone,
       relationship: rel,
       roles: roles,
+      photo: __hvPhotoData || '',
       createdAt: new Date().toISOString()
     });
 
@@ -692,8 +828,9 @@
     arr.forEach((v,idx)=>{
       const roles = Array.isArray(v.roles) ? v.roles.join(', ') : '';
       const tr = document.createElement('tr');
+      const photoHtml = v.photo ? `<img class="hv-name-thumb" src="${esc(v.photo)}" alt="">` : `<span class="hv-name-thumb" style="display:inline-flex;align-items:center;justify-content:center;color:#6a7b90;">👤</span>`;
       tr.innerHTML = `
-        <td>${esc(v.name)}</td>
+        <td><div class="hv-name-cell">${photoHtml}<span>${esc(v.name)}</span></div></td>
         <td>${esc(v.email)}</td>
         <td>${esc(v.phone)}</td>
         <td>${esc(v.relationship || '')}</td>
