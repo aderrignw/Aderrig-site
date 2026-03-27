@@ -121,6 +121,27 @@
     font-weight:500;
   }
 
+
+  #modalResident .household-list{
+    display:grid;
+    gap:8px;
+    margin-top:4px;
+  }
+  #modalResident .household-line{
+    font-weight:600;
+    margin:0;
+    line-height:1.45;
+    word-break:break-word;
+  }
+  #modalResident .household-line .muted{
+    color:#6a7b90;
+    font-weight:500;
+  }
+  #modalResident .household-empty{
+    color:#6a7b90;
+    font-weight:500;
+  }
+
 </style>
 
 <style>
@@ -353,8 +374,8 @@
   }
   #modalResident .admin-review-grid{
     display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:18px 22px;
+    grid-template-columns:1fr;
+    gap:16px;
     margin-top:18px;
   }
   #modalResident .admin-review-card{
@@ -959,6 +980,12 @@
     <h4>Current access</h4>
     <p class="admin-review-note">A quick admin summary of the resident’s active community roles.</p>
     <div class="role-chip-section" id="mCurrentAccessChips"></div>
+  </section>
+
+  <section class="admin-review-card" id="mHouseholdSection">
+    <h4>Household</h4>
+    <p class="admin-review-note">Residents linked to this household, when available.</p>
+    <div id="mHouseholdList" class="household-list"></div>
   </section>
 
   <section class="admin-review-card">
@@ -2201,16 +2228,24 @@
 
     const householdBox = byId('mHouseholdList');
     if(householdBox){
-      const members = Array.isArray(CURRENT_RESIDENT.household) ? CURRENT_RESIDENT.household : [];
+      const householdCandidates = []
+        .concat(Array.isArray(CURRENT_RESIDENT.household) ? CURRENT_RESIDENT.household : [])
+        .concat(Array.isArray(CURRENT_RESIDENT.households) ? CURRENT_RESIDENT.households : [])
+        .concat(Array.isArray(CURRENT_RESIDENT.familyMembers) ? CURRENT_RESIDENT.familyMembers : [])
+        .concat(Array.isArray(CURRENT_RESIDENT.members) ? CURRENT_RESIDENT.members : []);
+
+      const members = householdCandidates.filter(Boolean);
       if(members.length){
-        householdBox.innerHTML = members.map(m => {
-          const name = m.name || '';
-          const phone = m.phone || '';
-          const email = m.email || '';
-          return `<div class="household-line">${esc(name)} · <span class="muted">${esc(phone)} · ${esc(email)}</span></div>`;
+        householdBox.innerHTML = members.map((m) => {
+          const name = m.name || m.fullName || m.memberName || 'Unnamed resident';
+          const phone = m.phone || m.mobile || m.tel || '';
+          const email = m.email || m.mail || '';
+          const relation = m.relation || m.relationship || m.kinship || '';
+          const parts = [relation, phone, email].filter(Boolean);
+          return `<div class="household-line">${esc(name)}${parts.length ? ` · <span class="muted">${esc(parts.join(' · '))}</span>` : ''}</div>`;
         }).join('');
       } else {
-        householdBox.innerHTML = `<div class="muted">No household members</div>`;
+        householdBox.innerHTML = `<div class="household-empty">Não há households informado.</div>`;
       }
     }
 
