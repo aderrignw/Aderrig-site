@@ -84,11 +84,16 @@
     .toast .msg{ font-size:.95rem; }
     .toast .muted{ font-size:.85rem; opacity:.85; }
   
-/* ===== Household layout improvement ===== */
+/* ===== Household layout adjustment: compact activities in 2 columns ===== */
+#volsContent{
+  margin-top:10px;
+}
+
 #volsContent .grid-3{
   display:grid;
   grid-template-columns:repeat(3, minmax(0,1fr));
-  gap:12px;
+  gap:14px;
+  align-items:start;
 }
 
 #volsContent .grid-2{
@@ -98,7 +103,19 @@
   align-items:start;
 }
 
+#volsContent .field{
+  margin-bottom:0;
+}
+
+#volsContent label{
+  display:block;
+  margin-bottom:8px;
+}
+
 #hvRolesBox{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px 16px;
   border:1px solid rgba(0,0,0,.08);
   border-radius:14px;
   padding:12px;
@@ -107,18 +124,18 @@
 }
 
 #hvRolesBox .role-row{
-  padding:8px 6px;
-  border-bottom:1px solid rgba(0,0,0,.05);
-}
-
-#hvRolesBox .role-row:last-child{
-  border-bottom:0;
+  border-bottom:none;
+  padding:6px 0;
 }
 
 #volsContent .actions{
-  margin-top:14px;
+  margin-top:14px !important;
   padding-top:10px;
   border-top:1px solid rgba(0,0,0,.06);
+}
+
+#volsContent .table-wrap{
+  margin-top:8px;
 }
 
 #volsContent table{
@@ -141,6 +158,12 @@
     grid-template-columns:1fr;
   }
   #volsContent .grid-2{
+    grid-template-columns:1fr;
+  }
+}
+
+@media (max-width: 700px){
+  #hvRolesBox{
     grid-template-columns:1fr;
   }
 }
@@ -149,68 +172,6 @@
 <style id="page-access-style">
   footer.site-footer { position: relative; text-align: center; }
   footer.site-footer .page-access { position: absolute; left: 0; color: green; font-weight: normal; }
-
-/* ===== Household layout improvement ===== */
-#volsContent .grid-3{
-  display:grid;
-  grid-template-columns:repeat(3, minmax(0,1fr));
-  gap:12px;
-}
-
-#volsContent .grid-2{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:16px;
-  align-items:start;
-}
-
-#hvRolesBox{
-  border:1px solid rgba(0,0,0,.08);
-  border-radius:14px;
-  padding:12px;
-  background:#fbfdfc;
-  min-height:160px;
-}
-
-#hvRolesBox .role-row{
-  padding:8px 6px;
-  border-bottom:1px solid rgba(0,0,0,.05);
-}
-
-#hvRolesBox .role-row:last-child{
-  border-bottom:0;
-}
-
-#volsContent .actions{
-  margin-top:14px;
-  padding-top:10px;
-  border-top:1px solid rgba(0,0,0,.06);
-}
-
-#volsContent table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-#volsContent th{
-  background:#fbfdfc;
-  font-weight:600;
-}
-
-#volsContent th,
-#volsContent td{
-  padding:10px;
-}
-
-@media (max-width: 900px){
-  #volsContent .grid-3{
-    grid-template-columns:1fr;
-  }
-  #volsContent .grid-2{
-    grid-template-columns:1fr;
-  }
-}
-
 </style>
 </head>
 <body data-acl-loading="true">
