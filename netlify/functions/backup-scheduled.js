@@ -6,6 +6,28 @@ function getCentralStore(context){
   return getStore(storeName);
 }
 
+
+async function safeGetJson(store, key, fallback = null){
+  try {
+    const value = await store.get(key, { type: "json" });
+    return value ?? fallback;
+  } catch (_) {
+    try {
+      const raw = await store.get(key);
+      if (raw == null || raw === "") return fallback;
+      if (typeof raw === "string") return JSON.parse(raw);
+      if (raw && typeof raw === "object") return raw;
+      return fallback;
+    } catch (_err) {
+      return fallback;
+    }
+  }
+}
+
+async function safeSetJson(store, key, value, options = {}){
+  return store.set(key, JSON.stringify(value), options);
+}
+
 const ADMIN_TOKEN = (process?.env?.ANW_ADMIN_TOKEN || "").trim();
 function isAuthorized(req) {
   if (!ADMIN_TOKEN) return false;
@@ -64,7 +86,7 @@ function shouldPurgeRemovedUser(user, now = Date.now()){
 }
 
 async function purgeExpiredRemovedResidents(store){
-  const users = (await store.get("anw_users", { type: "json" })) ?? [];
+  const users = (await safeGetJson(store, "anw_users", [])) ?? [];
   if (!Array.isArray(users) || !users.length) return { purged: 0, remaining: Array.isArray(users) ? users.length : 0 };
 
   const kept = [];
@@ -78,7 +100,7 @@ async function purgeExpiredRemovedResidents(store){
   }
 
   if (purged > 0) {
-    await store.set("anw_users", kept, { metadata: { updatedAt: new Date().toISOString(), reason: "purge-expired-removed-users" } });
+    await safeSetJson(store, "anw_users", kept, { metadata: { updatedAt: new Date().toISOString(), reason: "purge-expired-removed-users" } });
   }
 
   return { purged, remaining: kept.length };
@@ -112,9 +134,9 @@ export default async (req, context) => {
   try {
     const store = getCentralStore(context);
 
-    const settings = (await store.get("anw_backup_settings", { type: "json" })) ?? { enabled: true, schedule: "0 2 * * *", timezone: "UTC" };
-    if (!(await store.get("anw_backup_settings", { type: "json" }))) {
-      await store.set("anw_backup_settings", Object.assign({}, settings, { updatedAt: new Date().toISOString() }), {
+    const settings = (await safeGetJson(store, "anw_backup_settings", { enabled: true, schedule: "0 2 * * *", timezone: "UTC" })) ?? { enabled: true, schedule: "0 2 * * *", timezone: "UTC" };
+    if (!(await safeGetJson(store, "anw_backup_settings", null))) {
+      await safeSetJson(store, "anw_backup_settings", Object.assign({}, settings, { updatedAt: new Date().toISOString() }), {
         metadata: { updatedAt: new Date().toISOString(), reason: "initial-enable-automatic-backup" }
       });
     }
@@ -132,18 +154,18 @@ export default async (req, context) => {
     const snapshot = { id, createdAt, includes: DATA_KEYS, purgeResult, data: {} };
 
     for (const key of DATA_KEYS) {
-      const v = await store.get(key, { type: "json" });
+      const v = await safeGetJson(store, key, null);
       snapshot.data[key] = v ?? null;
     }
 
-    await store.set(`anw_backup_${id}`, snapshot, { metadata: { createdAt, kind: "backup" } });
+    await safeSetJson(store, `anw_backup_${id}`, snapshot, { metadata: { createdAt, kind: "backup" } });
 
     const indexKey = "anw_backups_index";
-    const idx = (await store.get(indexKey, { type: "json" })) ?? { items: [] };
+    const idx = (await safeGetJson(store, indexKey, { items: [] })) ?? { items: [] };
     idx.items = Array.isArray(idx.items) ? idx.items : [];
     idx.items.unshift({ id, createdAt, includes: DATA_KEYS, purgeResult });
     idx.items = idx.items.slice(0, 100);
-    await store.set(indexKey, idx, { metadata: { updatedAt: createdAt } });
+    await safeSetJson(store, indexKey, idx, { metadata: { updatedAt: createdAt } });
 
     return new Response(JSON.stringify({ ok: true, id, scheduled: true, purgeResult }), {
       status: 200,
