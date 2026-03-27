@@ -159,8 +159,8 @@ main p {
 <div class="tiny" id="teamBallotContent">
 <p class="muted">
             When there are approved candidates for Area Coordinator or Assistant Area Coordinator,
-            they will appear here so that registered residents can cast a simple Yes/No support
-            vote for each role.
+            they will appear here so that approved owner residents connected to their corresponding
+            Eircode in the main register can cast a simple Yes/No support vote for each role.
           </p>
 </div>
 </section>
@@ -194,10 +194,10 @@ main p {
 </div>
 <div style="margin-top:10px; padding:8px 10px; border-radius:10px; background:#f9fafb; border:1px dashed var(--line);">
 <p class="tiny muted" style="margin:0;">
-            When you are logged in as a registered household, any role that requires resident
+            When you are logged in as an approved owner account linked to the main Eircode register, any role that requires resident
             approval (Area Coordinator, Assistant Area Coordinator) will show a simple
-            <strong>Yes / No</strong> voting control next to each candidate. One vote per
-            residence (one Eircode). You can always click on the candidate’s name to read their
+            <strong>Yes / No</strong> voting control next to each candidate. One valid vote per
+            residence (one Eircode) is permitted. Tenant accounts do not receive and cannot access voting. You can always click on the candidate’s name to read their
             background before voting.
           </p>
 </div>
@@ -206,12 +206,13 @@ main p {
 <h3>Appointment &amp; voting rules</h3>
 <p class="tiny justify">
           Two key roles are decided by <strong>resident vote</strong>: the <strong>Area Coordinator</strong>
-          and <strong>Assistant Area Coordinator</strong>. Each registered household (one Eircode) may cast
-          a single Yes/No vote for each candidate.
+          and <strong>Assistant Area Coordinator</strong>. Only approved <strong>owner</strong> accounts linked to their
+          corresponding residence in the main Eircode register may cast a single Yes/No vote for each candidate.
+          <strong>Tenant</strong> accounts are not eligible to vote and do not receive access to the ballot.
         </p>
 <p class="tiny justify" style="margin-top:6px;">
           A candidate is considered <strong>elected</strong> once at least <strong>60% of valid Yes votes</strong>
-          from active households is reached. Other roles (Street Coordinators, general Volunteers, Project Volunteers
+          from approved owner households connected to their respective Eircode is reached. Other roles (Street Coordinators, general Volunteers, Project Volunteers
           and Platform / Admin Support) are <strong>approved by administrators</strong> and are
           <strong>not subject to a public resident ballot</strong>.
         </p>
@@ -386,10 +387,42 @@ main p {
         if (!email) return null;
 
         const users = loadUsers();
-        const idx = users.findIndex(u => normEmail(u.email) === normEmail(email));
+        const idx = users.findIndex(u => {
+          const emails = [u && u.email, u && u.userEmail, u && u.loginEmail, u && u.netlifyEmail]
+            .map(v => normEmail(v))
+            .filter(Boolean);
+          return emails.includes(normEmail(email));
+        });
         if (idx === -1) return null;
 
         return { user: users[idx], index: idx, users };
+      }
+
+      function getResidentTypeTokens(u) {
+        const values = [u && u.residentType, u && u.type, u && u.role, u && u.access, u && u.roles];
+        return values
+          .flatMap(v => Array.isArray(v) ? v : [v])
+          .map(v => String(v || '').trim().toLowerCase())
+          .filter(Boolean);
+      }
+
+      function isOwnerResident(u) {
+        if (!u || !isApprovedUser(u)) return false;
+        const tokens = getResidentTypeTokens(u);
+        return tokens.some(v => ['owner','homeowner','proprietario','proprietário'].includes(v));
+      }
+
+      function isTenantResident(u) {
+        const tokens = getResidentTypeTokens(u);
+        return tokens.some(v => ['tenant','tennant','locatario','locatário'].includes(v));
+      }
+
+      function isEligibleOwnerVoter(u, users) {
+        if (!u || !isOwnerResident(u)) return false;
+        const eir = normEir(u.eircode || u.eir || '');
+        if (!eir) return false;
+        const list = Array.isArray(users) ? users : loadUsers();
+        return list.some(row => isOwnerResident(row) && normEir(row.eircode || row.eir || '') === eir && normEmail(row.email || row.userEmail || row.loginEmail || row.netlifyEmail || '') === normEmail(u.email || u.userEmail || u.loginEmail || u.netlifyEmail || ''));
       }
 
       // ==========================
@@ -528,10 +561,10 @@ main p {
       }
 
       function getEligibleHouseholdsCount(users) {
-        // One vote per Eircode (approved/active)
+        // One valid vote per approved owner household (main Eircode register)
         const set = new Set();
         users.forEach(u => {
-          if (!isApprovedUser(u)) return;
+          if (!isOwnerResident(u)) return;
           const e = normEir(u.eircode || u.eir || '');
           if (e) set.add(e);
         });
@@ -542,10 +575,13 @@ main p {
         return votes.some(v => normEir(v.voterEircode) === normEir(voterEir) && v.candidateKey === candidateKey);
       }
 
-      function upsertVote(votes, voterEir, candidateKey, value) {
-        const idx = votes.findIndex(v => normEir(v.voterEircode) === normEir(voterEir) && v.candidateKey === candidateKey);
+      function upsertVote(votes, voterUser, candidateKey, value) {
+        const voterEir = normEir(voterUser && (voterUser.eircode || voterUser.eir || ''));
+        const voterEmail = normEmail(voterUser && (voterUser.email || voterUser.userEmail || voterUser.loginEmail || voterUser.netlifyEmail || ''));
+        const idx = votes.findIndex(v => normEir(v.voterEircode) === voterEir && v.candidateKey === candidateKey);
         const rec = {
-          voterEircode: normEir(voterEir),
+          voterEircode: voterEir,
+          voterEmail,
           candidateKey,
           vote: value,
           at: Date.now()
@@ -555,10 +591,13 @@ main p {
         return votes;
       }
 
-      function countVotesForCandidate(votes, candidateKey) {
+      function countVotesForCandidate(votes, candidateKey, users) {
         let yes = 0, no = 0;
+        const validOwnerEmails = new Set((users || []).filter(isOwnerResident).map(u => normEmail(u.email || u.userEmail || u.loginEmail || u.netlifyEmail || '')).filter(Boolean));
         votes.forEach(v => {
           if (v.candidateKey !== candidateKey) return;
+          const voterEmail = normEmail(v.voterEmail || '');
+          if (!voterEmail || !validOwnerEmails.has(voterEmail)) return;
           if (String(v.vote).toLowerCase() === 'yes') yes++;
           if (String(v.vote).toLowerCase() === 'no') no++;
         });
@@ -604,6 +643,7 @@ main p {
 
         const totalHouseholds = getEligibleHouseholdsCount(users);
         const voterEir = logged && logged.user ? (logged.user.eircode || logged.user.eir || '') : '';
+        const voterIsEligibleOwner = !!(logged && logged.user && isEligibleOwnerVoter(logged.user, users));
 
         function mkRow(nameHTML, roleHTML, scope, basis, votingHTML) {
           const tr = document.createElement('tr');
@@ -684,12 +724,12 @@ main p {
 
           list.forEach(u => {
             const key = makeKey(u, u.candidate);
-            const counts = countVotesForCandidate(votes, key);
+            const counts = countVotesForCandidate(votes, key, users);
             const statusText = updateVotingStatusText(settings, totalHouseholds, counts);
 
             let controls = `<span class="tiny">${esc(statusText)}</span>`;
 
-            const allowVote = logged && logged.user && isApprovedUser(logged.user) && nowCanVote && roleOpen;
+            const allowVote = logged && logged.user && voterIsEligibleOwner && nowCanVote && roleOpen;
             if (allowVote) {
               const already = hasHouseholdVoted(votes, voterEir, key);
               const disabled = (!voterEir || already) ? 'disabled' : '';
@@ -702,7 +742,7 @@ main p {
                 </div>
               `;
             } else {
-              controls += `<div class="tiny muted" style="margin-top:6px;">Login with an approved account to vote (during the election period).</div>`;
+              controls += `<div class="tiny muted" style="margin-top:6px;">Voting is available only to approved owner accounts in the main Eircode register during the election period.</div>`;
             }
 
             mkRow(candidateNameLink(u), roleLink(er.label, er.roleKey === 'area' ? 'area-coordinator' : 'assistant-area-coordinator'), er.scope, er.basis, controls);
@@ -760,12 +800,12 @@ main p {
             const key = btn.getAttribute('data-key');
             const logged2 = getLoggedUser();
             if (!logged2 || !logged2.user) { alert('Please log in.'); return; }
-            if (!isApprovedUser(logged2.user)) { alert('Your account must be approved to vote.'); return; }
+            if (!isEligibleOwnerVoter(logged2.user, logged2.users)) { alert('Only approved owner accounts from the main Eircode register can vote.'); return; }
             const e = logged2.user.eircode || logged2.user.eir || '';
             if (!e) { alert('Missing Eircode. Please update your profile.'); return; }
 
             let votes2 = loadVotes();
-            votes2 = upsertVote(votes2, e, key, v);
+            votes2 = upsertVote(votes2, logged2.user, key, v);
             saveVotes(votes2);
 
             renderTeamTable();
