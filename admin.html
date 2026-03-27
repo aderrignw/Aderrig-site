@@ -142,6 +142,41 @@
     font-weight:500;
   }
 
+
+  #modalResident .household-line{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:0;
+    line-height:1.45;
+    word-break:break-word;
+  }
+  #modalResident .household-photo{
+    width:38px;
+    height:38px;
+    border-radius:10px;
+    object-fit:cover;
+    border:1px solid rgba(0,0,0,.08);
+    background:#eef3f0;
+    flex:0 0 38px;
+  }
+  #modalResident .household-photo-fallback{
+    width:38px;
+    height:38px;
+    border-radius:10px;
+    border:1px solid rgba(0,0,0,.08);
+    background:#eef3f0;
+    color:#6a7b90;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 38px;
+    font-size:1rem;
+  }
+  #modalResident .household-text{
+    min-width:0;
+  }
+
 </style>
 
 <style>
@@ -2232,7 +2267,8 @@
         .concat(Array.isArray(CURRENT_RESIDENT.household) ? CURRENT_RESIDENT.household : [])
         .concat(Array.isArray(CURRENT_RESIDENT.households) ? CURRENT_RESIDENT.households : [])
         .concat(Array.isArray(CURRENT_RESIDENT.familyMembers) ? CURRENT_RESIDENT.familyMembers : [])
-        .concat(Array.isArray(CURRENT_RESIDENT.members) ? CURRENT_RESIDENT.members : []);
+        .concat(Array.isArray(CURRENT_RESIDENT.members) ? CURRENT_RESIDENT.members : [])
+        .concat(Array.isArray(CURRENT_RESIDENT.householdVolunteers) ? CURRENT_RESIDENT.householdVolunteers : []);
 
       const members = householdCandidates.filter(Boolean);
       if(members.length){
@@ -2241,9 +2277,17 @@
           const phone = m.phone || m.mobile || m.tel || '';
           const email = m.email || m.mail || '';
           const relation = m.relation || m.relationship || m.kinship || '';
+          const photo = m.photo || m.photoUrl || m.photoURL || m.image || '';
           const parts = [relation, phone, email].filter(Boolean);
-          return `<div class="household-line">${esc(name)}${parts.length ? ` · <span class="muted">${esc(parts.join(' · '))}</span>` : ''}</div>`;
+          const photoHtml = photo
+            ? `<img class="household-photo" src="${esc(photo)}" alt="">`
+            : `<span class="household-photo-fallback">👤</span>`;
+          return `<div class="household-line">${photoHtml}<div class="household-text">${esc(name)}${parts.length ? ` · <span class="muted">${esc(parts.join(' · '))}</span>` : ''}</div></div>`;
         }).join('');
+      } else {
+        householdBox.innerHTML = `<div class="household-empty">No household members recorded.</div>`;
+      }
+    }).join('');
       } else {
         householdBox.innerHTML = `<div class="household-empty">No household members recorded.</div>`;
       }
