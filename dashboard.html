@@ -933,6 +933,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       if(isProfileSaving) return;
       await resolveDashboardContext();
       syncInterestAccess();
+      syncElectionAccess();
       if(avatarImg) avatarImg.src = getStoredAvatar();
       renderInterest();
       renderNotices();
@@ -944,6 +945,35 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   function isApprovedResident(profile){
     const status = statusFromUser(profile);
     return !!(profile && (profile.approved === true || profile.active === true || status === 'active' || status === 'approved'));
+  }
+
+  function isOwnerResidentProfile(profile){
+    if(!profile || !isApprovedResident(profile)) return false;
+    const roles = [profile?.role, profile?.type, profile?.residentType, profile?.access]
+      .flatMap(v => Array.isArray(v) ? v : [v])
+      .map(v => String(v || '').trim().toLowerCase())
+      .filter(Boolean);
+    return roles.some(v => ['owner','homeowner','proprietario','proprietário'].includes(v));
+  }
+
+  function syncElectionAccess(){
+    const electionsArea = document.getElementById('electionsArea');
+    const electionsBody = document.getElementById('electionsBody');
+    const electionsEmpty = document.getElementById('electionsEmpty');
+    const tabBtn = document.querySelector('.dash-tab[data-tab="tabElections"]');
+    const allowed = !!(currentProfile && isOwnerResidentProfile(currentProfile));
+    if(tabBtn) tabBtn.style.display = allowed ? '' : 'none';
+    if(!allowed){
+      if(electionsArea) electionsArea.innerHTML = '<p class="tiny muted" style="margin:0;">Voting is available only to approved owner accounts in the main Eircode register. Tenant accounts remain blocked.</p>';
+      if(electionsBody) electionsBody.innerHTML = '';
+      if(electionsEmpty) electionsEmpty.style.display = 'none';
+      const panel = document.getElementById('tabElections');
+      if(panel && panel.style.display !== 'none'){
+        const profileBtn = document.querySelector('.dash-tab[data-tab="tabProfile"]');
+        profileBtn && profileBtn.click();
+      }
+    }
+    return allowed;
   }
 
   window.anwIsApprovedDashboardProfile = function(profile){ return isApprovedResident(profile); };
@@ -959,6 +989,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   await resolveDashboardContext();
   syncInterestAccess();
+  syncElectionAccess();
 
   const avatarImg = document.getElementById('pfAvatar');
   const avatarInput = document.getElementById('pfAvatarInput');
