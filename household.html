@@ -83,6 +83,83 @@
     .toast .x{ border:0; background:transparent; cursor:pointer; font-size:18px; line-height:1; }
     .toast .msg{ font-size:.95rem; }
     .toast .muted{ font-size:.85rem; opacity:.85; }
+  
+    /* Household volunteers page layout refinement - visual only */
+    .hh-section-title{
+      margin-bottom:0;
+    }
+    .hh-vol-builder{
+      display:grid;
+      grid-template-columns:minmax(0, 1.1fr) minmax(320px, .9fr);
+      gap:16px;
+      align-items:start;
+    }
+    .hh-vol-form-card,
+    .hh-vol-role-card,
+    .hh-table-card{
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:18px;
+      background:#fff;
+      padding:16px;
+      box-shadow:0 1px 0 rgba(255,255,255,.7) inset;
+    }
+    .hh-form-grid-top{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:12px;
+    }
+    .hh-rel-field{
+      margin-top:12px;
+      margin-bottom:0;
+    }
+    .hh-vol-actions{
+      padding-top:10px;
+      border-top:1px solid rgba(0,0,0,.06);
+    }
+    .hh-card-label{
+      display:block;
+      font-weight:700;
+      margin:0 0 10px;
+    }
+    .hh-vol-role-card .rolebox{
+      background:#fbfdfc;
+      min-height:100%;
+    }
+    .hh-vol-role-card .role-row{
+      padding:10px 8px;
+      border-bottom:1px solid rgba(0,0,0,.05);
+    }
+    .hh-vol-role-card .role-row:last-child{
+      border-bottom:0;
+    }
+    #hvMsg{
+      min-height:1.2em;
+    }
+    .hh-table-card table{
+      width:100%;
+      border-collapse:collapse;
+    }
+    .hh-table-card th{
+      font-size:.95rem;
+      color:#1f2b3d;
+      background:#fbfdfc;
+    }
+    .hh-table-card th,
+    .hh-table-card td{
+      padding:11px 10px;
+    }
+    .hh-table-card td:last-child{
+      white-space:nowrap;
+    }
+    @media (max-width: 980px){
+      .hh-vol-builder{
+        grid-template-columns:1fr;
+      }
+      .hh-form-grid-top{
+        grid-template-columns:1fr;
+      }
+    }
+
   </style>
 <style id="page-access-style">
   footer.site-footer { position: relative; text-align: center; }
@@ -132,62 +209,71 @@
 <div class="tiny muted" id="volsNotApproved" style="display:none;">Your account is not approved yet. Please wait for approval.</div>
 <div class="tiny muted" id="volsNotRegistered" style="display:none;">Your account is logged in, but you are not registered/approved yet. Please wait for approval.</div>
 <div id="volsContent" style="display:none;">
-<h3 style="margin-top:6px;">Add a household volunteer</h3>
-<div class="grid-3" style="margin-top:10px;">
-<div class="field">
-<label for="hvName">Name</label>
-<input id="hvName" placeholder="Full name" type="text"/>
+<h3 class="hh-section-title" style="margin-top:6px;">Add a household volunteer</h3>
+
+<div class="hh-vol-builder" style="margin-top:12px;">
+  <div class="hh-vol-form-card">
+    <div class="hh-form-grid-top">
+      <div class="field">
+        <label for="hvName">Name</label>
+        <input id="hvName" placeholder="Full name" type="text"/>
+      </div>
+      <div class="field">
+        <label for="hvEmail">Email</label>
+        <input id="hvEmail" placeholder="name@example.com" type="email"/>
+      </div>
+      <div class="field">
+        <label for="hvPhone">Phone</label>
+        <input id="hvPhone" placeholder="+353…" type="tel"/>
+      </div>
+    </div>
+
+    <div class="field hh-rel-field">
+      <label for="hvRel">Relationship to account holder</label>
+      <select id="hvRel">
+        <option value="">Select…</option>
+        <option value="Spouse / partner">Spouse / partner</option>
+        <option value="Adult child">Adult child</option>
+        <option value="Parent">Parent</option>
+        <option value="Other relative">Other relative</option>
+        <option value="Housemate">Housemate</option>
+        <option value="Carer">Carer</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div class="actions hh-vol-actions" style="justify-content:flex-end; gap:10px; margin-top:12px;">
+      <button class="btn btn-line small" id="hvClear" type="button">Clear</button>
+      <button class="btn small" id="hvSave" type="button">Save volunteer</button>
+    </div>
+    <p class="tiny muted" id="hvMsg" style="margin-top:8px;"></p>
+  </div>
+
+  <div class="hh-vol-role-card">
+    <label class="hh-card-label">Activities they can help with</label>
+    <div class="rolebox" id="hvRolesBox">
+      <p class="tiny muted" style="margin:0;">Volunteer roles are loaded automatically from your resident record.</p>
+    </div>
+  </div>
 </div>
-<div class="field">
-<label for="hvEmail">Email</label>
-<input id="hvEmail" placeholder="name@example.com" type="email"/>
-</div>
-<div class="field">
-<label for="hvPhone">Phone</label>
-<input id="hvPhone" placeholder="+353…" type="tel"/>
-</div>
-</div>
-<div class="grid-2" style="margin-top:12px;">
-<div class="field">
-<label for="hvRel">Relationship to account holder</label>
-<select id="hvRel">
-<option value="">Select…</option>
-<option value="Spouse / partner">Spouse / partner</option>
-<option value="Adult child">Adult child</option>
-<option value="Parent">Parent</option>
-<option value="Other relative">Other relative</option>
-<option value="Housemate">Housemate</option>
-<option value="Carer">Carer</option>
-<option value="Other">Other</option>
-</select>
-</div>
-<div class="field">
-<label>Activities they can help with</label>
-<div class="rolebox" id="hvRolesBox">
-<p class="tiny muted" style="margin:0;">Volunteer roles are loaded automatically from your resident record.</p>
-</div>
-</div>
-</div>
-<div class="actions" style="justify-content:flex-end; gap:10px; margin-top:12px;">
-<button class="btn btn-line small" id="hvClear" type="button">Clear</button>
-<button class="btn small" id="hvSave" type="button">Save volunteer</button>
-</div>
-<p class="tiny muted" id="hvMsg" style="margin-top:8px;"></p>
-<h3 style="margin-top:18px;">Your household volunteers</h3>
-<div class="table-wrap" style="margin-top:8px;">
-<table>
-<thead>
-<tr>
-<th style="min-width:160px;">Name</th>
-<th style="min-width:180px;">Email</th>
-<th style="min-width:140px;">Phone</th>
-<th style="min-width:180px;">Relationship</th>
-<th style="min-width:240px;">Activities</th>
-<th style="width:120px;">Actions</th>
-</tr>
-</thead>
-<tbody id="hvTbody"></tbody>
-</table>
+
+<h3 class="hh-section-title" style="margin-top:22px;">Your household volunteers</h3>
+<div class="hh-table-card" style="margin-top:10px;">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="min-width:160px;">Name</th>
+          <th style="min-width:180px;">Email</th>
+          <th style="min-width:140px;">Phone</th>
+          <th style="min-width:180px;">Relationship</th>
+          <th style="min-width:240px;">Activities</th>
+          <th style="width:120px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="hvTbody"></tbody>
+    </table>
+  </div>
 </div>
 <p class="tiny muted" id="hvEmpty" style="display:none; margin-top:10px;">No household volunteers added yet.</p>
 </div>
