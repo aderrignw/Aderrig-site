@@ -14,18 +14,13 @@
 
 <link rel="stylesheet" href="assets/style.css" />
 
-<script>document.documentElement.classList.add('admin-js','admin-booting');</script>
+<script>document.documentElement.classList.add('admin-js');</script>
 
 <style id="admin-first-paint-fix">
-  html.admin-booting body,
-  body.admin-booting .site-header,
-  body.admin-booting main.wrap,
-  body.admin-booting footer.site-footer{
-    visibility:hidden !important;
-  }
-
   .admin-tab-content{display:none;}
+  #tabResidents{display:block;}
   .elect-subtab{display:none;}
+  #subManage{display:block;}
 
 .logout-btn-inline{min-width:104px;}
 
@@ -891,7 +886,7 @@
 </script>
 </head>
 
-<body data-acl-loading="true" class="admin-booting">
+<body data-acl-loading="true">
 
 <header class="site-header">
 <div class="brand">
@@ -913,7 +908,7 @@
 <a class="nav-login" href="login.html">Login / Register</a>
 <a href="dashboard.html">Dashboard</a>
 <a href="household.html">Household</a>
-<a class="active" href="admin.html" data-acl="page:admin">Admin</a>
+<a class="active" href="admin.html">Admin</a>
 </nav>
 </header>
 
@@ -1929,28 +1924,100 @@
     document.body.classList.remove('admin-booting');
   }
 
+  async function waitForAdminAuthContext(timeoutMs = 4000){
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    function getIdentityUser(){
+      try{
+        return (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
+          ? window.netlifyIdentity.currentUser()
+          : null;
+      }catch(_){
+        return null;
+      }
+    }
+
+    function getLocalLogged(){
+      try{
+        const raw = localStorage.getItem('anw_logged');
+        return raw ? JSON.parse(raw) : null;
+      }catch(_){
+        return null;
+      }
+    }
+
+    function getRoleSnapshot(localLogged){
+      try{
+        if(typeof window.anwGetLoggedRole === 'function'){
+          const role = String(window.anwGetLoggedRole() || '').trim().toLowerCase();
+          if(role) return role;
+        }
+      }catch(_){}
+
+      try{
+        const role = String((localLogged && localLogged.role) || '').trim().toLowerCase();
+        if(role) return role;
+      }catch(_){}
+
+      return '';
+    }
+
+    const started = Date.now();
+
+    while(Date.now() - started < timeoutMs){
+      const currentUser = getIdentityUser();
+      const localLogged = getLocalLogged();
+
+      const email = String(
+        (currentUser && currentUser.email) ||
+        (localLogged && localLogged.email) ||
+        ''
+      ).trim().toLowerCase();
+
+      const role = getRoleSnapshot(localLogged);
+
+      if(email || role){
+        return { currentUser, localLogged, email, role };
+      }
+
+      await sleep(150);
+    }
+
+    const currentUser = getIdentityUser();
+    const localLogged = getLocalLogged();
+
+    return {
+      currentUser,
+      localLogged,
+      email: String(
+        (currentUser && currentUser.email) ||
+        (localLogged && localLogged.email) ||
+        ''
+      ).trim().toLowerCase(),
+      role: getRoleSnapshot(localLogged)
+    };
+  }
+
   async function runAdminGate(){
     const msg = byId('adminGateMsg');
 
     try{
-      const currentUser = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
-        ? window.netlifyIdentity.currentUser()
-        : null;
+      const ctx = await waitForAdminAuthContext();
+      const email = String(ctx && ctx.email || '').trim().toLowerCase();
+      const role = String(ctx && ctx.role || '').trim().toLowerCase();
+      const isOwner = email === OWNER_EMAIL.toLowerCase() || role === 'owner';
 
-      if(!currentUser || !currentUser.email){
+      if(!email){
         location.replace('login.html');
         return false;
       }
 
-      const email = String(currentUser.email || '').trim().toLowerCase();
-      const isOwner = email === OWNER_EMAIL.toLowerCase();
-
       let allowed = false;
-      let role = '';
+      let effectiveRole = role;
 
       if(isOwner){
         allowed = true;
-        role = 'owner';
+        effectiveRole = 'owner';
       } else {
         try{
           if(typeof window.anwAclAllows === 'function'){
@@ -1959,17 +2026,9 @@
         }catch(_){
           allowed = false;
         }
-
-        try{
-          role = (typeof window.anwGetLoggedRole === 'function')
-            ? String(window.anwGetLoggedRole() || '').trim().toLowerCase()
-            : '';
-        }catch(_){
-          role = '';
-        }
       }
 
-      adminApplyRoleVisibility(role);
+      adminApplyRoleVisibility(effectiveRole);
 
       if(!allowed){
         location.replace('dashboard.html');
