@@ -156,14 +156,22 @@
 
     if (req === "public") return true;
     if (req === "authenticated") return isLoggedIn();
-    if (cur === "owner" || cur === "admin") return true;
+
+    // Owner always has full access.
+    if (cur === "owner") return true;
+
+    // Admin no longer bypasses all ACL rules.
+    // Admin only gets access when the rule explicitly allows it.
+    if (cur === "admin" && req === "owner") return false;
 
     const reqRank = ROLE_RANK[req];
     const curRank = ROLE_RANK[cur];
+
     if (typeof reqRank === "number" && typeof curRank === "number") {
-      if (req === "projects") return cur === "projects" || cur === "owner" || cur === "admin";
+      if (req === "projects") return cur === "projects" || cur === "owner";
       return curRank >= reqRank;
     }
+
     return cur === req;
   }
 
