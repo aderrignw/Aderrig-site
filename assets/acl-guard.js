@@ -57,8 +57,29 @@
   function getPageKey() {
     const m1 = document.querySelector('meta[name="anw-acl-key"]');
     if (m1 && m1.getAttribute("content")) return m1.getAttribute("content");
+
     const m2 = document.querySelector('meta[name="anw-page"]');
     if (m2 && m2.getAttribute("content")) return m2.getAttribute("content");
+
+    // Fallback by pathname so sensitive pages never become public
+    try {
+      const path = String(location.pathname || "").toLowerCase();
+      const file = path.split("/").pop() || "";
+
+      if (!file || file === "index.html") return "page:home";
+      if (file === "home.html") return "page:home";
+      if (file === "about.html") return "page:about";
+      if (file === "handbook.html") return "page:handbook";
+      if (file === "login.html") return "page:login";
+      if (file === "privacy.html") return "page:privacy";
+      if (file === "dashboard.html") return "page:dashboard";
+      if (file === "report.html") return "page:report";
+      if (file === "household.html") return "page:household";
+      if (file === "alerts.html") return "page:alerts";
+      if (file === "projects.html") return "page:projects";
+      if (file === "admin.html") return "page:admin";
+    } catch {}
+
     return null;
   }
 
@@ -157,11 +178,10 @@
     if (req === "public") return true;
     if (req === "authenticated") return isLoggedIn();
 
-    // Owner always has full access.
+    // Owner always has full access
     if (cur === "owner") return true;
 
-    // Admin no longer bypasses all ACL rules.
-    // Admin only gets access when the rule explicitly allows it.
+    // Admin must follow explicit ACL rules and cannot inherit owner-only access
     if (cur === "admin" && req === "owner") return false;
 
     const reqRank = ROLE_RANK[req];
@@ -212,15 +232,35 @@
     if (isShellPublicPage()) return;
 
     const key = getPageKey();
-    const rule = key ? resolveAclRule(acl, key) : "Public";
-    const clean = normalizeRule(rule);
+    const rule = key ? resolveAclRule(acl, key) : "Authenticated";
+    const clean = normalizeRule(rule).toLowerCase();
 
-    if (clean.toLowerCase() === "public") return;
+    // Sensitive hard-stop for admin page:
+    // must be logged in first, then must pass ACL rule.
+    if (key === "page:admin") {
+      if (!isLoggedIn()) {
+        location.replace("login.html");
+        return;
+      }
+      if (!ruleAllows("owner", role) && !ruleAllows(resolveAclRule(acl, "page:admin"), role)) {
+        location.replace("dashboard.html");
+        return;
+      }
+      return;
+    }
 
-    if (clean.toLowerCase() === "authenticated") {
+    if (clean === "public") return;
+
+    if (clean === "authenticated") {
       if (!isLoggedIn()) {
         location.replace("login.html");
       }
+      return;
+    }
+
+    // For any non-public rule, require login before role check
+    if (!isLoggedIn()) {
+      location.replace("login.html");
       return;
     }
 
@@ -233,6 +273,11 @@
     const acl = loadAcl() || {};
     const role = getRole();
     const rule = resolveAclRule(acl, keyOrRule);
+
+    if (normalizeRule(rule).toLowerCase() !== "public" && !isLoggedIn()) {
+      return false;
+    }
+
     return ruleAllows(rule, role);
   };
 
