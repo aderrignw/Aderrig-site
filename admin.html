@@ -14,13 +14,18 @@
 
 <link rel="stylesheet" href="assets/style.css" />
 
-<script>document.documentElement.classList.add('admin-js');</script>
+<script>document.documentElement.classList.add('admin-js','admin-booting');</script>
 
 <style id="admin-first-paint-fix">
+  html.admin-booting body,
+  body.admin-booting .site-header,
+  body.admin-booting main.wrap,
+  body.admin-booting footer.site-footer{
+    visibility:hidden !important;
+  }
+
   .admin-tab-content{display:none;}
-  #tabResidents{display:block;}
   .elect-subtab{display:none;}
-  #subManage{display:block;}
 
 .logout-btn-inline{min-width:104px;}
 
@@ -886,7 +891,7 @@
 </script>
 </head>
 
-<body data-acl-loading="true" data-acl-shell-public="true">
+<body data-acl-loading="true" class="admin-booting">
 
 <header class="site-header">
 <div class="brand">
@@ -908,7 +913,7 @@
 <a class="nav-login" href="login.html">Login / Register</a>
 <a href="dashboard.html">Dashboard</a>
 <a href="household.html">Household</a>
-<a class="active" href="admin.html">Admin</a>
+<a class="active" href="admin.html" data-acl="page:admin">Admin</a>
 </nav>
 </header>
 
@@ -1876,16 +1881,7 @@
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
   const byId = id => document.getElementById(id);
 
-  const ADMIN_ALLOWED_ROLES = ['admin','owner','platform_support','area_coordinator','aux_coordinator','assistant_area_coordinator'];
   const OWNER_EMAIL = 'claudiosantos1968@gmail.com';
-
-  function hasAllowedAdminRole(roles){
-    const list = Array.isArray(roles) ? roles : [roles];
-    const normalized = list
-      .map(v => (typeof window.anwGetCanonicalRole === 'function') ? window.anwGetCanonicalRole({ role:v }, '') : String(v||'').toLowerCase())
-      .filter(Boolean);
-    return normalized.some(v => ADMIN_ALLOWED_ROLES.includes(v));
-  }
 
   async function anwLoadSafe(key, fallback){
     try{
@@ -1922,141 +1918,9 @@
     }
   }
 
-  function downloadText(filename, text, type='application/json'){
-    const blob = new Blob([text], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 500);
-  }
-
-  function esc(s){
-    return String(s == null ? '' : s)
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'",'&#39;');
-  }
-
-  function fmtDate(v){
-    if(!v) return '—';
-    const d = new Date(v);
-    if(Number.isNaN(d.getTime())) return String(v);
-    return d.toLocaleString();
-  }
-
-  function fmtDateShort(v){
-    if(!v) return '—';
-    const d = new Date(v + 'T12:00:00');
-    if(Number.isNaN(d.getTime())) return String(v);
-    return d.toLocaleDateString();
-  }
-
-  function normList(v){
-    if(Array.isArray(v)) return v.filter(Boolean);
-    if(v == null || v === '') return [];
-    return String(v).split(/[;,|]/).map(s => s.trim()).filter(Boolean);
-  }
-
-  function uniqueBy(arr, getKey){
-    const seen = new Set();
-    return arr.filter(item => {
-      const k = getKey(item);
-      if(seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-  }
-
-  function slugify(v){
-    return String(v||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-  }
-
-  function parseCsvLine(line){
-    const out = [];
-    let cur = '';
-    let quote = false;
-    for(let i=0;i<line.length;i++){
-      const ch = line[i];
-      if(ch === '"'){
-        if(quote && line[i+1] === '"'){ cur += '"'; i++; }
-        else quote = !quote;
-      } else if(!quote && (ch === ',' || ch === ';' || ch === '\t')){
-        out.push(cur.trim());
-        cur = '';
-      } else {
-        cur += ch;
-      }
-    }
-    out.push(cur.trim());
-    return out;
-  }
-
-  function parseFlexibleDate(v){
-    const s = String(v||'').trim();
-    if(!s) return '';
-    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-    const m1 = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if(m1) return `${m1[3]}-${m1[2]}-${m1[1]}`;
-    const m2 = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-    if(m2) return `${m2[3]}-${m2[2]}-${m2[1]}`;
-    const d = new Date(s);
-    if(!Number.isNaN(d.getTime())){
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    }
-    return s;
-  }
-
-  function startOfWeekMonday(dateStr){
-    const d = new Date(dateStr + 'T12:00:00');
-    if(Number.isNaN(d.getTime())) return dateStr;
-    const day = d.getDay();
-    const offset = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + offset);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-
-  function endOfNextWeekSunday(dateStr){
-    const d = new Date(dateStr + 'T12:00:00');
-    if(Number.isNaN(d.getTime())) return dateStr;
-    const day = d.getDay();
-    const offsetToMonday = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + offsetToMonday + 13);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-
-  function getCurrentAdminTabId(){
-    const active = document.querySelector('.admin-tab.active');
-    return active ? active.getAttribute('data-tab') : 'tabResidents';
-  }
-
-  function showAdminTab(tabId){
-    closeResidentModal();
-    $$('.admin-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId));
-    $$('.admin-tab-content').forEach(p => { p.style.display = (p.id === tabId) ? 'block' : 'none'; });
-  }
-
-  function showResidentSubtab(id){
-    closeResidentModal();
-    $$('.resident-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-subtab') === id));
-    const mode = id === 'subPending' ? 'pending' : id === 'subApproved' ? 'approved' : 'all';
-    renderResidents(mode);
-  }
-
-  function showElectionSubtab(id){
-    closeResidentModal();
-    $$('.elect-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-subtab') === id));
-    $$('.elect-subtab').forEach(p => p.style.display = (p.id === id ? 'block' : 'none'));
-  }
-
   function adminApplyRoleVisibility(role){
     const normalized = String(role||'').toLowerCase();
-    const allowAll = hasAllowedAdminRole(normalized);
+    const allowAll = normalized === 'owner';
     document.body.classList.toggle('admin-allowed', allowAll);
   }
 
@@ -2067,1076 +1931,73 @@
 
   async function runAdminGate(){
     const msg = byId('adminGateMsg');
+
     try{
-      let allowed = false;
-      let role = '';
       const currentUser = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
         ? window.netlifyIdentity.currentUser()
         : null;
 
-      if(currentUser && currentUser.email){
-        const email = String(currentUser.email || '').trim().toLowerCase();
-        if(email === OWNER_EMAIL.toLowerCase()){
-          allowed = true;
-          role = 'owner';
-        }else{
-          const users = await anwLoadSafe(KEY_USERS, []);
-          const row = users.find(u => String((u && (u.email || u.userEmail || '')) || '').trim().toLowerCase() === email);
-          if(row){
-            const roles = []
-              .concat(normList(row.type))
-              .concat(normList(row.role))
-              .concat(normList(row.roles))
-              .concat(normList(row.userRole))
-              .concat(normList(row.userRoles))
-              .concat(normList(row.residentType));
-            allowed = hasAllowedAdminRole(roles);
-            role = (typeof window.anwGetCanonicalRole === 'function') ? window.anwGetCanonicalRole(row, email) : (roles[0] || '');
+      if(!currentUser || !currentUser.email){
+        location.replace('login.html');
+        return false;
+      }
+
+      const email = String(currentUser.email || '').trim().toLowerCase();
+      const isOwner = email === OWNER_EMAIL.toLowerCase();
+
+      let allowed = false;
+      let role = '';
+
+      if(isOwner){
+        allowed = true;
+        role = 'owner';
+      } else {
+        try{
+          if(typeof window.anwAclAllows === 'function'){
+            allowed = !!window.anwAclAllows('page:admin');
           }
+        }catch(_){
+          allowed = false;
+        }
+
+        try{
+          role = (typeof window.anwGetLoggedRole === 'function')
+            ? String(window.anwGetLoggedRole() || '').trim().toLowerCase()
+            : '';
+        }catch(_){
+          role = '';
         }
       }
 
       adminApplyRoleVisibility(role);
 
+      if(!allowed){
+        location.replace('dashboard.html');
+        return false;
+      }
+
       if(msg){
-        if(allowed){
-          msg.style.display = 'none';
-          msg.textContent = '';
-        }else{
-          msg.style.display = 'block';
-          msg.textContent = 'Admin access is restricted to approved admin roles. Some sections may be hidden until your role is confirmed.';
-        }
-      }
-    }catch(err){
-      console.error(err);
-      if(msg){
-        msg.style.display = 'block';
-        msg.textContent = 'Unable to fully verify admin access right now. Local admin tools are still available.';
-      }
-    }finally{
-      showAdminTab(getCurrentAdminTabId());
-      showElectionSubtab('subManage');
-      adminMarkReady();
-    }
-  }
-  // ---------- Residents ----------
-  let RESIDENTS_CACHE = [];
-  let CURRENT_RESIDENT = null;
-
-  async function loadResidents(){
-    RESIDENTS_CACHE = await anwLoadSafe(KEY_USERS, []);
-    if(assignMissingResidentNumbers(RESIDENTS_CACHE)){
-      await anwSaveSafe(KEY_USERS, RESIDENTS_CACHE);
-    }
-    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
-      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
-      : 'pending');
-  }
-
-  function getResidentRolesLabel(u){
-    const roles = [];
-    if(u.streetCoordinator || u.isStreetCoordinator || normList(u.roles).includes('street_admin') || normList(u.role).includes('street_admin')) roles.push('Street Coordinator');
-    if(u.volunteer || normList(u.roles).includes('volunteer') || normList(u.role).includes('volunteer')) roles.push('Volunteer');
-    if(normList(u.roles).includes('admin') || normList(u.role).includes('admin')) roles.push('Admin');
-    return roles.length ? roles.join(', ') : '—';
-  }
-
-  function renderResidents(mode){
-    const body = byId('resBody');
-    const empty = byId('resEmpty');
-    const summary = byId('resSummary');
-    if(!body) return;
-
-    const rows = (RESIDENTS_CACHE || []).filter(u => {
-      const status = String((u && u.status) || '').toLowerCase();
-      if(mode === 'pending') return !['approved','active'].includes(status);
-      if(mode === 'approved') return ['approved','active'].includes(status);
-      return true;
-    });
-
-    body.innerHTML = rows.map((u, idx) => `
-      <tr>
-        <td>${esc(formatResidentRegId(u.regId || u.regNo) || '—')}</td>
-        <td>${esc(u.name || '—')}</td>
-        <td>${esc(u.email || '—')}</td>
-        <td>${esc(u.eircode || '—')}</td>
-        <td>${esc(u.status || 'pending')}</td>
-        <td>${esc(getResidentRolesLabel(u))}</td>
-        <td class="resident-actions-col">
-          <div class="resident-action-cell">
-            <button type="button" class="btn-line small" data-res-index="${idx}" data-act="openResident">
-              ${String((u.status||'')).toLowerCase() === 'approved' || String((u.status||'')).toLowerCase() === 'active' ? 'Edit' : 'Open'}
-            </button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-
-    summary.textContent = `${rows.length} resident(s) shown`;
-    empty.style.display = rows.length ? 'none' : 'block';
-
-    $$('[data-act="openResident"]', body).forEach(btn => {
-      btn.addEventListener('click', () => {
-        const u = rows[Number(btn.getAttribute('data-res-index'))];
-        openResidentModal(u);
-      });
-    });
-  }
-
-  function openResidentModal(user){
-    CURRENT_RESIDENT = user || null;
-    if(!CURRENT_RESIDENT) return;
-
-    const modal = byId('modalResident');
-    if(modal) modal.style.display = 'block';
-
-    const regLabel = formatResidentRegId(CURRENT_RESIDENT.regId || CURRENT_RESIDENT.regNo) || '—';
-    const statusLabel = CURRENT_RESIDENT.status || 'pending';
-    const residentType = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '—';
-
-    if(byId('mStatus')) byId('mStatus').value = statusLabel;
-    if(byId('mEmail')) byId('mEmail').value = CURRENT_RESIDENT.email || '';
-    if(byId('mEir')) byId('mEir').value = CURRENT_RESIDENT.eircode || '';
-    if(byId('mPhone')) byId('mPhone').value = CURRENT_RESIDENT.phone || '';
-    if(byId('mAddress')) byId('mAddress').value = CURRENT_RESIDENT.address || '';
-    if(byId('mType')) byId('mType').value = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '';
-    if(byId('mMgmt')) byId('mMgmt').value = CURRENT_RESIDENT.managementCompany || CURRENT_RESIDENT.mgmt || '';
-
-    const roles = normList(CURRENT_RESIDENT.roles).concat(normList(CURRENT_RESIDENT.role));
-    const primaryRole = roles.includes('admin') ? 'Admin'
-      : roles.includes('owner') ? 'Owner'
-      : roles.includes('street_admin') ? 'Street Coordinator'
-      : roles.includes('volunteer') ? 'Volunteer'
-      : (residentType || 'Resident');
-
-    if(byId('mCoord')) byId('mCoord').checked = roles.includes('street_admin') || !!CURRENT_RESIDENT.streetCoordinator;
-    if(byId('mVol')) byId('mVol').checked = roles.includes('volunteer') || !!CURRENT_RESIDENT.volunteer;
-
-    const vrList = normList(CURRENT_RESIDENT.volunteerRoles);
-    const vrObj = CURRENT_RESIDENT.vol_roles || CURRENT_RESIDENT.volunteer_roles || {};
-    if(byId('mVStreet')) byId('mVStreet').checked = vrList.includes('Street watch / patrols') || !!vrObj.streetWatch;
-    if(byId('mVLeaf')) byId('mVLeaf').checked = vrList.includes('Distribute leaflets') || !!vrObj.leaflets;
-    if(byId('mVTech')) byId('mVTech').checked = vrList.includes('Tech support') || !!vrObj.tech || !!vrObj.techSupport;
-    if(byId('mVEld')) byId('mVEld').checked = vrList.includes('Elderly checks') || !!vrObj.elderly;
-    if(byId('mVClean')) byId('mVClean').checked = vrList.includes('Community clean-up') || !!vrObj.cleanUp || !!vrObj.cleanup;
-    if(byId('mVPark')) byId('mVPark').checked = vrList.includes('Parking assistance') || !!vrObj.parkingAssistance || !!vrObj.parking;
-    if(byId('mVMeet')) byId('mVMeet').checked = vrList.includes('Meeting organiser') || !!vrObj.meetings;
-    if(byId('mVTrans')) byId('mVTrans').checked = vrList.includes('Translation') || !!vrObj.translation;
-
-    const volunteerRoleMap = [
-      ['mVStreet', 'Street watch / patrols'],
-      ['mVLeaf', 'Distribute leaflets'],
-      ['mVTech', 'Tech support'],
-      ['mVEld', 'Elderly checks'],
-      ['mVClean', 'Community clean-up'],
-      ['mVPark', 'Parking assistance'],
-      ['mVMeet', 'Meeting organiser'],
-      ['mVTrans', 'Translation']
-    ];
-
-    volunteerRoleMap.forEach(([id]) => {
-      const input = byId(id);
-      if(input) input.disabled = true;
-    });
-
-    const activeVolunteerRoles = volunteerRoleMap.filter(([id]) => byId(id) && byId(id).checked).map(([, label]) => label);
-    const availableVolunteerRoles = volunteerRoleMap.filter(([id]) => byId(id) && !byId(id).checked).map(([, label]) => label);
-
-    const chips = byId('mVolunteerRolesChips');
-    if(chips){
-      chips.innerHTML = activeVolunteerRoles.length
-        ? activeVolunteerRoles.map(label => `<span class="role-chip">${esc(label)}</span>`).join('')
-        : `<span class="role-chip available">No volunteer roles yet</span>`;
-    }
-
-    const currentAccess = [];
-    if(byId('mCoord') && byId('mCoord').checked) currentAccess.push('Street Coordinator');
-    if(byId('mVol') && byId('mVol').checked) currentAccess.push('Volunteer');
-    if(primaryRole && !currentAccess.includes(primaryRole)) currentAccess.unshift(primaryRole);
-
-    const accessBox = byId('mCurrentAccessChips');
-    if(accessBox){
-      accessBox.innerHTML = currentAccess.length
-        ? currentAccess.map(label => `<span class="role-chip current">${esc(label)}</span>`).join('')
-        : `<span class="role-chip available">Resident</span>`;
-    }
-
-    const householdBox = byId('mHouseholdList');
-    if(householdBox){
-      const householdCandidates = []
-        .concat(Array.isArray(CURRENT_RESIDENT.household) ? CURRENT_RESIDENT.household : [])
-        .concat(Array.isArray(CURRENT_RESIDENT.households) ? CURRENT_RESIDENT.households : [])
-        .concat(Array.isArray(CURRENT_RESIDENT.familyMembers) ? CURRENT_RESIDENT.familyMembers : [])
-        .concat(Array.isArray(CURRENT_RESIDENT.members) ? CURRENT_RESIDENT.members : [])
-        .concat(Array.isArray(CURRENT_RESIDENT.householdVolunteers) ? CURRENT_RESIDENT.householdVolunteers : []);
-
-      const members = householdCandidates.filter(Boolean);
-      if(members.length){
-        householdBox.innerHTML = members.map((m) => {
-          const name = m.name || m.fullName || m.memberName || 'Unnamed resident';
-          const phone = m.phone || m.mobile || m.tel || '';
-          const email = m.email || m.mail || '';
-          const relation = m.relation || m.relationship || m.kinship || '';
-          const photo = m.photo || m.photoUrl || m.photoURL || m.image || '';
-          const parts = [relation, phone, email].filter(Boolean);
-          const photoHtml = photo
-            ? `<img class="household-photo" src="${esc(photo)}" alt="">`
-            : `<span class="household-photo-fallback">👤</span>`;
-          return `<div class="household-line">${photoHtml}<div class="household-text">${esc(name)}${parts.length ? ` · <span class="muted">${esc(parts.join(' · '))}</span>` : ''}</div></div>`;
-        }).join('');
-      } else {
-        householdBox.innerHTML = `<div class="household-empty">No household members recorded.</div>`;
-      }
-    }
-
-    const currentVolBox = byId('mVolunteerCurrentChips');
-    if(currentVolBox){
-      currentVolBox.innerHTML = activeVolunteerRoles.length
-        ? activeVolunteerRoles.map(label => `<span class="role-chip current">${esc(label)}</span>`).join('')
-        : `<span class="role-chip available">No volunteer roles yet</span>`;
-    }
-
-    const availableVolBox = byId('mVolunteerAvailableChips');
-    if(availableVolBox){
-      availableVolBox.innerHTML = availableVolunteerRoles.length
-        ? availableVolunteerRoles.map(label => `<span class="role-chip available">${esc(label)}</span>`).join('')
-        : `<span class="role-chip current">All volunteer roles already active</span>`;
-    }
-
-    if(byId('mRegIdBadge')) byId('mRegIdBadge').textContent = regLabel;
-    if(byId('mStatusBadge')) byId('mStatusBadge').textContent = String(statusLabel || 'pending').replace(/^./, c => c.toUpperCase());
-    if(byId('mNameHeading')) byId('mNameHeading').textContent = CURRENT_RESIDENT.name || 'Resident profile';
-    if(byId('mPrimaryRoleView')) byId('mPrimaryRoleView').textContent = primaryRole || '—';
-    if(byId('mAddressView')) byId('mAddressView').textContent = CURRENT_RESIDENT.address || '—';
-    if(byId('mEirView')) byId('mEirView').textContent = CURRENT_RESIDENT.eircode || '—';
-    if(byId('mTypeView')) byId('mTypeView').textContent = residentType || '—';
-
-    const photoUrl = CURRENT_RESIDENT.profilePhoto || CURRENT_RESIDENT.photo || CURRENT_RESIDENT.photoURL || '';
-    const photoBox = byId('mPhotoPreview');
-    if(photoBox){
-      if(photoUrl){
-        photoBox.classList.add('has-photo');
-        photoBox.innerHTML = `<img src="${esc(photoUrl)}" alt="Resident profile photo">`;
-      }else{
-        photoBox.classList.remove('has-photo');
-        photoBox.textContent = '👤';
-      }
-    }
-
-    if(byId('mMsg')) byId('mMsg').textContent = '';
-
-    const status = String(CURRENT_RESIDENT.status || '').toLowerCase();
-    const alreadyApproved = ['approved','active'].includes(status);
-    if(byId('btnApprove')) byId('btnApprove').style.display = alreadyApproved ? 'none' : 'inline-flex';
-    if(byId('btnReject')) byId('btnReject').style.display = alreadyApproved ? 'none' : 'inline-flex';
-
-    try{ document.body.style.overflow = 'hidden'; }catch(_){}
-  }
-
-  function closeResidentModal(){
-    if(byId('modalResident')) byId('modalResident').style.display = 'none';
-    try{ document.body.style.overflow = ''; }catch(_){}
-    CURRENT_RESIDENT = null;
-  }
-
-  async function saveCurrentResident(nextStatus){
-    if(!CURRENT_RESIDENT) return;
-    const users = await anwLoadSafe(KEY_USERS, []);
-    const idx = users.findIndex(u => String(u.email||'').toLowerCase() === String(CURRENT_RESIDENT.email||'').toLowerCase());
-    if(idx < 0) return;
-
-    const roles = [];
-    if(byId('mCoord').checked) roles.push('street_admin');
-    if(byId('mVol').checked) roles.push('volunteer');
-    if(normList(users[idx].roles).includes('admin')) roles.push('admin');
-
-    const volunteerRoles = [
-      byId('mVStreet').checked ? 'Street watch / patrols' : '',
-      byId('mVLeaf').checked ? 'Distribute leaflets' : '',
-      byId('mVTech').checked ? 'Tech support' : '',
-      byId('mVEld').checked ? 'Elderly checks' : '',
-      byId('mVClean').checked ? 'Community clean-up' : '',
-      byId('mVPark').checked ? 'Parking assistance' : '',
-      byId('mVMeet').checked ? 'Meeting organiser' : '',
-      byId('mVTrans').checked ? 'Translation' : ''
-    ].filter(Boolean);
-    const volunteerRoleFlags = {
-      streetWatch: byId('mVStreet').checked,
-      leaflets: byId('mVLeaf').checked,
-      tech: byId('mVTech').checked,
-      elderly: byId('mVEld').checked,
-      cleanUp: byId('mVClean').checked,
-      parkingAssistance: byId('mVPark').checked,
-      meetings: byId('mVMeet').checked,
-      translation: byId('mVTrans').checked
-    };
-
-    users[idx].name = byId('mName').value.trim();
-    users[idx].phone = byId('mPhone').value.trim();
-    users[idx].residentType = byId('mType').value;
-    users[idx].type = byId('mType').value;
-    users[idx].managementCompany = byId('mMgmt').value.trim();
-    users[idx].roles = uniqueBy(roles, x => x);
-    users[idx].role = users[idx].roles[0] || '';
-    users[idx].volunteerRoles = volunteerRoles;
-    users[idx].vol_roles = volunteerRoleFlags;
-    users[idx].volunteer_roles = volunteerRoleFlags;
-    users[idx].streetCoordinator = byId('mCoord').checked;
-    users[idx].volunteer = byId('mVol').checked;
-
-    if(nextStatus){
-      users[idx].status = nextStatus;
-      if(['approved','active'].includes(nextStatus) && !(users[idx].regId || users[idx].regNo)){
-        const nextId = anwNextRegId(users);
-        users[idx].regId = nextId;
-        users[idx].regNo = nextId;
-      }
-    }
-
-    assignMissingResidentNumbers(users);
-    await anwSaveSafe(KEY_USERS, users);
-    RESIDENTS_CACHE = users;
-    byId('mMsg').textContent = 'Resident saved.';
-    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
-      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
-      : 'pending');
-  }
-
-  // ---------- Notices ----------
-  function sanitizeNoticeCollection(list){
-    const now = Date.now();
-    const seen = new Set();
-    return (Array.isArray(list) ? list : []).filter(n => {
-      if(!n || typeof n !== 'object') return false;
-      const title = String(n.title || '').trim();
-      const message = String(n.message || '').trim();
-      const isBinImport = !!(n.meta && n.meta.type === 'bin_collection_import');
-      if(!isBinImport && !title && !message) return false;
-      if(!isBinImport && /^\d+$/.test(title)) return false;
-      if(!isBinImport && /^(null|undefined|untitled)$/i.test(title)) return false;
-      const exp = n.expires || n.expiresAt || n.endsOn || n.endDate;
-      if(exp){
-        const t = Date.parse(exp);
-        if(!Number.isNaN(t) && t < now) return false;
-      }
-      const key = [String(n.id || ''), title.toLowerCase(), message.toLowerCase()].join('|');
-      if(seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }
-
-  async function loadNoticesFresh(){
-    const key = window.getNoticesKey();
-    const raw = await anwLoadSafe(key, []);
-    const cleaned = sanitizeNoticeCollection(raw);
-    if(JSON.stringify(cleaned) !== JSON.stringify(Array.isArray(raw) ? raw : [])){
-      try{ await anwSaveSafe(key, cleaned); }catch(_){}
-    }
-    return cleaned;
-  }
-
-  function collectNoticeForm(){
-    return {
-      title: byId('ntTitle').value.trim(),
-      message: byId('ntMessage').value.trim(),
-      category: byId('ntCategory').value || 'General',
-      expires: byId('ntExpires').value || '',
-      targets: {
-        allLogged: !!byId('ntAllLogged').checked,
-        nonAdminOnly: !!byId('ntNonAdminOnly').checked,
-        roles: $$('.ntRole').filter(x => x.checked).map(x => x.value),
-        eirPrefixes: normList(byId('ntEirPrefixes').value),
-        streets: normList(byId('ntStreets').value),
-        eircodes: byId('ntEircodes').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean),
-        emails: byId('ntEmails').value.split(/\r?\n/).map(s => s.trim().toLowerCase()).filter(Boolean)
-      },
-      home: {
-        enabled: !!byId('ntHomeEnabled').checked,
-        visibility: byId('ntHomeVisibility').value || 'private'
-      }
-    };
-  }
-
-  async function publishNotice(){
-    const msg = byId('ntMsg');
-    const form = collectNoticeForm();
-    if(!form.title || !form.message){
-      msg.textContent = 'Title and message are required.';
-      return;
-    }
-
-    const list = await loadNoticesFresh();
-    const next = [{
-      id: 'nt_' + Date.now(),
-      title: form.title,
-      message: form.message,
-      category: form.category,
-      createdAt: new Date().toISOString(),
-      expires: form.expires,
-      public: form.home.enabled && form.home.visibility === 'public',
-      isPublic: form.home.enabled && form.home.visibility === 'public',
-      showOnHome: !!form.home.enabled,
-      published: true,
-      status: (form.home.enabled && form.home.visibility === 'public') ? 'public' : 'private',
-      targets: form.targets,
-      home: form.home
-    }].concat(list || []);
-
-    await anwSaveSafe(window.getNoticesKey(), next);
-    msg.textContent = 'Notice published.';
-    await renderNoticesList();
-  }
-
-  function renderNoticeRowActions(n){
-    const isBinImport = !!(n && n.meta && n.meta.type === 'bin_collection_import');
-    if(!isBinImport) return '';
-    return `
-      <div class="notice-actions">
-        <button type="button" class="btn btn-line small" data-del-notice="${esc(n.id || '')}">Delete</button>
-      </div>
-    `;
-  }
-
-  async function deleteNoticeById(id){
-    const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => String((n && n.id) || '') !== String(id || ''));
-    await anwSaveSafe(window.getNoticesKey(), next);
-    await renderNoticesList();
-  }
-
-  async function clearImportedBinNotices(){
-    const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
-    await anwSaveSafe(window.getNoticesKey(), next);
-    byId('binMsg').textContent = 'Imported bin notices removed from dashboard notices.';
-    await renderNoticesList();
-  }
-
-  async function renderNoticesList(){
-    const listEl = byId('ntList');
-    const notes = await loadNoticesFresh();
-    const sorted = (notes || []).slice().sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
-
-    if(byId('ntListMsg')){
-      byId('ntListMsg').textContent = sorted.length ? `${sorted.length} notice(s) saved.` : 'No notices found.';
-    }
-
-    listEl.innerHTML = sorted.map(n => `
-      <div class="card" style="padding:12px; margin-bottom:10px;">
-        <div>
-          <strong>${esc(n.title || 'Untitled')}</strong>
-          <div class="tiny muted">${esc(n.category || 'General')} · ${esc(fmtDate(n.createdAt || n.date || ''))}</div>
-          <div style="margin-top:6px;">${esc(n.message || '')}</div>
-
-          <div class="notice-card-meta">
-            <span class="notice-chip">Home: ${(n.home && n.home.enabled) ? esc(n.home.visibility || 'private') : 'disabled'}</span>
-            ${n.date ? `<span class="notice-chip">Collection date: ${esc(fmtDateShort(n.date))}</span>` : ''}
-            ${n.startsOn ? `<span class="notice-chip">Show from: ${esc(fmtDateShort(n.startsOn))}</span>` : ''}
-            ${n.endsOn ? `<span class="notice-chip">Show until: ${esc(fmtDateShort(n.endsOn))}</span>` : ''}
-          </div>
-
-          ${renderNoticeRowActions(n)}
-        </div>
-      </div>
-    `).join('') || '<p class="tiny muted">No notices found.</p>';
-
-    $$('[data-del-notice]', listEl).forEach(btn => {
-      btn.addEventListener('click', async () => {
-        await deleteNoticeById(btn.getAttribute('data-del-notice'));
-      });
-    });
-  }
-
-  async function importPandaSchedule(){
-    const fileEl = byId('binCsvFile');
-    const msg = byId('binMsg');
-    const file = fileEl && fileEl.files && fileEl.files[0];
-    if(!file){
-      msg.textContent = 'Please select the CSV file first.';
-      return;
-    }
-
-    const text = await file.text();
-    const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-
-    const imported = [];
-    for(const line of lines){
-      const cols = parseCsvLine(line);
-      if(!cols.length) continue;
-
-      const headerLike = cols.join(' ').toLowerCase();
-      if(headerLike.includes('date') && headerLike.includes('provider')) continue;
-      if(cols.length < 3) continue;
-
-      const date = parseFlexibleDate(cols[0]);
-      if(!date) continue;
-
-      const provider = String(cols[1] || '').trim();
-      const bin = String(cols[2] || '').trim();
-      const visibility = String(cols[3] || 'public').trim().toLowerCase();
-
-      const startsOn = startOfWeekMonday(date);
-      const endsOn = endOfNextWeekSunday(date);
-
-      imported.push({
-        id: `bin_${date}_${slugify(bin)}`,
-        title: 'Bin collection update',
-        message: `${bin} bin collection scheduled for ${date}.`,
-        category: 'Bins',
-        provider,
-        bin,
-        date,
-        startsOn,
-        endsOn,
-        startDate: startsOn,
-        endDate: endsOn,
-        createdAt: new Date().toISOString(),
-        showOnHome: true,
-        public: true,
-        isPublic: true,
-        published: true,
-        status: visibility === 'private' ? 'private' : 'public',
-        home: { enabled: true, visibility: 'public' },
-        meta: { type: 'bin_collection_import' }
-      });
-    }
-
-    const current = sanitizeNoticeCollection(await anwLoadSafe(KEY_NOTICES, []));
-    const kept = current.filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
-    const merged = sanitizeNoticeCollection([...kept, ...imported]);
-
-    await anwSaveSafe(KEY_NOTICES, merged);
-
-    msg.textContent = `${imported.length} collection row(s) imported and saved.`;
-    if(fileEl) fileEl.value = '';
-    await renderNoticesList();
-  }
-
-  // ---------- Light stubs for remaining tabs ----------
-  async function renderSimpleTable(key, tbodyId, emptyId, mapRow){
-    const rows = await anwLoadSafe(key, []);
-    const body = byId(tbodyId);
-    const empty = byId(emptyId);
-    if(!body) return;
-    body.innerHTML = rows.map(mapRow).join('');
-    if(empty) empty.style.display = rows.length ? 'none' : 'block';
-  }
-
-  async function loadReports(){
-    await renderSimpleTable(KEY_REPORTS, 'repBody', 'repEmpty', r => `
-      <tr>
-        <td>${esc(r.id || '—')}</td>
-        <td>${esc(fmtDate(r.createdAt || r.created || ''))}</td>
-        <td>${esc(r.category || '—')}</td>
-        <td>${esc(r.location || r.address || '—')}</td>
-        <td>${esc(r.email || r.reporterEmail || '—')}</td>
-        <td>${esc(r.status || 'submitted')}</td>
-        <td><button type="button" class="btn-line small" disabled>View</button></td>
-      </tr>
-    `);
-  }
-
-  async function loadProjects(){
-    await renderSimpleTable(KEY_PROJECTS, 'pmBody', 'pmEmpty', p => `
-      <tr>
-        <td>${esc(p.id || '—')}</td>
-        <td>${esc(p.title || p.project || '—')}</td>
-        <td>${esc(p.status || '—')}</td>
-        <td>${esc(p.owner || '—')}</td>
-        <td>${esc(fmtDate(p.updatedAt || p.updated || ''))}</td>
-        <td><button type="button" class="btn-line small" disabled>View</button></td>
-      </tr>
-    `);
-    await renderSimpleTable(KEY_PROJECT_RECIPIENTS, 'pmRecipientsBody', 'pmRecipientsEmpty', p => `
-      <tr>
-        <td>${esc(p.project || p.projectTitle || '—')}</td>
-        <td>${esc(p.recipient || p.name || '—')}</td>
-        <td>${esc([p.address, p.eircode].filter(Boolean).join(' · ') || '—')}</td>
-        <td>${esc(p.status || '—')}</td>
-        <td>${esc(fmtDate(p.updatedAt || p.updated || ''))}</td>
-      </tr>
-    `);
-  }
-
-  
-  
-  const ACL_ROLES = ['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'];
-
-  const ACL_ITEMS = [
-    { key:'page:home', label:'Home', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:about', label:'About', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:report', label:'Report Incident', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'page:alerts', label:'Community Alerts', group:'Site pages', indent:0, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:projects', label:'Community Projects page', group:'Projects', indent:0, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_monitoring', label:'Projects · Monitoring', group:'Projects', indent:1, defaults:{ projects:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_builder', label:'Projects · Build project', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_published', label:'Projects · Confirm sending', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'page:handbook', label:'Handbook', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:privacy', label:'Privacy Policy', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:login', label:'Login / Register', group:'Site pages', indent:0, defaults:{ public:true } },
-
-    { key:'page:dashboard', label:'Dashboard', group:'Dashboard', indent:0, defaults:{ public:true } },
-    { key:'dashboard:tab_profile', label:'Dashboard · Profile', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_interest', label:'Dashboard · Interest', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_elections', label:'Dashboard · Elections', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_notices', label:'Dashboard · Notices', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_garda', label:'Dashboard · Garda & Safety', group:'Dashboard', indent:1, defaults:{ public:true } },
-
-    { key:'page:household', label:'Household', group:'Residents', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:resident-profile', label:'Resident profile data', group:'Residents', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:street-management', label:'Street management', group:'Residents', indent:1, defaults:{ street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:regional-management', label:'Regional management', group:'Residents', indent:1, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-
-    { key:'page:admin', label:'Admin panel', group:'Owner controls', indent:0, defaults:{ owner:true } },
-    { key:'page:access-control', label:'Access Control sub-tab', group:'Owner controls', indent:1, defaults:{ owner:true } },
-    { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-  ];
-
-  const ROLE_RANK = {
-    public: 0,
-    resident: 1,
-    street_coordinator: 2,
-    assistant_area_coordinator: 3,
-    area_coordinator: 4,
-    projects: 4,
-    owner: 5
-  };
-
-  let ACCESS_RULES_CACHE = [];
-
-  function aclEmptyRule(item){
-    const out = { key:item.key, label:item.label, group:item.group || '', indent:Number(item.indent || 0) };
-    ACL_ROLES.forEach(role => { out[role] = false; });
-    const defaults = item.defaults || {};
-    Object.keys(defaults).forEach(k => { out[k] = !!defaults[k]; });
-    return out;
-  }
-
-  function classifyMatrixToRule(entry){
-    if(entry.public) return 'Public';
-
-    const selected = ACL_ROLES.filter(role => role !== 'public' && !!entry[role]);
-    if(!selected.length) return 'owner';
-
-    if(selected.length === ACL_ROLES.length - 1) return 'Authenticated';
-
-    const rankMap = selected.map(role => ROLE_RANK[role] ?? 999);
-    const minRank = Math.min(...rankMap);
-    const rankMatchedRoles = selected.filter(role => (ROLE_RANK[role] ?? 999) === minRank);
-
-    if(rankMatchedRoles.length === 1){
-      return rankMatchedRoles[0];
-    }
-
-    if(rankMatchedRoles.includes('projects') && rankMatchedRoles.length === 1){
-      return 'projects';
-    }
-
-    return 'Authenticated';
-  }
-
-  function applyRuleToRow(row, rule){
-    const clean = String(rule == null ? '' : rule).trim();
-    ACL_ROLES.forEach(role => { row[role] = false; });
-
-    if(clean === 'Public'){
-      row.public = true;
-      return;
-    }
-
-    if(clean === 'Authenticated'){
-      ACL_ROLES.filter(role => role !== 'public').forEach(role => { row[role] = true; });
-      return;
-    }
-
-    if(clean === 'projects'){
-      row.projects = true;
-      row.owner = true;
-      return;
-    }
-
-    const rank = ROLE_RANK[clean];
-    if(typeof rank === 'number'){
-      ACL_ROLES.filter(role => role !== 'public').forEach(role => {
-        const roleRank = ROLE_RANK[role];
-        if(typeof roleRank === 'number' && roleRank >= rank){
-          row[role] = true;
-        }
-      });
-    }
-  }
-
-  function mapSavedAclToMatrix(saved){
-    const matrix = ACL_ITEMS.map(aclEmptyRule);
-
-    const source = (saved && typeof saved === 'object' && !Array.isArray(saved)) ? saved : {};
-    const matrixSource = (source.__matrix && typeof source.__matrix === 'object') ? source.__matrix : {};
-
-    matrix.forEach((row) => {
-      const fromMatrix = matrixSource[row.key];
-      if(fromMatrix && typeof fromMatrix === 'object'){
-        ACL_ROLES.forEach(role => {
-          if(role in fromMatrix) row[role] = !!fromMatrix[role];
-        });
-        return;
-      }
-
-      const direct = (
-        Object.prototype.hasOwnProperty.call(source, row.key) ? source[row.key] :
-        source.features && Object.prototype.hasOwnProperty.call(source.features, row.key) ? source.features[row.key] :
-        null
-      );
-
-      applyRuleToRow(row, direct);
-    });
-
-    return matrix;
-  }
-
-  function matrixToAclPayload(matrix){
-    const payload = {
-      features:{},
-      pages:{},
-      publicFeatures:[],
-      __matrix:{},
-      rolesMeta:{
-        order:['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'],
-        rank: ROLE_RANK
-      }
-    };
-
-    matrix.forEach((row) => {
-      const rule = classifyMatrixToRule(row);
-      payload[row.key] = rule;
-      payload.__matrix[row.key] = Object.fromEntries(ACL_ROLES.map(role => [role, !!row[role]]));
-
-      if(row.key.startsWith('dashboard:') || row.key.startsWith('projects:')){
-        payload.features[row.key] = rule;
-        if(row.public) payload.publicFeatures.push(row.key);
-      }
-
-      if(row.key === 'page:dashboard'){
-        payload.pages['page:dashboard'] = payload.pages['page:dashboard'] || { shell: rule, features:{} };
-        payload.pages['page:dashboard'].shell = rule;
-      }
-
-      if(row.key.startsWith('dashboard:tab_')){
-        payload.pages['page:dashboard'] = payload.pages['page:dashboard'] || { shell:'resident', features:{} };
-        payload.pages['page:dashboard'].features[row.key] = rule;
-      }
-
-      if(row.key === 'page:projects'){
-        payload.pages['page:projects'] = payload.pages['page:projects'] || { shell: rule, features:{} };
-        payload.pages['page:projects'].shell = rule;
-      }
-
-      if(row.key.startsWith('projects:tab_')){
-        payload.pages['page:projects'] = payload.pages['page:projects'] || { shell:'projects', features:{} };
-        payload.pages['page:projects'].features[row.key] = rule;
-      }
-    });
-
-    return payload;
-  }
-
-  function renderAccessControlFromData(rules){
-    const body = byId('acBody');
-    if(!body) return;
-
-    let lastGroup = '';
-    body.innerHTML = rules.map((r, idx) => {
-      const groupHeader = (r.group && r.group !== lastGroup)
-        ? `<tr class="ac-group"><td colspan="8"><strong>${esc(r.group)}</strong></td></tr>`
-        : '';
-      lastGroup = r.group || lastGroup;
-
-      return `${groupHeader}
-      <tr data-ac-row="${idx}">
-        <td>
-          <div class="ac-item">
-            <div>
-              <div class="ac-indent-${Math.min(Number(r.indent || 0), 3)}">${esc(r.label)}</div>
-              <div class="ac-key">${esc(r.key)}</div>
-            </div>
-          </div>
-        </td>
-        ${ACL_ROLES.map(role => `
-          <td>
-            <button
-              type="button"
-              class="ac-toggle ${r[role] ? 'allowed' : 'denied'}"
-              data-role="${role}"
-              data-row="${idx}"
-              title="${role === 'public' ? 'Visible without login' : role.replaceAll('_',' ')}"
-            >${r[role] ? '✓' : '—'}</button>
-          </td>
-        `).join('')}
-      </tr>`;
-    }).join('');
-
-    $$('.ac-toggle', body).forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const row = Number(btn.getAttribute('data-row'));
-        const role = btn.getAttribute('data-role');
-        if(!Number.isFinite(row) || !rules[row]) return;
-
-        if(role === 'public'){
-          const next = !rules[row].public;
-          ACL_ROLES.forEach(k => { rules[row][k] = false; });
-          rules[row].public = next;
-        } else {
-          rules[row][role] = !rules[row][role];
-          if(rules[row][role]) rules[row].public = false;
-        }
-
-        ACCESS_RULES_CACHE = rules;
-        renderAccessControlFromData(rules);
-      });
-    });
-
-    byId('btnAcSave').onclick = async () => {
-      const payload = matrixToAclPayload(rules);
-      await anwSaveSafe(KEY_ACCESS, payload);
-      try{
-        if(typeof window.anwSave === 'function') window.anwSave(KEY_ACCESS, payload);
-      }catch(_){}
-      byId('acMsg').textContent = 'Access rules saved. Pages and sub-tabs are now linked to the new role-based ACL.';
-    };
-
-    byId('btnAcPrint').onclick = () => {
-      document.body.classList.add('print-access-control');
-      window.print();
-      setTimeout(() => document.body.classList.remove('print-access-control'), 200);
-    };
-
-    byId('btnAcRefresh').onclick = loadAccessControl;
-  }
-
-  async function loadAccessControl(){
-    const saved = await anwLoadSafe(KEY_ACCESS, {});
-    ACCESS_RULES_CACHE = mapSavedAclToMatrix(saved);
-    renderAccessControlFromData(ACCESS_RULES_CACHE);
-  }
-
-
-
-  async function loadDiagnostics(){
-    const data = {
-      users: (await anwLoadSafe(KEY_USERS, [])).length,
-      notices: (await anwLoadSafe(window.getNoticesKey(), [])).length,
-      reports: (await anwLoadSafe(KEY_REPORTS, [])).length,
-      projects: (await anwLoadSafe(KEY_PROJECTS, [])).length
-    };
-    byId('diagOut').textContent = JSON.stringify(data, null, 2);
-  }
-
-  // ---------- Events ----------
-  document.addEventListener('click', ev => {
-    const btn = ev.target.closest('.admin-tab');
-    if(btn){ showAdminTab(btn.getAttribute('data-tab')); }
-
-    const rtab = ev.target.closest('.resident-tab');
-    if(rtab){ showResidentSubtab(rtab.getAttribute('data-subtab')); }
-
-    const etab = ev.target.closest('.elect-tab');
-    if(etab){ showElectionSubtab(etab.getAttribute('data-subtab')); }
-  });
-
-  byId('btnCloseResident')?.addEventListener('click', closeResidentModal);
-  byId('modalResident')?.addEventListener('click', (ev) => {
-    if(ev.target === byId('modalResident')) closeResidentModal();
-  });
-  byId('btnSaveResident')?.addEventListener('click', () => saveCurrentResident());
-  byId('btnApprove')?.addEventListener('click', async () => { await saveCurrentResident('approved'); closeResidentModal(); });
-  byId('btnReject')?.addEventListener('click', async () => { await saveCurrentResident('rejected'); closeResidentModal(); });
-  byId('btnSuspendResident')?.addEventListener('click', async () => { await saveCurrentResident('suspended'); closeResidentModal(); });
-  byId('btnRemoveResident')?.addEventListener('click', async () => {
-    if(!CURRENT_RESIDENT) return;
-    const users = await anwLoadSafe(KEY_USERS, []);
-    const next = users.filter(u => String(u.email||'').toLowerCase() !== String(CURRENT_RESIDENT.email||'').toLowerCase());
-    await anwSaveSafe(KEY_USERS, next);
-    RESIDENTS_CACHE = next;
-    closeResidentModal();
-    renderResidents('all');
-  });
-
-  byId('btnNtPublish')?.addEventListener('click', publishNotice);
-  byId('btnNtClear')?.addEventListener('click', () => {
-    ['ntTitle','ntMessage','ntExpires','ntEirPrefixes','ntStreets','ntEircodes','ntEmails'].forEach(id => { if(byId(id)) byId(id).value = ''; });
-    if(byId('ntCategory')) byId('ntCategory').value = 'General';
-    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = false;
-    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = 'private';
-    if(byId('ntAllLogged')) byId('ntAllLogged').checked = true;
-    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = false;
-    $$('.ntRole').forEach(x => x.checked = false);
-    byId('ntMsg').textContent = '';
-  });
-
-  byId('btnBinImport')?.addEventListener('click', importPandaSchedule);
-  byId('btnClearBinNotices')?.addEventListener('click', clearImportedBinNotices);
-
-  byId('btnRepRefresh')?.addEventListener('click', loadReports);
-  byId('btnPmRefresh')?.addEventListener('click', loadProjects);
-  byId('btnAcRefresh')?.addEventListener('click', loadAccessControl);
-  byId('btnDiagRun')?.addEventListener('click', loadDiagnostics);
-
-  byId('btnExportUsers')?.addEventListener('click', async () => downloadText('residents.json', JSON.stringify(await anwLoadSafe(KEY_USERS, []), null, 2)));
-  byId('btnExportNotices')?.addEventListener('click', async () => downloadText('notices.json', JSON.stringify(await loadNoticesFresh(), null, 2)));
-  byId('btnExportReports')?.addEventListener('click', async () => downloadText('reports.json', JSON.stringify(await anwLoadSafe(KEY_REPORTS, []), null, 2)));
-  byId('btnExportProjects')?.addEventListener('click', async () => downloadText('projects.json', JSON.stringify(await anwLoadSafe(KEY_PROJECTS, []), null, 2)));
-
-  
-  async function getAdminAuthHeaders(extra){
-    const headers = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
-    try{
-      const u = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
-        ? window.netlifyIdentity.currentUser()
-        : null;
-      if(u && typeof u.jwt === 'function'){
-        const token = await u.jwt();
-        if(token) headers.Authorization = 'Bearer ' + token;
-      }
-    }catch(_){}
-    return headers;
-  }
-
-  async function ensureBackupSettings(){
-    try{
-      const current = await anwLoadSafe('anw_backup_settings', null);
-      if(current && typeof current === 'object' && current.enabled === true) return current;
-      const next = Object.assign({}, current || {}, {
-        enabled: true,
-        schedule: '0 2 * * *',
-        timezone: 'UTC',
-        updatedAt: new Date().toISOString()
-      });
-      await anwSaveSafe('anw_backup_settings', next);
-      return next;
-    }catch(_){
-      return { enabled:true, schedule:'0 2 * * *', timezone:'UTC' };
-    }
-  }
-
-  async function refreshBackupStatus(){
-    const statusText = byId('backupStatusText');
-    const statusBadge = byId('backupStatusBadge');
-    const lastRun = byId('backupLastRun');
-    const msg = byId('backupMsg');
-    if(statusText) statusText.textContent = 'Checking backup status…';
-    if(statusBadge){
-      statusBadge.textContent = 'Checking';
-      statusBadge.className = 'tag gray';
-    }
-    if(lastRun) lastRun.textContent = 'Last run: —';
-
-    try{
-      const settings = await ensureBackupSettings();
-      const headers = await getAdminAuthHeaders();
-      const res = await fetch('/.netlify/functions/backup-list', {
-        method: 'GET',
-        headers,
-        cache: 'no-store'
-      });
-      const data = await res.json().catch(() => ({}));
-      if(!res.ok || data.ok === false){
-        throw new Error(data.error || 'Unable to load backup status');
-      }
-      const items = Array.isArray(data.items) ? data.items : [];
-      const latest = items[0] || null;
-      if(statusText){
-        statusText.textContent = settings.enabled
-          ? 'Automatic backup is active (daily at 02:00 UTC). You can also run a manual backup now.'
-          : 'Automatic backup is disabled.';
-      }
-      if(statusBadge){
-        statusBadge.textContent = settings.enabled ? 'Active' : 'Disabled';
-        statusBadge.className = settings.enabled ? 'tag ok' : 'tag gray';
-      }
-      if(lastRun){
-        lastRun.textContent = latest && latest.createdAt
-          ? ('Last run: ' + fmtDate(latest.createdAt))
-          : 'Last run: none yet';
-      }
-      if(msg && latest && latest.id){
-        msg.textContent = 'Latest backup ID: ' + latest.id;
-      }else if(msg){
+        msg.style.display = 'none';
         msg.textContent = '';
       }
+
+      return true;
+
     }catch(err){
-      if(statusText) statusText.textContent = 'Backup status could not be loaded.';
-      if(statusBadge){
-        statusBadge.textContent = 'Error';
-        statusBadge.className = 'tag gray';
-      }
-      if(lastRun) lastRun.textContent = 'Last run: unavailable';
-      if(msg) msg.textContent = String(err && err.message ? err.message : err || 'Unknown backup error');
+      console.error(err);
+      location.replace('login.html');
+      return false;
     }
   }
 
-  byId('btnBackupRefresh')?.addEventListener('click', refreshBackupStatus);
-
-  byId('btnBackupNow')?.addEventListener('click', async () => {
-    const msg = byId('backupMsg');
-    if(msg) msg.textContent = 'Running backup now…';
-    try{
-      await ensureBackupSettings();
-      const headers = await getAdminAuthHeaders();
-      const res = await fetch('/.netlify/functions/backup-now', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ source: 'admin-manual' })
-      });
-      const data = await res.json().catch(() => ({}));
-      if(!res.ok || data.ok === false){
-        throw new Error(data.error || 'Backup failed');
-      }
-      if(msg) msg.textContent = 'Backup created successfully. Backup ID: ' + (data.id || 'unknown');
-      await refreshBackupStatus();
-    }catch(err){
-      if(msg) msg.textContent = 'Backup failed: ' + String(err && err.message ? err.message : err || 'Unknown error');
-    }
-  });
-
-  byId('btnRestoreBackup')?.addEventListener('click', async () => {
-    const msg = byId('backupMsg');
-    const input = byId('restoreBackupFile');
-    const file = input && input.files && input.files[0] ? input.files[0] : null;
-    if(!file){
-      if(msg) msg.textContent = 'Select a backup JSON file first.';
-      return;
-    }
-    if(msg) msg.textContent = 'Restoring backup…';
-    try{
-      const text = await file.text();
-      const snapshot = JSON.parse(text);
-      const headers = await getAdminAuthHeaders();
-      const res = await fetch('/.netlify/functions/restore-backup', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ snapshot })
-      });
-      const data = await res.json().catch(() => ({}));
-      if(!res.ok || data.ok === false){
-        throw new Error(data.error || 'Restore failed');
-      }
-      if(msg){
-        msg.textContent = 'Restore completed successfully from backup ' +
-          String(data.id || snapshot.id || 'uploaded file') +
-          (data.safetyBackupId ? (' (safety backup: ' + data.safetyBackupId + ')') : '');
-      }
-      if(input) input.value = '';
-      await refreshBackupStatus();
-    }catch(err){
-      if(msg) msg.textContent = 'Restore failed: ' + String(err && err.message ? err.message : err || 'Unknown error');
-    }
-  });
-
-  // ---------- Init ----------
   document.addEventListener('DOMContentLoaded', async () => {
     try{
-      showAdminTab('tabResidents');
+      const allowed = await runAdminGate();
+      if(!allowed) return;
+
+      showAdminTab(getCurrentAdminTabId());
       showElectionSubtab('subManage');
+
       await Promise.all([
         loadResidents(),
         renderNoticesList(),
@@ -3145,15 +2006,12 @@
         loadAccessControl(),
         loadDiagnostics()
       ]);
+
+      adminMarkReady();
     }catch(err){
       console.error(err);
-    }finally{
-      runAdminGate();
+      location.replace('login.html');
     }
-  });
-
-  window.addEventListener('load', () => {
-    adminMarkReady();
   });
 })();
 </script>
@@ -3191,31 +2049,7 @@
 
 
 
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-  try{
-    const tabResidents = document.getElementById("tabResidents");
-    const subManage = document.getElementById("subManage");
-    if (tabResidents) {
-      tabResidents.style.display = "block";
-      tabResidents.hidden = false;
-    }
-    if (subManage) {
-      subManage.style.display = "block";
-      subManage.hidden = false;
-    }
-    const allTabs = document.querySelectorAll(".admin-tab-content");
-    if (allTabs.length) {
-      let anyVisible = false;
-      allTabs.forEach(el => {
-        const st = window.getComputedStyle(el);
-        if (st.display !== "none" && st.visibility !== "hidden") anyVisible = true;
-      });
-      if (!anyVisible && tabResidents) tabResidents.style.display = "block";
-    }
-  }catch(e){}
-});
-</script>
+
 
 
 <script>
