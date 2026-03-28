@@ -1,7 +1,32 @@
 // assets/acl-guard.js
 (function () {
+  function getPathName() {
+    try {
+      return String(location.pathname || "").toLowerCase();
+    } catch {
+      return "";
+    }
+  }
+
+  function isAdminPath() {
+    const path = getPathName();
+    return (
+      path === "/admin" ||
+      path === "/admin/" ||
+      path.endsWith("/admin") ||
+      path.endsWith("/admin/") ||
+      path.endsWith("/admin.html")
+    );
+  }
+
   function isPublicMode(){
-    try { return !!window.ANW_PUBLIC_MODE; } catch { return false; }
+    try {
+      // Admin must never be bypassed by public mode
+      if (isAdminPath()) return false;
+      return !!window.ANW_PUBLIC_MODE;
+    } catch {
+      return false;
+    }
   }
 
   function isLoggedIn() {
@@ -61,23 +86,22 @@
     const m2 = document.querySelector('meta[name="anw-page"]');
     if (m2 && m2.getAttribute("content")) return m2.getAttribute("content");
 
-    // Fallback by pathname so sensitive pages never become public
+    // Strong fallback by route/path
     try {
-      const path = String(location.pathname || "").toLowerCase();
-      const file = path.split("/").pop() || "";
+      const path = getPathName();
+      const file = path.split("/").filter(Boolean).pop() || "";
 
-      if (!file || file === "index.html") return "page:home";
-      if (file === "home.html") return "page:home";
-      if (file === "about.html") return "page:about";
-      if (file === "handbook.html") return "page:handbook";
-      if (file === "login.html") return "page:login";
-      if (file === "privacy.html") return "page:privacy";
-      if (file === "dashboard.html") return "page:dashboard";
-      if (file === "report.html") return "page:report";
-      if (file === "household.html") return "page:household";
-      if (file === "alerts.html") return "page:alerts";
-      if (file === "projects.html") return "page:projects";
-      if (file === "admin.html") return "page:admin";
+      if (!file || path === "/" || file === "index.html" || file === "home" || file === "home.html") return "page:home";
+      if (file === "about" || file === "about.html") return "page:about";
+      if (file === "handbook" || file === "handbook.html") return "page:handbook";
+      if (file === "login" || file === "login.html") return "page:login";
+      if (file === "privacy" || file === "privacy.html") return "page:privacy";
+      if (file === "dashboard" || file === "dashboard.html") return "page:dashboard";
+      if (file === "report" || file === "report.html") return "page:report";
+      if (file === "household" || file === "household.html") return "page:household";
+      if (file === "alerts" || file === "alerts.html") return "page:alerts";
+      if (file === "projects" || file === "projects.html") return "page:projects";
+      if (file === "admin" || file === "admin.html") return "page:admin";
     } catch {}
 
     return null;
@@ -85,6 +109,8 @@
 
   function isShellPublicPage() {
     try {
+      // Admin must never be bypassed by shell-public mode
+      if (isAdminPath()) return false;
       return document.body && document.body.getAttribute("data-acl-shell-public") === "true";
     } catch {
       return false;
@@ -144,7 +170,6 @@
     } catch {}
     return undefined;
   }
-
   function resolveAclRule(acl, keyOrRule) {
     const raw = String(keyOrRule || "").trim();
     if (!raw) return "Public";
@@ -181,22 +206,19 @@
     // Owner always has full access
     if (cur === "owner") return true;
 
-    // Admin must follow explicit ACL rules and cannot inherit owner-only access
+    // Admin must not inherit owner-only access
     if (cur === "admin" && req === "owner") return false;
 
     const reqRank = ROLE_RANK[req];
     const curRank = ROLE_RANK[cur];
-
     if (typeof reqRank === "number" && typeof curRank === "number") {
       if (req === "projects") return cur === "projects" || cur === "owner";
       return curRank >= reqRank;
     }
-
     return cur === req;
   }
 
   function ruleAllows(rule, role) {
-    if (isPublicMode()) return true;
     const clean = normalizeRule(rule);
     if (clean.toLowerCase() === "public") return true;
     if (clean.toLowerCase() === "authenticated") return isLoggedIn();
@@ -227,38 +249,48 @@
     });
   }
 
+  function enforceAdminPage(role, acl) {
+    if (!isLoggedIn()) {
+      location.replace("login.html");
+      return true;
+    }
+
+    const adminRule = resolveAclRule(acl, "page:admin");
+
+    // Owner always allowed. Others only if ACL explicitly allows.
+    if (role === "owner") return false;
+
+    if (!ruleAllows(adminRule, role)) {
+      location.replace("dashboard.html");
+      return true;
+    }
+
+    return false;
+  }
+
   function enforcePage(role, acl) {
+    // Hard enforcement for admin first, before any public/shell checks
+    if (isAdminPath() || getPageKey() === "page:admin") {
+      if (enforceAdminPage(role, acl)) return;
+      return;
+    }
+
     if (isPublicMode()) return;
     if (isShellPublicPage()) return;
 
     const key = getPageKey();
     const rule = key ? resolveAclRule(acl, key) : "Authenticated";
-    const clean = normalizeRule(rule).toLowerCase();
+    const clean = normalizeRule(rule);
 
-    // Sensitive hard-stop for admin page:
-    // must be logged in first, then must pass ACL rule.
-    if (key === "page:admin") {
-      if (!isLoggedIn()) {
-        location.replace("login.html");
-        return;
-      }
-      if (!ruleAllows("owner", role) && !ruleAllows(resolveAclRule(acl, "page:admin"), role)) {
-        location.replace("dashboard.html");
-        return;
-      }
-      return;
-    }
+    if (clean.toLowerCase() === "public") return;
 
-    if (clean === "public") return;
-
-    if (clean === "authenticated") {
+    if (clean.toLowerCase() === "authenticated") {
       if (!isLoggedIn()) {
         location.replace("login.html");
       }
       return;
     }
 
-    // For any non-public rule, require login before role check
     if (!isLoggedIn()) {
       location.replace("login.html");
       return;
@@ -268,25 +300,27 @@
       location.replace("dashboard.html");
     }
   }
-
   window.anwAclAllows = function(keyOrRule){
     const acl = loadAcl() || {};
     const role = getRole();
-    const rule = resolveAclRule(acl, keyOrRule);
 
-    if (normalizeRule(rule).toLowerCase() !== "public" && !isLoggedIn()) {
+    if ((String(keyOrRule || "").trim() === "page:admin" || isAdminPath()) && !isLoggedIn()) {
       return false;
     }
 
+    const rule = resolveAclRule(acl, keyOrRule);
+    if (normalizeRule(rule).toLowerCase() !== "public" && !isLoggedIn()) {
+      return false;
+    }
     return ruleAllows(rule, role);
   };
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
-      if (isPublicMode()) return;
       await ensureFresh();
       const acl = loadAcl() || {};
       const role = getRole();
+
       applyNav(role, acl);
       applyFeatures(role, acl);
       enforcePage(role, acl);
