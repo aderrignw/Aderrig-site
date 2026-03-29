@@ -14,13 +14,18 @@
 
 <link rel="stylesheet" href="assets/style.css" />
 
-<script>document.documentElement.classList.add('admin-js');</script>
+<script>document.documentElement.classList.add('admin-js','admin-booting');</script>
 
 <style id="admin-first-paint-fix">
+  html.admin-booting body,
+  body.admin-booting .site-header,
+  body.admin-booting main.wrap,
+  body.admin-booting footer.site-footer{
+    visibility:hidden !important;
+  }
+
   .admin-tab-content{display:none;}
-  #tabResidents{display:block;}
   .elect-subtab{display:none;}
-  #subManage{display:block;}
 
 .logout-btn-inline{min-width:104px;}
 
@@ -872,10 +877,9 @@
 <script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script defer src="assets/identity.js"></script>
 <script defer src="assets/app-core.js"></script>
-<script defer src="assets/acl-guard.js"></script>
 </head>
 
-<body data-acl-loading="true">
+<body data-acl-loading="true" class="admin-booting">
 
 <header class="site-header">
 <div class="brand">
@@ -897,7 +901,7 @@
 <a class="nav-login" href="login.html">Login / Register</a>
 <a href="dashboard.html">Dashboard</a>
 <a href="household.html">Household</a>
-<a class="active" href="admin.html">Admin</a>
+<a class="active" href="admin.html" data-acl="page:admin">Admin</a>
 </nav>
 </header>
 
@@ -1913,44 +1917,231 @@
     document.body.classList.remove('admin-booting');
   }
 
+  function normalizeAdminRole(v){
+    try{
+      if(typeof window.anwNormalizeRoleName === 'function'){
+        return String(window.anwNormalizeRoleName(v) || '').trim().toLowerCase();
+      }
+    }catch(_){}
+    return String(v || '').trim().toLowerCase();
+  }
+
+  function extractRolesFromUserRecord(user){
+    const roles = new Set();
+
+    try{
+      const direct = normalizeAdminRole(user && user.role);
+      if(direct) roles.add(direct);
+    }catch(_){}
+
+    try{
+      const primary = normalizeAdminRole(user && user.primaryRole);
+      if(primary) roles.add(primary);
+    }catch(_){}
+
+    try{
+      const arr = Array.isArray(user && user.roles) ? user.roles : [];
+      arr.forEach(r => {
+        const clean = normalizeAdminRole(r);
+        if(clean) roles.add(clean);
+      });
+    }catch(_){}
+
+    try{
+      if(user && user.isOwner === true) roles.add('owner');
+    }catch(_){}
+
+    return Array.from(roles);
+  }
+
+  function aclLookupValue(acl, key){
+    try{
+      if(!acl || typeof acl !== 'object') return undefined;
+      if(Object.prototype.hasOwnProperty.call(acl, key)) return acl[key];
+      if(acl.features && Object.prototype.hasOwnProperty.call(acl.features, key)) return acl.features[key];
+      if(acl.pages && Object.prototype.hasOwnProperty.call(acl.pages, key)) return acl.pages[key];
+
+      if(acl.pages && typeof acl.pages === 'object'){
+        for(const pageKey of Object.keys(acl.pages)){
+          const page = acl.pages[pageKey];
+          if(!page || typeof page !== 'object') continue;
+          if(Object.prototype.hasOwnProperty.call(page, key)) return page[key];
+          if(page.features && Object.prototype.hasOwnProperty.call(page.features, key)) return page.features[key];
+        }
+      }
+    }catch(_){}
+    return undefined;
+  }
+
+  function normalizeAclRule(rule){
+    if(rule == null) return 'Public';
+    if(typeof rule === 'string'){
+      const clean = rule.trim();
+      return clean || 'Public';
+    }
+    if(typeof rule === 'object'){
+      if(typeof rule.shell === 'string') return rule.shell.trim() || 'Public';
+      if(typeof rule.rule === 'string') return rule.rule.trim() || 'Public';
+      if(typeof rule.access === 'string') return rule.access.trim() || 'Public';
+      if(typeof rule.visibility === 'string') return rule.visibility.trim() || 'Public';
+      if(rule.public === true) return 'Public';
+      if(rule.authenticated === true) return 'Authenticated';
+    }
+    return 'Public';
+  }
+
+  function roleAllowsAdmin(required, currentRole){
+    const req = normalizeAdminRole(required);
+    const cur = normalizeAdminRole(currentRole);
+
+    if(req === 'public') return true;
+    if(req === 'authenticated') return true;
+    if(cur === 'owner') return true;
+    if(cur === 'admin' && req !== 'owner') return true;
+
+    const rank = {
+      public: 0,
+      resident: 1,
+      street_coordinator: 2,
+      assistant_area_coordinator: 3,
+      area_coordinator: 4,
+      projects: 4,
+      owner: 5,
+      admin: 5
+    };
+
+    const reqRank = rank[req];
+    const curRank = rank[cur];
+    if(typeof reqRank === 'number' && typeof curRank === 'number'){
+      if(req === 'projects') return cur === 'projects' || cur === 'owner' || cur === 'admin';
+      return curRank >= reqRank;
+    }
+
+    return cur === req;
+  }
+
+  async function waitForAdminIdentity(timeoutMs = 6000){
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    const started = Date.now();
+
+    function getIdentityUser(){
+      try{
+        return (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
+          ? window.netlifyIdentity.currentUser()
+          : null;
+      }catch(_){
+        return null;
+      }
+    }
+
+    function getLoggedSnapshot(){
+      try{
+        const raw = localStorage.getItem('anw_logged');
+        return raw ? JSON.parse(raw) : null;
+      }catch(_){
+        return null;
+      }
+    }
+
+    while(Date.now() - started < timeoutMs){
+      const currentUser = getIdentityUser();
+      const logged = getLoggedSnapshot();
+
+      const email = String(
+        (currentUser && currentUser.email) ||
+        (logged && logged.email) ||
+        ''
+      ).trim().toLowerCase();
+
+      const role = normalizeAdminRole(
+        (typeof window.anwGetLoggedRole === 'function' ? window.anwGetLoggedRole() : '') ||
+        (logged && (logged.role || logged.primaryRole)) ||
+        ''
+      );
+
+      if(email || role){
+        return { currentUser, logged, email, role };
+      }
+
+      await sleep(200);
+    }
+
+    const currentUser = getIdentityUser();
+    const logged = getLoggedSnapshot();
+    return {
+      currentUser,
+      logged,
+      email: String(
+        (currentUser && currentUser.email) ||
+        (logged && logged.email) ||
+        ''
+      ).trim().toLowerCase(),
+      role: normalizeAdminRole(
+        (typeof window.anwGetLoggedRole === 'function' ? window.anwGetLoggedRole() : '') ||
+        (logged && (logged.role || logged.primaryRole)) ||
+        ''
+      )
+    };
+  }
+
+  async function resolveAdminUserContext(){
+    const identity = await waitForAdminIdentity();
+    const email = String(identity && identity.email || '').trim().toLowerCase();
+    let role = normalizeAdminRole(identity && identity.role || '');
+    let matchedUser = null;
+
+    try{
+      const users = await anwLoadSafe(KEY_USERS, []);
+      const list = Array.isArray(users) ? users : [];
+      matchedUser = list.find(u => String(u && u.email || '').trim().toLowerCase() === email) || null;
+
+      if(matchedUser){
+        const roles = extractRolesFromUserRecord(matchedUser);
+        if(!role && roles.length) role = normalizeAdminRole(roles[0]);
+        if(roles.includes('owner')) role = 'owner';
+      }
+    }catch(_){}
+
+    return {
+      email,
+      role,
+      matchedUser
+    };
+  }
+
   async function runAdminGate(){
     const msg = byId('adminGateMsg');
 
     try{
-      const currentUser = (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
-        ? window.netlifyIdentity.currentUser()
-        : null;
+      const ctx = await resolveAdminUserContext();
+      const email = String(ctx && ctx.email || '').trim().toLowerCase();
+      let role = normalizeAdminRole(ctx && ctx.role || '');
+      const userRoles = extractRolesFromUserRecord(ctx && ctx.matchedUser);
+      const isOwner = (
+        email === OWNER_EMAIL.toLowerCase() ||
+        role === 'owner' ||
+        userRoles.includes('owner')
+      );
 
-      if(!currentUser || !currentUser.email){
+      if(!email){
         location.replace('login.html');
         return false;
       }
 
-      const email = String(currentUser.email || '').trim().toLowerCase();
-      const isOwner = email === OWNER_EMAIL.toLowerCase();
-
       let allowed = false;
-      let role = '';
 
       if(isOwner){
         allowed = true;
         role = 'owner';
       } else {
+        let acl = {};
         try{
-          if(typeof window.anwAclAllows === 'function'){
-            allowed = !!window.anwAclAllows('page:admin');
-          }
+          acl = await anwLoadSafe(KEY_ACCESS, {});
         }catch(_){
-          allowed = false;
+          acl = {};
         }
-
-        try{
-          role = (typeof window.anwGetLoggedRole === 'function')
-            ? String(window.anwGetLoggedRole() || '').trim().toLowerCase()
-            : '';
-        }catch(_){
-          role = '';
-        }
+        const rule = normalizeAclRule(aclLookupValue(acl, 'page:admin') ?? 'owner');
+        allowed = roleAllowsAdmin(rule, role);
       }
 
       adminApplyRoleVisibility(role);
