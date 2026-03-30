@@ -885,33 +885,18 @@
   })();
 </script>
 
+<style id="admin-guard-style">
+  html.admin-guard-pending main.wrap{ visibility:hidden; }
+</style>
 <script>
-(function(){
-  function getUser(){
-    try{
-      return window.netlifyIdentity &&
-             typeof window.netlifyIdentity.currentUser === "function"
-        ? window.netlifyIdentity.currentUser()
-        : null;
-    }catch(_){
-      return null;
-    }
-  }
-
-  var user = getUser();
-  if(!user){
-    try{
-      location.replace("/login.html");
-    }catch(_){
-      try{ location.href = "/login.html"; }catch(__){}
-    }
-  }
-})();
+  (function(){
+    try { document.documentElement.classList.add('admin-guard-pending'); } catch (_) {}
+  })();
 </script>
 
 </head>
 
-<body data-acl-loading="true">
+<body>
 
 <header class="site-header">
 <div class="brand">
@@ -2085,6 +2070,92 @@
     document.body.classList.toggle('admin-allowed', allowAll);
   }
 
+  function adminGuardPending(on){
+    try{
+      document.documentElement.classList.toggle('admin-guard-pending', !!on);
+    }catch(_){}
+  }
+
+  function getNetlifyCurrentUser(){
+    try{
+      return (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function')
+        ? (window.netlifyIdentity.currentUser() || null)
+        : null;
+    }catch(_){
+      return null;
+    }
+  }
+
+  function hasIdentitySessionHint(){
+    try{
+      for(const key of Object.keys(localStorage)){
+        if(/gotrue/i.test(key)){
+          const raw = localStorage.getItem(key);
+          if(raw && String(raw).trim()) return true;
+        }
+      }
+    }catch(_){}
+    return false;
+  }
+
+  function redirectAdminDenied(target){
+    adminGuardPending(false);
+    try{
+      location.replace(target);
+    }catch(_){
+      try{ location.href = target; }catch(__){}
+    }
+    setTimeout(() => {
+      try{ location.href = target; }catch(_){}
+    }, 80);
+  }
+
+  async function waitForAclFunction(timeoutMs){
+    const started = Date.now();
+    while(Date.now() - started < Number(timeoutMs || 6000)){
+      if(typeof window.anwAclAllows === 'function') return true;
+      await new Promise(r => setTimeout(r, 80));
+    }
+    return false;
+  }
+
+  async function waitForAdminDecision(timeoutMs){
+    const started = Date.now();
+    const limit = Number(timeoutMs || 7000);
+    const hadSessionHint = hasIdentitySessionHint();
+
+    while(Date.now() - started < limit){
+      const currentUser = getNetlifyCurrentUser();
+      const aclReady = typeof window.anwAclAllows === 'function';
+
+      if(aclReady && currentUser && window.anwAclAllows('page:admin')){
+        return 'allow';
+      }
+
+      if(aclReady && currentUser && !window.anwAclAllows('page:admin')){
+        return 'deny-dashboard';
+      }
+
+      if(aclReady && !currentUser && !hadSessionHint){
+        return 'deny-login';
+      }
+
+      await new Promise(r => setTimeout(r, 100));
+    }
+
+    const currentUser = getNetlifyCurrentUser();
+    if(currentUser){
+      try{
+        if(typeof window.anwAclAllows === 'function' && window.anwAclAllows('page:admin')){
+          return 'allow';
+        }
+      }catch(_){}
+      return 'deny-dashboard';
+    }
+
+    return 'deny-login';
+  }
+
   function adminMarkReady(){
     document.documentElement.classList.remove('admin-booting');
     document.body.classList.remove('admin-booting');
@@ -2141,7 +2212,6 @@
     }finally{
       showAdminTab(getCurrentAdminTabId());
       showElectionSubtab('subManage');
-      adminMarkReady();
     }
   }
   // ---------- Residents ----------
@@ -3160,8 +3230,30 @@
   // ---------- Init ----------
   document.addEventListener('DOMContentLoaded', async () => {
     try{
+      adminGuardPending(true);
+
+      const aclReady = await waitForAclFunction(6000);
+      if(!aclReady){
+        redirectAdminDenied('/login.html');
+        return;
+      }
+
+      const decision = await waitForAdminDecision(7000);
+      if(decision === 'deny-login'){
+        redirectAdminDenied('/login.html');
+        return;
+      }
+      if(decision === 'deny-dashboard'){
+        redirectAdminDenied('/dashboard.html');
+        return;
+      }
+
       showAdminTab('tabResidents');
       showElectionSubtab('subManage');
+
+      adminGuardPending(false);
+      adminMarkReady();
+
       await Promise.all([
         loadResidents(),
         renderNoticesList(),
@@ -3170,15 +3262,13 @@
         loadAccessControl(),
         loadDiagnostics()
       ]);
+
+      await runAdminGate();
     }catch(err){
       console.error(err);
-    }finally{
-      runAdminGate();
+      adminGuardPending(false);
+      adminMarkReady();
     }
-  });
-
-  window.addEventListener('load', () => {
-    adminMarkReady();
   });
 })();
 </script>
@@ -3216,31 +3306,6 @@
 
 
 
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-  try{
-    const tabResidents = document.getElementById("tabResidents");
-    const subManage = document.getElementById("subManage");
-    if (tabResidents) {
-      tabResidents.style.display = "block";
-      tabResidents.hidden = false;
-    }
-    if (subManage) {
-      subManage.style.display = "block";
-      subManage.hidden = false;
-    }
-    const allTabs = document.querySelectorAll(".admin-tab-content");
-    if (allTabs.length) {
-      let anyVisible = false;
-      allTabs.forEach(el => {
-        const st = window.getComputedStyle(el);
-        if (st.display !== "none" && st.visibility !== "hidden") anyVisible = true;
-      });
-      if (!anyVisible && tabResidents) tabResidents.style.display = "block";
-    }
-  }catch(e){}
-});
-</script>
 
 
 <script>
