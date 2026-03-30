@@ -387,7 +387,7 @@
       const variant = it?._displayVariant || pickVariant(it);
       const title = esc(it?.title || 'Notice');
       const msgHtml = it?._displayMessageHtml || esc(it?.message || it?.text || '');
-      const visibility = esc(it?._displayBadge || formatVisibility(it));
+      const visibility = '';
       const meta = String(it?._displayMeta || '').trim();
       return `
         <article class="home-notice-card home-notice-card--${variant}">
