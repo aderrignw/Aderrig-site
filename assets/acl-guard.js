@@ -116,9 +116,12 @@
   }
 
   function getRole() {
+    const loggedIn = isLoggedIn();
+    if (!loggedIn) return "public";
+
     try {
       const email = getLoggedEmail();
-      if (isMasterOwnerEmail(email)) return "owner";
+      if (email && isMasterOwnerEmail(email)) return "owner";
     } catch (_) {}
 
     try {
@@ -146,16 +149,16 @@
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     while (Date.now() - started < limit) {
-      const email = getLoggedEmail();
       const loggedIn = isLoggedIn();
+      const email = getLoggedEmail();
       const role = getRole();
 
-      if (email && (loggedIn || role === "owner" || role === "admin" || isMasterOwnerEmail(email))) {
+      if (loggedIn && (email || role === "owner" || role === "admin")) {
         return;
       }
 
       try {
-        if (typeof window.anwInitStore === "function" && (loggedIn || email)) {
+        if (typeof window.anwInitStore === "function" && loggedIn) {
           await window.anwInitStore();
         }
       } catch (_) {}
@@ -380,8 +383,8 @@
   }
 
   function enforceAdminPage(role, acl) {
-    const email = getLoggedEmail();
-    const loggedIn = isLoggedIn() || !!email;
+    const loggedIn = isLoggedIn();
+    const email = loggedIn ? getLoggedEmail() : "";
 
     if (!loggedIn) {
       location.replace("login.html");
@@ -390,7 +393,7 @@
 
     const adminRule = resolveAclRule(acl, "page:admin");
 
-    if (role === "owner" || isMasterOwnerEmail(email)) {
+    if (role === "owner" || (email && isMasterOwnerEmail(email))) {
       return false;
     }
 
