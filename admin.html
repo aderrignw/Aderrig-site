@@ -12,57 +12,33 @@
   })();
 </script>
 
+<script>
+  (function(){
+    try {
+      var hasUser = !!(window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function' && window.netlifyIdentity.currentUser());
+      var hasSessionHint = false;
+      try {
+        for (var i = 0; i < localStorage.length; i++) {
+          var key = localStorage.key(i) || '';
+          if (/gotrue|netlify/i.test(key)) {
+            var raw = localStorage.getItem(key);
+            if (raw && String(raw).trim()) { hasSessionHint = true; break; }
+          }
+        }
+      } catch (_) {}
+      if (!hasUser && !hasSessionHint) {
+        location.replace('/login.html');
+      }
+    } catch (_) {}
+  })();
+</script>
+
 <link rel="stylesheet" href="assets/style.css" />
 
 <script>document.documentElement.classList.add('admin-js');</script>
 
 <style id="admin-first-paint-fix">
-  body[data-admin-loading="true"]{visibility:visible;}
-  #adminLoadingOverlay{
-    position:fixed;
-    inset:0;
-    z-index:2147483647;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    padding:24px;
-    background:rgba(248,250,252,.98);
-    color:#1f2b3d;
-    text-align:center;
-  }
-  body[data-admin-loading="true"] #adminLoadingOverlay{
-    display:flex;
-  }
-  #adminLoadingOverlay .admin-loading-card{
-    width:min(480px, calc(100vw - 40px));
-    background:#fff;
-    border:1px solid rgba(16,24,40,.08);
-    border-radius:24px;
-    box-shadow:0 24px 72px rgba(15,23,42,.12);
-    padding:28px 24px;
-  }
-  #adminLoadingOverlay .admin-loading-spinner{
-    width:38px;
-    height:38px;
-    margin:0 auto 14px;
-    border-radius:999px;
-    border:3px solid rgba(47,109,80,.18);
-    border-top-color:rgba(47,109,80,.88);
-    animation:adminSpin 0.9s linear infinite;
-  }
-  #adminLoadingOverlay h3{
-    margin:0 0 8px;
-    font-size:1.15rem;
-    color:#1f2b3d;
-  }
-  #adminLoadingOverlay p{
-    margin:0;
-    color:#5b6b7f;
-    line-height:1.55;
-  }
-  @keyframes adminSpin{
-    to{ transform:rotate(360deg); }
-  }
+  body[data-admin-loading="true"]{visibility:hidden;}
   .admin-tab-content{display:none;}
   #tabResidents{display:block;}
   .elect-subtab{display:none;}
@@ -933,13 +909,6 @@
 </head>
 
 <body data-acl-loading="true" data-admin-loading="true">
-<div id="adminLoadingOverlay" aria-live="polite" aria-busy="true">
-  <div class="admin-loading-card">
-    <div class="admin-loading-spinner" aria-hidden="true"></div>
-    <h3 id="adminLoadingTitle">Checking admin access…</h3>
-    <p id="adminLoadingText">Please wait a moment while the site confirms your login and permissions.</p>
-  </div>
-</div>
 
 <header class="site-header">
 <div class="brand">
@@ -2113,27 +2082,6 @@
     document.body.classList.toggle('admin-allowed', allowAll);
   }
 
-  function setAdminLoadingState(title, textMsg){
-    try{
-      const t = byId('adminLoadingTitle');
-      const p = byId('adminLoadingText');
-      if(t) t.textContent = title || 'Checking admin access…';
-      if(p) p.textContent = textMsg || 'Please wait a moment while the site confirms your login and permissions.';
-    }catch(_){ }
-  }
-
-  function hasNetlifySessionHint(){
-    try{
-      for(const key of Object.keys(localStorage)){
-        if(/gotrue/i.test(key)){
-          const raw = localStorage.getItem(key);
-          if(raw && String(raw).trim()) return true;
-        }
-      }
-    }catch(_){ }
-    return false;
-  }
-
   function adminMarkReady(){
     document.documentElement.classList.remove('admin-booting');
     document.body.classList.remove('admin-booting');
@@ -2142,19 +2090,8 @@
     try{ document.documentElement.removeAttribute('data-acl-loading'); }catch(_){}
   }
 
-  function redirectDeniedAdmin(){
-    let isLogged = false;
-    try{
-      isLogged = !!(window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function' && window.netlifyIdentity.currentUser());
-    }catch(_){}
-    const target = isLogged ? '/dashboard.html' : '/login.html';
-    setAdminLoadingState(
-      isLogged ? 'Redirecting…' : 'Login required',
-      isLogged
-        ? 'Your account is signed in, but this page is not available for your current access level. Taking you to your dashboard now.'
-        : 'This page is restricted. Taking you to the login page now.'
-    );
-
+  function redirectDeniedAdmin(status){
+    const target = status === 'deny-dashboard' ? '/dashboard.html' : '/login.html';
     try{
       location.replace(target);
     }catch(_){
@@ -2177,29 +2114,47 @@
     return typeof window.anwAclAllows === 'function';
   }
 
-  async function waitForAdminAclDecision(timeoutMs){
-    const limit = Number(timeoutMs || 9000);
-    const started = Date.now();
-    let aclReady = false;
 
-    while(Date.now() - started < limit){
-      try{
-        aclReady = aclReady || (typeof window.anwAclAllows === 'function');
-        if(aclReady && window.anwAclAllows('page:admin')){
-          return true;
-        }
-      }catch(_){ }
-      await new Promise(resolve => setTimeout(resolve, 150));
-    }
+async function waitForFinalAdminAccessState(timeoutMs){
+  const limit = Number(timeoutMs || 7000);
 
+  function readState(){
     try{
-      return !!(typeof window.anwAclAllows === 'function' && window.anwAclAllows('page:admin'));
+      return window.__ANW_ADMIN_ACCESS_STATE || null;
     }catch(_){
-      return false;
+      return null;
     }
   }
 
-  async function runAdminGate(){
+  const current = readState();
+  if(current && current.ready) return current;
+
+  return await new Promise(resolve => {
+    let settled = false;
+    let timer = null;
+
+    function finish(state){
+      if(settled) return;
+      settled = true;
+      try{ document.removeEventListener('anw:admin-access', onAccess); }catch(_){ }
+      try{ clearTimeout(timer); }catch(_){ }
+      resolve(state || readState() || { ready:true, status:'deny-login', role:'resident' });
+    }
+
+    function onAccess(ev){
+      const detail = ev && ev.detail ? ev.detail : readState();
+      if(detail && detail.ready) finish(detail);
+    }
+
+    try{ document.addEventListener('anw:admin-access', onAccess); }catch(_){ }
+    timer = setTimeout(() => finish(readState() || { ready:true, status:'deny-login', role:'resident' }), limit);
+
+    const immediate = readState();
+    if(immediate && immediate.ready) finish(immediate);
+  });
+}
+
+async function runAdminGate(){
     const msg = byId('adminGateMsg');
     try{
       let allowed = false;
@@ -3267,48 +3222,29 @@
 
   // ---------- Init ----------
   document.addEventListener('DOMContentLoaded', async () => {
-    let allowed = false;
     try{
-      setAdminLoadingState('Checking admin access…', 'Please wait a moment while the site confirms your login and permissions.');
-
-      const hasImmediateUser = !!(window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function' && window.netlifyIdentity.currentUser());
-      const hasSessionHint = hasNetlifySessionHint();
-
-      if(!hasImmediateUser && !hasSessionHint){
-        redirectDeniedAdmin();
+      await waitForAclReady(4000);
+      const access = await waitForFinalAdminAccessState(7000);
+      if(!access || access.status !== 'allow'){
+        redirectDeniedAdmin(access && access.status);
         return;
       }
-
-      await waitForAclReady(8000);
-
-      allowed = await waitForAdminAclDecision(hasImmediateUser ? 5000 : 7000);
-      if(!allowed){
-        redirectDeniedAdmin();
-        return;
-      }
-
-      setAdminLoadingState('Opening admin panel…', 'Loading residents, reports, projects, access control and the rest of the admin tools.');
 
       showAdminTab('tabResidents');
       showElectionSubtab('subManage');
+      adminMarkReady();
 
-      await Promise.all([
+      Promise.all([
         loadResidents(),
         renderNoticesList(),
         loadReports(),
         loadProjects(),
         loadAccessControl(),
         loadDiagnostics()
-      ]);
-      await runAdminGate();
-      adminMarkReady();
+      ]).then(runAdminGate).catch(console.error);
     }catch(err){
       console.error(err);
-      if(!allowed){
-        redirectDeniedAdmin();
-        return;
-      }
-      adminMarkReady();
+      redirectDeniedAdmin('deny-login');
     }
   });
 })();
