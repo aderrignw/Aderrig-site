@@ -126,10 +126,90 @@
     return String(value || "").trim().toLowerCase();
   }
 
+  const ADMIN_ALLOWED_ROLES = [
+    "admin",
+    "owner",
+    "platform_support",
+    "area_coordinator",
+    "aux_coordinator",
+    "assistant_area_coordinator"
+  ];
+
+  function getUsersKey() {
+    try {
+      const keys = window.ANW_KEYS || {};
+      return keys.USERS || "anw_users";
+    } catch (_) {
+      return "anw_users";
+    }
+  }
+
+  function canonicalAdminRole(value) {
+    try {
+      if (typeof window.anwGetCanonicalRole === "function") {
+        const canonical = window.anwGetCanonicalRole({ role: value }, "");
+        if (canonical) return String(canonical || "").trim().toLowerCase();
+      }
+    } catch (_) {}
+    return normalizeRoleName(value);
+  }
+
+  function normRoleList(value) {
+    if (Array.isArray(value)) return value.filter(Boolean);
+    if (value == null || value === "") return [];
+    return String(value).split(/[;,|]/).map((part) => part.trim()).filter(Boolean);
+  }
+
+  function getAdminRolesForEmail(email) {
+    const cleanEmail = String(email || "").trim().toLowerCase();
+    if (!cleanEmail) return [];
+
+    let users = [];
+    try {
+      if (typeof window.anwLoad === "function") {
+        users = window.anwLoad(getUsersKey(), []) || [];
+      } else {
+        const raw = localStorage.getItem(getUsersKey());
+        users = raw ? JSON.parse(raw) : [];
+      }
+    } catch (_) {
+      users = [];
+    }
+
+    const row = Array.isArray(users)
+      ? users.find((u) => String((u && (u.email || u.userEmail || "")) || "").trim().toLowerCase() === cleanEmail)
+      : null;
+
+    if (!row || typeof row !== "object") return [];
+
+    const roles = []
+      .concat(normRoleList(row.type))
+      .concat(normRoleList(row.role))
+      .concat(normRoleList(row.roles))
+      .concat(normRoleList(row.userRole))
+      .concat(normRoleList(row.userRoles))
+      .concat(normRoleList(row.residentType));
+
+    return Array.from(new Set(roles.map(canonicalAdminRole).filter(Boolean)));
+  }
+
+  function hasAllowedAdminRole(roles) {
+    const list = Array.isArray(roles) ? roles : [roles];
+    const normalized = list.map(canonicalAdminRole).filter(Boolean);
+    return normalized.some((role) => ADMIN_ALLOWED_ROLES.includes(role));
+  }
+
   function getRole() {
     try {
       const email = getLoggedEmail();
       if (email && isMasterOwnerEmail(email)) return "owner";
+
+      if (isAdminPath() && email) {
+        const roles = getAdminRolesForEmail(email);
+        if (hasAllowedAdminRole(roles)) {
+          return roles[0] || "admin";
+        }
+      }
     } catch (_) {}
 
     try {
@@ -399,12 +479,16 @@
       return true;
     }
 
-    const adminRule = resolveAclRule(acl, "page:admin");
-
     if (role === "owner" || isMasterOwnerEmail(email)) {
       return false;
     }
 
+    const adminRoles = getAdminRolesForEmail(email);
+    if (hasAllowedAdminRole(adminRoles)) {
+      return false;
+    }
+
+    const adminRule = resolveAclRule(acl, "page:admin");
     if (!ruleAllows(adminRule, role)) {
       location.replace("dashboard.html");
       return true;
@@ -448,9 +532,16 @@
   window.anwAclAllows = function (keyOrRule) {
     const acl = loadAcl() || {};
     const role = getRole();
+    const key = String(keyOrRule || "").trim();
 
-    if ((String(keyOrRule || "").trim() === "page:admin" || isAdminPath()) && !isLoggedIn()) {
+    if ((key === "page:admin" || isAdminPath()) && !isLoggedIn()) {
       return false;
+    }
+
+    if (key === "page:admin" || isAdminPath()) {
+      const email = getLoggedEmail();
+      if (email && isMasterOwnerEmail(email)) return true;
+      if (hasAllowedAdminRole(getAdminRolesForEmail(email))) return true;
     }
 
     const rule = resolveAclRule(acl, keyOrRule);
