@@ -1,9 +1,11 @@
 // assets/acl-guard.js
 (function () {
+  "use strict";
+
   function getPathName() {
     try {
       return String(location.pathname || "").toLowerCase();
-    } catch {
+    } catch (_) {
       return "";
     }
   }
@@ -19,32 +21,146 @@
     );
   }
 
-  function isPublicMode(){
+  function isPublicMode() {
     try {
-      // Admin must never be bypassed by public mode
       if (isAdminPath()) return false;
       return !!window.ANW_PUBLIC_MODE;
-    } catch {
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function isShellPublicPage() {
+    try {
+      if (isAdminPath()) return false;
+      return document.body && document.body.getAttribute("data-acl-shell-public") === "true";
+    } catch (_) {
       return false;
     }
   }
 
   function isLoggedIn() {
     try {
-      if (typeof anwIsLoggedIn === "function") return !!anwIsLoggedIn();
-      return !!(window.netlifyIdentity && window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser());
-    } catch {
+      if (typeof window.anwIsLoggedIn === "function") {
+        return !!window.anwIsLoggedIn();
+      }
+    } catch (_) {}
+
+    try {
+      return !!(
+        window.netlifyIdentity &&
+        typeof window.netlifyIdentity.currentUser === "function" &&
+        window.netlifyIdentity.currentUser()
+      );
+    } catch (_) {
       return false;
     }
   }
 
+  function getLoggedEmail() {
+    try {
+      if (typeof window.anwGetLoggedEmail === "function") {
+        return String(window.anwGetLoggedEmail() || "").trim().toLowerCase();
+      }
+    } catch (_) {}
+
+    try {
+      const u =
+        window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === "function"
+          ? window.netlifyIdentity.currentUser()
+          : null;
+      if (u && u.email) return String(u.email || "").trim().toLowerCase();
+    } catch (_) {}
+
+    try {
+      const key =
+        window.ANW_KEYS && window.ANW_KEYS.SESSION
+          ? window.ANW_KEYS.SESSION
+          : "anw_session";
+      const raw = localStorage.getItem(key);
+      const session = raw ? JSON.parse(raw) : null;
+      if (session && session.email) return String(session.email || "").trim().toLowerCase();
+    } catch (_) {}
+
+    try {
+      const rawLogged = localStorage.getItem("anw_logged");
+      const logged = rawLogged ? JSON.parse(rawLogged) : null;
+      if (logged && logged.email) return String(logged.email || "").trim().toLowerCase();
+    } catch (_) {}
+
+    return "";
+  }
+
+  function isMasterOwnerEmail(email) {
+    try {
+      const configured = String(window.ANW_MASTER_EMAIL || "").trim().toLowerCase();
+      if (configured) {
+        return String(email || "").trim().toLowerCase() === configured;
+      }
+    } catch (_) {}
+
+    try {
+      return String(email || "").trim().toLowerCase() === "claudiosantos1968@gmail.com";
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function normalizeRoleName(value) {
+    try {
+      if (typeof window.anwNormalizeRoleName === "function") {
+        return String(window.anwNormalizeRoleName(value) || "").trim().toLowerCase();
+      }
+    } catch (_) {}
+    return String(value || "").trim().toLowerCase();
+  }
+
   function getRole() {
     try {
-      const raw = (typeof anwGetLoggedRole === "function" ? anwGetLoggedRole() : "resident") || "resident";
-      if (typeof window.anwNormalizeRoleName === "function") return window.anwNormalizeRoleName(raw);
-      return String(raw).trim().toLowerCase();
-    } catch {
-      return "resident";
+      const email = getLoggedEmail();
+      if (isMasterOwnerEmail(email)) return "owner";
+    } catch (_) {}
+
+    try {
+      if (typeof window.anwGetLoggedRole === "function") {
+        const role = normalizeRoleName(window.anwGetLoggedRole());
+        if (role) return role;
+      }
+    } catch (_) {}
+
+    try {
+      const rawLogged = localStorage.getItem("anw_logged");
+      const logged = rawLogged ? JSON.parse(rawLogged) : null;
+      const role = normalizeRoleName(
+        logged && (logged.role || logged.primaryRole || (Array.isArray(logged.roles) ? logged.roles[0] : ""))
+      );
+      if (role) return role;
+    } catch (_) {}
+
+    return "resident";
+  }
+
+  async function waitForAdminAuthReady(timeoutMs) {
+    const limit = Number(timeoutMs || 4500);
+    const started = Date.now();
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    while (Date.now() - started < limit) {
+      const email = getLoggedEmail();
+      const loggedIn = isLoggedIn();
+      const role = getRole();
+
+      if (email && (loggedIn || role === "owner" || role === "admin" || isMasterOwnerEmail(email))) {
+        return;
+      }
+
+      try {
+        if (typeof window.anwInitStore === "function" && (loggedIn || email)) {
+          await window.anwInitStore();
+        }
+      } catch (_) {}
+
+      await sleep(150);
     }
   }
 
@@ -60,9 +176,17 @@
   };
 
   const KNOWN_RULES = new Set([
-    "Public","Authenticated","public","authenticated",
-    "resident","street_coordinator","assistant_area_coordinator",
-    "area_coordinator","projects","owner","admin"
+    "Public",
+    "Authenticated",
+    "public",
+    "authenticated",
+    "resident",
+    "street_coordinator",
+    "assistant_area_coordinator",
+    "area_coordinator",
+    "projects",
+    "owner",
+    "admin"
   ]);
 
   const BUILTIN_PAGE_RULES = {
@@ -80,13 +204,16 @@
   };
 
   function getPageKey() {
-    const m1 = document.querySelector('meta[name="anw-acl-key"]');
-    if (m1 && m1.getAttribute("content")) return m1.getAttribute("content");
+    try {
+      const m1 = document.querySelector('meta[name="anw-acl-key"]');
+      if (m1 && m1.getAttribute("content")) return m1.getAttribute("content");
+    } catch (_) {}
 
-    const m2 = document.querySelector('meta[name="anw-page"]');
-    if (m2 && m2.getAttribute("content")) return m2.getAttribute("content");
+    try {
+      const m2 = document.querySelector('meta[name="anw-page"]');
+      if (m2 && m2.getAttribute("content")) return m2.getAttribute("content");
+    } catch (_) {}
 
-    // Strong fallback by route/path
     try {
       const path = getPathName();
       const file = path.split("/").filter(Boolean).pop() || "";
@@ -102,45 +229,47 @@
       if (file === "alerts" || file === "alerts.html") return "page:alerts";
       if (file === "projects" || file === "projects.html") return "page:projects";
       if (file === "admin" || file === "admin.html") return "page:admin";
-    } catch {}
+    } catch (_) {}
 
     return null;
   }
 
-  function isShellPublicPage() {
-    try {
-      // Admin must never be bypassed by shell-public mode
-      if (isAdminPath()) return false;
-      return document.body && document.body.getAttribute("data-acl-shell-public") === "true";
-    } catch {
-      return false;
-    }
-  }
-
   function loadAcl() {
     try {
-      return (typeof anwLoad === "function")
-        ? anwLoad((window.ANW_KEYS && ANW_KEYS.ACL) ? ANW_KEYS.ACL : "acl", {})
-        : {};
-    } catch {
+      const key =
+        window.ANW_KEYS && (window.ANW_KEYS.ACL || window.ANW_KEYS.ACCESS)
+          ? (window.ANW_KEYS.ACL || window.ANW_KEYS.ACCESS)
+          : "acl";
+
+      if (typeof window.anwLoad === "function") {
+        return window.anwLoad(key, {}) || {};
+      }
+    } catch (_) {}
+
+    try {
+      const raw = localStorage.getItem("acl");
+      return raw ? JSON.parse(raw) : {};
+    } catch (_) {
       return {};
     }
   }
 
   async function ensureFresh() {
     try {
-      if (typeof anwInitStore === "function" && isLoggedIn()) {
-        await anwInitStore();
+      if (typeof window.anwInitStore === "function" && isLoggedIn()) {
+        await window.anwInitStore();
       }
-    } catch {}
+    } catch (_) {}
   }
 
   function normalizeRule(rule) {
     if (rule == null) return "Public";
+
     if (typeof rule === "string") {
       const clean = rule.trim();
       return clean || "Public";
     }
+
     if (typeof rule === "object") {
       if (typeof rule.shell === "string") return rule.shell.trim() || "Public";
       if (typeof rule.rule === "string") return rule.rule.trim() || "Public";
@@ -149,12 +278,14 @@
       if (rule.public === true) return "Public";
       if (rule.authenticated === true) return "Authenticated";
     }
+
     return "Public";
   }
 
   function lookupAclValue(acl, key) {
     try {
       if (!acl || typeof acl !== "object") return undefined;
+
       if (Object.prototype.hasOwnProperty.call(acl, key)) return acl[key];
       if (acl.features && Object.prototype.hasOwnProperty.call(acl.features, key)) return acl.features[key];
       if (acl.pages && Object.prototype.hasOwnProperty.call(acl.pages, key)) return acl.pages[key];
@@ -163,13 +294,16 @@
         for (const pageKey of Object.keys(acl.pages)) {
           const page = acl.pages[pageKey];
           if (!page || typeof page !== "object") continue;
+
           if (Object.prototype.hasOwnProperty.call(page, key)) return page[key];
           if (page.features && Object.prototype.hasOwnProperty.call(page.features, key)) return page.features[key];
         }
       }
-    } catch {}
+    } catch (_) {}
+
     return undefined;
   }
+
   function resolveAclRule(acl, keyOrRule) {
     const raw = String(keyOrRule || "").trim();
     if (!raw) return "Public";
@@ -187,34 +321,24 @@
   }
 
   function roleAllows(required, current) {
-    const normalize = (v) => {
-      try {
-        return typeof window.anwNormalizeRoleName === "function"
-          ? window.anwNormalizeRoleName(v)
-          : String(v || "").trim().toLowerCase();
-      } catch {
-        return String(v || "").trim().toLowerCase();
-      }
-    };
-
-    const req = normalize(required);
-    const cur = normalize(current);
+    const req = normalizeRoleName(required);
+    const cur = normalizeRoleName(current);
 
     if (req === "public") return true;
     if (req === "authenticated") return isLoggedIn();
 
-    // Owner always has full access
     if (cur === "owner") return true;
 
-    // Admin must not inherit owner-only access
     if (cur === "admin" && req === "owner") return false;
 
     const reqRank = ROLE_RANK[req];
     const curRank = ROLE_RANK[cur];
+
     if (typeof reqRank === "number" && typeof curRank === "number") {
       if (req === "projects") return cur === "projects" || cur === "owner";
       return curRank >= reqRank;
     }
+
     return cur === req;
   }
 
@@ -229,7 +353,9 @@
     document.querySelectorAll("[data-acl]").forEach((el) => {
       const keyOrRule = el.getAttribute("data-acl");
       const rule = resolveAclRule(acl, keyOrRule);
-      if (!ruleAllows(rule, role)) el.style.display = "none";
+      if (!ruleAllows(rule, role)) {
+        el.style.display = "none";
+      }
     });
   }
 
@@ -243,22 +369,30 @@
       if (isShellPublicPage() && (el.classList.contains("dash-tab") || el.classList.contains("dash-tab-content"))) {
         return;
       }
+
       const keyOrRule = el.getAttribute("data-acl-feature") || el.getAttribute("data-feature-acl");
       const rule = resolveAclRule(acl, keyOrRule);
-      if (!ruleAllows(rule, role)) el.style.display = "none";
+
+      if (!ruleAllows(rule, role)) {
+        el.style.display = "none";
+      }
     });
   }
 
   function enforceAdminPage(role, acl) {
-    if (!isLoggedIn()) {
+    const email = getLoggedEmail();
+    const loggedIn = isLoggedIn() || !!email;
+
+    if (!loggedIn) {
       location.replace("login.html");
       return true;
     }
 
     const adminRule = resolveAclRule(acl, "page:admin");
 
-    // Owner always allowed. Others only if ACL explicitly allows.
-    if (role === "owner") return false;
+    if (role === "owner" || isMasterOwnerEmail(email)) {
+      return false;
+    }
 
     if (!ruleAllows(adminRule, role)) {
       location.replace("dashboard.html");
@@ -269,7 +403,6 @@
   }
 
   function enforcePage(role, acl) {
-    // Hard enforcement for admin first, before any public/shell checks
     if (isAdminPath() || getPageKey() === "page:admin") {
       if (enforceAdminPage(role, acl)) return;
       return;
@@ -300,7 +433,8 @@
       location.replace("dashboard.html");
     }
   }
-  window.anwAclAllows = function(keyOrRule){
+
+  window.anwAclAllows = function (keyOrRule) {
     const acl = loadAcl() || {};
     const role = getRole();
 
@@ -309,15 +443,22 @@
     }
 
     const rule = resolveAclRule(acl, keyOrRule);
+
     if (normalizeRule(rule).toLowerCase() !== "public" && !isLoggedIn()) {
       return false;
     }
+
     return ruleAllows(rule, role);
   };
 
-  document.addEventListener("DOMContentLoaded", async () => {
+  document.addEventListener("DOMContentLoaded", async function () {
     try {
+      if (isAdminPath() || getPageKey() === "page:admin") {
+        await waitForAdminAuthReady();
+      }
+
       await ensureFresh();
+
       const acl = loadAcl() || {};
       const role = getRole();
 
@@ -327,11 +468,15 @@
     } catch (e) {
       console.warn("[acl-guard] fallback after error:", e);
     } finally {
-      try { document.body.removeAttribute("data-acl-loading"); } catch (e) {}
+      try {
+        document.body.removeAttribute("data-acl-loading");
+      } catch (_) {}
     }
   });
 
-  window.addEventListener("load", () => {
-    try { document.body.removeAttribute("data-acl-loading"); } catch (e) {}
+  window.addEventListener("load", function () {
+    try {
+      document.body.removeAttribute("data-acl-loading");
+    } catch (_) {}
   });
 })();
