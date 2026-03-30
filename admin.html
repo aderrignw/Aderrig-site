@@ -2074,7 +2074,16 @@
     try{
       isLogged = !!(window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function' && window.netlifyIdentity.currentUser());
     }catch(_){}
-    const target = isLogged ? 'dashboard.html' : 'login.html';
+    const target = isLogged ? '/dashboard.html' : '/login.html';
+
+    // Never leave the admin locked on a blank screen if navigation is delayed.
+    try{ adminMarkReady(); }catch(_){
+      try{ document.body.removeAttribute('data-acl-loading'); }catch(__){}
+      try{ document.documentElement.removeAttribute('data-acl-loading'); }catch(__){}
+      try{ document.documentElement.classList.remove('admin-booting'); }catch(__){}
+      try{ document.body.classList.remove('admin-booting'); }catch(__){}
+    }
+
     try{
       location.replace(target);
     }catch(_){
@@ -2082,19 +2091,41 @@
     }
     setTimeout(() => {
       try{ location.href = target; }catch(_){}
-    }, 150);
+    }, 120);
   }
 
   async function waitForAclReady(timeoutMs){
-    const limit = Number(timeoutMs || 5000);
+    const limit = Number(timeoutMs || 8000);
     const started = Date.now();
     while(Date.now() - started < limit){
       try{
         if(typeof window.anwAclAllows === 'function') return true;
       }catch(_){ }
-      await new Promise(resolve => setTimeout(resolve, 60));
+      await new Promise(resolve => setTimeout(resolve, 80));
     }
     return typeof window.anwAclAllows === 'function';
+  }
+
+  async function waitForAdminAclDecision(timeoutMs){
+    const limit = Number(timeoutMs || 9000);
+    const started = Date.now();
+    let aclReady = false;
+
+    while(Date.now() - started < limit){
+      try{
+        aclReady = aclReady || (typeof window.anwAclAllows === 'function');
+        if(aclReady && window.anwAclAllows('page:admin')){
+          return true;
+        }
+      }catch(_){ }
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+
+    try{
+      return !!(typeof window.anwAclAllows === 'function' && window.anwAclAllows('page:admin'));
+    }catch(_){
+      return false;
+    }
   }
 
   async function runAdminGate(){
@@ -3167,11 +3198,11 @@
   document.addEventListener('DOMContentLoaded', async () => {
     let allowed = false;
     try{
-      await waitForAclReady(5000);
+      await waitForAclReady(8000);
       showAdminTab('tabResidents');
       showElectionSubtab('subManage');
 
-      allowed = !!(typeof window.anwAclAllows === 'function' && window.anwAclAllows('page:admin'));
+      allowed = await waitForAdminAclDecision(9000);
       if(!allowed){
         redirectDeniedAdmin();
         return;
@@ -3192,22 +3223,13 @@
         redirectDeniedAdmin();
       }
     }finally{
-      if(allowed){
-        adminMarkReady();
-      }else{
-        setTimeout(adminMarkReady, 400);
-      }
+      adminMarkReady();
     }
   });
 
   window.addEventListener('load', () => {
     try{
-      const allowed = !!(typeof window.anwAclAllows === 'function' && window.anwAclAllows('page:admin'));
-      if(allowed){
-        adminMarkReady();
-      }else{
-        setTimeout(adminMarkReady, 400);
-      }
+      adminMarkReady();
     }catch(_){
       setTimeout(adminMarkReady, 400);
     }
