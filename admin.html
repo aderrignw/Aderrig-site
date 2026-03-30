@@ -3197,16 +3197,19 @@
   // ---------- Init ----------
   document.addEventListener('DOMContentLoaded', async () => {
     let allowed = false;
+    let redirected = false;
     try{
       await waitForAclReady(8000);
-      showAdminTab('tabResidents');
-      showElectionSubtab('subManage');
 
       allowed = await waitForAdminAclDecision(9000);
       if(!allowed){
+        redirected = true;
         redirectDeniedAdmin();
         return;
       }
+
+      showAdminTab('tabResidents');
+      showElectionSubtab('subManage');
 
       await Promise.all([
         loadResidents(),
@@ -3217,21 +3220,15 @@
         loadDiagnostics()
       ]);
       await runAdminGate();
+      adminMarkReady();
     }catch(err){
       console.error(err);
       if(!allowed){
+        redirected = true;
         redirectDeniedAdmin();
+        return;
       }
-    }finally{
       adminMarkReady();
-    }
-  });
-
-  window.addEventListener('load', () => {
-    try{
-      adminMarkReady();
-    }catch(_){
-      setTimeout(adminMarkReady, 400);
     }
   });
 })();
