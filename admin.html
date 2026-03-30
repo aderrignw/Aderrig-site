@@ -884,9 +884,34 @@
     addJs(prefix + 'assets/acl-guard.js', true);
   })();
 </script>
+
+<script>
+(function(){
+  function getUser(){
+    try{
+      return window.netlifyIdentity &&
+             typeof window.netlifyIdentity.currentUser === "function"
+        ? window.netlifyIdentity.currentUser()
+        : null;
+    }catch(_){
+      return null;
+    }
+  }
+
+  var user = getUser();
+  if(!user){
+    try{
+      location.replace("/login.html");
+    }catch(_){
+      try{ location.href = "/login.html"; }catch(__){}
+    }
+  }
+})();
+</script>
+
 </head>
 
-<body>
+<body data-acl-loading="true">
 
 <header class="site-header">
 <div class="brand">
