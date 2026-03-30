@@ -39,13 +39,7 @@
     }
   }
 
-  function isLoggedIn() {
-    try {
-      if (typeof window.anwIsLoggedIn === "function") {
-        return !!window.anwIsLoggedIn();
-      }
-    } catch (_) {}
-
+  function hasNetlifyIdentityUser() {
     try {
       return !!(
         window.netlifyIdentity &&
@@ -55,6 +49,22 @@
     } catch (_) {
       return false;
     }
+  }
+
+  function isLoggedIn() {
+    try {
+      if (isAdminPath() || getPageKey() === "page:admin") {
+        return hasNetlifyIdentityUser();
+      }
+    } catch (_) {}
+
+    try {
+      if (typeof window.anwIsLoggedIn === "function") {
+        return !!window.anwIsLoggedIn();
+      }
+    } catch (_) {}
+
+    return hasNetlifyIdentityUser();
   }
 
   function getLoggedEmail() {
@@ -437,6 +447,16 @@
     }
   }
 
+  function adminImmediateLock() {
+    try {
+      if (!(isAdminPath() || getPageKey() === "page:admin")) return;
+      if (hasNetlifyIdentityUser()) return;
+      location.replace("login.html");
+    } catch (_) {}
+  }
+
+  adminImmediateLock();
+
   window.anwAclAllows = function (keyOrRule) {
     const acl = loadAcl() || {};
     const role = getRole();
@@ -470,6 +490,14 @@
       enforcePage(role, acl);
     } catch (e) {
       console.warn("[acl-guard] fallback after error:", e);
+      try {
+        if (isAdminPath() || getPageKey() === "page:admin") {
+          if (!hasNetlifyIdentityUser()) {
+            location.replace("login.html");
+            return;
+          }
+        }
+      } catch (_) {}
     } finally {
       try {
         document.body.removeAttribute("data-acl-loading");
