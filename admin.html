@@ -2498,6 +2498,8 @@
   }
 
   // ---------- Notices ----------
+  let NOTICE_EDITING_ID = '';
+
   function sanitizeNoticeCollection(list){
     const now = Date.now();
     const seen = new Set();
@@ -2553,6 +2555,55 @@
     };
   }
 
+  function resetNoticeForm(message){
+    NOTICE_EDITING_ID = '';
+    ['ntTitle','ntMessage','ntExpires','ntEirPrefixes','ntStreets','ntEircodes','ntEmails'].forEach(id => { if(byId(id)) byId(id).value = ''; });
+    if(byId('ntCategory')) byId('ntCategory').value = 'General';
+    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = false;
+    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = 'private';
+    if(byId('ntAllLogged')) byId('ntAllLogged').checked = true;
+    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = false;
+    $$('.ntRole').forEach(x => x.checked = false);
+    if(byId('btnNtPublish')) byId('btnNtPublish').textContent = 'Publish notice';
+    if(byId('ntMsg')) byId('ntMsg').textContent = message || '';
+  }
+
+  function populateNoticeForm(notice){
+    const n = notice && typeof notice === 'object' ? notice : {};
+    const targets = n.targets || n.target || {};
+    const home = n.home || {};
+
+    NOTICE_EDITING_ID = String(n.id || '');
+    if(byId('ntTitle')) byId('ntTitle').value = String(n.title || '');
+    if(byId('ntMessage')) byId('ntMessage').value = String(n.message || '');
+    if(byId('ntCategory')) byId('ntCategory').value = String(n.category || 'General') || 'General';
+    if(byId('ntExpires')) byId('ntExpires').value = String(n.expires || n.expiresAt || n.endsOn || n.endDate || '').slice(0, 10);
+    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = !!(home.enabled || n.showOnHome);
+    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = String(home.visibility || ((n.public || n.isPublic) ? 'public' : 'private')) || 'private';
+    if(byId('ntAllLogged')) byId('ntAllLogged').checked = ('allLogged' in targets) ? !!targets.allLogged : true;
+    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = !!targets.nonAdminOnly;
+    if(byId('ntEirPrefixes')) byId('ntEirPrefixes').value = Array.isArray(targets.eirPrefixes) ? targets.eirPrefixes.join(', ') : '';
+    if(byId('ntStreets')) byId('ntStreets').value = Array.isArray(targets.streets) ? targets.streets.join(', ') : '';
+    if(byId('ntEircodes')) byId('ntEircodes').value = Array.isArray(targets.eircodes) ? targets.eircodes.join('\n') : '';
+    if(byId('ntEmails')) byId('ntEmails').value = Array.isArray(targets.emails) ? targets.emails.join('\n') : '';
+    $$('.ntRole').forEach(x => {
+      x.checked = Array.isArray(targets.roles) && targets.roles.includes(x.value);
+    });
+    if(byId('btnNtPublish')) byId('btnNtPublish').textContent = 'Update notice';
+    if(byId('ntMsg')) byId('ntMsg').textContent = 'Editing selected notice.';
+  }
+
+  async function startEditNotice(id){
+    const list = await loadNoticesFresh();
+    const notice = (list || []).find(n => String((n && n.id) || '') === String(id || ''));
+    if(!notice){
+      if(byId('ntMsg')) byId('ntMsg').textContent = 'Notice not found.';
+      return;
+    }
+    populateNoticeForm(notice);
+    try{ byId('ntTitle')?.focus(); }catch(_){ }
+  }
+
   async function publishNotice(){
     const msg = byId('ntMsg');
     const form = collectNoticeForm();
@@ -2562,12 +2613,16 @@
     }
 
     const list = await loadNoticesFresh();
-    const next = [{
-      id: 'nt_' + Date.now(),
+    const editId = String(NOTICE_EDITING_ID || '').trim();
+    const nowIso = new Date().toISOString();
+    const current = editId ? (list || []).find(n => String((n && n.id) || '') === editId) : null;
+    const payload = Object.assign({}, current || {}, {
+      id: editId || ('nt_' + Date.now()),
       title: form.title,
       message: form.message,
       category: form.category,
-      createdAt: new Date().toISOString(),
+      createdAt: current && current.createdAt ? current.createdAt : nowIso,
+      updatedAt: nowIso,
       expires: form.expires,
       public: form.home.enabled && form.home.visibility === 'public',
       isPublic: form.home.enabled && form.home.visibility === 'public',
@@ -2576,18 +2631,20 @@
       status: (form.home.enabled && form.home.visibility === 'public') ? 'public' : 'private',
       targets: form.targets,
       home: form.home
-    }].concat(list || []);
+    });
+
+    const filtered = (list || []).filter(n => String((n && n.id) || '') !== String(payload.id || ''));
+    const next = [payload].concat(filtered);
 
     await anwSaveSafe(window.getNoticesKey(), next);
-    msg.textContent = 'Notice published.';
+    resetNoticeForm(editId ? 'Notice updated.' : 'Notice published.');
     await renderNoticesList();
   }
 
   function renderNoticeRowActions(n){
-    const isBinImport = !!(n && n.meta && n.meta.type === 'bin_collection_import');
-    if(!isBinImport) return '';
     return `
       <div class="notice-actions">
+        <button type="button" class="btn btn-line small" data-edit-notice="${esc(n.id || '')}">Edit</button>
         <button type="button" class="btn btn-line small" data-del-notice="${esc(n.id || '')}">Delete</button>
       </div>
     `;
@@ -2636,9 +2693,19 @@
       </div>
     `).join('') || '<p class="tiny muted">No notices found.</p>';
 
+    $$('[data-edit-notice]', listEl).forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await startEditNotice(btn.getAttribute('data-edit-notice'));
+      });
+    });
+
     $$('[data-del-notice]', listEl).forEach(btn => {
       btn.addEventListener('click', async () => {
-        await deleteNoticeById(btn.getAttribute('data-del-notice'));
+        const id = btn.getAttribute('data-del-notice');
+        if(String(NOTICE_EDITING_ID || '') === String(id || '')){
+          resetNoticeForm('Notice removed.');
+        }
+        await deleteNoticeById(id);
       });
     });
   }
@@ -3057,16 +3124,7 @@
   });
 
   byId('btnNtPublish')?.addEventListener('click', publishNotice);
-  byId('btnNtClear')?.addEventListener('click', () => {
-    ['ntTitle','ntMessage','ntExpires','ntEirPrefixes','ntStreets','ntEircodes','ntEmails'].forEach(id => { if(byId(id)) byId(id).value = ''; });
-    if(byId('ntCategory')) byId('ntCategory').value = 'General';
-    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = false;
-    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = 'private';
-    if(byId('ntAllLogged')) byId('ntAllLogged').checked = true;
-    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = false;
-    $$('.ntRole').forEach(x => x.checked = false);
-    byId('ntMsg').textContent = '';
-  });
+  byId('btnNtClear')?.addEventListener('click', () => resetNoticeForm(''));
 
   byId('btnBinImport')?.addEventListener('click', importPandaSchedule);
   byId('btnClearBinNotices')?.addEventListener('click', clearImportedBinNotices);
