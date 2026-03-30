@@ -12,33 +12,11 @@
   })();
 </script>
 
-<script>
-  (function(){
-    try {
-      var hasUser = !!(window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function' && window.netlifyIdentity.currentUser());
-      var hasSessionHint = false;
-      try {
-        for (var i = 0; i < localStorage.length; i++) {
-          var key = localStorage.key(i) || '';
-          if (/gotrue|netlify/i.test(key)) {
-            var raw = localStorage.getItem(key);
-            if (raw && String(raw).trim()) { hasSessionHint = true; break; }
-          }
-        }
-      } catch (_) {}
-      if (!hasUser && !hasSessionHint) {
-        location.replace('/login.html');
-      }
-    } catch (_) {}
-  })();
-</script>
-
 <link rel="stylesheet" href="assets/style.css" />
 
 <script>document.documentElement.classList.add('admin-js');</script>
 
 <style id="admin-first-paint-fix">
-  body[data-admin-loading="true"]{visibility:hidden;}
   .admin-tab-content{display:none;}
   #tabResidents{display:block;}
   .elect-subtab{display:none;}
@@ -908,7 +886,7 @@
 </script>
 </head>
 
-<body data-acl-loading="true" data-admin-loading="true">
+<body>
 
 <header class="site-header">
 <div class="brand">
@@ -2085,76 +2063,9 @@
   function adminMarkReady(){
     document.documentElement.classList.remove('admin-booting');
     document.body.classList.remove('admin-booting');
-    try{ document.body.removeAttribute('data-admin-loading'); }catch(_){}
-    try{ document.body.removeAttribute('data-acl-loading'); }catch(_){}
-    try{ document.documentElement.removeAttribute('data-acl-loading'); }catch(_){}
   }
 
-  function redirectDeniedAdmin(status){
-    const target = status === 'deny-dashboard' ? '/dashboard.html' : '/login.html';
-    try{
-      location.replace(target);
-    }catch(_){
-      try{ location.href = target; }catch(__){}
-    }
-    setTimeout(() => {
-      try{ location.href = target; }catch(_){}
-    }, 120);
-  }
-
-  async function waitForAclReady(timeoutMs){
-    const limit = Number(timeoutMs || 8000);
-    const started = Date.now();
-    while(Date.now() - started < limit){
-      try{
-        if(typeof window.anwAclAllows === 'function') return true;
-      }catch(_){ }
-      await new Promise(resolve => setTimeout(resolve, 80));
-    }
-    return typeof window.anwAclAllows === 'function';
-  }
-
-
-async function waitForFinalAdminAccessState(timeoutMs){
-  const limit = Number(timeoutMs || 7000);
-
-  function readState(){
-    try{
-      return window.__ANW_ADMIN_ACCESS_STATE || null;
-    }catch(_){
-      return null;
-    }
-  }
-
-  const current = readState();
-  if(current && current.ready) return current;
-
-  return await new Promise(resolve => {
-    let settled = false;
-    let timer = null;
-
-    function finish(state){
-      if(settled) return;
-      settled = true;
-      try{ document.removeEventListener('anw:admin-access', onAccess); }catch(_){ }
-      try{ clearTimeout(timer); }catch(_){ }
-      resolve(state || readState() || { ready:true, status:'deny-login', role:'resident' });
-    }
-
-    function onAccess(ev){
-      const detail = ev && ev.detail ? ev.detail : readState();
-      if(detail && detail.ready) finish(detail);
-    }
-
-    try{ document.addEventListener('anw:admin-access', onAccess); }catch(_){ }
-    timer = setTimeout(() => finish(readState() || { ready:true, status:'deny-login', role:'resident' }), limit);
-
-    const immediate = readState();
-    if(immediate && immediate.ready) finish(immediate);
-  });
-}
-
-async function runAdminGate(){
+  async function runAdminGate(){
     const msg = byId('adminGateMsg');
     try{
       let allowed = false;
@@ -2205,6 +2116,7 @@ async function runAdminGate(){
     }finally{
       showAdminTab(getCurrentAdminTabId());
       showElectionSubtab('subManage');
+      adminMarkReady();
     }
   }
   // ---------- Residents ----------
@@ -3223,29 +3135,25 @@ async function runAdminGate(){
   // ---------- Init ----------
   document.addEventListener('DOMContentLoaded', async () => {
     try{
-      await waitForAclReady(4000);
-      const access = await waitForFinalAdminAccessState(7000);
-      if(!access || access.status !== 'allow'){
-        redirectDeniedAdmin(access && access.status);
-        return;
-      }
-
       showAdminTab('tabResidents');
       showElectionSubtab('subManage');
-      adminMarkReady();
-
-      Promise.all([
+      await Promise.all([
         loadResidents(),
         renderNoticesList(),
         loadReports(),
         loadProjects(),
         loadAccessControl(),
         loadDiagnostics()
-      ]).then(runAdminGate).catch(console.error);
+      ]);
     }catch(err){
       console.error(err);
-      redirectDeniedAdmin('deny-login');
+    }finally{
+      runAdminGate();
     }
+  });
+
+  window.addEventListener('load', () => {
+    adminMarkReady();
   });
 })();
 </script>
