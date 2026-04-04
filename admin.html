@@ -3333,25 +3333,14 @@
 
 <script>
 (function(){
-  const INACTIVITY_LIMIT_MS = 10 * 60 * 1000;
-  let logoutTimer = null;
-
   async function doLogout(){
+    try{ if(window.anwLogout){ await window.anwLogout(); return; } }catch(_){}
     try{ if(window.netlifyIdentity && typeof window.netlifyIdentity.logout === 'function'){ await window.netlifyIdentity.logout(); } }catch(_){}
     window.location.href = 'login.html';
   }
 
-  function resetInactivity(){
-    if(logoutTimer) clearTimeout(logoutTimer);
-    logoutTimer = setTimeout(doLogout, INACTIVITY_LIMIT_MS);
-  }
-
   function initAdminSessionUi(){
     document.getElementById('btnLogoutAdmin')?.addEventListener('click', doLogout);
-    ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach((evt)=>{
-      window.addEventListener(evt, resetInactivity, { passive:true });
-    });
-    resetInactivity();
   }
 
   if(document.readyState === 'loading'){
