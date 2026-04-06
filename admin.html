@@ -1935,8 +1935,17 @@
               </div>
 
               <div class="field" style="margin-top:1rem;">
+                <label>Latest backup download</label>
+                <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
+                  <button type="button" class="btn small" id="btnDownloadLatestBackup" disabled>Download latest backup</button>
+                  <span id="backupLatestId" class="tiny muted">No backup detected yet.</span>
+                </div>
+              </div>
+
+              <div class="field" style="margin-top:1rem;">
                 <label for="restoreBackupFile">Restore backup file</label>
                 <input id="restoreBackupFile" type="file" accept=".json,application/json" />
+                <p class="tiny muted" style="margin:6px 0 0;">Download the latest backup above, then use that file here only when you need to restore manually.</p>
               </div>
 
               <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
@@ -3298,6 +3307,26 @@
     }
   }
 
+  let ADMIN_LATEST_BACKUP_ID = '';
+
+  function setLatestBackupUi(latest){
+    const latestId = latest && latest.id ? String(latest.id) : '';
+    ADMIN_LATEST_BACKUP_ID = latestId;
+    const downloadBtn = byId('btnDownloadLatestBackup');
+    const latestIdText = byId('backupLatestId');
+
+    if(downloadBtn){
+      downloadBtn.disabled = !latestId;
+      downloadBtn.setAttribute('aria-disabled', latestId ? 'false' : 'true');
+    }
+
+    if(latestIdText){
+      latestIdText.textContent = latestId
+        ? ('Latest backup ID: ' + latestId)
+        : 'No backup detected yet.';
+    }
+  }
+
   async function refreshBackupStatus(){
     const statusText = byId('backupStatusText');
     const statusBadge = byId('backupStatusBadge');
@@ -3324,6 +3353,7 @@
       }
       const items = Array.isArray(data.items) ? data.items : [];
       const latest = items[0] || null;
+      setLatestBackupUi(latest);
       if(statusText){
         statusText.textContent = settings.enabled
           ? 'Automatic backup is active (daily at 02:00 UTC). You can also run a manual backup now.'
@@ -3344,6 +3374,7 @@
         msg.textContent = '';
       }
     }catch(err){
+      setLatestBackupUi(null);
       if(statusText) statusText.textContent = 'Backup status could not be loaded.';
       if(statusBadge){
         statusBadge.textContent = 'Error';
@@ -3355,6 +3386,51 @@
   }
 
   byId('btnBackupRefresh')?.addEventListener('click', refreshBackupStatus);
+
+  byId('btnDownloadLatestBackup')?.addEventListener('click', async () => {
+    const msg = byId('backupMsg');
+    const backupId = String(ADMIN_LATEST_BACKUP_ID || '').trim();
+
+    if(!backupId){
+      if(msg) msg.textContent = 'No latest backup is available to download yet.';
+      return;
+    }
+
+    if(msg) msg.textContent = 'Preparing backup download…';
+
+    try{
+      const headers = await getAdminAuthHeaders();
+      const res = await fetch('/.netlify/functions/backup-download?id=' + encodeURIComponent(backupId), {
+        method: 'GET',
+        headers,
+        cache: 'no-store'
+      });
+
+      if(!res.ok){
+        let errorMessage = 'Download failed';
+        try{
+          const data = await res.clone().json();
+          errorMessage = data.error || errorMessage;
+        }catch(_){}
+        throw new Error(errorMessage);
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const safeId = backupId.replace(/[^a-z0-9_-]+/gi, '-');
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'backup-' + safeId + '.json';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      if(msg) msg.textContent = 'Backup downloaded successfully: ' + backupId;
+    }catch(err){
+      if(msg) msg.textContent = 'Backup download failed: ' + String(err && err.message ? err.message : err || 'Unknown error');
+    }
+  });
 
   byId('btnBackupNow')?.addEventListener('click', async () => {
     const msg = byId('backupMsg');
