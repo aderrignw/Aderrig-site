@@ -3390,16 +3390,46 @@
   function parkingStatusPill(status){ if(status==='Completed') return 'parking-admin-pill completed'; if(status==='Pending') return 'parking-admin-pill pending'; if(status==='No Parking') return 'parking-admin-pill noparking'; if(status==='No Vehicle Declared') return 'parking-admin-pill novehicle'; return 'parking-admin-pill'; }
   function parkingTypePill(type){ if(type==='Double') return 'parking-admin-pill double'; if(type==='Single') return 'parking-admin-pill single'; return 'parking-admin-pill none'; }
   function parkingRenderAdmin(){ const rows = parkingBuildRows(); const filtered = parkingFilterRows(rows); byId('pkAdminTotal').textContent = String(rows.length); byId('pkAdminCompleted').textContent = String(rows.filter(r=>r.status==='Completed').length); byId('pkAdminPending').textContent = String(rows.filter(r=>r.status==='Pending').length); byId('pkAdminNoParking').textContent = String(rows.filter(r=>r.status==='No Parking').length); byId('pkAdminNoVehicle').textContent = String(rows.filter(r=>r.status==='No Vehicle Declared').length); const body = byId('pkAdminBody'); if(!body) return; body.innerHTML = filtered.map((row, idx)=>`<tr><td>${esc(row.resident||'—')}</td><td>${esc(row.address||'—')}</td><td>${esc(row.eircode||'—')}</td><td><span class="parking-space-chip">${esc(row.space||'—')}</span></td><td><span class="${parkingTypePill(row.type)}">${esc(row.type)}</span></td><td><span class="${parkingStatusPill(row.status)}">${esc(row.status)}</span></td><td>${row.vehicles}</td><td>${esc(row.ownerCheck)}</td><td>${esc(String(row.updated||'').replace('T',' ').slice(0,16) || '—')}</td><td class="parking-admin-actions"><button type="button" class="btn-line small" data-pk-msg="${idx}">Message</button></td></tr>`).join(''); byId('pkAdminEmpty').style.display = filtered.length ? 'none' : 'block'; Array.from(body.querySelectorAll('[data-pk-msg]')).forEach(btn=>btn.addEventListener('click', ()=> parkingSendNotice(filtered[Number(btn.getAttribute('data-pk-msg'))]))); byId('parkingImportName').textContent = (parkingRegistryLoad().importMeta && parkingRegistryLoad().importMeta.name) || 'No file uploaded'; byId('parkingPolicyName').textContent = (parkingRegistryLoad().policy && parkingRegistryLoad().policy.name) || 'No file uploaded'; }
-  function parkingCsvParse(text){ const lines = String(text||'').replace(/
-/g,'').split('
-').filter(Boolean); if(!lines.length) return []; const split = (line)=>{ const out=[]; let cur=''; let q=false; for(let i=0;i<line.length;i++){ const ch=line[i]; if(ch==='"'){ if(q && line[i+1]==='"'){ cur+='"'; i++; } else q=!q; } else if(ch===',' && !q){ out.push(cur); cur=''; } else cur+=ch; } out.push(cur); return out.map(v=>v.trim()); }; const headers = split(lines.shift()).map(h=>parkingNorm(h)); return lines.map(line=>{ const cols=split(line); const obj={}; headers.forEach((h,i)=>obj[h]=cols[i]||''); return obj; }); }
+  function parkingCsvParse(text){
+  const lines = String(text || '').replace(/\r/g, '').split('\n').filter(Boolean);
+  if(!lines.length) return [];
+  const split = (line)=>{
+    const out=[];
+    let cur='';
+    let q=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){
+        if(q && line[i+1]==='"'){
+          cur+='"';
+          i++;
+        } else {
+          q=!q;
+        }
+      } else if(ch===',' && !q){
+        out.push(cur);
+        cur='';
+      } else {
+        cur+=ch;
+      }
+    }
+    out.push(cur);
+    return out.map(v=>v.trim());
+  };
+  const headers = split(lines.shift()).map(h=>parkingNorm(h));
+  return lines.map(line=>{
+    const cols=split(line);
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=cols[i]||'');
+    return obj;
+  });
+}
   function parkingMapAllocations(rows){ return rows.map((row, idx)=>{ const hasParkingRaw = String(row['has parking'] || row['hasparking'] || row['parking'] || row['possui vaga'] || '').toLowerCase(); const type = String(row['type'] || row['parking type'] || row['space type'] || row['tipo'] || '').trim() || ''; const hasParking = hasParkingRaw ? !['no','false','nao','não','0'].includes(hasParkingRaw) : (String(type).toLowerCase() !== 'no parking'); const s1 = row['parking space no.'] || row['parking space'] || row['space no'] || row['space'] || row['vaga'] || ''; const s2 = row['parking space no. 2'] || row['space 2'] || row['secondary space'] || row['vaga 2'] || ''; const finalType = !hasParking ? 'No Parking' : (type || (s2 ? 'Double' : 'Single')); const spaceDisplay = !hasParking ? 'N/A' : (s2 ? `${s1} / ${s2}` : s1); return { id:'alloc-'+(idx+1), address: row['address'] || row['endereco'] || row['morada'] || '', eircode: row['eircode'] || '', residentName: row['resident name'] || row['name'] || '', hasParking, type: finalType, spaceNo: s1, space1:s1, space2:s2, spaceDisplay, updatedAt:new Date().toISOString() }; }); }
   async function parkingHandleImport(file){ const txt = await file.text(); let allocations = []; if(file.name.toLowerCase().endsWith('.json')) allocations = JSON.parse(txt); else allocations = parkingMapAllocations(parkingCsvParse(txt)); const reg = parkingRegistryLoad(); reg.allocations = allocations; reg.importMeta = { name:file.name, uploadedAt:new Date().toISOString() }; parkingRegistrySave(reg); parkingRenderAdmin(); }
   async function parkingHandlePolicy(file){ const dataUrl = await new Promise((resolve,reject)=>{ const reader=new FileReader(); reader.onload=()=>resolve(reader.result); reader.onerror=()=>reject(reader.error||new Error('Failed to read file')); reader.readAsDataURL(file); }); const reg = parkingRegistryLoad(); reg.policy = { name:file.name, type:file.type || 'application/octet-stream', dataUrl, updatedAt:new Date().toISOString() }; parkingRegistrySave(reg); parkingRenderAdmin(); }
   function parkingClearImport(){ const reg = parkingRegistryLoad(); reg.allocations = []; reg.importMeta = null; parkingRegistrySave(reg); parkingRenderAdmin(); }
   function parkingRemovePolicy(){ const reg = parkingRegistryLoad(); reg.policy = null; parkingRegistrySave(reg); try{ localStorage.removeItem(window.ANW_KEYS.PARKING_POLICY); }catch(_){} parkingRenderAdmin(); }
-  function parkingExportCsv(){ const rows = parkingFilterRows(parkingBuildRows()); const head = ['Resident','Address','Eircode','Parking Space No.','Type','Status','Vehicles','Owner Check','Policy','Updated']; const lines = [head.join(',')].concat(rows.map(r=>[r.resident,r.address,r.eircode,r.space,r.type,r.status,r.vehicles,r.ownerCheck,r.policy,r.updated].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','))); downloadText('parking-registry.csv', lines.join('
-')); }
+  function parkingExportCsv(){ const rows = parkingFilterRows(parkingBuildRows()); const head = ['Resident','Address','Eircode','Parking Space No.','Type','Status','Vehicles','Owner Check','Policy','Updated']; const lines = [head.join(',')].concat(rows.map(r=>[r.resident,r.address,r.eircode,r.space,r.type,r.status,r.vehicles,r.ownerCheck,r.policy,r.updated].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','))); downloadText('parking-registry.csv', lines.join('\n')); }
   function parkingExportPdf(){ const rows = parkingFilterRows(parkingBuildRows()); const win = window.open('', '_blank'); if(!win) return; win.document.write('<html><head><title>Parking Registry</title><style>body{font-family:Arial,sans-serif;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}h1{font-size:20px}</style></head><body><h1>Parking & Vehicles Report</h1><table><thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.resident)}</td><td>${esc(r.address)}</td><td>${esc(r.eircode)}</td><td>${esc(r.space)}</td><td>${esc(r.type)}</td><td>${esc(r.status)}</td><td>${esc(r.vehicles)}</td><td>${esc(r.ownerCheck)}</td><td>${esc(r.updated)}</td></tr>`).join('')+'</tbody></table></body></html>'); win.document.close(); win.focus(); setTimeout(()=>win.print(), 300); }
   async function parkingSendNotice(row){ if(!row) return; const message = prompt('Message to resident about Parking & Vehicles:', 'Your parking registration needs attention. Please review your Parking & Vehicles section and update the required details.'); if(!message) return; const notices = sanitizeNoticeCollection(await anwLoadSafe(KEY_NOTICES, [])); notices.push({ id:'parking-'+Date.now(), title:'Parking & Vehicles update required', message:String(message), createdAt:new Date().toISOString(), createdBy:'admin', targetEmails:[row.residentEmail].filter(Boolean), category:'parking' }); await anwSaveSafe(KEY_NOTICES, notices); await renderNoticesList(); alert('Notice created for the selected resident.'); }
   function parkingBindAdmin(){ byId('parkingImportInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandleImport(file); e.target.value=''; }); byId('parkingPolicyInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandlePolicy(file); e.target.value=''; }); byId('btnParkingClearImport')?.addEventListener('click', parkingClearImport); byId('btnParkingRemovePolicy')?.addEventListener('click', parkingRemovePolicy); byId('btnParkingTemplate')?.addEventListener('click', ()=>downloadText('parking-template.csv','address,eircode,parking space no.,parking space no. 2,type,has parking
