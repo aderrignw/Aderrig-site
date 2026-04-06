@@ -244,6 +244,65 @@
     } catch (_) {}
   }
 
+
+function getUserRole(user) {
+  if (!user || typeof user !== "object") return "";
+  try {
+    const appMeta = user.app_metadata && typeof user.app_metadata === "object" ? user.app_metadata : null;
+    const userMeta = user.user_metadata && typeof user.user_metadata === "object" ? user.user_metadata : null;
+    return String(
+      (appMeta && (appMeta.role || appMeta.roles)) ||
+      (userMeta && (userMeta.role || userMeta.roles)) ||
+      user.role ||
+      ""
+    ).toLowerCase().trim();
+  } catch (_) {
+    return "";
+  }
+}
+
+function hasRequiredRole(user, roles) {
+  const required = Array.isArray(roles) ? roles.map((role) => String(role || "").toLowerCase().trim()).filter(Boolean) : [];
+  if (!required.length) return true;
+
+  const currentRole = getUserRole(user);
+  if (!currentRole) return false;
+
+  if (required.includes(currentRole)) return true;
+
+  return currentRole.split(/[\s,|;]+/).some((role) => required.includes(role));
+}
+
+function requireRole(roles, options) {
+  const settings = Object.assign({ redirectTo: "login.html", onAuthorized: null, onUnauthorized: null }, options || {});
+  const user = getCurrentUser();
+
+  if (!user || !hasRequiredRole(user, roles)) {
+    try {
+      if (typeof settings.onUnauthorized === "function") settings.onUnauthorized(user);
+    } catch (_) {}
+    if (!isLoginPage()) {
+      try { window.location.replace(settings.redirectTo); }
+      catch (_) { window.location.href = settings.redirectTo; }
+    }
+    return false;
+  }
+
+  try {
+    if (typeof settings.onAuthorized === "function") settings.onAuthorized(user);
+  } catch (_) {}
+
+  return true;
+}
+
+window.ANWIdentity = Object.assign({}, window.ANWIdentity || {}, {
+  getCurrentUser,
+  getUserRole,
+  hasRequiredRole,
+  requireRole,
+  forceGlobalLogout
+});
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
       initIdentity();
