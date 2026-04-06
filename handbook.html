@@ -4,15 +4,53 @@
   <meta charset="utf-8" />
   <meta content="page:handbook" name="anw-acl-key"/>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-<!-- Auth pre-check disabled (temporary public mode) -->
 <script>
-  (function(){
-    try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
+  document.documentElement.classList.add('anw-preauth-hide');
+  (function () {
+    function allowPage() {
+      try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
+      try { document.body && document.body.removeAttribute('data-acl-loading'); } catch (_) {}
+    }
+
+    function protectHandbook() {
+      try {
+        var api = window.ANWIdentity || null;
+        if (!api || typeof api.requireRole !== 'function') return false;
+
+        var allowed = api.requireRole(['resident', 'owner'], {
+          redirectTo: 'login.html',
+          onAuthorized: allowPage
+        });
+
+        return !!allowed;
+      } catch (_) {
+        try { window.location.replace('login.html'); }
+        catch (e) { window.location.href = 'login.html'; }
+        return true;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      if (protectHandbook()) return;
+
+      var tries = 0;
+      var waitForIdentity = window.setInterval(function () {
+        tries += 1;
+        if (protectHandbook() || tries >= 40) {
+          window.clearInterval(waitForIdentity);
+        }
+      }, 150);
+    });
   })();
 </script>
 
   <title>Handbook — Aderrig NW</title>
   <link rel="stylesheet" href="assets/style.css" />
+
+<style>
+  html.anw-preauth-hide body { visibility: hidden; }
+</style>
+
 
   <style>
     /* Match the existing “premium” styling used across the site */
@@ -45,7 +83,7 @@
     .hb-attach:hover{ background: rgba(17,24,39,.03); text-decoration:none; }
   </style>
 </head>
-<body data-acl-shell-public="true" data-acl-loading="true" class="page-handbook">
+<body data-acl-loading="true" class="page-handbook">
 
 <header class="site-header">
 <div class="brand">
