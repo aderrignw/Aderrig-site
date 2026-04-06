@@ -177,6 +177,8 @@
     min-width:0;
   }
 
+
+  .parking-admin-grid{display:grid;grid-template-columns:380px 1fr;gap:18px}.parking-admin-card{border:1px solid var(--line);border-radius:18px;background:#fbfcf8;padding:18px}.parking-admin-card h4{margin:0 0 6px}.parking-admin-compact-upload{display:grid;gap:12px}.parking-admin-file-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}.parking-admin-btn-row{display:flex;gap:8px;flex-wrap:wrap}.parking-admin-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.parking-stat{border:1px solid var(--line);border-radius:16px;background:#fff;padding:14px}.parking-stat.no-vehicle{background:#eef4ff}.parking-stat.completed{background:#eef6e5}.parking-stat.pending{background:#fff9e7}.parking-stat.no-parking{background:#fff1ef}.parking-admin-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}.parking-admin-search{display:flex;gap:8px;flex-wrap:wrap}.parking-admin-search input,.parking-admin-search select{min-height:42px}.parking-admin-pill{display:inline-flex;padding:6px 11px;border-radius:999px;font-size:.8rem;font-weight:700}.parking-admin-pill.single{background:#e7eef8;color:#4b6487}.parking-admin-pill.double{background:#fff4d8;color:#8b6b22}.parking-admin-pill.none{background:#fde9e7;color:#9a4a3f}.parking-admin-pill.completed{background:#e5efda;color:#56713d}.parking-admin-pill.pending{background:#fff4d8;color:#8b6b22}.parking-admin-pill.noparking{background:#fde9e7;color:#9a4a3f}.parking-admin-pill.novehicle{background:#e7eef8;color:#4b6487}.parking-space-chip{display:inline-flex;padding:8px 12px;border-radius:14px;border:1px solid var(--line);background:#fff;font-weight:700}.parking-admin-note{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;margin-top:12px}.parking-admin-table-wrap{overflow:auto}.parking-admin-actions button{margin:2px 0}.parking-admin-hidden{display:none!important}@media (max-width:1100px){.parking-admin-grid{grid-template-columns:1fr}.parking-admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:700px){.parking-admin-stats{grid-template-columns:1fr}}
 </style>
 
 <style>
@@ -932,6 +934,7 @@
       <button type="button" class="btn small admin-tab active" data-tab="tabResidents">Residents</button>
       <button type="button" class="btn small admin-tab" data-tab="tabTasks">Volunteer tasks</button>
       <button type="button" class="btn small admin-tab" data-tab="tabElections">Elections</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabParkingAdmin">Parking &amp; Vehicles</button>
       <button type="button" class="btn small admin-tab" data-tab="tabReports">Reports</button>
       <button type="button" class="btn small admin-tab" data-tab="tabNotices">Notices</button>
       <button type="button" class="btn small admin-tab" data-tab="tabHandbook">Handbook</button>
@@ -971,6 +974,83 @@
     </div>
 
     <p id="resEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No residents found.</p>
+  </section>
+
+  <section class="card admin-tab-content" id="tabParkingAdmin" style="display:none;">
+    <h3>Parking &amp; Vehicles</h3>
+    <p class="tiny muted" style="margin-top:0;">Private parking allocation management connected directly to the resident dashboard. Visitor vehicles must not be registered here and must use the visitor parking procedure.</p>
+    <div class="parking-admin-grid">
+      <div style="display:grid; gap:18px;">
+        <section class="parking-admin-card">
+          <h4>Import Parking File</h4>
+          <p class="tiny muted" style="margin-top:0;">Compact upload area for the current parking allocation file and the policy file shown on the dashboard.</p>
+          <div class="parking-admin-compact-upload">
+            <div class="parking-admin-file-row">
+              <div><div class="tiny muted">Current allocation file</div><strong id="parkingImportName">No file uploaded</strong></div>
+              <div class="parking-admin-btn-row"><label class="btn small" for="parkingImportInput">Upload</label><button type="button" class="btn-line small" id="btnParkingClearImport">Clear</button></div>
+            </div>
+            <input id="parkingImportInput" type="file" accept=".csv,.json" style="display:none;">
+            <div class="parking-admin-file-row">
+              <div><div class="tiny muted">Parking policy file</div><strong id="parkingPolicyName">No file uploaded</strong></div>
+              <div class="parking-admin-btn-row"><label class="btn small" for="parkingPolicyInput">Upload</label><button type="button" class="btn-line small" id="btnParkingRemovePolicy">Remove</button></div>
+            </div>
+            <input id="parkingPolicyInput" type="file" accept=".pdf,.doc,.docx" style="display:none;">
+            <div class="parking-admin-btn-row">
+              <button type="button" class="btn-line small" id="btnParkingTemplate">Download Template</button>
+              <button type="button" class="btn-line small" id="btnParkingImportRules">View Import Rules</button>
+            </div>
+          </div>
+          <div class="parking-admin-note">A double space must be stored as one valid registration linked to both parking space numbers. The system must not treat those linked vehicles as duplicates.</div>
+        </section>
+
+        <section class="parking-admin-card">
+          <h4>Management Tools</h4>
+          <div class="parking-admin-btn-row" style="margin-top:10px;">
+            <button type="button" class="btn-line small" id="btnParkingExportCsv">Export CSV</button>
+            <button type="button" class="btn-line small" id="btnParkingExportPdf">Export PDF</button>
+          </div>
+          <div class="parking-admin-note">Use reporting to export filtered records. Large logs stay in the registry and are not shown as fixed blocks on screen.</div>
+        </section>
+      </div>
+
+      <div style="display:grid; gap:18px;">
+        <section class="parking-admin-card">
+          <div class="parking-admin-stats">
+            <div class="parking-stat"><div class="tiny muted">Total Homes</div><div id="pkAdminTotal" style="font-size:1.8rem;font-weight:800;">0</div></div>
+            <div class="parking-stat completed"><div class="tiny muted">Completed</div><div id="pkAdminCompleted" style="font-size:1.8rem;font-weight:800;">0</div></div>
+            <div class="parking-stat pending"><div class="tiny muted">Pending</div><div id="pkAdminPending" style="font-size:1.8rem;font-weight:800;">0</div></div>
+            <div class="parking-stat no-parking"><div class="tiny muted">No Parking</div><div id="pkAdminNoParking" style="font-size:1.8rem;font-weight:800;">0</div></div>
+            <div class="parking-stat no-vehicle" style="grid-column:1/-1;"><div class="tiny muted">No Vehicle Declared</div><div id="pkAdminNoVehicle" style="font-size:1.8rem;font-weight:800;">0</div></div>
+          </div>
+        </section>
+
+        <section class="parking-admin-card">
+          <div class="parking-admin-toolbar">
+            <div>
+              <h4>Parking Registry</h4>
+              <p class="tiny muted" style="margin-top:4px;">Live overview of imported allocations and resident submissions connected to the dashboard.</p>
+            </div>
+            <div class="parking-admin-search">
+              <input id="pkAdminSearch" type="text" placeholder="Search resident, eircode, address or space">
+              <select id="pkAdminStatusFilter">
+                <option value="all">All status</option>
+                <option value="Completed">Completed</option>
+                <option value="Pending">Pending</option>
+                <option value="No Vehicle Declared">No Vehicle Declared</option>
+                <option value="No Parking">No Parking</option>
+              </select>
+            </div>
+          </div>
+          <div class="parking-admin-table-wrap">
+            <table style="width:100%;">
+              <thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th><th>Actions</th></tr></thead>
+              <tbody id="pkAdminBody"></tbody>
+            </table>
+          </div>
+          <p class="tiny muted" id="pkAdminEmpty" style="display:none; margin-top:10px;">No parking records found.</p>
+        </section>
+      </div>
+    </div>
   </section>
 
   <div id="modalResident" class="modal" style="display:none;">
@@ -2840,6 +2920,7 @@
 
     { key:'page:dashboard', label:'Dashboard', group:'Dashboard', indent:0, defaults:{ public:true } },
     { key:'dashboard:tab_profile', label:'Dashboard · Profile', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
+    { key:'dashboard:tab_parking', label:'Dashboard · Parking & Vehicles', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
     { key:'dashboard:tab_interest', label:'Dashboard · Interest', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
     { key:'dashboard:tab_elections', label:'Dashboard · Elections', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
     { key:'dashboard:tab_notices', label:'Dashboard · Notices', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
@@ -2852,6 +2933,7 @@
 
     { key:'page:admin', label:'Admin panel', group:'Owner controls', indent:0, defaults:{ owner:true } },
     { key:'page:access-control', label:'Access Control sub-tab', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'page:admin-parking', label:'Admin · Parking & Vehicles', group:'Owner controls', indent:1, defaults:{ owner:true } },
     { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
   ];
 
@@ -3285,6 +3367,46 @@
     }
   });
 
+
+  // ---------- Parking & Vehicles ----------
+  function parkingRegistryLoad(){ return (window.anwParkingLoadRegistry && window.anwParkingLoadRegistry()) || { allocations:[], submissions:{}, policy:null }; }
+  function parkingRegistrySave(data){ return (window.anwParkingSaveRegistry && window.anwParkingSaveRegistry(data)) || data; }
+  function parkingNorm(v){ try{return window.anwParkingNormalizeText(v);}catch(_){return String(v||'').toLowerCase().trim();} }
+  function parkingEmail(v){ try{return window.anwNormEmail(v);}catch(_){return String(v||'').toLowerCase().trim();} }
+  function parkingUsers(){ return Array.isArray(RESIDENTS_CACHE) ? RESIDENTS_CACHE : []; }
+  function parkingResidentName(u){ return String(u?.name || u?.fullName || [u?.firstName,u?.lastName].filter(Boolean).join(' ') || u?.email || 'Resident'); }
+  function parkingFindUserForAllocation(allocation){ const users = parkingUsers(); const eir = String(allocation?.eircode || '').toUpperCase().replace(/\s+/g,''); const addr = parkingNorm(allocation?.address || ''); return users.find(u => String(u?.eircode || '').toUpperCase().replace(/\s+/g,'') === eir && eir) || users.find(u => parkingNorm(u?.address || '') === addr && addr) || null; }
+  function parkingSubmissionKeyForUser(user){ const email = parkingEmail(user?.email || user?.userEmail || ''); const eir = String(user?.eircode || '').toUpperCase().replace(/\s+/g,''); return email || ('eir:' + eir); }
+  function parkingBuildRows(){ const reg = parkingRegistryLoad(); const allocations = Array.isArray(reg.allocations) ? reg.allocations : []; const rows = allocations.map((allocation, idx) => { const user = parkingFindUserForAllocation(allocation) || {}; const key = parkingSubmissionKeyForUser(user); const sub = (reg.submissions && key && reg.submissions[key]) ? reg.submissions[key] : null; const type = allocation.hasParking === false ? 'No Parking' : (allocation.type || 'Single'); const status = allocation.hasParking === false ? 'No Parking' : sub?.noVehicleDeclared ? 'No Vehicle Declared' : (Array.isArray(sub?.vehicles) && sub.vehicles.some(v => !v.deletedAt) ? 'Completed' : 'Pending'); return {
+      id: allocation.id || ('alloc-' + idx),
+      resident: parkingResidentName(user),
+      residentEmail: user?.email || user?.userEmail || '',
+      address: allocation.address || user?.address || '',
+      eircode: allocation.eircode || user?.eircode || '',
+      space: allocation.hasParking === false ? 'N/A' : (allocation.spaceDisplay || allocation.spaceNo || allocation.space1 || ''),
+      type, status, vehicles: sub?.noVehicleDeclared ? 0 : ((sub?.vehicles || []).filter(v => !v.deletedAt).length), ownerCheck: sub?.ownerConfirmed ? 'Confirmed' : (sub?.noVehicleDeclared ? 'Declared Empty' : 'Pending'), policy: sub?.acceptanceHistory?.length ? 'Accepted' : (allocation.hasParking === false ? 'N/A' : 'Pending'), updated: sub?.lastUpdatedAt || allocation.updatedAt || 'Imported', subKey:key, allocation, submission:sub
+    }; }); return rows; }
+  function parkingFilterRows(rows){ const q = String(byId('pkAdminSearch')?.value || '').toLowerCase().trim(); const status = String(byId('pkAdminStatusFilter')?.value || 'all'); return rows.filter(row => { const okStatus = status === 'all' || row.status === status; const hay = [row.resident,row.address,row.eircode,row.space,row.type,row.status].join(' ').toLowerCase(); return okStatus && (!q || hay.includes(q)); }); }
+  function parkingStatusPill(status){ if(status==='Completed') return 'parking-admin-pill completed'; if(status==='Pending') return 'parking-admin-pill pending'; if(status==='No Parking') return 'parking-admin-pill noparking'; if(status==='No Vehicle Declared') return 'parking-admin-pill novehicle'; return 'parking-admin-pill'; }
+  function parkingTypePill(type){ if(type==='Double') return 'parking-admin-pill double'; if(type==='Single') return 'parking-admin-pill single'; return 'parking-admin-pill none'; }
+  function parkingRenderAdmin(){ const rows = parkingBuildRows(); const filtered = parkingFilterRows(rows); byId('pkAdminTotal').textContent = String(rows.length); byId('pkAdminCompleted').textContent = String(rows.filter(r=>r.status==='Completed').length); byId('pkAdminPending').textContent = String(rows.filter(r=>r.status==='Pending').length); byId('pkAdminNoParking').textContent = String(rows.filter(r=>r.status==='No Parking').length); byId('pkAdminNoVehicle').textContent = String(rows.filter(r=>r.status==='No Vehicle Declared').length); const body = byId('pkAdminBody'); if(!body) return; body.innerHTML = filtered.map((row, idx)=>`<tr><td>${esc(row.resident||'—')}</td><td>${esc(row.address||'—')}</td><td>${esc(row.eircode||'—')}</td><td><span class="parking-space-chip">${esc(row.space||'—')}</span></td><td><span class="${parkingTypePill(row.type)}">${esc(row.type)}</span></td><td><span class="${parkingStatusPill(row.status)}">${esc(row.status)}</span></td><td>${row.vehicles}</td><td>${esc(row.ownerCheck)}</td><td>${esc(String(row.updated||'').replace('T',' ').slice(0,16) || '—')}</td><td class="parking-admin-actions"><button type="button" class="btn-line small" data-pk-msg="${idx}">Message</button></td></tr>`).join(''); byId('pkAdminEmpty').style.display = filtered.length ? 'none' : 'block'; Array.from(body.querySelectorAll('[data-pk-msg]')).forEach(btn=>btn.addEventListener('click', ()=> parkingSendNotice(filtered[Number(btn.getAttribute('data-pk-msg'))]))); byId('parkingImportName').textContent = (parkingRegistryLoad().importMeta && parkingRegistryLoad().importMeta.name) || 'No file uploaded'; byId('parkingPolicyName').textContent = (parkingRegistryLoad().policy && parkingRegistryLoad().policy.name) || 'No file uploaded'; }
+  function parkingCsvParse(text){ const lines = String(text||'').replace(/
+/g,'').split('
+').filter(Boolean); if(!lines.length) return []; const split = (line)=>{ const out=[]; let cur=''; let q=false; for(let i=0;i<line.length;i++){ const ch=line[i]; if(ch==='"'){ if(q && line[i+1]==='"'){ cur+='"'; i++; } else q=!q; } else if(ch===',' && !q){ out.push(cur); cur=''; } else cur+=ch; } out.push(cur); return out.map(v=>v.trim()); }; const headers = split(lines.shift()).map(h=>parkingNorm(h)); return lines.map(line=>{ const cols=split(line); const obj={}; headers.forEach((h,i)=>obj[h]=cols[i]||''); return obj; }); }
+  function parkingMapAllocations(rows){ return rows.map((row, idx)=>{ const hasParkingRaw = String(row['has parking'] || row['hasparking'] || row['parking'] || row['possui vaga'] || '').toLowerCase(); const type = String(row['type'] || row['parking type'] || row['space type'] || row['tipo'] || '').trim() || ''; const hasParking = hasParkingRaw ? !['no','false','nao','não','0'].includes(hasParkingRaw) : (String(type).toLowerCase() !== 'no parking'); const s1 = row['parking space no.'] || row['parking space'] || row['space no'] || row['space'] || row['vaga'] || ''; const s2 = row['parking space no. 2'] || row['space 2'] || row['secondary space'] || row['vaga 2'] || ''; const finalType = !hasParking ? 'No Parking' : (type || (s2 ? 'Double' : 'Single')); const spaceDisplay = !hasParking ? 'N/A' : (s2 ? `${s1} / ${s2}` : s1); return { id:'alloc-'+(idx+1), address: row['address'] || row['endereco'] || row['morada'] || '', eircode: row['eircode'] || '', residentName: row['resident name'] || row['name'] || '', hasParking, type: finalType, spaceNo: s1, space1:s1, space2:s2, spaceDisplay, updatedAt:new Date().toISOString() }; }); }
+  async function parkingHandleImport(file){ const txt = await file.text(); let allocations = []; if(file.name.toLowerCase().endsWith('.json')) allocations = JSON.parse(txt); else allocations = parkingMapAllocations(parkingCsvParse(txt)); const reg = parkingRegistryLoad(); reg.allocations = allocations; reg.importMeta = { name:file.name, uploadedAt:new Date().toISOString() }; parkingRegistrySave(reg); parkingRenderAdmin(); }
+  async function parkingHandlePolicy(file){ const dataUrl = await new Promise((resolve,reject)=>{ const reader=new FileReader(); reader.onload=()=>resolve(reader.result); reader.onerror=()=>reject(reader.error||new Error('Failed to read file')); reader.readAsDataURL(file); }); const reg = parkingRegistryLoad(); reg.policy = { name:file.name, type:file.type || 'application/octet-stream', dataUrl, updatedAt:new Date().toISOString() }; parkingRegistrySave(reg); parkingRenderAdmin(); }
+  function parkingClearImport(){ const reg = parkingRegistryLoad(); reg.allocations = []; reg.importMeta = null; parkingRegistrySave(reg); parkingRenderAdmin(); }
+  function parkingRemovePolicy(){ const reg = parkingRegistryLoad(); reg.policy = null; parkingRegistrySave(reg); try{ localStorage.removeItem(window.ANW_KEYS.PARKING_POLICY); }catch(_){} parkingRenderAdmin(); }
+  function parkingExportCsv(){ const rows = parkingFilterRows(parkingBuildRows()); const head = ['Resident','Address','Eircode','Parking Space No.','Type','Status','Vehicles','Owner Check','Policy','Updated']; const lines = [head.join(',')].concat(rows.map(r=>[r.resident,r.address,r.eircode,r.space,r.type,r.status,r.vehicles,r.ownerCheck,r.policy,r.updated].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','))); downloadText('parking-registry.csv', lines.join('
+')); }
+  function parkingExportPdf(){ const rows = parkingFilterRows(parkingBuildRows()); const win = window.open('', '_blank'); if(!win) return; win.document.write('<html><head><title>Parking Registry</title><style>body{font-family:Arial,sans-serif;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}h1{font-size:20px}</style></head><body><h1>Parking & Vehicles Report</h1><table><thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.resident)}</td><td>${esc(r.address)}</td><td>${esc(r.eircode)}</td><td>${esc(r.space)}</td><td>${esc(r.type)}</td><td>${esc(r.status)}</td><td>${esc(r.vehicles)}</td><td>${esc(r.ownerCheck)}</td><td>${esc(r.updated)}</td></tr>`).join('')+'</tbody></table></body></html>'); win.document.close(); win.focus(); setTimeout(()=>win.print(), 300); }
+  async function parkingSendNotice(row){ if(!row) return; const message = prompt('Message to resident about Parking & Vehicles:', 'Your parking registration needs attention. Please review your Parking & Vehicles section and update the required details.'); if(!message) return; const notices = sanitizeNoticeCollection(await anwLoadSafe(KEY_NOTICES, [])); notices.push({ id:'parking-'+Date.now(), title:'Parking & Vehicles update required', message:String(message), createdAt:new Date().toISOString(), createdBy:'admin', targetEmails:[row.residentEmail].filter(Boolean), category:'parking' }); await anwSaveSafe(KEY_NOTICES, notices); await renderNoticesList(); alert('Notice created for the selected resident.'); }
+  function parkingBindAdmin(){ byId('parkingImportInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandleImport(file); e.target.value=''; }); byId('parkingPolicyInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandlePolicy(file); e.target.value=''; }); byId('btnParkingClearImport')?.addEventListener('click', parkingClearImport); byId('btnParkingRemovePolicy')?.addEventListener('click', parkingRemovePolicy); byId('btnParkingTemplate')?.addEventListener('click', ()=>downloadText('parking-template.csv','address,eircode,parking space no.,parking space no. 2,type,has parking
+12 Example Avenue,D15X9T2,101,102,Double,Yes
+8 River Court,D15H2K4,104,,Single,Yes
+16 Oak Lane,D15T8R1,,,No Parking,No')); byId('btnParkingImportRules')?.addEventListener('click', ()=>alert('Use one row per residence. Double spaces must be linked in one row using both parking space numbers.')); byId('btnParkingExportCsv')?.addEventListener('click', parkingExportCsv); byId('btnParkingExportPdf')?.addEventListener('click', parkingExportPdf); byId('pkAdminSearch')?.addEventListener('input', parkingRenderAdmin); byId('pkAdminStatusFilter')?.addEventListener('change', parkingRenderAdmin); }
+
   // ---------- Init ----------
   document.addEventListener('DOMContentLoaded', async () => {
     try{
@@ -3321,6 +3443,9 @@
         loadDiagnostics()
       ]);
 
+      parkingBindAdmin();
+      parkingRenderAdmin();
+
       await runAdminGate();
     }catch(err){
       console.error(err);
@@ -3333,14 +3458,25 @@
 
 <script>
 (function(){
+  const INACTIVITY_LIMIT_MS = 10 * 60 * 1000;
+  let logoutTimer = null;
+
   async function doLogout(){
-    try{ if(window.anwLogout){ await window.anwLogout(); return; } }catch(_){}
     try{ if(window.netlifyIdentity && typeof window.netlifyIdentity.logout === 'function'){ await window.netlifyIdentity.logout(); } }catch(_){}
     window.location.href = 'login.html';
   }
 
+  function resetInactivity(){
+    if(logoutTimer) clearTimeout(logoutTimer);
+    logoutTimer = setTimeout(doLogout, INACTIVITY_LIMIT_MS);
+  }
+
   function initAdminSessionUi(){
     document.getElementById('btnLogoutAdmin')?.addEventListener('click', doLogout);
+    ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach((evt)=>{
+      window.addEventListener(evt, resetInactivity, { passive:true });
+    });
+    resetInactivity();
   }
 
   if(document.readyState === 'loading'){
