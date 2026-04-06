@@ -180,10 +180,10 @@
 
   .parking-admin-grid{display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px;align-items:start}
 .parking-admin-grid>div:first-child,.parking-admin-grid>div:last-child{display:contents !important}
-.parking-admin-grid>div:first-child>.parking-admin-card:first-child{grid-column:1;grid-row:1}
-.parking-admin-grid>div:first-child>.parking-admin-card:last-child{grid-column:1;grid-row:2;margin-top:-10px}
+.parking-admin-grid>div:first-child>.parking-admin-card:first-child{grid-column:1;grid-row:1 / span 2}
+.parking-admin-grid>div:first-child>.parking-admin-card:last-child{grid-column:2;grid-row:2;margin-top:0}
 .parking-admin-grid>div:last-child>.parking-admin-card:first-child{grid-column:2;grid-row:1}
-.parking-admin-grid>div:last-child>.parking-admin-card:last-child{grid-column:1 / -1;grid-row:2}
+.parking-admin-grid>div:last-child>.parking-admin-card:last-child{grid-column:1 / -1;grid-row:3}
 .parking-admin-card{border:1px solid var(--line);border-radius:18px;background:#fbfcf8;padding:18px;min-width:0}
 .parking-admin-card h4{margin:0 0 10px}
 .parking-admin-compact-upload{display:grid;gap:12px}
