@@ -12,6 +12,8 @@ window.ANW_KEYS = window.ANW_KEYS || {
   ACL: "acl",
   ELECTIONS: "anw_elections",
   NOTICES: "anw_notices",
+  PARKING_REGISTRY: "anw_parking_registry_v1",
+  PARKING_POLICY: "anw_parking_policy_v1",
 };
 
 // ---------------------------
@@ -313,7 +315,7 @@ window.anwSyncFromServer = async function(keys, ttlMs){
 async function anwInitStore() {
   try {
     if (window.anwSyncFromServer) {
-      await window.anwSyncFromServer([ANW_KEYS.ACL, ANW_KEYS.USERS]);
+      await window.anwSyncFromServer([ANW_KEYS.ACL, ANW_KEYS.USERS, ANW_KEYS.PARKING_REGISTRY, ANW_KEYS.PARKING_POLICY]);
     }
   } catch (e) {
     console.warn("Erro ao inicializar store:", e);
@@ -419,13 +421,13 @@ async function anwFetchStorePost(key, payload) {
   const token = await anwGetIdentityToken();
   if (!token) throw new Error("Not authenticated (missing token)");
 
-  const res = await fetch("/.netlify/functions/store", {
+  const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: "Bearer " + token
     },
-    body: JSON.stringify({ key, value: payload })
+    body: JSON.stringify(payload)
   });
 
   if (!res.ok) {
@@ -454,3 +456,71 @@ async function anwFetchStorePost(key, payload) {
 window.anwNormalizeRoleName = anwNormalizeRoleName;
 window.anwCollectProfileRoles = anwCollectProfileRoles;
 window.anwProfileHasRole = anwProfileHasRole;
+
+// ---------------------------
+// Parking registry helpers
+// ---------------------------
+function anwParkingNormalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function anwParkingBaseRegistry() {
+  return { allocations: [], submissions: {}, policy: null, updatedAt: null };
+}
+
+function anwParkingLoadRegistry() {
+  const data = anwLoad(window.ANW_KEYS.PARKING_REGISTRY, null);
+  if (!data || typeof data !== 'object') return anwParkingBaseRegistry();
+  return Object.assign(anwParkingBaseRegistry(), data, {
+    allocations: Array.isArray(data.allocations) ? data.allocations : [],
+    submissions: data.submissions && typeof data.submissions === 'object' ? data.submissions : {},
+    policy: data.policy && typeof data.policy === 'object' ? data.policy : null,
+  });
+}
+
+function anwParkingSaveRegistry(data) {
+  const payload = Object.assign(anwParkingBaseRegistry(), data || {}, { updatedAt: new Date().toISOString() });
+  anwSave(window.ANW_KEYS.PARKING_REGISTRY, payload);
+  if (payload && payload.policy) {
+    anwSave(window.ANW_KEYS.PARKING_POLICY, payload.policy);
+  }
+
+  (async () => {
+    try {
+      await anwFetchStorePost(window.ANW_KEYS.PARKING_REGISTRY, payload);
+      _markSynced(window.ANW_KEYS.PARKING_REGISTRY);
+      if (payload && payload.policy) {
+        await anwFetchStorePost(window.ANW_KEYS.PARKING_POLICY, payload.policy);
+        _markSynced(window.ANW_KEYS.PARKING_POLICY);
+      }
+    } catch (e) {
+      console.warn(`[anwParkingSaveRegistry] ${e && e.message ? e.message : e}`);
+    }
+  })();
+
+  return payload;
+}
+
+function anwParkingLoadPolicy() {
+  const registry = anwParkingLoadRegistry();
+  if (registry.policy) return registry.policy;
+  const direct = anwLoad(window.ANW_KEYS.PARKING_POLICY, null);
+  if (direct && typeof direct === "object") return direct;
+  return null;
+}
+
+window.anwSave = anwSave;
+window.anwLoad = anwLoad;
+window.anwNormEmail = anwNormEmail;
+window.anwIsApproved = anwIsApproved;
+window.anwParkingNormalizeText = anwParkingNormalizeText;
+window.anwParkingLoadRegistry = anwParkingLoadRegistry;
+window.anwParkingSaveRegistry = anwParkingSaveRegistry;
+window.anwParkingLoadPolicy = anwParkingLoadPolicy;
+window.anwFetchStorePost = anwFetchStorePost;
+window.anwFetchStoreKey = anwFetchStoreKey;
