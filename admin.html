@@ -178,15 +178,10 @@
   }
 
 
-  .parking-admin-grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:18px}
-.parking-admin-grid>div:first-child,.parking-admin-grid>div:last-child{display:contents !important}
-.parking-admin-grid>div:first-child>.parking-admin-card:first-child{grid-column:1;grid-row:1}
-.parking-admin-grid>div:first-child>.parking-admin-card:last-child{grid-column:1;grid-row:2;margin-top:-4px}
-.parking-admin-grid>div:last-child>.parking-admin-card:first-child{grid-column:2;grid-row:1 / span 2;align-self:stretch}
-.parking-admin-grid>div:last-child>.parking-admin-card:last-child{grid-column:1 / -1;grid-row:3}
+  .parking-admin-grid{display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px;align-items:start}
+.parking-admin-col{display:grid;gap:18px;align-content:start;min-width:0}
+.parking-admin-card--registry{grid-column:1 / -1;min-width:0}
 .parking-admin-card{border:1px solid var(--line);border-radius:18px;background:#fbfcf8;padding:18px;min-width:0}
-.parking-admin-grid>div:last-child>.parking-admin-card:first-child{display:flex;flex-direction:column;justify-content:flex-start}
-.parking-admin-grid>div:last-child>.parking-admin-card:first-child .parking-admin-stats{flex:1;align-content:start}
 .parking-admin-card h4{margin:0 0 10px}
 .parking-admin-compact-upload{display:grid;gap:12px}
 .parking-admin-file-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}
@@ -217,12 +212,7 @@
 .parking-admin-hidden{display:none!important}
 @media (max-width:1100px){
   .parking-admin-grid{grid-template-columns:1fr}
-  .parking-admin-grid>div:first-child,
-  .parking-admin-grid>div:last-child{display:grid !important;gap:18px}
-  .parking-admin-grid>div:first-child>.parking-admin-card:first-child,
-  .parking-admin-grid>div:first-child>.parking-admin-card:last-child,
-  .parking-admin-grid>div:last-child>.parking-admin-card:first-child,
-  .parking-admin-grid>div:last-child>.parking-admin-card:last-child{grid-column:auto;grid-row:auto;margin-top:0;align-self:auto}
+  .parking-admin-card--registry{grid-column:auto}
   .parking-admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:700px){.parking-admin-stats{grid-template-columns:1fr}}
@@ -1027,7 +1017,7 @@
     <h3>Parking &amp; Vehicles</h3>
     <p class="tiny muted" style="margin-top:0;">Private parking allocation management connected directly to the resident dashboard. Visitor vehicles must not be registered here and must use the visitor parking procedure.</p>
     <div class="parking-admin-grid">
-      <div style="display:grid; gap:18px;">
+      <div class="parking-admin-col">
         <section class="parking-admin-card">
           <h4>Import Parking File</h4>
           <p class="tiny muted" style="margin-top:0;">Compact upload area for the current parking allocation file and the policy file shown on the dashboard.</p>
@@ -1049,6 +1039,56 @@
           </div>
           <div class="parking-admin-note">A double space must be stored as one valid registration linked to both parking space numbers. The system must not treat those linked vehicles as duplicates.</div>
         </section>
+      </div>
+
+      <div class="parking-admin-col parking-admin-col-right">
+        <section class="parking-admin-card">
+          <div class="parking-admin-stats">
+            <div class="parking-stat"><div class="tiny muted">Total Homes</div><div id="pkAdminTotal" style="font-size:1.8rem;font-weight:800;">0</div></div>
+            <div class="parking-stat completed"><div class="tiny muted">Completed</div><div id="pkAdminCompleted" style="font-size:1.8rem;font-weight:800;">0</div></div>
+            <div class="parking-stat pending"><div class="tiny muted">Pending</div><div id="pkAdminPending" style="font-size:1.8rem;font-weight:800;">0</div></div>
+            <div class="parking-stat no-parking"><div class="tiny muted">No Parking</div><div id="pkAdminNoParking" style="font-size:1.8rem;font-weight:800;">0</div></div>
+            <div class="parking-stat no-vehicle" style="grid-column:1/-1;"><div class="tiny muted">No Vehicle Declared</div><div id="pkAdminNoVehicle" style="font-size:1.8rem;font-weight:800;">0</div></div>
+          </div>
+        </section>
+
+        <section class="parking-admin-card">
+          <h4>Management Tools</h4>
+          <div class="parking-admin-btn-row" style="margin-top:10px;">
+            <button type="button" class="btn-line small" id="btnParkingExportCsv">Export CSV</button>
+            <button type="button" class="btn-line small" id="btnParkingExportPdf">Export PDF</button>
+          </div>
+          <div class="parking-admin-note">Use reporting to export filtered records. Large logs stay in the registry and are not shown as fixed blocks on screen.</div>
+        </section>
+      </div>
+
+      <section class="parking-admin-card parking-admin-card--registry">
+        <div class="parking-admin-toolbar">
+          <div>
+            <h4>Parking Registry</h4>
+            <p class="tiny muted" style="margin-top:4px;">Live overview of imported allocations and resident submissions connected to the dashboard.</p>
+          </div>
+          <div class="parking-admin-search">
+            <input id="pkAdminSearch" type="text" placeholder="Search resident, eircode, address or space">
+            <select id="pkAdminStatusFilter">
+              <option value="all">All status</option>
+              <option value="Completed">Completed</option>
+              <option value="Pending">Pending</option>
+              <option value="No Vehicle Declared">No Vehicle Declared</option>
+              <option value="No Parking">No Parking</option>
+            </select>
+          </div>
+        </div>
+        <div class="parking-admin-table-wrap">
+          <table style="width:100%;">
+            <thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th><th>Actions</th></tr></thead>
+            <tbody id="pkAdminBody"></tbody>
+          </table>
+        </div>
+        <p class="tiny muted" id="pkAdminEmpty" style="display:none; margin-top:10px;">No parking records found.</p>
+      </section>
+    </div>
+  </section>
 
         <section class="parking-admin-card">
           <h4>Management Tools</h4>
