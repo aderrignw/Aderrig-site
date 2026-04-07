@@ -941,6 +941,120 @@
   })();
 </script>
 
+
+<style id="handbook-admin-simplified-style">
+  #tabHandbook .hb-admin-shell{
+    display:grid;
+    grid-template-columns:320px minmax(0,1fr);
+    gap:18px;
+    align-items:start;
+  }
+  #tabHandbook .hb-admin-panel{
+    border:1px solid rgba(17,24,39,.10);
+    border-radius:20px;
+    background:linear-gradient(180deg, rgba(250,252,251,.98), rgba(255,255,255,1));
+    padding:18px;
+    min-width:0;
+  }
+  #tabHandbook .hb-admin-panel-head{ margin-bottom:14px; }
+  #tabHandbook .hb-admin-category-list,
+  #tabHandbook .hb-admin-items-list{
+    display:grid;
+    gap:10px;
+  }
+  #tabHandbook .hb-admin-category-row,
+  #tabHandbook .hb-admin-item-row{
+    border:1px solid rgba(17,24,39,.08);
+    border-radius:16px;
+    background:#fff;
+    padding:12px 14px;
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:flex-start;
+  }
+  #tabHandbook .hb-admin-category-meta,
+  #tabHandbook .hb-admin-item-meta{
+    min-width:0;
+  }
+  #tabHandbook .hb-admin-category-title,
+  #tabHandbook .hb-admin-item-title{
+    font-weight:800;
+    color:#1f2b3d;
+  }
+  #tabHandbook .hb-admin-item-sub,
+  #tabHandbook .hb-admin-category-sub{
+    color:#6a7b90;
+    margin-top:4px;
+    line-height:1.45;
+  }
+  #tabHandbook .hb-admin-row-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  #tabHandbook .hb-admin-image-preview{
+    min-height:180px;
+    border:1px dashed rgba(17,24,39,.16);
+    border-radius:18px;
+    background:#f7faf8;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#6a7b90;
+    text-align:center;
+    padding:12px;
+    overflow:hidden;
+  }
+  #tabHandbook .hb-admin-image-preview img{
+    width:100%;
+    max-height:240px;
+    object-fit:cover;
+    border-radius:14px;
+    display:block;
+  }
+  #tabHandbook .hb-admin-items-card{
+    border-top:1px solid rgba(17,24,39,.08);
+    padding-top:16px;
+  }
+  #tabHandbook .hb-admin-items-toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  #tabHandbook .hb-admin-items-toolbar input{
+    max-width:260px;
+    width:100%;
+  }
+  #tabHandbook .hb-status-pill{
+    display:inline-flex;
+    align-items:center;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:.8rem;
+    font-weight:700;
+    border:1px solid rgba(17,24,39,.10);
+    background:#fff;
+  }
+  #tabHandbook .hb-status-pill.published{
+    color:#2f6d50;
+    background:#eef7f1;
+    border-color:rgba(52,92,73,.18);
+  }
+  #tabHandbook .hb-status-pill.draft{
+    color:#8b6b22;
+    background:#fff7e8;
+    border-color:rgba(139,107,34,.18);
+  }
+  @media (max-width: 980px){
+    #tabHandbook .hb-admin-shell{ grid-template-columns:1fr; }
+  }
+</style>
+
 </head>
 
 <body>
@@ -1680,134 +1794,155 @@
     </div>
   </section>
 
+
   <!-- ================= HANDBOOK ================= -->
   <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
     <h3>Handbook</h3>
-    <p class="tiny muted" style="margin-top:0;">Create categories and items for the resident Handbook. Residents can view published items only. Prefer external links for large PDFs.</p>
+    <p class="tiny muted" style="margin-top:0;">Simple handbook registration for the admin. Keep categories light, save one image per item, and publish only what residents should see.</p>
 
-    <div class="grid-2" style="gap:1rem; align-items:flex-start;">
-      <div>
-        <h4 style="margin-top:0;">Categories</h4>
+    <div class="hb-admin-shell">
+      <div class="hb-admin-panel">
+        <div class="hb-admin-panel-head">
+          <div>
+            <h4 style="margin:0;">Categories</h4>
+            <p class="tiny muted" style="margin:6px 0 0;">Use a suggested category or create a new one quickly. This still feeds the resident handbook.</p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Suggested categories</label>
+          <select id="hbQuickCategory" class="input">
+            <option value="">Choose a suggestion…</option>
+            <option value="General">General</option>
+            <option value="Security">Security</option>
+            <option value="Parking">Parking</option>
+            <option value="Emergency">Emergency</option>
+            <option value="Volunteering">Volunteering</option>
+            <option value="Waste & Recycling">Waste &amp; Recycling</option>
+            <option value="Community Services">Community Services</option>
+            <option value="Rules & Guidance">Rules &amp; Guidance</option>
+          </select>
+        </div>
+
         <div class="field">
           <label>Category title</label>
-          <input id="hbCatTitle" type="text" maxlength="80" placeholder="e.g., Waste & Recycling" />
-        </div>
-        <div class="grid-2" style="gap:1rem;">
-          <div class="field">
-            <label>Icon (emoji)</label>
-            <input id="hbCatIcon" type="text" maxlength="8" placeholder="🗑️" />
-          </div>
-          <div class="field">
-            <label>Order</label>
-            <input id="hbCatOrder" type="number" min="1" step="1" placeholder="1" />
-          </div>
-        </div>
-        <div class="field">
-          <label class="chk" style="display:flex; align-items:center; gap:10px; margin:0;">
-            <input id="hbCatActive" type="checkbox" checked>
-            <span>Active</span>
-          </label>
-        </div>
-        <p id="hbCatMsg" class="tiny muted"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnHbCatClear">Clear</button>
-          <button type="button" class="btn" id="btnHbCatSave">Save category</button>
+          <input id="hbSimpleCatTitle" type="text" maxlength="80" placeholder="e.g., Waste & Recycling" list="hbSimpleCatSuggestions" />
+          <datalist id="hbSimpleCatSuggestions">
+            <option value="General"></option>
+            <option value="Security"></option>
+            <option value="Parking"></option>
+            <option value="Emergency"></option>
+            <option value="Volunteering"></option>
+            <option value="Waste & Recycling"></option>
+            <option value="Community Services"></option>
+            <option value="Rules & Guidance"></option>
+          </datalist>
         </div>
 
-        <div class="resident-table-wrap">
-          <table style="width:100%;">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th style="width:90px;">Order</th>
-                <th style="width:90px;">Status</th>
-                <th style="width:160px;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="hbCatBody"></tbody>
-          </table>
+        <div class="grid-2" style="gap:12px;">
+          <div class="field">
+            <label>Icon</label>
+            <input id="hbSimpleCatIcon" type="text" maxlength="8" placeholder="📘" />
+          </div>
+          <div class="field">
+            <label class="chk" style="display:flex; align-items:center; gap:10px; margin-top:34px;">
+              <input id="hbSimpleCatActive" type="checkbox" checked>
+              <span>Active</span>
+            </label>
+          </div>
         </div>
-        <p id="hbCatEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No categories yet.</p>
+
+        <p id="hbSimpleCatMsg" class="tiny muted" style="margin-top:8px;"></p>
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn btn-line" id="btnHbSimpleCatClear">Clear</button>
+          <button type="button" class="btn" id="btnHbSimpleCatSave">Save category</button>
+        </div>
+
+        <div class="hb-admin-category-list" id="hbSimpleCatList" style="margin-top:16px;"></div>
       </div>
 
-      <div>
-        <h4 style="margin-top:0;">Items</h4>
-        <p class="tiny muted" style="margin-top:0;">Simple flow: choose the category, write the text, add an optional image, then save.</p>
-        <div class="field">
-          <label>Category</label>
-          <select id="hbItemCategory"></select>
-        </div>
-        <div class="field">
-          <label>Item title</label>
-          <input id="hbItemTitle" type="text" maxlength="120" placeholder="e.g., Visitor Parking Locations" />
-        </div>
-        <div class="field">
-          <label>Summary (optional)</label>
-          <input id="hbItemSummary" type="text" maxlength="160" placeholder="Short description shown in the list" />
+      <div class="hb-admin-panel">
+        <div class="hb-admin-panel-head">
+          <div>
+            <h4 style="margin:0;">Handbook item</h4>
+            <p class="tiny muted" style="margin:6px 0 0;">One simple registration flow: category, title, content, one image, one optional link and publish status.</p>
+          </div>
         </div>
 
-        <div class="grid-2" style="gap:1rem;">
+        <div class="grid-2" style="gap:12px;">
           <div class="field">
-            <label>Type</label>
-            <select id="hbItemType">
-              <option value="page" selected>Page (content on site)</option>
-              <option value="link">External link</option>
-            </select>
+            <label>Category</label>
+            <select id="hbSimpleItemCategory"></select>
           </div>
           <div class="field">
             <label>Status</label>
-            <select id="hbItemStatus">
-              <option value="published" selected>Published</option>
+            <select id="hbSimpleItemStatus">
+              <option value="published">Published</option>
               <option value="draft">Draft</option>
             </select>
           </div>
         </div>
 
         <div class="field">
-          <label>External URL (for Link type)</label>
-          <input id="hbItemUrl" type="url" placeholder="https://..." />
+          <label>Title</label>
+          <input id="hbSimpleItemTitle" type="text" maxlength="120" placeholder="e.g., Visitor parking rules" />
         </div>
 
         <div class="field">
-          <label>Image (optional, 1 per item)</label>
-          <input id="hbItemImageFile" type="file" accept="image/*" />
-          <input id="hbItemHeroUrl" type="hidden" />
-          <div id="hbItemImagePreviewWrap" style="display:none; margin-top:10px;">
-            <div style="display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap;">
-              <img id="hbItemImagePreview" alt="Handbook image preview" style="width:160px; max-width:100%; height:auto; border-radius:14px; border:1px solid var(--line); background:#f8faf8; object-fit:cover;" />
-              <div style="display:grid; gap:8px;">
-                <div class="tiny muted" id="hbItemImageMeta">Compressed image ready.</div>
-                <button type="button" class="btn btn-line small" id="btnHbItemImageRemove">Remove image</button>
-              </div>
-            </div>
-          </div>
-          <div class="tiny muted" style="margin-top:6px;">The image is compressed automatically before saving. Deleting the item also deletes the saved image data.</div>
+          <label>Short summary (optional)</label>
+          <input id="hbSimpleItemSummary" type="text" maxlength="160" placeholder="Short text shown in the resident list" />
         </div>
 
         <div class="field">
           <label>Content</label>
-          <textarea id="hbItemContent" rows="7" placeholder="Write the handbook content here..."></textarea>
+          <textarea id="hbSimpleItemContent" rows="8" placeholder="Write the handbook content here."></textarea>
         </div>
 
-        <div class="field">
-          <label>Useful links (one per line: Label | URL)</label>
-          <textarea id="hbItemAttachments" rows="4" placeholder="Map PDF | https://...&#10;Bin schedule | https://..."></textarea>
+        <div class="grid-2" style="gap:12px; align-items:start;">
+          <div class="field">
+            <label>Image (1 per item)</label>
+            <input id="hbSimpleItemImage" type="file" accept="image/*" />
+            <div class="tiny muted" style="margin-top:6px;">The image is compressed automatically before saving.</div>
+            <div class="actions" style="justify-content:flex-start; margin-top:8px;">
+              <button type="button" class="btn btn-line small" id="btnHbRemoveImage">Remove image</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Image preview</label>
+            <div id="hbSimpleImagePreview" class="hb-admin-image-preview">No image selected</div>
+          </div>
         </div>
 
-        <p id="hbItemMsg" class="tiny muted"></p>
+        <div class="grid-2" style="gap:12px;">
+          <div class="field">
+            <label>Link text (optional)</label>
+            <input id="hbSimpleItemLinkLabel" type="text" maxlength="80" placeholder="e.g., Open map" />
+          </div>
+          <div class="field">
+            <label>Link URL (optional)</label>
+            <input id="hbSimpleItemLinkUrl" type="url" placeholder="https://..." />
+          </div>
+        </div>
+
+        <p id="hbSimpleItemMsg" class="tiny muted" style="margin-top:8px;"></p>
         <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnHbItemClear">Clear</button>
-          <button type="button" class="btn" id="btnHbItemSave">Save item</button>
+          <button type="button" class="btn btn-line" id="btnHbSimpleItemDelete" style="display:none;">Delete item</button>
+          <button type="button" class="btn btn-line" id="btnHbSimpleItemClear">Clear</button>
+          <button type="button" class="btn" id="btnHbSimpleItemSave">Save item</button>
         </div>
 
-        <div class="card" style="padding:1rem; margin-top:1rem;">
-          <h4 style="margin-top:0;">Items in selected category</h4>
-          <div id="hbItemList" class="grid" style="gap:10px;"></div>
-          <p id="hbItemEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No items in this category.</p>
+        <div class="hb-admin-items-card" style="margin-top:18px;">
+          <div class="hb-admin-items-toolbar">
+            <h4 style="margin:0;">Registered items</h4>
+            <input id="hbSimpleItemSearch" type="text" placeholder="Search item title..." />
+          </div>
+          <div id="hbSimpleItemList" class="hb-admin-items-list"></div>
+          <p id="hbSimpleItemEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No handbook items yet.</p>
         </div>
       </div>
     </div>
   </section>
+
   <!-- ================= PROJECTS ================= -->
   <section class="card admin-tab-content" id="tabProjects" style="display:none;">
     <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
@@ -1946,19 +2081,12 @@
               </div>
 
               <div class="field" style="margin-top:1rem;">
-                <label>Latest backup download</label>
-                <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-                  <button type="button" class="btn small" id="btnDownloadLatestBackup" disabled>Download latest backup</button>
-                  <span id="backupLatestId" class="tiny muted">No backup detected yet.</span>
-                </div>
+                <label for="restoreBackupFile">Restore backup file</label>
+                <input id="restoreBackupFile" type="file" accept=".json,application/json" />
               </div>
 
-              <div class="field" style="margin-top:1rem;">
-                <label>Automatic restore</label>
-                <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-                  <button type="button" class="btn small btn-line" id="btnRestoreLatestBackup" disabled>Restore latest backup</button>
-                </div>
-                <p class="tiny muted" style="margin:6px 0 0;">This restores directly from the latest backup stored in Netlify Blobs. Manual file upload restore has been removed from this screen.</p>
+              <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
+                <button type="button" class="btn small btn-line" id="btnRestoreBackup">Restore backup</button>
               </div>
 
               <p id="backupMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
@@ -3316,32 +3444,6 @@
     }
   }
 
-  let ADMIN_LATEST_BACKUP_ID = '';
-
-  function setLatestBackupUi(latest){
-    const latestId = latest && latest.id ? String(latest.id) : '';
-    ADMIN_LATEST_BACKUP_ID = latestId;
-    const downloadBtn = byId('btnDownloadLatestBackup');
-    const restoreBtn = byId('btnRestoreLatestBackup');
-    const latestIdText = byId('backupLatestId');
-
-    if(downloadBtn){
-      downloadBtn.disabled = !latestId;
-      downloadBtn.setAttribute('aria-disabled', latestId ? 'false' : 'true');
-    }
-
-    if(restoreBtn){
-      restoreBtn.disabled = !latestId;
-      restoreBtn.setAttribute('aria-disabled', latestId ? 'false' : 'true');
-    }
-
-    if(latestIdText){
-      latestIdText.textContent = latestId
-        ? ('Latest backup ID: ' + latestId)
-        : 'No backup detected yet.';
-    }
-  }
-
   async function refreshBackupStatus(){
     const statusText = byId('backupStatusText');
     const statusBadge = byId('backupStatusBadge');
@@ -3368,7 +3470,6 @@
       }
       const items = Array.isArray(data.items) ? data.items : [];
       const latest = items[0] || null;
-      setLatestBackupUi(latest);
       if(statusText){
         statusText.textContent = settings.enabled
           ? 'Automatic backup is active (daily at 02:00 UTC). You can also run a manual backup now.'
@@ -3389,7 +3490,6 @@
         msg.textContent = '';
       }
     }catch(err){
-      setLatestBackupUi(null);
       if(statusText) statusText.textContent = 'Backup status could not be loaded.';
       if(statusBadge){
         statusBadge.textContent = 'Error';
@@ -3401,51 +3501,6 @@
   }
 
   byId('btnBackupRefresh')?.addEventListener('click', refreshBackupStatus);
-
-  byId('btnDownloadLatestBackup')?.addEventListener('click', async () => {
-    const msg = byId('backupMsg');
-    const backupId = String(ADMIN_LATEST_BACKUP_ID || '').trim();
-
-    if(!backupId){
-      if(msg) msg.textContent = 'No latest backup is available to download yet.';
-      return;
-    }
-
-    if(msg) msg.textContent = 'Preparing backup download…';
-
-    try{
-      const headers = await getAdminAuthHeaders();
-      const res = await fetch('/.netlify/functions/backup-download?id=' + encodeURIComponent(backupId), {
-        method: 'GET',
-        headers,
-        cache: 'no-store'
-      });
-
-      if(!res.ok){
-        let errorMessage = 'Download failed';
-        try{
-          const data = await res.clone().json();
-          errorMessage = data.error || errorMessage;
-        }catch(_){}
-        throw new Error(errorMessage);
-      }
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const safeId = backupId.replace(/[^a-z0-9_-]+/gi, '-');
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'backup-' + safeId + '.json';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-      if(msg) msg.textContent = 'Backup downloaded successfully: ' + backupId;
-    }catch(err){
-      if(msg) msg.textContent = 'Backup download failed: ' + String(err && err.message ? err.message : err || 'Unknown error');
-    }
-  });
 
   byId('btnBackupNow')?.addEventListener('click', async () => {
     const msg = byId('backupMsg');
@@ -3469,26 +3524,23 @@
     }
   });
 
-  byId('btnRestoreLatestBackup')?.addEventListener('click', async () => {
+  byId('btnRestoreBackup')?.addEventListener('click', async () => {
     const msg = byId('backupMsg');
-    const backupId = String(ADMIN_LATEST_BACKUP_ID || '').trim();
-
-    if(!backupId){
-      if(msg) msg.textContent = 'No latest backup is available to restore yet.';
+    const input = byId('restoreBackupFile');
+    const file = input && input.files && input.files[0] ? input.files[0] : null;
+    if(!file){
+      if(msg) msg.textContent = 'Select a backup JSON file first.';
       return;
     }
-
-    const confirmed = window.confirm('Restore the latest backup now? This will overwrite the current live data and create a safety backup first.');
-    if(!confirmed) return;
-
-    if(msg) msg.textContent = 'Restoring latest backup…';
-
+    if(msg) msg.textContent = 'Restoring backup…';
     try{
+      const text = await file.text();
+      const snapshot = JSON.parse(text);
       const headers = await getAdminAuthHeaders();
       const res = await fetch('/.netlify/functions/restore-backup', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ id: backupId })
+        body: JSON.stringify({ snapshot })
       });
       const data = await res.json().catch(() => ({}));
       if(!res.ok || data.ok === false){
@@ -3496,9 +3548,10 @@
       }
       if(msg){
         msg.textContent = 'Restore completed successfully from backup ' +
-          String(data.id || backupId) +
+          String(data.id || snapshot.id || 'uploaded file') +
           (data.safetyBackupId ? (' (safety backup: ' + data.safetyBackupId + ')') : '');
       }
+      if(input) input.value = '';
       await refreshBackupStatus();
     }catch(err){
       if(msg) msg.textContent = 'Restore failed: ' + String(err && err.message ? err.message : err || 'Unknown error');
@@ -3900,30 +3953,45 @@
 })();
 </script>
 
-<script>
+
+<script id="handbook-admin-simplified-script">
 (function(){
   'use strict';
+  const KEYS = window.ANW_KEYS || {};
+  const KEY_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
+  const KEY_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
 
-  const byId = (id) => document.getElementById(id);
-  const KEY_HANDBOOK_CATEGORIES = (window.ANW_KEYS && window.ANW_KEYS.HANDBOOK_CATEGORIES) || 'anw_handbook_categories';
-  const KEY_HANDBOOK_ITEMS = (window.ANW_KEYS && window.ANW_KEYS.HANDBOOK_ITEMS) || 'anw_handbook_items';
+  const $id = (id) => document.getElementById(id);
 
-  let hbCategories = [];
-  let hbItems = [];
-  let editingCategoryId = null;
-  let editingItemId = null;
+  let categories = [];
+  let items = [];
+  let currentCategoryId = '';
+  let currentItemId = '';
+  let currentImageData = '';
+
+  function slugify(value){
+    return String(value || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function esc(value){
+    return String(value == null ? '' : value)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#39;');
+  }
 
   async function loadStore(key, fallback){
     try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, { cache:'no-store' });
+      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
       if(!res.ok) throw new Error('store load failed');
-      const data = await res.json();
-      try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){}
-      return data;
+      return await res.json();
     }catch(_){
-      try{
-        if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback);
-      }catch(__){}
       try{
         const raw = localStorage.getItem(key);
         return raw ? JSON.parse(raw) : fallback;
@@ -3935,513 +4003,452 @@
 
   async function saveStore(key, value){
     try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify(value)
       });
       if(!res.ok) throw new Error('store save failed');
-    }catch(_){}
-    try{ if(typeof window.anwSave === 'function') window.anwSave(key, value); }catch(__){}
-    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(__){}
-  }
-
-  function esc(s){
-    return String(s == null ? '' : s)
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'", '&#39;');
-  }
-
-  function slugify(v){
-    return String(v || '')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 60);
-  }
-
-  function sortCategories(list){
-    return (Array.isArray(list) ? list : []).slice().sort((a,b) => {
-      const ao = Number(a && a.order) || 9999;
-      const bo = Number(b && b.order) || 9999;
-      if(ao !== bo) return ao - bo;
-      return String(a && a.title || '').localeCompare(String(b && b.title || ''));
-    });
-  }
-
-  function parseLinks(raw){
-    return String(raw || '')
-      .split(/\n+/)
-      .map(line => line.trim())
-      .filter(Boolean)
-      .map(line => {
-        const parts = line.split('|');
-        const label = String(parts[0] || '').trim();
-        const url = String(parts.slice(1).join('|') || '').trim();
-        if(!label || !url) return null;
-        return { label, url };
-      })
-      .filter(Boolean);
-  }
-
-  function serializeLinks(list){
-    return (Array.isArray(list) ? list : [])
-      .map(row => {
-        const label = String(row && row.label || '').trim();
-        const url = String(row && row.url || '').trim();
-        return label && url ? `${label} | ${url}` : '';
-      })
-      .filter(Boolean)
-      .join('\n');
-  }
-
-  function setText(id, value){
-    const el = byId(id);
-    if(el) el.textContent = value || '';
-  }
-
-  function setCategoryMessage(msg){ setText('hbCatMsg', msg); }
-  function setItemMessage(msg){ setText('hbItemMsg', msg); }
-
-  function getImageFieldValue(){
-    return String(byId('hbItemHeroUrl')?.value || '').trim();
-  }
-
-  function setImageFieldValue(v){
-    const el = byId('hbItemHeroUrl');
-    if(el) el.value = v || '';
-  }
-
-  function refreshImagePreview(){
-    const wrap = byId('hbItemImagePreviewWrap');
-    const img = byId('hbItemImagePreview');
-    const meta = byId('hbItemImageMeta');
-    const value = getImageFieldValue();
-    if(!wrap || !img || !meta) return;
-    if(!value){
-      wrap.style.display = 'none';
-      img.removeAttribute('src');
-      meta.textContent = '';
-      return;
+    }catch(_){
+      localStorage.setItem(key, JSON.stringify(value));
     }
-    wrap.style.display = 'block';
-    img.src = value;
-    const approxBytes = Math.round((value.length * 3) / 4);
-    meta.textContent = `Compressed image embedded in this item · ~${Math.max(1, Math.round(approxBytes / 1024))} KB`;
   }
 
-  function clearCategoryForm(){
-    editingCategoryId = null;
-    byId('hbCatTitle').value = '';
-    byId('hbCatIcon').value = '';
-    byId('hbCatOrder').value = '';
-    byId('hbCatActive').checked = true;
-    setCategoryMessage('');
-  }
-
-  function fillCategoryForm(cat){
-    editingCategoryId = cat && cat.id ? cat.id : null;
-    byId('hbCatTitle').value = cat && cat.title ? cat.title : '';
-    byId('hbCatIcon').value = cat && cat.icon ? cat.icon : '';
-    byId('hbCatOrder').value = cat && cat.order ? String(cat.order) : '';
-    byId('hbCatActive').checked = !(cat && cat.active === false);
-    setCategoryMessage('');
-  }
-
-  function clearItemForm(keepCategory){
-    const currentCategory = keepCategory ? ((byId('hbItemCategory') && byId('hbItemCategory').value) || '') : '';
-    editingItemId = null;
-    if(byId('hbItemCategory')) byId('hbItemCategory').value = currentCategory;
-    byId('hbItemTitle').value = '';
-    byId('hbItemSummary').value = '';
-    byId('hbItemType').value = 'page';
-    byId('hbItemStatus').value = 'published';
-    byId('hbItemUrl').value = '';
-    byId('hbItemContent').value = '';
-    byId('hbItemAttachments').value = '';
-    setImageFieldValue('');
-    const file = byId('hbItemImageFile');
-    if(file) file.value = '';
-    refreshImagePreview();
-    toggleItemTypeUi();
-    setItemMessage('');
-  }
-
-  function fillItemForm(item){
-    editingItemId = item && item.id ? item.id : null;
-    if(byId('hbItemCategory')) byId('hbItemCategory').value = item && item.categoryId ? item.categoryId : '';
-    byId('hbItemTitle').value = item && item.title ? item.title : '';
-    byId('hbItemSummary').value = item && item.summary ? item.summary : '';
-    byId('hbItemType').value = item && item.type ? item.type : 'page';
-    byId('hbItemStatus').value = item && item.status ? item.status : 'published';
-    byId('hbItemUrl').value = item && item.url ? item.url : '';
-    byId('hbItemContent').value = item && item.content ? item.content : '';
-    byId('hbItemAttachments').value = serializeLinks(item && item.attachments);
-    setImageFieldValue(item && item.heroUrl ? item.heroUrl : '');
-    const file = byId('hbItemImageFile');
-    if(file) file.value = '';
-    refreshImagePreview();
-    toggleItemTypeUi();
-    setItemMessage('');
-  }
-
-  function normalizeCategories(raw){
-    return sortCategories((Array.isArray(raw) ? raw : []).map((cat, idx) => ({
-      id: cat && cat.id ? String(cat.id) : `hbcat_${Date.now()}_${idx}`,
-      title: String(cat && cat.title || '').trim(),
-      icon: String(cat && cat.icon || '').trim(),
-      order: Number(cat && cat.order) || (idx + 1),
-      active: cat && cat.active !== false
-    })).filter(cat => cat.title));
-  }
-
-  function normalizeItems(raw){
-    return (Array.isArray(raw) ? raw : []).map((item, idx) => ({
-      id: item && item.id ? String(item.id) : `hbitem_${Date.now()}_${idx}`,
-      categoryId: String(item && (item.categoryId || item.category || '') || '').trim(),
-      title: String(item && item.title || '').trim(),
-      slug: String(item && item.slug || slugify(item && item.title || '')).trim(),
-      summary: String(item && item.summary || '').trim(),
-      type: String(item && item.type || 'page') === 'link' ? 'link' : 'page',
-      status: String(item && item.status || 'published') === 'draft' ? 'draft' : 'published',
-      url: String(item && item.url || '').trim(),
-      heroUrl: String(item && item.heroUrl || '').trim(),
-      content: String(item && item.content || '').trim(),
-      attachments: Array.isArray(item && item.attachments)
-        ? item.attachments.map(link => ({ label:String(link && link.label || '').trim(), url:String(link && link.url || '').trim() })).filter(link => link.label && link.url)
-        : [],
-      updatedAt: String(item && item.updatedAt || item && item.createdAt || new Date().toISOString()),
-      createdAt: String(item && item.createdAt || item && item.updatedAt || new Date().toISOString())
-    })).filter(item => item.categoryId && item.title);
-  }
-
-  async function loadHandbook(){
-    hbCategories = normalizeCategories(await loadStore(KEY_HANDBOOK_CATEGORIES, []));
-    hbItems = normalizeItems(await loadStore(KEY_HANDBOOK_ITEMS, []));
-    renderCategories();
-    renderCategorySelect();
-    renderItems();
-  }
-
-  async function persistCategories(){
-    hbCategories = normalizeCategories(hbCategories);
-    await saveStore(KEY_HANDBOOK_CATEGORIES, hbCategories);
-  }
-
-  async function persistItems(){
-    hbItems = normalizeItems(hbItems);
-    await saveStore(KEY_HANDBOOK_ITEMS, hbItems);
-  }
-
-  function renderCategories(){
-    const body = byId('hbCatBody');
-    const empty = byId('hbCatEmpty');
-    if(!body) return;
-    const list = sortCategories(hbCategories);
-    body.innerHTML = list.map(cat => `
-      <tr>
-        <td>${esc((cat.icon ? cat.icon + ' ' : '') + cat.title)}</td>
-        <td>${esc(String(cat.order || '—'))}</td>
-        <td>${cat.active ? '<span class="tag ok">Active</span>' : '<span class="tag gray">Hidden</span>'}</td>
-        <td>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button type="button" class="btn-line small" data-hb-cat-edit="${esc(cat.id)}">Edit</button>
-            <button type="button" class="btn-line small" data-hb-cat-delete="${esc(cat.id)}">Delete</button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-    if(empty) empty.style.display = list.length ? 'none' : 'block';
-
-    body.querySelectorAll('[data-hb-cat-edit]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const cat = hbCategories.find(row => String(row.id) === String(btn.getAttribute('data-hb-cat-edit')));
-        fillCategoryForm(cat || null);
+  function normalizeCategories(list){
+    const out = [];
+    (Array.isArray(list) ? list : []).forEach((cat, index) => {
+      const title = String((cat && (cat.title || cat.name)) || '').trim();
+      if(!title) return;
+      out.push({
+        id: String(cat.id || slugify(title) || ('category-' + (index + 1))),
+        title,
+        icon: String(cat.icon || '📘').trim() || '📘',
+        order: Number(cat.order) || (index + 1),
+        active: cat.active !== false
       });
     });
+    return out.sort((a,b) => (a.order - b.order) || a.title.localeCompare(b.title));
+  }
 
-    body.querySelectorAll('[data-hb-cat-delete]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = String(btn.getAttribute('data-hb-cat-delete'));
-        const linkedCount = hbItems.filter(item => String(item.categoryId) === id).length;
-        if(linkedCount){
-          setCategoryMessage('This category still has items. Delete or move those items first.');
-          return;
-        }
-        hbCategories = hbCategories.filter(cat => String(cat.id) !== id);
-        await persistCategories();
-        if(editingCategoryId === id) clearCategoryForm();
-        renderCategories();
-        renderCategorySelect();
-        renderItems();
-        setCategoryMessage('Category deleted.');
-      });
+  function ensureCategoriesFromItems(){
+    const titles = new Map(categories.map(cat => [cat.id, cat]));
+    items.forEach(item => {
+      const explicit = String(item.categoryId || item.category || '').trim();
+      if(explicit && !titles.has(explicit)){
+        categories.push({
+          id: explicit,
+          title: String(item.categoryTitle || explicit).replace(/-/g,' ').replace(/\b\w/g, m => m.toUpperCase()),
+          icon: '📘',
+          order: categories.length + 1,
+          active: true
+        });
+        titles.set(explicit, true);
+      }
     });
+    categories = normalizeCategories(categories);
+  }
+
+  function normalizeItems(list){
+    return (Array.isArray(list) ? list : []).map((item, index) => {
+      const title = String((item && (item.title || item.name)) || '').trim();
+      const categoryId = String(item.categoryId || item.category || '').trim();
+      const categoryTitle = String(item.categoryTitle || '').trim();
+      const hero = String(
+        item.imageData ||
+        (item.image && item.image.dataUrl) ||
+        item.heroUrl ||
+        ''
+      );
+      const attachments = Array.isArray(item.attachments)
+        ? item.attachments.filter(Boolean)
+        : [];
+      return {
+        id: String(item.id || item.slug || ('hb-item-' + (index + 1))),
+        categoryId,
+        categoryTitle,
+        title,
+        summary: String(item.summary || item.excerpt || '').trim(),
+        content: String(item.content || '').trim(),
+        status: String(item.status || 'published').toLowerCase() === 'draft' ? 'draft' : 'published',
+        type: String(item.type || (item.url ? 'link' : 'page')).toLowerCase() === 'link' ? 'link' : 'page',
+        url: String(item.url || item.linkUrl || '').trim(),
+        linkLabel: String(item.linkLabel || (attachments[0] && attachments[0].label) || '').trim(),
+        heroUrl: hero,
+        imageName: String(item.imageName || '').trim(),
+        attachments,
+        createdAt: item.createdAt || '',
+        updatedAt: item.updatedAt || ''
+      };
+    }).filter(item => item.title);
+  }
+
+  function setCategoryMessage(message){
+    const el = $id('hbSimpleCatMsg');
+    if(el) el.textContent = message || '';
+  }
+
+  function setItemMessage(message){
+    const el = $id('hbSimpleItemMsg');
+    if(el) el.textContent = message || '';
   }
 
   function renderCategorySelect(){
-    const select = byId('hbItemCategory');
+    const select = $id('hbSimpleItemCategory');
     if(!select) return;
-    const current = select.value;
-    const list = sortCategories(hbCategories);
-    select.innerHTML = list.length
-      ? list.map(cat => `<option value="${esc(cat.id)}">${esc((cat.icon ? cat.icon + ' ' : '') + cat.title)}</option>`).join('')
-      : '<option value="">No categories yet</option>';
-    const stillExists = list.some(cat => String(cat.id) === String(current));
-    if(stillExists){
-      select.value = current;
-    }else if(list[0]){
-      select.value = list[0].id;
+    const active = categories.filter(cat => cat.active !== false);
+    select.innerHTML = active.length
+      ? active.map(cat => '<option value="' + esc(cat.id) + '">' + esc(cat.icon + ' ' + cat.title) + '</option>').join('')
+      : '<option value="">Create a category first</option>';
+    if(currentCategoryId && active.some(cat => cat.id === currentCategoryId)){
+      select.value = currentCategoryId;
+    }else if(active.length){
+      currentCategoryId = active[0].id;
+      select.value = currentCategoryId;
     }
   }
 
-  function filteredItemsForCurrentCategory(){
-    const categoryId = String(byId('hbItemCategory')?.value || '').trim();
-    return hbItems
-      .filter(item => String(item.categoryId) === categoryId)
-      .sort((a,b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+  function renderCategoryList(){
+    const wrap = $id('hbSimpleCatList');
+    if(!wrap) return;
+    if(!categories.length){
+      wrap.innerHTML = '<p class="tiny muted" style="margin:0;">No categories yet.</p>';
+      return;
+    }
+    wrap.innerHTML = categories.map(cat => {
+      return '<div class="hb-admin-category-row">'
+        + '<div class="hb-admin-category-meta">'
+        + '<div class="hb-admin-category-title">' + esc(cat.icon + ' ' + cat.title) + '</div>'
+        + '<div class="hb-admin-category-sub">ID: ' + esc(cat.id) + ' · ' + (cat.active ? 'Active' : 'Hidden') + '</div>'
+        + '</div>'
+        + '<div class="hb-admin-row-actions">'
+        + '<button type="button" class="btn btn-line small" data-hb-cat-edit="' + esc(cat.id) + '">Edit</button>'
+        + '<button type="button" class="btn btn-line small" data-hb-cat-delete="' + esc(cat.id) + '">Delete</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function renderPreview(){
+    const preview = $id('hbSimpleImagePreview');
+    if(!preview) return;
+    if(currentImageData){
+      preview.innerHTML = '<img src="' + currentImageData + '" alt="Handbook preview" />';
+    }else{
+      preview.textContent = 'No image selected';
+    }
+  }
+
+  function getCategoryLabel(categoryId){
+    const found = categories.find(cat => cat.id === categoryId);
+    return found ? (found.icon + ' ' + found.title) : categoryId;
   }
 
   function renderItems(){
-    const listEl = byId('hbItemList');
-    const empty = byId('hbItemEmpty');
-    if(!listEl) return;
-    const rows = filteredItemsForCurrentCategory();
-    listEl.innerHTML = rows.map(item => {
-      const imageChip = item.heroUrl ? '<span class="tag gray">Image</span>' : '';
-      const statusChip = item.status === 'published' ? '<span class="tag ok">Published</span>' : '<span class="tag gray">Draft</span>';
-      const typeChip = `<span class="tag gray">${esc(item.type === 'link' ? 'Link' : 'Page')}</span>`;
-      return `
-        <div class="card" style="padding:14px;">
-          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-            <div style="min-width:0;">
-              <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">${statusChip}${typeChip}${imageChip}</div>
-              <h5 style="margin:0 0 6px 0;">${esc(item.title)}</h5>
-              <div class="tiny muted">${esc(item.summary || (item.type === 'link' ? item.url : 'No summary'))}</div>
-            </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button type="button" class="btn-line small" data-hb-item-edit="${esc(item.id)}">Edit</button>
-              <button type="button" class="btn-line small" data-hb-item-delete="${esc(item.id)}">Delete</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-    if(empty) empty.style.display = rows.length ? 'none' : 'block';
+    const wrap = $id('hbSimpleItemList');
+    const empty = $id('hbSimpleItemEmpty');
+    if(!wrap || !empty) return;
 
-    listEl.querySelectorAll('[data-hb-item-edit]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const item = hbItems.find(row => String(row.id) === String(btn.getAttribute('data-hb-item-edit')));
-        fillItemForm(item || null);
-        byId('tabHandbook')?.scrollIntoView({ behavior:'smooth', block:'start' });
-      });
+    const query = String(($id('hbSimpleItemSearch') && $id('hbSimpleItemSearch').value) || '').trim().toLowerCase();
+    const filtered = items.filter(item => {
+      if(!query) return true;
+      return [item.title, item.summary, item.content].join(' ').toLowerCase().includes(query);
     });
 
-    listEl.querySelectorAll('[data-hb-item-delete]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = String(btn.getAttribute('data-hb-item-delete'));
-        hbItems = hbItems.filter(item => String(item.id) !== id);
-        await persistItems();
-        if(editingItemId === id) clearItemForm(true);
-        renderItems();
-        setItemMessage('Item deleted. The image stored inside this item was deleted too.');
-      });
-    });
+    empty.style.display = filtered.length ? 'none' : 'block';
+    if(!filtered.length){
+      wrap.innerHTML = '';
+      return;
+    }
+
+    wrap.innerHTML = filtered
+      .sort((a,b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))
+      .map(item => {
+        return '<div class="hb-admin-item-row">'
+          + '<div class="hb-admin-item-meta">'
+          + '<div class="hb-admin-item-title">' + esc(item.title) + '</div>'
+          + '<div class="hb-admin-item-sub">' + esc(getCategoryLabel(item.categoryId)) + (item.summary ? ' · ' + esc(item.summary) : '') + '</div>'
+          + '<div class="hb-admin-item-sub">' + (item.heroUrl ? 'Image saved' : 'No image') + (item.url ? ' · Link added' : '') + '</div>'
+          + '</div>'
+          + '<div class="hb-admin-row-actions">'
+          + '<span class="hb-status-pill ' + esc(item.status) + '">' + esc(item.status) + '</span>'
+          + '<button type="button" class="btn btn-line small" data-hb-item-edit="' + esc(item.id) + '">Edit</button>'
+          + '<button type="button" class="btn btn-line small" data-hb-item-delete="' + esc(item.id) + '">Delete</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
   }
 
-  function toggleItemTypeUi(){
-    const type = byId('hbItemType')?.value || 'page';
-    const contentField = byId('hbItemContent')?.closest('.field');
-    const attachmentsField = byId('hbItemAttachments')?.closest('.field');
-    const imageField = byId('hbItemImageFile')?.closest('.field');
-    if(contentField) contentField.style.display = type === 'link' ? 'none' : '';
-    if(attachmentsField) attachmentsField.style.display = type === 'link' ? 'none' : '';
-    if(imageField) imageField.style.display = type === 'link' ? 'none' : '';
+  function clearCategoryForm(){
+    currentCategoryId = '';
+    if($id('hbQuickCategory')) $id('hbQuickCategory').value = '';
+    if($id('hbSimpleCatTitle')) $id('hbSimpleCatTitle').value = '';
+    if($id('hbSimpleCatIcon')) $id('hbSimpleCatIcon').value = '📘';
+    if($id('hbSimpleCatActive')) $id('hbSimpleCatActive').checked = true;
+    setCategoryMessage('');
+  }
+
+  function fillCategoryForm(categoryId){
+    const cat = categories.find(entry => entry.id === categoryId);
+    if(!cat) return;
+    currentCategoryId = cat.id;
+    $id('hbSimpleCatTitle').value = cat.title;
+    $id('hbSimpleCatIcon').value = cat.icon || '📘';
+    $id('hbSimpleCatActive').checked = cat.active !== false;
+    setCategoryMessage('Editing category.');
+  }
+
+  function clearItemForm(){
+    currentItemId = '';
+    currentImageData = '';
+    if($id('hbSimpleItemTitle')) $id('hbSimpleItemTitle').value = '';
+    if($id('hbSimpleItemSummary')) $id('hbSimpleItemSummary').value = '';
+    if($id('hbSimpleItemContent')) $id('hbSimpleItemContent').value = '';
+    if($id('hbSimpleItemStatus')) $id('hbSimpleItemStatus').value = 'published';
+    if($id('hbSimpleItemLinkLabel')) $id('hbSimpleItemLinkLabel').value = '';
+    if($id('hbSimpleItemLinkUrl')) $id('hbSimpleItemLinkUrl').value = '';
+    if($id('hbSimpleItemImage')) $id('hbSimpleItemImage').value = '';
+    if($id('btnHbSimpleItemDelete')) $id('btnHbSimpleItemDelete').style.display = 'none';
+    renderPreview();
+    setItemMessage('');
+  }
+
+  function fillItemForm(itemId){
+    const item = items.find(entry => entry.id === itemId);
+    if(!item) return;
+    currentItemId = item.id;
+    currentImageData = item.heroUrl || '';
+    if($id('hbSimpleItemCategory')) $id('hbSimpleItemCategory').value = item.categoryId;
+    if($id('hbSimpleItemTitle')) $id('hbSimpleItemTitle').value = item.title;
+    if($id('hbSimpleItemSummary')) $id('hbSimpleItemSummary').value = item.summary || '';
+    if($id('hbSimpleItemContent')) $id('hbSimpleItemContent').value = item.content || '';
+    if($id('hbSimpleItemStatus')) $id('hbSimpleItemStatus').value = item.status || 'published';
+    if($id('hbSimpleItemLinkLabel')) $id('hbSimpleItemLinkLabel').value = item.linkLabel || '';
+    if($id('hbSimpleItemLinkUrl')) $id('hbSimpleItemLinkUrl').value = item.url || '';
+    if($id('btnHbSimpleItemDelete')) $id('btnHbSimpleItemDelete').style.display = 'inline-flex';
+    renderPreview();
+    setItemMessage('Editing item.');
   }
 
   async function saveCategory(){
-    const title = String(byId('hbCatTitle')?.value || '').trim();
-    const icon = String(byId('hbCatIcon')?.value || '').trim();
-    const active = !!byId('hbCatActive')?.checked;
-    const order = Number(byId('hbCatOrder')?.value) || (hbCategories.length + 1);
+    const title = String($id('hbSimpleCatTitle').value || '').trim();
+    const icon = String($id('hbSimpleCatIcon').value || '📘').trim() || '📘';
+    const active = !!$id('hbSimpleCatActive').checked;
     if(!title){
-      setCategoryMessage('Category title is required.');
+      setCategoryMessage('Please enter a category title.');
       return;
     }
-    const isEditing = !!editingCategoryId;
-    const next = {
-      id: editingCategoryId || `hbcat_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+    const id = currentCategoryId || slugify(title);
+    const existing = categories.find(cat => cat.id === id || cat.title.toLowerCase() === title.toLowerCase());
+    const base = existing || { id, order: categories.length + 1 };
+    const category = {
+      id: base.id || id,
       title,
       icon,
-      order,
+      order: base.order || (categories.length + 1),
       active
     };
-    hbCategories = hbCategories.filter(cat => String(cat.id) !== String(next.id));
-    hbCategories.push(next);
-    await persistCategories();
-    fillCategoryForm(next);
-    renderCategories();
+    categories = categories.filter(cat => cat.id !== category.id);
+    categories.push(category);
+    categories = normalizeCategories(categories);
+    await saveStore(KEY_CATEGORIES, categories);
     renderCategorySelect();
+    renderCategoryList();
     renderItems();
-    setCategoryMessage(isEditing ? 'Category updated.' : 'Category saved.');
+    currentCategoryId = category.id;
+    if($id('hbSimpleItemCategory')) $id('hbSimpleItemCategory').value = category.id;
+    setCategoryMessage('Category saved.');
+    clearCategoryForm();
+  }
+
+  async function deleteCategory(categoryId){
+    const itemCount = items.filter(item => item.categoryId === categoryId).length;
+    if(itemCount){
+      setCategoryMessage('Move or delete the ' + itemCount + ' item(s) in this category first.');
+      return;
+    }
+    categories = categories.filter(cat => cat.id !== categoryId);
+    await saveStore(KEY_CATEGORIES, categories);
+    renderCategorySelect();
+    renderCategoryList();
+    setCategoryMessage('Category removed.');
+    clearCategoryForm();
+  }
+
+  function sanitizeContent(value){
+    return String(value || '').trim();
   }
 
   async function saveItem(){
-    const categoryId = String(byId('hbItemCategory')?.value || '').trim();
-    const title = String(byId('hbItemTitle')?.value || '').trim();
-    const summary = String(byId('hbItemSummary')?.value || '').trim();
-    const type = String(byId('hbItemType')?.value || 'page');
-    const status = String(byId('hbItemStatus')?.value || 'published');
-    const url = String(byId('hbItemUrl')?.value || '').trim();
-    const heroUrl = getImageFieldValue();
-    const content = String(byId('hbItemContent')?.value || '').trim();
-    const attachments = parseLinks(byId('hbItemAttachments')?.value || '');
+    const categoryId = String(($id('hbSimpleItemCategory') && $id('hbSimpleItemCategory').value) || '').trim();
+    const title = String($id('hbSimpleItemTitle').value || '').trim();
+    const summary = String($id('hbSimpleItemSummary').value || '').trim();
+    const content = sanitizeContent($id('hbSimpleItemContent').value);
+    const status = String($id('hbSimpleItemStatus').value || 'published');
+    const linkLabel = String($id('hbSimpleItemLinkLabel').value || '').trim();
+    const linkUrl = String($id('hbSimpleItemLinkUrl').value || '').trim();
 
     if(!categoryId){
-      setItemMessage('Select a category first.');
+      setItemMessage('Please choose a category.');
       return;
     }
     if(!title){
-      setItemMessage('Item title is required.');
+      setItemMessage('Please enter a title.');
       return;
     }
-    if(type === 'link' && !url){
-      setItemMessage('External URL is required for Link items.');
-      return;
-    }
-    if(type !== 'link' && !content && !heroUrl && !attachments.length){
-      setItemMessage('Add some content, an image, or at least one useful link.');
+    if(!content && !linkUrl){
+      setItemMessage('Add content or a link before saving.');
       return;
     }
 
-    const isEditing = !!editingItemId;
     const now = new Date().toISOString();
-    const previous = hbItems.find(item => String(item.id) === String(editingItemId));
+    const previous = items.find(entry => entry.id === currentItemId) || {};
     const next = {
-      id: editingItemId || `hbitem_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+      id: currentItemId || ('hb-' + Date.now()),
       categoryId,
+      category: categoryId,
+      categoryTitle: (categories.find(cat => cat.id === categoryId) || {}).title || '',
       title,
-      slug: slugify(title),
       summary,
-      type: type === 'link' ? 'link' : 'page',
-      status: status === 'draft' ? 'draft' : 'published',
-      url: type === 'link' ? url : '',
-      heroUrl: type === 'link' ? '' : heroUrl,
-      content: type === 'link' ? '' : content,
-      attachments: type === 'link' ? [] : attachments,
-      createdAt: previous && previous.createdAt ? previous.createdAt : now,
+      content,
+      status,
+      type: linkUrl ? 'link' : 'page',
+      url: linkUrl,
+      linkLabel: linkLabel,
+      heroUrl: currentImageData || '',
+      imageData: currentImageData || '',
+      imageName: previous.imageName || '',
+      attachments: linkUrl ? [{ label: linkLabel || 'Open link', url: linkUrl }] : [],
+      createdAt: previous.createdAt || now,
       updatedAt: now
     };
 
-    hbItems = hbItems.filter(item => String(item.id) !== String(next.id));
-    hbItems.unshift(next);
-    await persistItems();
-    fillItemForm(next);
+    items = items.filter(entry => entry.id !== next.id);
+    items.push(next);
+    await saveStore(KEY_ITEMS, items);
     renderItems();
-    setItemMessage(isEditing ? 'Item updated.' : 'Item saved.');
+    setItemMessage('Item saved.');
+    fillItemForm(next.id);
   }
 
-  async function compressImageFile(file){
-    const originalBytes = Number(file && file.size) || 0;
-    if(!file) throw new Error('No file selected.');
-    if(!/^image\//i.test(String(file.type || ''))) throw new Error('Please choose an image file.');
-    if(originalBytes > 8 * 1024 * 1024) throw new Error('Please choose an image up to 8 MB.');
+  async function deleteItem(itemId){
+    const item = items.find(entry => entry.id === itemId);
+    if(!item) return;
+    if(!window.confirm('Delete this handbook item? The image saved inside it will be deleted too.')) return;
+    items = items.filter(entry => entry.id !== itemId);
+    await saveStore(KEY_ITEMS, items);
+    if(currentItemId === itemId) clearItemForm();
+    renderItems();
+    setItemMessage('Item removed. Image space has been cleared together with the item.');
+  }
 
+  async function compressImage(file){
+    if(!file) return '';
+    if(file.size > 8 * 1024 * 1024){
+      throw new Error('Please choose an image smaller than 8 MB.');
+    }
     const dataUrl = await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result || ''));
-      reader.onerror = () => reject(new Error('Could not read the image file.'));
+      reader.onerror = () => reject(new Error('Could not read the file.'));
       reader.readAsDataURL(file);
     });
 
     const image = await new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('Could not open the image.'));
+      img.onerror = () => reject(new Error('Could not process the image.'));
       img.src = dataUrl;
     });
 
-    const maxW = 1600;
-    const maxH = 1600;
-    let width = image.naturalWidth || image.width;
-    let height = image.naturalHeight || image.height;
-    const ratio = Math.min(1, maxW / width, maxH / height);
-    width = Math.max(1, Math.round(width * ratio));
-    height = Math.max(1, Math.round(height * ratio));
-
+    const maxWidth = 1400;
+    const scale = image.width > maxWidth ? (maxWidth / image.width) : 1;
+    const width = Math.round(image.width * scale);
+    const height = Math.round(image.height * scale);
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
-    const ctx = canvas.getContext('2d', { alpha:false });
+
+    const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(image, 0, 0, width, height);
-
-    let quality = 0.82;
-    let out = canvas.toDataURL('image/jpeg', quality);
-    while(out.length > 420000 && quality > 0.5){
-      quality -= 0.06;
-      out = canvas.toDataURL('image/jpeg', quality);
-    }
-    return {
-      dataUrl: out,
-      width,
-      height,
-      originalBytes,
-      finalBytes: Math.round((out.length * 3) / 4)
-    };
+    return canvas.toDataURL('image/jpeg', 0.78);
   }
 
-  function bindEvents(){
-    byId('btnHbCatClear')?.addEventListener('click', clearCategoryForm);
-    byId('btnHbCatSave')?.addEventListener('click', saveCategory);
-    byId('btnHbItemClear')?.addEventListener('click', () => clearItemForm(true));
-    byId('btnHbItemSave')?.addEventListener('click', saveItem);
-    byId('hbItemCategory')?.addEventListener('change', () => {
-      renderItems();
-      setItemMessage('');
-    });
-    byId('hbItemType')?.addEventListener('change', toggleItemTypeUi);
-    byId('btnHbItemImageRemove')?.addEventListener('click', () => {
-      setImageFieldValue('');
-      const file = byId('hbItemImageFile');
-      if(file) file.value = '';
-      refreshImagePreview();
-      setItemMessage('Image removed from this item form. Save the item to apply the removal.');
-    });
-    byId('hbItemImageFile')?.addEventListener('change', async (event) => {
-      const file = event.target && event.target.files && event.target.files[0];
-      if(!file) return;
-      try{
-        setItemMessage('Compressing image...');
-        const result = await compressImageFile(file);
-        setImageFieldValue(result.dataUrl);
-        refreshImagePreview();
-        setItemMessage(`Image ready. Reduced from ~${Math.max(1, Math.round(result.originalBytes/1024))} KB to ~${Math.max(1, Math.round(result.finalBytes/1024))} KB.`);
-      }catch(err){
-        setImageFieldValue('');
-        refreshImagePreview();
-        setItemMessage(err && err.message ? err.message : 'Could not process the image.');
+  async function handleImageUpload(event){
+    const file = event.target && event.target.files && event.target.files[0];
+    if(!file) return;
+    try{
+      currentImageData = await compressImage(file);
+      renderPreview();
+      setItemMessage('Image ready. It will be saved inside this handbook item.');
+    }catch(err){
+      currentImageData = '';
+      renderPreview();
+      setItemMessage(err && err.message ? err.message : 'Could not process the image.');
+    }
+  }
+
+  async function boot(){
+    if(!$id('tabHandbook') || !$id('hbSimpleItemTitle')) return;
+    categories = normalizeCategories(await loadStore(KEY_CATEGORIES, []));
+    items = normalizeItems(await loadStore(KEY_ITEMS, []));
+    ensureCategoriesFromItems();
+    if(categories.length){
+      await saveStore(KEY_CATEGORIES, categories);
+    }
+
+    renderCategorySelect();
+    renderCategoryList();
+    renderPreview();
+    renderItems();
+    clearCategoryForm();
+    clearItemForm();
+
+    $id('hbQuickCategory')?.addEventListener('change', function(){
+      if(this.value){
+        $id('hbSimpleCatTitle').value = this.value;
+        if(!$id('hbSimpleCatIcon').value) $id('hbSimpleCatIcon').value = '📘';
       }
     });
-  }
+    $id('btnHbSimpleCatClear')?.addEventListener('click', clearCategoryForm);
+    $id('btnHbSimpleCatSave')?.addEventListener('click', saveCategory);
+    $id('btnHbSimpleItemClear')?.addEventListener('click', clearItemForm);
+    $id('btnHbSimpleItemSave')?.addEventListener('click', saveItem);
+    $id('btnHbSimpleItemDelete')?.addEventListener('click', function(){
+      if(currentItemId) deleteItem(currentItemId);
+    });
+    $id('btnHbRemoveImage')?.addEventListener('click', function(){
+      currentImageData = '';
+      if($id('hbSimpleItemImage')) $id('hbSimpleItemImage').value = '';
+      renderPreview();
+      setItemMessage('Image removed from this item draft. Save to apply.');
+    });
+    $id('hbSimpleItemImage')?.addEventListener('change', handleImageUpload);
+    $id('hbSimpleItemSearch')?.addEventListener('input', renderItems);
+    $id('hbSimpleItemCategory')?.addEventListener('change', function(){
+      currentCategoryId = this.value;
+    });
 
-  function init(){
-    if(!byId('tabHandbook') || !byId('hbCatTitle') || !byId('hbItemTitle')) return;
-    clearCategoryForm();
-    clearItemForm(false);
-    bindEvents();
-    loadHandbook();
+    $id('hbSimpleCatList')?.addEventListener('click', function(event){
+      const editId = event.target && event.target.getAttribute('data-hb-cat-edit');
+      const deleteId = event.target && event.target.getAttribute('data-hb-cat-delete');
+      if(editId) fillCategoryForm(editId);
+      if(deleteId) deleteCategory(deleteId);
+    });
+
+    $id('hbSimpleItemList')?.addEventListener('click', function(event){
+      const editId = event.target && event.target.getAttribute('data-hb-item-edit');
+      const deleteId = event.target && event.target.getAttribute('data-hb-item-delete');
+      if(editId) fillItemForm(editId);
+      if(deleteId) deleteItem(deleteId);
+    });
   }
 
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', init, { once:true });
+    document.addEventListener('DOMContentLoaded', boot, { once:true });
   }else{
-    init();
+    boot();
   }
 })();
 </script>
