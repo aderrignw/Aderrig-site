@@ -41,100 +41,336 @@
   <style>
     html.anw-preauth-hide body { visibility: hidden; }
 
-    .hb-wrap{display:grid;gap:22px}
-    .hb-hero{
-      border:1px solid rgba(17,24,39,.08);
-      border-radius:30px;
-      background:linear-gradient(135deg,#f6faf8 0%,#ffffff 58%,#f7fbfa 100%);
-      box-shadow:var(--shadow);
-      padding:28px;
+    :root{
+      --hb-border: rgba(17,24,39,.08);
+      --hb-muted:#66768a;
+      --hb-text:#22324a;
+      --hb-soft:#f6f8fa;
+      --hb-accent:#2f6d50;
+      --hb-accent-soft:#edf7f1;
+      --hb-shadow:0 12px 32px rgba(15,23,42,.05);
     }
-    .hb-kicker{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:8px 14px;border-radius:999px;
-      background:#edf7f1;color:#2f6d50;font-weight:800;font-size:.85rem;
-      border:1px solid rgba(47,109,80,.12)
+
+    .hb-page{display:grid;gap:18px}
+    .hb-top{
+      border:1px solid var(--hb-border);
+      border-radius:24px;
+      background:linear-gradient(180deg,#fafcfb 0%,#ffffff 100%);
+      box-shadow:var(--shadow);
+      padding:22px;
+      display:grid;
+      gap:16px;
+    }
+    .hb-topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+    .hb-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 12px;
+      border-radius:999px;
+      border:1px solid rgba(47,109,80,.12);
+      background:var(--hb-accent-soft);
+      color:var(--hb-accent);
+      font-weight:800;
+      font-size:.82rem;
     }
     .hb-title{
-      margin:14px 0 10px;
-      font-size:clamp(2rem,3vw,3rem);
-      line-height:1.02;color:#1f2b3d
+      margin:8px 0 4px;
+      color:var(--hb-text);
+      font-size:clamp(1.35rem,2vw,1.85rem);
+      line-height:1.15;
+      font-weight:900;
     }
-    .hb-copy{max-width:72ch;color:#5b6b7d;line-height:1.7;margin:0}
-    .hb-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:20px}
-    .hb-stat{
-      background:rgba(255,255,255,.86);
-      border:1px solid rgba(17,24,39,.08);
-      border-radius:22px;padding:18px;
-      box-shadow:0 10px 28px rgba(15,23,42,.05)
+    .hb-copy{
+      margin:0;
+      color:var(--hb-muted);
+      line-height:1.65;
+      max-width:75ch;
+      font-size:.98rem;
     }
-    .hb-stat-value{font-size:1.6rem;font-weight:900;color:#1f2b3d}
-    .hb-stat-label{color:#6a7b90;font-size:.9rem;margin-top:4px}
 
-    .hb-list{display:grid;gap:18px}
-    .hb-card{
-      border:1px solid rgba(17,24,39,.08);
-      border-radius:26px;
-      background:#fff;
-      box-shadow:0 12px 32px rgba(15,23,42,.06);
-      overflow:hidden;
+    .hb-stats{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
     }
-    .hb-card-inner{padding:24px}
+    .hb-stat{
+      border:1px solid var(--hb-border);
+      background:#fff;
+      border-radius:18px;
+      padding:16px 18px;
+    }
+    .hb-stat-value{
+      font-size:1.35rem;
+      font-weight:900;
+      color:var(--hb-text);
+      line-height:1;
+    }
+    .hb-stat-label{
+      margin-top:6px;
+      color:var(--hb-muted);
+      font-size:.9rem;
+    }
+
+    .hb-section{
+      border:1px solid var(--hb-border);
+      border-radius:24px;
+      background:#fff;
+      box-shadow:var(--shadow);
+      padding:20px;
+    }
+    .hb-section-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    .hb-section-title{
+      margin:0;
+      font-size:1.05rem;
+      color:var(--hb-text);
+    }
+    .hb-section-sub{
+      margin:4px 0 0;
+      color:var(--hb-muted);
+      font-size:.92rem;
+    }
+
+    .hb-categories{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .hb-category{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      min-height:40px;
+      padding:0 14px;
+      border-radius:999px;
+      border:1px solid var(--hb-border);
+      background:#fbfcfd;
+      color:#32455a;
+      font-weight:800;
+      font-size:.92rem;
+    }
+    .hb-category small{
+      color:var(--hb-muted);
+      font-weight:700;
+      font-size:.82rem;
+    }
+
+    .hb-list{display:grid;gap:14px}
+    .hb-item{
+      border:1px solid var(--hb-border);
+      border-radius:22px;
+      background:#fff;
+      box-shadow:var(--hb-shadow);
+      overflow:hidden;
+      transition:box-shadow .2s ease, transform .2s ease;
+    }
+    .hb-item:hover{
+      box-shadow:0 14px 34px rgba(15,23,42,.07);
+      transform:translateY(-1px);
+    }
+    .hb-item-header{
+      padding:18px 20px;
+      display:grid;
+      gap:10px;
+    }
+    .hb-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
     .hb-meta{
-      display:flex;gap:10px;flex-wrap:wrap;align-items:center;
-      color:#6a7b90;font-size:.92rem;margin-bottom:12px
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      color:var(--hb-muted);
+      font-size:.9rem;
     }
     .hb-pill{
-      display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;
-      background:#f4f7f5;border:1px solid rgba(17,24,39,.08);font-weight:800;color:#32455a
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid var(--hb-border);
+      background:#f8faf9;
+      color:#32455a;
+      font-weight:800;
+    }
+    .hb-status{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:5px 10px;
+      border-radius:999px;
+      font-size:.82rem;
+      font-weight:800;
+      border:1px solid rgba(17,24,39,.08);
+      background:#fbfcfd;
+      color:#5c6b7f;
+    }
+    .hb-status.unread{
+      background:#fff6e9;
+      border-color:#f3d7a6;
+      color:#9a6417;
+    }
+    .hb-dot{
+      width:8px;height:8px;border-radius:999px;background:currentColor;display:inline-block;
     }
     .hb-item-title{
       margin:0;
-      font-size:clamp(1.35rem,2vw,2rem);
-      line-height:1.12;color:#1f2b3d
+      color:var(--hb-text);
+      font-size:1.28rem;
+      line-height:1.2;
+      font-weight:800;
     }
     .hb-summary{
-      margin:12px 0 0;
-      color:#5b6b7d;line-height:1.65;font-size:1rem
+      margin:0;
+      color:var(--hb-muted);
+      line-height:1.6;
+      font-size:.96rem;
     }
+    .hb-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .hb-link-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:40px;
+      padding:0 14px;
+      border-radius:12px;
+      border:1px solid var(--hb-border);
+      background:#fff;
+      color:var(--hb-text);
+      text-decoration:none;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .hb-link-btn:hover{background:#f8fbf9;text-decoration:none}
+    .hb-link-btn.primary{
+      color:#fff;
+      background:var(--hb-accent);
+      border-color:var(--hb-accent);
+    }
+    .hb-link-btn.primary:hover{background:#285b43}
+
+    .hb-details{
+      display:none;
+      border-top:1px solid var(--hb-border);
+      background:#fcfdfd;
+      padding:18px 20px 20px;
+    }
+    .hb-item.open .hb-details{display:grid;gap:14px}
     .hb-content{
-      margin-top:18px;color:#263445;line-height:1.78;font-size:1rem
+      color:#314154;
+      line-height:1.72;
+      font-size:.97rem;
     }
     .hb-content p:first-child{margin-top:0}
-    .hb-media{
-      margin-top:18px;
-      border:1px solid rgba(17,24,39,.08);
-      border-radius:22px;
+    .hb-gallery{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      gap:12px;
+    }
+    .hb-image-card{
+      border:1px solid var(--hb-border);
+      border-radius:16px;
+      background:#fff;
       overflow:hidden;
+    }
+    .hb-image-link{
+      display:block;
+      text-decoration:none;
+      color:inherit;
+    }
+    .hb-image{
+      width:100%;
+      aspect-ratio: 4 / 3;
+      object-fit:cover;
+      display:block;
       background:#eef3f0;
     }
-    .hb-media a{display:block;text-decoration:none}
-    .hb-media img{
-      width:100%;max-height:520px;object-fit:cover;display:block;
-      transition:transform .25s ease
-    }
-    .hb-media a:hover img{transform:scale(1.015)}
-    .hb-media-note{
-      padding:12px 16px;background:#fbfcfb;border-top:1px solid rgba(17,24,39,.08);
-      color:#5b6b7d;font-size:.93rem
+    .hb-image-caption{
+      padding:10px 12px;
+      color:var(--hb-muted);
+      font-size:.88rem;
+      line-height:1.45;
     }
     .hb-resource-row{
-      margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center
-    }
-    .hb-link{
-      display:inline-flex;align-items:center;min-height:42px;padding:0 14px;
-      border-radius:14px;border:1px solid rgba(17,24,39,.1);
-      text-decoration:none;background:#fff;color:#2f6d50;font-weight:800
-    }
-    .hb-link:hover{text-decoration:none;background:#f7fbf8}
-    .hb-empty{
-      padding:24px;border:1px dashed rgba(17,24,39,.15);border-radius:22px;
-      background:#fafcfb;color:#6a7b90
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
     }
 
-    @media (max-width: 760px){
-      .hb-hero,.hb-card-inner{padding:18px}
+    .hb-empty{
+      padding:20px;
+      border-radius:18px;
+      border:1px dashed rgba(17,24,39,.15);
+      background:#fafcfb;
+      color:var(--hb-muted);
+    }
+
+    .hb-lightbox{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+      z-index:9999;
+      background:rgba(10,16,24,.76);
+      backdrop-filter:blur(4px);
+    }
+    .hb-lightbox.open{display:flex}
+    .hb-lightbox-card{
+      max-width:min(1080px,100%);
+      max-height:100%;
+      display:grid;
+      gap:12px;
+    }
+    .hb-lightbox-tools{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .hb-lightbox img{
+      max-width:100%;
+      max-height:calc(100vh - 130px);
+      display:block;
+      border-radius:18px;
+      box-shadow:0 24px 60px rgba(0,0,0,.35);
+      background:#fff;
+    }
+
+    @media (max-width: 860px){
       .hb-stats{grid-template-columns:1fr}
+      .hb-top,.hb-section,.hb-item-header,.hb-details{padding-left:16px;padding-right:16px}
+      .hb-item-header,.hb-details{padding-top:16px;padding-bottom:16px}
+      .hb-item-title{font-size:1.1rem}
+      .hb-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media (max-width: 560px){
+      .hb-gallery{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -164,28 +400,51 @@
 </header>
 
 <main class="container">
-  <div class="hb-wrap">
-    <section class="hb-hero">
-      <span class="hb-kicker">Resident Handbook</span>
-      <h2 class="hb-title">Resident messages in a clean premium listing.</h2>
-      <p class="hb-copy">Everything appears directly on the page in one organised flow. Each post shows the title, a short summary, the posting date, the full message, and the image arranged properly. Residents can click the image itself and click any link directly.</p>
+  <div class="hb-page">
+    <section class="hb-top">
+      <div class="hb-topbar">
+        <div>
+          <span class="hb-badge">Resident Handbook</span>
+          <h2 class="hb-title">Resident updates</h2>
+          <p class="hb-copy">A softer and more organised listing. Categories are shown at the top, each message stays compact, and residents can click for details only when needed.</p>
+        </div>
+      </div>
+
       <div class="hb-stats">
         <div class="hb-stat">
           <div class="hb-stat-value" id="hbStatItems">0</div>
           <div class="hb-stat-label">Published messages</div>
         </div>
         <div class="hb-stat">
-          <div class="hb-stat-value" id="hbStatCategories">0</div>
-          <div class="hb-stat-label">Categories</div>
+          <div class="hb-stat-value" id="hbStatUnread">0</div>
+          <div class="hb-stat-label">Unread messages</div>
         </div>
         <div class="hb-stat">
-          <div class="hb-stat-value" id="hbStatMedia">0</div>
-          <div class="hb-stat-label">Messages with image</div>
+          <div class="hb-stat-value" id="hbStatCategories">0</div>
+          <div class="hb-stat-label">Categories</div>
         </div>
       </div>
     </section>
 
-    <section id="hbList" class="hb-list"></section>
+    <section class="hb-section">
+      <div class="hb-section-head">
+        <div>
+          <h3 class="hb-section-title">Categories</h3>
+          <p class="hb-section-sub">A quick summary of the resident handbook categories.</p>
+        </div>
+      </div>
+      <div id="hbCategories" class="hb-categories"></div>
+    </section>
+
+    <section class="hb-section">
+      <div class="hb-section-head">
+        <div>
+          <h3 class="hb-section-title">Messages</h3>
+          <p class="hb-section-sub">Title, short summary, date, and a simple click for more details.</p>
+        </div>
+      </div>
+      <div id="hbList" class="hb-list"></div>
+    </section>
   </div>
 </main>
 
@@ -200,6 +459,16 @@
   </div>
 </footer>
 
+<div id="hbLightbox" class="hb-lightbox" aria-hidden="true">
+  <div class="hb-lightbox-card">
+    <div class="hb-lightbox-tools">
+      <a id="hbLightboxDownload" class="hb-link-btn" href="#" download>Download image</a>
+      <button id="hbLightboxClose" type="button" class="hb-link-btn">Close</button>
+    </div>
+    <img id="hbLightboxImage" alt="Handbook image" src="" />
+  </div>
+</div>
+
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script src="assets/identity.js"></script>
 <script src="assets/app-core.js"></script>
@@ -207,13 +476,17 @@
 <script>
 (function(){
   'use strict';
+
   const KEYS = window.ANW_KEYS || {};
   const KEY_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
   const KEY_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
+  const KEY_READ = 'anw_handbook_read_state';
 
   const $id = (id) => document.getElementById(id);
+
   let categories = [];
   let items = [];
+  let readState = {};
 
   function esc(value){
     return String(value == null ? '' : value)
@@ -254,6 +527,34 @@
     }
   }
 
+  function loadReadState(){
+    try{
+      const raw = localStorage.getItem(KEY_READ);
+      readState = raw ? JSON.parse(raw) : {};
+    }catch(_){
+      readState = {};
+    }
+  }
+
+  function saveReadState(){
+    try{
+      localStorage.setItem(KEY_READ, JSON.stringify(readState));
+    }catch(_){}
+  }
+
+  function markRead(itemId){
+    if(!itemId) return;
+    if(readState[itemId]) return;
+    readState[itemId] = true;
+    saveReadState();
+    renderStats();
+    renderList();
+  }
+
+  function isRead(itemId){
+    return !!readState[itemId];
+  }
+
   function normalizeCategories(list){
     return (Array.isArray(list) ? list : []).map((cat, index) => {
       const title = String((cat && (cat.title || cat.name)) || '').trim();
@@ -285,8 +586,7 @@
         heroUrl,
         attachments,
         updatedAt: String(item.updatedAt || item.createdAt || '').trim(),
-        createdAt: String(item.createdAt || '').trim(),
-        hasMedia: !!heroUrl
+        createdAt: String(item.createdAt || '').trim()
       };
     }).filter(item => item.title && item.status === 'published').sort((a,b) => {
       return String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')) || a.title.localeCompare(b.title);
@@ -312,66 +612,206 @@
 
   function contentToHtml(content){
     const value = String(content || '').trim();
-    if(!value) return '<p class="muted">No content has been added yet.</p>';
+    if(!value) return '<p class="muted">No extra details were added for this message.</p>';
     const hasHtml = /<\/?[a-z][\s\S]*>/i.test(value);
     if(hasHtml) return value;
     return value.split(/\n{2,}/).map(part => '<p>' + esc(part).replace(/\n/g, '<br>') + '</p>').join('');
   }
 
+  function imageLabelFromUrl(url, index){
+    try{
+      const name = String(url || '').split('/').pop().split('?')[0];
+      return name ? decodeURIComponent(name) : ('Image ' + (index + 1));
+    }catch(_){
+      return 'Image ' + (index + 1);
+    }
+  }
+
+  function collectImages(item){
+    const images = [];
+    if(item.heroUrl) images.push({ url:item.heroUrl, label:'Main image' });
+    (Array.isArray(item.attachments) ? item.attachments : []).forEach((att, index) => {
+      const url = String(att && att.url || '').trim();
+      if(!url) return;
+      const looksLikeImage = /\.(png|jpe?g|gif|webp|svg|bmp|avif)(\?.*)?$/i.test(url) || /^data:image\//i.test(url);
+      if(looksLikeImage){
+        images.push({
+          url,
+          label:String(att.label || imageLabelFromUrl(url, index)).trim() || ('Image ' + (index + 1))
+        });
+      }
+    });
+    const seen = new Set();
+    return images.filter(img => {
+      if(seen.has(img.url)) return false;
+      seen.add(img.url);
+      return true;
+    });
+  }
+
+  function collectLinks(item){
+    const links = [];
+    if(item.url){
+      links.push({
+        url:item.url,
+        label:item.linkLabel || item.url
+      });
+    }
+    (Array.isArray(item.attachments) ? item.attachments : []).forEach((att, index) => {
+      const url = String(att && att.url || '').trim();
+      if(!url) return;
+      const looksLikeImage = /\.(png|jpe?g|gif|webp|svg|bmp|avif)(\?.*)?$/i.test(url) || /^data:image\//i.test(url);
+      if(looksLikeImage) return;
+      links.push({
+        url,
+        label:String(att.label || ('Attachment ' + (index + 1))).trim()
+      });
+    });
+    return links;
+  }
+
   function renderStats(){
+    const unread = items.filter(item => !isRead(item.id)).length;
     $id('hbStatItems').textContent = String(items.length);
+    $id('hbStatUnread').textContent = String(unread);
     $id('hbStatCategories').textContent = String(categories.length);
-    $id('hbStatMedia').textContent = String(items.filter(item => item.hasMedia).length);
+  }
+
+  function renderCategories(){
+    const wrap = $id('hbCategories');
+    if(!wrap) return;
+
+    if(!categories.length){
+      wrap.innerHTML = '<div class="hb-empty">No categories were found yet.</div>';
+      return;
+    }
+
+    const countByCategory = {};
+    items.forEach(item => {
+      const key = item.categoryId || 'general';
+      countByCategory[key] = (countByCategory[key] || 0) + 1;
+    });
+
+    wrap.innerHTML = categories.map(cat => {
+      return '<div class="hb-category">'
+        + '<span>' + esc((cat.icon || '📘') + ' ' + cat.title) + '</span>'
+        + '<small>' + esc(String(countByCategory[cat.id] || 0) + ' messages') + '</small>'
+        + '</div>';
+    }).join('');
   }
 
   function renderList(){
     const wrap = $id('hbList');
     if(!wrap) return;
+
     if(!items.length){
       wrap.innerHTML = '<div class="hb-empty">No resident handbook messages were found right now.</div>';
       return;
     }
 
-    wrap.innerHTML = items.map(function(item){
+    wrap.innerHTML = items.map(item => {
       const category = categories.find(cat => cat.id === item.categoryId);
-      const attachments = Array.isArray(item.attachments) ? item.attachments.filter(att => att && att.url) : [];
+      const read = isRead(item.id);
+      const images = collectImages(item);
+      const links = collectLinks(item);
 
-      return '<article class="hb-card">'
-        + '<div class="hb-card-inner">'
-        + '<div class="hb-meta">'
-        + '<span class="hb-pill">' + esc(category ? ((category.icon || '📘') + ' ' + category.title) : (item.categoryTitle || 'General')) + '</span>'
-        + '<span>' + esc(formatDate(item.updatedAt || item.createdAt)) + '</span>'
+      return '<article class="hb-item" data-item-id="' + esc(item.id) + '">'
+        + '<div class="hb-item-header">'
+        + '<div class="hb-row">'
+        +   '<div class="hb-meta">'
+        +     '<span class="hb-pill">' + esc(category ? ((category.icon || '📘') + ' ' + category.title) : (item.categoryTitle || 'General')) + '</span>'
+        +     '<span>' + esc(formatDate(item.updatedAt || item.createdAt)) + '</span>'
+        +   '</div>'
+        +   '<span class="hb-status ' + (read ? '' : 'unread') + '">'
+        +     '<span class="hb-dot"></span>' + (read ? 'Read' : 'Unread')
+        +   '</span>'
         + '</div>'
         + '<h3 class="hb-item-title">' + esc(item.title) + '</h3>'
         + (item.summary ? '<p class="hb-summary">' + esc(item.summary) + '</p>' : '')
-        + '<div class="hb-content">' + contentToHtml(item.content) + '</div>'
-        + (item.heroUrl
-            ? '<div class="hb-media">'
-              + '<a href="' + esc(item.heroUrl) + '" target="_blank" rel="noopener" download="' + esc(item.title.replace(/[^a-z0-9]+/gi,'-').toLowerCase() || 'handbook-image') + '.jpg">'
-              + '<img src="' + esc(item.heroUrl) + '" alt="' + esc(item.title) + '">'
-              + '</a>'
-              + '<div class="hb-media-note">Click the image to open it or download it.</div>'
-              + '</div>'
-            : '')
-        + ((item.url || attachments.length)
-            ? '<div class="hb-resource-row">'
-              + (item.url ? '<a class="hb-link" href="' + esc(item.url) + '" target="_blank" rel="noopener">' + esc(item.linkLabel || item.url) + '</a>' : '')
-              + attachments.map(function(att, index){
-                  return '<a class="hb-link" href="' + esc(String(att.url || '')) + '" target="_blank" rel="noopener">' + esc(String(att.label || ('Attachment ' + (index + 1)))) + '</a>';
-                }).join('')
-              + '</div>'
-            : '')
+        + '<div class="hb-actions">'
+        +   '<button type="button" class="hb-link-btn primary" data-toggle-details="' + esc(item.id) + '">Click for more details</button>'
+        +   (images.length ? '<span class="hb-section-sub" style="margin:0;">' + esc(String(images.length) + ' image' + (images.length === 1 ? '' : 's') + ' available') + '</span>' : '')
+        + '</div>'
+        + '</div>'
+        + '<div class="hb-details" id="hb-details-' + esc(item.id) + '">'
+        +   '<div class="hb-content">' + contentToHtml(item.content) + '</div>'
+        +   (images.length ? '<div class="hb-gallery">' + images.map(function(image, index){
+              return '<div class="hb-image-card">'
+                + '<a href="#" class="hb-image-link" data-open-image="' + esc(item.id) + '" data-image-url="' + esc(image.url) + '" data-image-label="' + esc(image.label) + '">'
+                + '<img class="hb-image" src="' + esc(image.url) + '" alt="' + esc(image.label || item.title) + '">'
+                + '<div class="hb-image-caption">Click image to open</div>'
+                + '</a>'
+                + '</div>';
+            }).join('') + '</div>' : '')
+        +   (links.length ? '<div class="hb-resource-row">' + links.map(function(link){
+              return '<a class="hb-link-btn" href="' + esc(link.url) + '" target="_blank" rel="noopener">' + esc(link.label) + '</a>';
+            }).join('') + '</div>' : '')
         + '</div>'
         + '</article>';
     }).join('');
   }
 
+  function toggleDetails(itemId){
+    const card = document.querySelector('[data-item-id="' + CSS.escape(itemId) + '"]');
+    if(!card) return;
+    card.classList.toggle('open');
+    if(card.classList.contains('open')) markRead(itemId);
+  }
+
+  function openLightbox(itemId, imageUrl, imageLabel){
+    if(!imageUrl) return;
+    markRead(itemId);
+    $id('hbLightboxImage').src = imageUrl;
+    $id('hbLightboxImage').alt = imageLabel || 'Handbook image';
+    $id('hbLightboxDownload').href = imageUrl;
+    $id('hbLightboxDownload').setAttribute('download', (imageLabel || 'handbook-image').replace(/[^a-z0-9]+/gi,'-').toLowerCase() + '.jpg');
+    $id('hbLightbox').classList.add('open');
+    $id('hbLightbox').setAttribute('aria-hidden','false');
+  }
+
+  function closeLightbox(){
+    $id('hbLightbox').classList.remove('open');
+    $id('hbLightbox').setAttribute('aria-hidden','true');
+    $id('hbLightboxImage').src = '';
+    $id('hbLightboxDownload').href = '#';
+  }
+
   async function boot(){
+    loadReadState();
     categories = normalizeCategories(await loadStore(KEY_CATEGORIES, []));
     items = normalizeItems(await loadStore(KEY_ITEMS, []));
     ensureCategoriesFromItems();
     renderStats();
+    renderCategories();
     renderList();
+
+    document.addEventListener('click', function(event){
+      const toggle = event.target.closest('[data-toggle-details]');
+      if(toggle){
+        event.preventDefault();
+        toggleDetails(String(toggle.getAttribute('data-toggle-details') || ''));
+        return;
+      }
+
+      const image = event.target.closest('[data-open-image]');
+      if(image){
+        event.preventDefault();
+        openLightbox(
+          String(image.getAttribute('data-open-image') || ''),
+          String(image.getAttribute('data-image-url') || ''),
+          String(image.getAttribute('data-image-label') || '')
+        );
+        return;
+      }
+    });
+
+    $id('hbLightboxClose')?.addEventListener('click', closeLightbox);
+    $id('hbLightbox')?.addEventListener('click', function(event){
+      if(event.target === this) closeLightbox();
+    });
+    document.addEventListener('keydown', function(event){
+      if(event.key === 'Escape') closeLightbox();
+    });
   }
 
   document.addEventListener('DOMContentLoaded', function(){
