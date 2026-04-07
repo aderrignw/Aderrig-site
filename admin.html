@@ -1943,13 +1943,11 @@
               </div>
 
               <div class="field" style="margin-top:1rem;">
-                <label for="restoreBackupFile">Restore backup file</label>
-                <input id="restoreBackupFile" type="file" accept=".json,application/json" />
-                <p class="tiny muted" style="margin:6px 0 0;">Download the latest backup above, then use that file here only when you need to restore manually.</p>
-              </div>
-
-              <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-                <button type="button" class="btn small btn-line" id="btnRestoreBackup">Restore backup</button>
+                <label>Automatic restore</label>
+                <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
+                  <button type="button" class="btn small btn-line" id="btnRestoreLatestBackup" disabled>Restore latest backup</button>
+                </div>
+                <p class="tiny muted" style="margin:6px 0 0;">This restores directly from the latest backup stored in Netlify Blobs. Manual file upload restore has been removed from this screen.</p>
               </div>
 
               <p id="backupMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
@@ -3313,11 +3311,17 @@
     const latestId = latest && latest.id ? String(latest.id) : '';
     ADMIN_LATEST_BACKUP_ID = latestId;
     const downloadBtn = byId('btnDownloadLatestBackup');
+    const restoreBtn = byId('btnRestoreLatestBackup');
     const latestIdText = byId('backupLatestId');
 
     if(downloadBtn){
       downloadBtn.disabled = !latestId;
       downloadBtn.setAttribute('aria-disabled', latestId ? 'false' : 'true');
+    }
+
+    if(restoreBtn){
+      restoreBtn.disabled = !latestId;
+      restoreBtn.setAttribute('aria-disabled', latestId ? 'false' : 'true');
     }
 
     if(latestIdText){
@@ -3454,23 +3458,26 @@
     }
   });
 
-  byId('btnRestoreBackup')?.addEventListener('click', async () => {
+  byId('btnRestoreLatestBackup')?.addEventListener('click', async () => {
     const msg = byId('backupMsg');
-    const input = byId('restoreBackupFile');
-    const file = input && input.files && input.files[0] ? input.files[0] : null;
-    if(!file){
-      if(msg) msg.textContent = 'Select a backup JSON file first.';
+    const backupId = String(ADMIN_LATEST_BACKUP_ID || '').trim();
+
+    if(!backupId){
+      if(msg) msg.textContent = 'No latest backup is available to restore yet.';
       return;
     }
-    if(msg) msg.textContent = 'Restoring backup…';
+
+    const confirmed = window.confirm('Restore the latest backup now? This will overwrite the current live data and create a safety backup first.');
+    if(!confirmed) return;
+
+    if(msg) msg.textContent = 'Restoring latest backup…';
+
     try{
-      const text = await file.text();
-      const snapshot = JSON.parse(text);
       const headers = await getAdminAuthHeaders();
       const res = await fetch('/.netlify/functions/restore-backup', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ snapshot })
+        body: JSON.stringify({ id: backupId })
       });
       const data = await res.json().catch(() => ({}));
       if(!res.ok || data.ok === false){
@@ -3478,10 +3485,9 @@
       }
       if(msg){
         msg.textContent = 'Restore completed successfully from backup ' +
-          String(data.id || snapshot.id || 'uploaded file') +
+          String(data.id || backupId) +
           (data.safetyBackupId ? (' (safety backup: ' + data.safetyBackupId + ')') : '');
       }
-      if(input) input.value = '';
       await refreshBackupStatus();
     }catch(err){
       if(msg) msg.textContent = 'Restore failed: ' + String(err && err.message ? err.message : err || 'Unknown error');
