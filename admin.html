@@ -1732,6 +1732,7 @@
 
       <div>
         <h4 style="margin-top:0;">Items</h4>
+        <p class="tiny muted" style="margin-top:0;">Simple flow: choose the category, write the text, add an optional image, then save.</p>
         <div class="field">
           <label>Category</label>
           <select id="hbItemCategory"></select>
@@ -1768,18 +1769,28 @@
         </div>
 
         <div class="field">
-          <label>Hero image (optional)</label>
-          <input id="hbItemHeroUrl" type="url" placeholder="https://... (recommended)" />
-          <div class="tiny muted" style="margin-top:6px;">Tip: prefer a link (Netlify Large Media/Drive) to avoid storing large files in the KV store.</div>
+          <label>Image (optional, 1 per item)</label>
+          <input id="hbItemImageFile" type="file" accept="image/*" />
+          <input id="hbItemHeroUrl" type="hidden" />
+          <div id="hbItemImagePreviewWrap" style="display:none; margin-top:10px;">
+            <div style="display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap;">
+              <img id="hbItemImagePreview" alt="Handbook image preview" style="width:160px; max-width:100%; height:auto; border-radius:14px; border:1px solid var(--line); background:#f8faf8; object-fit:cover;" />
+              <div style="display:grid; gap:8px;">
+                <div class="tiny muted" id="hbItemImageMeta">Compressed image ready.</div>
+                <button type="button" class="btn btn-line small" id="btnHbItemImageRemove">Remove image</button>
+              </div>
+            </div>
+          </div>
+          <div class="tiny muted" style="margin-top:6px;">The image is compressed automatically before saving. Deleting the item also deletes the saved image data.</div>
         </div>
 
         <div class="field">
-          <label>Content (HTML allowed)</label>
-          <textarea id="hbItemContent" rows="7" placeholder="Write the page content here..."></textarea>
+          <label>Content</label>
+          <textarea id="hbItemContent" rows="7" placeholder="Write the handbook content here..."></textarea>
         </div>
 
         <div class="field">
-          <label>Attachments (one per line: Label | URL)</label>
+          <label>Useful links (one per line: Label | URL)</label>
           <textarea id="hbItemAttachments" rows="4" placeholder="Map PDF | https://...&#10;Bin schedule | https://..."></textarea>
         </div>
 
@@ -3879,6 +3890,552 @@
     fillTaskForm(null);
     bindTaskEvents();
     loadTasks();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init, { once:true });
+  }else{
+    init();
+  }
+})();
+</script>
+
+<script>
+(function(){
+  'use strict';
+
+  const byId = (id) => document.getElementById(id);
+  const KEY_HANDBOOK_CATEGORIES = (window.ANW_KEYS && window.ANW_KEYS.HANDBOOK_CATEGORIES) || 'anw_handbook_categories';
+  const KEY_HANDBOOK_ITEMS = (window.ANW_KEYS && window.ANW_KEYS.HANDBOOK_ITEMS) || 'anw_handbook_items';
+
+  let hbCategories = [];
+  let hbItems = [];
+  let editingCategoryId = null;
+  let editingItemId = null;
+
+  async function loadStore(key, fallback){
+    try{
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
+      const data = await res.json();
+      try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){}
+      return data;
+    }catch(_){
+      try{
+        if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback);
+      }catch(__){}
+      try{
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      }catch(__){
+        return fallback;
+      }
+    }
+  }
+
+  async function saveStore(key, value){
+    try{
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(value)
+      });
+      if(!res.ok) throw new Error('store save failed');
+    }catch(_){}
+    try{ if(typeof window.anwSave === 'function') window.anwSave(key, value); }catch(__){}
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(__){}
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  function slugify(v){
+    return String(v || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60);
+  }
+
+  function sortCategories(list){
+    return (Array.isArray(list) ? list : []).slice().sort((a,b) => {
+      const ao = Number(a && a.order) || 9999;
+      const bo = Number(b && b.order) || 9999;
+      if(ao !== bo) return ao - bo;
+      return String(a && a.title || '').localeCompare(String(b && b.title || ''));
+    });
+  }
+
+  function parseLinks(raw){
+    return String(raw || '')
+      .split(/\n+/)
+      .map(line => line.trim())
+      .filter(Boolean)
+      .map(line => {
+        const parts = line.split('|');
+        const label = String(parts[0] || '').trim();
+        const url = String(parts.slice(1).join('|') || '').trim();
+        if(!label || !url) return null;
+        return { label, url };
+      })
+      .filter(Boolean);
+  }
+
+  function serializeLinks(list){
+    return (Array.isArray(list) ? list : [])
+      .map(row => {
+        const label = String(row && row.label || '').trim();
+        const url = String(row && row.url || '').trim();
+        return label && url ? `${label} | ${url}` : '';
+      })
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  function setText(id, value){
+    const el = byId(id);
+    if(el) el.textContent = value || '';
+  }
+
+  function setCategoryMessage(msg){ setText('hbCatMsg', msg); }
+  function setItemMessage(msg){ setText('hbItemMsg', msg); }
+
+  function getImageFieldValue(){
+    return String(byId('hbItemHeroUrl')?.value || '').trim();
+  }
+
+  function setImageFieldValue(v){
+    const el = byId('hbItemHeroUrl');
+    if(el) el.value = v || '';
+  }
+
+  function refreshImagePreview(){
+    const wrap = byId('hbItemImagePreviewWrap');
+    const img = byId('hbItemImagePreview');
+    const meta = byId('hbItemImageMeta');
+    const value = getImageFieldValue();
+    if(!wrap || !img || !meta) return;
+    if(!value){
+      wrap.style.display = 'none';
+      img.removeAttribute('src');
+      meta.textContent = '';
+      return;
+    }
+    wrap.style.display = 'block';
+    img.src = value;
+    const approxBytes = Math.round((value.length * 3) / 4);
+    meta.textContent = `Compressed image embedded in this item · ~${Math.max(1, Math.round(approxBytes / 1024))} KB`;
+  }
+
+  function clearCategoryForm(){
+    editingCategoryId = null;
+    byId('hbCatTitle').value = '';
+    byId('hbCatIcon').value = '';
+    byId('hbCatOrder').value = '';
+    byId('hbCatActive').checked = true;
+    setCategoryMessage('');
+  }
+
+  function fillCategoryForm(cat){
+    editingCategoryId = cat && cat.id ? cat.id : null;
+    byId('hbCatTitle').value = cat && cat.title ? cat.title : '';
+    byId('hbCatIcon').value = cat && cat.icon ? cat.icon : '';
+    byId('hbCatOrder').value = cat && cat.order ? String(cat.order) : '';
+    byId('hbCatActive').checked = !(cat && cat.active === false);
+    setCategoryMessage('');
+  }
+
+  function clearItemForm(keepCategory){
+    const currentCategory = keepCategory ? ((byId('hbItemCategory') && byId('hbItemCategory').value) || '') : '';
+    editingItemId = null;
+    if(byId('hbItemCategory')) byId('hbItemCategory').value = currentCategory;
+    byId('hbItemTitle').value = '';
+    byId('hbItemSummary').value = '';
+    byId('hbItemType').value = 'page';
+    byId('hbItemStatus').value = 'published';
+    byId('hbItemUrl').value = '';
+    byId('hbItemContent').value = '';
+    byId('hbItemAttachments').value = '';
+    setImageFieldValue('');
+    const file = byId('hbItemImageFile');
+    if(file) file.value = '';
+    refreshImagePreview();
+    toggleItemTypeUi();
+    setItemMessage('');
+  }
+
+  function fillItemForm(item){
+    editingItemId = item && item.id ? item.id : null;
+    if(byId('hbItemCategory')) byId('hbItemCategory').value = item && item.categoryId ? item.categoryId : '';
+    byId('hbItemTitle').value = item && item.title ? item.title : '';
+    byId('hbItemSummary').value = item && item.summary ? item.summary : '';
+    byId('hbItemType').value = item && item.type ? item.type : 'page';
+    byId('hbItemStatus').value = item && item.status ? item.status : 'published';
+    byId('hbItemUrl').value = item && item.url ? item.url : '';
+    byId('hbItemContent').value = item && item.content ? item.content : '';
+    byId('hbItemAttachments').value = serializeLinks(item && item.attachments);
+    setImageFieldValue(item && item.heroUrl ? item.heroUrl : '');
+    const file = byId('hbItemImageFile');
+    if(file) file.value = '';
+    refreshImagePreview();
+    toggleItemTypeUi();
+    setItemMessage('');
+  }
+
+  function normalizeCategories(raw){
+    return sortCategories((Array.isArray(raw) ? raw : []).map((cat, idx) => ({
+      id: cat && cat.id ? String(cat.id) : `hbcat_${Date.now()}_${idx}`,
+      title: String(cat && cat.title || '').trim(),
+      icon: String(cat && cat.icon || '').trim(),
+      order: Number(cat && cat.order) || (idx + 1),
+      active: cat && cat.active !== false
+    })).filter(cat => cat.title));
+  }
+
+  function normalizeItems(raw){
+    return (Array.isArray(raw) ? raw : []).map((item, idx) => ({
+      id: item && item.id ? String(item.id) : `hbitem_${Date.now()}_${idx}`,
+      categoryId: String(item && (item.categoryId || item.category || '') || '').trim(),
+      title: String(item && item.title || '').trim(),
+      slug: String(item && item.slug || slugify(item && item.title || '')).trim(),
+      summary: String(item && item.summary || '').trim(),
+      type: String(item && item.type || 'page') === 'link' ? 'link' : 'page',
+      status: String(item && item.status || 'published') === 'draft' ? 'draft' : 'published',
+      url: String(item && item.url || '').trim(),
+      heroUrl: String(item && item.heroUrl || '').trim(),
+      content: String(item && item.content || '').trim(),
+      attachments: Array.isArray(item && item.attachments)
+        ? item.attachments.map(link => ({ label:String(link && link.label || '').trim(), url:String(link && link.url || '').trim() })).filter(link => link.label && link.url)
+        : [],
+      updatedAt: String(item && item.updatedAt || item && item.createdAt || new Date().toISOString()),
+      createdAt: String(item && item.createdAt || item && item.updatedAt || new Date().toISOString())
+    })).filter(item => item.categoryId && item.title);
+  }
+
+  async function loadHandbook(){
+    hbCategories = normalizeCategories(await loadStore(KEY_HANDBOOK_CATEGORIES, []));
+    hbItems = normalizeItems(await loadStore(KEY_HANDBOOK_ITEMS, []));
+    renderCategories();
+    renderCategorySelect();
+    renderItems();
+  }
+
+  async function persistCategories(){
+    hbCategories = normalizeCategories(hbCategories);
+    await saveStore(KEY_HANDBOOK_CATEGORIES, hbCategories);
+  }
+
+  async function persistItems(){
+    hbItems = normalizeItems(hbItems);
+    await saveStore(KEY_HANDBOOK_ITEMS, hbItems);
+  }
+
+  function renderCategories(){
+    const body = byId('hbCatBody');
+    const empty = byId('hbCatEmpty');
+    if(!body) return;
+    const list = sortCategories(hbCategories);
+    body.innerHTML = list.map(cat => `
+      <tr>
+        <td>${esc((cat.icon ? cat.icon + ' ' : '') + cat.title)}</td>
+        <td>${esc(String(cat.order || '—'))}</td>
+        <td>${cat.active ? '<span class="tag ok">Active</span>' : '<span class="tag gray">Hidden</span>'}</td>
+        <td>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn-line small" data-hb-cat-edit="${esc(cat.id)}">Edit</button>
+            <button type="button" class="btn-line small" data-hb-cat-delete="${esc(cat.id)}">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    if(empty) empty.style.display = list.length ? 'none' : 'block';
+
+    body.querySelectorAll('[data-hb-cat-edit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cat = hbCategories.find(row => String(row.id) === String(btn.getAttribute('data-hb-cat-edit')));
+        fillCategoryForm(cat || null);
+      });
+    });
+
+    body.querySelectorAll('[data-hb-cat-delete]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = String(btn.getAttribute('data-hb-cat-delete'));
+        const linkedCount = hbItems.filter(item => String(item.categoryId) === id).length;
+        if(linkedCount){
+          setCategoryMessage('This category still has items. Delete or move those items first.');
+          return;
+        }
+        hbCategories = hbCategories.filter(cat => String(cat.id) !== id);
+        await persistCategories();
+        if(editingCategoryId === id) clearCategoryForm();
+        renderCategories();
+        renderCategorySelect();
+        renderItems();
+        setCategoryMessage('Category deleted.');
+      });
+    });
+  }
+
+  function renderCategorySelect(){
+    const select = byId('hbItemCategory');
+    if(!select) return;
+    const current = select.value;
+    const list = sortCategories(hbCategories);
+    select.innerHTML = list.length
+      ? list.map(cat => `<option value="${esc(cat.id)}">${esc((cat.icon ? cat.icon + ' ' : '') + cat.title)}</option>`).join('')
+      : '<option value="">No categories yet</option>';
+    const stillExists = list.some(cat => String(cat.id) === String(current));
+    if(stillExists){
+      select.value = current;
+    }else if(list[0]){
+      select.value = list[0].id;
+    }
+  }
+
+  function filteredItemsForCurrentCategory(){
+    const categoryId = String(byId('hbItemCategory')?.value || '').trim();
+    return hbItems
+      .filter(item => String(item.categoryId) === categoryId)
+      .sort((a,b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+  }
+
+  function renderItems(){
+    const listEl = byId('hbItemList');
+    const empty = byId('hbItemEmpty');
+    if(!listEl) return;
+    const rows = filteredItemsForCurrentCategory();
+    listEl.innerHTML = rows.map(item => {
+      const imageChip = item.heroUrl ? '<span class="tag gray">Image</span>' : '';
+      const statusChip = item.status === 'published' ? '<span class="tag ok">Published</span>' : '<span class="tag gray">Draft</span>';
+      const typeChip = `<span class="tag gray">${esc(item.type === 'link' ? 'Link' : 'Page')}</span>`;
+      return `
+        <div class="card" style="padding:14px;">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div style="min-width:0;">
+              <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">${statusChip}${typeChip}${imageChip}</div>
+              <h5 style="margin:0 0 6px 0;">${esc(item.title)}</h5>
+              <div class="tiny muted">${esc(item.summary || (item.type === 'link' ? item.url : 'No summary'))}</div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="button" class="btn-line small" data-hb-item-edit="${esc(item.id)}">Edit</button>
+              <button type="button" class="btn-line small" data-hb-item-delete="${esc(item.id)}">Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    if(empty) empty.style.display = rows.length ? 'none' : 'block';
+
+    listEl.querySelectorAll('[data-hb-item-edit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = hbItems.find(row => String(row.id) === String(btn.getAttribute('data-hb-item-edit')));
+        fillItemForm(item || null);
+        byId('tabHandbook')?.scrollIntoView({ behavior:'smooth', block:'start' });
+      });
+    });
+
+    listEl.querySelectorAll('[data-hb-item-delete]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = String(btn.getAttribute('data-hb-item-delete'));
+        hbItems = hbItems.filter(item => String(item.id) !== id);
+        await persistItems();
+        if(editingItemId === id) clearItemForm(true);
+        renderItems();
+        setItemMessage('Item deleted. The image stored inside this item was deleted too.');
+      });
+    });
+  }
+
+  function toggleItemTypeUi(){
+    const type = byId('hbItemType')?.value || 'page';
+    const contentField = byId('hbItemContent')?.closest('.field');
+    const attachmentsField = byId('hbItemAttachments')?.closest('.field');
+    const imageField = byId('hbItemImageFile')?.closest('.field');
+    if(contentField) contentField.style.display = type === 'link' ? 'none' : '';
+    if(attachmentsField) attachmentsField.style.display = type === 'link' ? 'none' : '';
+    if(imageField) imageField.style.display = type === 'link' ? 'none' : '';
+  }
+
+  async function saveCategory(){
+    const title = String(byId('hbCatTitle')?.value || '').trim();
+    const icon = String(byId('hbCatIcon')?.value || '').trim();
+    const active = !!byId('hbCatActive')?.checked;
+    const order = Number(byId('hbCatOrder')?.value) || (hbCategories.length + 1);
+    if(!title){
+      setCategoryMessage('Category title is required.');
+      return;
+    }
+    const isEditing = !!editingCategoryId;
+    const next = {
+      id: editingCategoryId || `hbcat_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+      title,
+      icon,
+      order,
+      active
+    };
+    hbCategories = hbCategories.filter(cat => String(cat.id) !== String(next.id));
+    hbCategories.push(next);
+    await persistCategories();
+    fillCategoryForm(next);
+    renderCategories();
+    renderCategorySelect();
+    renderItems();
+    setCategoryMessage(isEditing ? 'Category updated.' : 'Category saved.');
+  }
+
+  async function saveItem(){
+    const categoryId = String(byId('hbItemCategory')?.value || '').trim();
+    const title = String(byId('hbItemTitle')?.value || '').trim();
+    const summary = String(byId('hbItemSummary')?.value || '').trim();
+    const type = String(byId('hbItemType')?.value || 'page');
+    const status = String(byId('hbItemStatus')?.value || 'published');
+    const url = String(byId('hbItemUrl')?.value || '').trim();
+    const heroUrl = getImageFieldValue();
+    const content = String(byId('hbItemContent')?.value || '').trim();
+    const attachments = parseLinks(byId('hbItemAttachments')?.value || '');
+
+    if(!categoryId){
+      setItemMessage('Select a category first.');
+      return;
+    }
+    if(!title){
+      setItemMessage('Item title is required.');
+      return;
+    }
+    if(type === 'link' && !url){
+      setItemMessage('External URL is required for Link items.');
+      return;
+    }
+    if(type !== 'link' && !content && !heroUrl && !attachments.length){
+      setItemMessage('Add some content, an image, or at least one useful link.');
+      return;
+    }
+
+    const isEditing = !!editingItemId;
+    const now = new Date().toISOString();
+    const previous = hbItems.find(item => String(item.id) === String(editingItemId));
+    const next = {
+      id: editingItemId || `hbitem_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+      categoryId,
+      title,
+      slug: slugify(title),
+      summary,
+      type: type === 'link' ? 'link' : 'page',
+      status: status === 'draft' ? 'draft' : 'published',
+      url: type === 'link' ? url : '',
+      heroUrl: type === 'link' ? '' : heroUrl,
+      content: type === 'link' ? '' : content,
+      attachments: type === 'link' ? [] : attachments,
+      createdAt: previous && previous.createdAt ? previous.createdAt : now,
+      updatedAt: now
+    };
+
+    hbItems = hbItems.filter(item => String(item.id) !== String(next.id));
+    hbItems.unshift(next);
+    await persistItems();
+    fillItemForm(next);
+    renderItems();
+    setItemMessage(isEditing ? 'Item updated.' : 'Item saved.');
+  }
+
+  async function compressImageFile(file){
+    const originalBytes = Number(file && file.size) || 0;
+    if(!file) throw new Error('No file selected.');
+    if(!/^image\//i.test(String(file.type || ''))) throw new Error('Please choose an image file.');
+    if(originalBytes > 8 * 1024 * 1024) throw new Error('Please choose an image up to 8 MB.');
+
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Could not read the image file.'));
+      reader.readAsDataURL(file);
+    });
+
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Could not open the image.'));
+      img.src = dataUrl;
+    });
+
+    const maxW = 1600;
+    const maxH = 1600;
+    let width = image.naturalWidth || image.width;
+    let height = image.naturalHeight || image.height;
+    const ratio = Math.min(1, maxW / width, maxH / height);
+    width = Math.max(1, Math.round(width * ratio));
+    height = Math.max(1, Math.round(height * ratio));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', { alpha:false });
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(image, 0, 0, width, height);
+
+    let quality = 0.82;
+    let out = canvas.toDataURL('image/jpeg', quality);
+    while(out.length > 420000 && quality > 0.5){
+      quality -= 0.06;
+      out = canvas.toDataURL('image/jpeg', quality);
+    }
+    return {
+      dataUrl: out,
+      width,
+      height,
+      originalBytes,
+      finalBytes: Math.round((out.length * 3) / 4)
+    };
+  }
+
+  function bindEvents(){
+    byId('btnHbCatClear')?.addEventListener('click', clearCategoryForm);
+    byId('btnHbCatSave')?.addEventListener('click', saveCategory);
+    byId('btnHbItemClear')?.addEventListener('click', () => clearItemForm(true));
+    byId('btnHbItemSave')?.addEventListener('click', saveItem);
+    byId('hbItemCategory')?.addEventListener('change', () => {
+      renderItems();
+      setItemMessage('');
+    });
+    byId('hbItemType')?.addEventListener('change', toggleItemTypeUi);
+    byId('btnHbItemImageRemove')?.addEventListener('click', () => {
+      setImageFieldValue('');
+      const file = byId('hbItemImageFile');
+      if(file) file.value = '';
+      refreshImagePreview();
+      setItemMessage('Image removed from this item form. Save the item to apply the removal.');
+    });
+    byId('hbItemImageFile')?.addEventListener('change', async (event) => {
+      const file = event.target && event.target.files && event.target.files[0];
+      if(!file) return;
+      try{
+        setItemMessage('Compressing image...');
+        const result = await compressImageFile(file);
+        setImageFieldValue(result.dataUrl);
+        refreshImagePreview();
+        setItemMessage(`Image ready. Reduced from ~${Math.max(1, Math.round(result.originalBytes/1024))} KB to ~${Math.max(1, Math.round(result.finalBytes/1024))} KB.`);
+      }catch(err){
+        setImageFieldValue('');
+        refreshImagePreview();
+        setItemMessage(err && err.message ? err.message : 'Could not process the image.');
+      }
+    });
+  }
+
+  function init(){
+    if(!byId('tabHandbook') || !byId('hbCatTitle') || !byId('hbItemTitle')) return;
+    clearCategoryForm();
+    clearItemForm(false);
+    bindEvents();
+    loadHandbook();
   }
 
   if(document.readyState === 'loading'){
