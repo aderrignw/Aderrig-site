@@ -1,193 +1,511 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Handbook — Aderrig NW</title>
-<link rel="stylesheet" href="assets/style.css" />
-<style>
-  .hb-wrap{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px;align-items:start}
-  .hb-side .card,.hb-main .card{padding:18px}
-  .hb-search{margin-bottom:12px}
-  .hb-search input{width:100%}
-  .hb-cat-list,.hb-item-list{display:grid;gap:10px}
-  .hb-cat-btn,.hb-item-btn{width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:14px;padding:12px 14px;cursor:pointer}
-  .hb-cat-btn.active,.hb-item-btn.active{border-color:rgba(47,125,91,.34);background:#f7fbf8}
-  .hb-item-summary{color:var(--muted);font-size:.92rem;margin-top:4px}
-  .hb-meta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
-  .hb-chip{display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;background:#f4f7f5;border:1px solid rgba(0,0,0,.08);font-size:.82rem}
-  .hb-hero{width:100%;max-height:420px;object-fit:cover;border-radius:18px;border:1px solid var(--line);background:#f7faf8}
-  .hb-content{line-height:1.7;white-space:pre-wrap}
-  .hb-links{display:grid;gap:10px;margin-top:18px}
-  .hb-link{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;text-decoration:none;color:inherit}
-  .hb-empty{color:var(--muted)}
-  @media (max-width: 920px){.hb-wrap{grid-template-columns:1fr}}
-</style>
+  <meta charset="utf-8" />
+  <meta content="page:handbook" name="anw-acl-key"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 <script>
-window.ANW_KEYS = window.ANW_KEYS || {};
-const KEY_HANDBOOK_CATEGORIES = (window.ANW_KEYS && window.ANW_KEYS.HANDBOOK_CATEGORIES) || 'anw_handbook_categories';
-const KEY_HANDBOOK_ITEMS = (window.ANW_KEYS && window.ANW_KEYS.HANDBOOK_ITEMS) || 'anw_handbook_items';
-function safeRead(key, fallback){
-  try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }catch(_){ return fallback; }
-}
-function byId(id){ return document.getElementById(id); }
-function esc(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s])); }
-function slugify(v){ return String(v||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
-function normalizeCats(list){
-  return (Array.isArray(list)?list:[])
-    .filter(c => c && String(c.status || c.active ? 'active' : c.status || '').toLowerCase() !== 'draft')
-    .map((c,i)=>({
-      id: c.id || c.key || slugify(c.title || c.name || ('cat-'+i)),
-      title: String(c.title || c.name || 'Untitled').trim(),
-      icon: String(c.icon || '').trim(),
-      order: Number(c.order || i+1) || (i+1),
-      active: c.active !== false && String(c.status || 'active').toLowerCase() !== 'inactive'
-    }))
-    .filter(c => c.active)
-    .sort((a,b)=>a.order-b.order || a.title.localeCompare(b.title));
-}
-function normalizeLinks(item){
-  if(Array.isArray(item.attachments)) return item.attachments.filter(Boolean).map(a => ({ label:String(a.label||a.title||a.name||'Open link').trim(), url:String(a.url||a.href||'').trim() })).filter(a=>a.url);
-  const raw = String(item.attachments || '').trim();
-  if(!raw) return [];
-  return raw.split(/
-+/).map(line => {
-    const parts = line.split('|');
-    const label = String(parts[0] || 'Open link').trim();
-    const url = String(parts[1] || parts[0] || '').trim();
-    return {label, url};
-  }).filter(a=>/^https?:/i.test(a.url));
-}
-function normalizeItems(list){
-  return (Array.isArray(list)?list:[]).map((item,i)=>({
-    id: item.id || slugify(item.title || ('item-'+i)),
-    categoryId: item.categoryId || item.category || item.categoryKey || '',
-    title: String(item.title || 'Untitled').trim(),
-    summary: String(item.summary || '').trim(),
-    content: String(item.content || '').trim(),
-    type: String(item.type || 'page').toLowerCase(),
-    status: String(item.status || 'draft').toLowerCase(),
-    url: String(item.url || '').trim(),
-    heroUrl: String(item.heroUrl || item.image || '').trim(),
-    attachments: normalizeLinks(item)
-  })).filter(item => item.status === 'published');
-}
-let CATS = [];
-let ITEMS = [];
-let activeCat = '';
-let activeItem = '';
-function getItemsForCat(catId, query){
-  const q = String(query || '').trim().toLowerCase();
-  return ITEMS.filter(item => {
-    const inCat = !catId || item.categoryId === catId;
-    const inQuery = !q || [item.title, item.summary, item.content].join(' ').toLowerCase().includes(q);
-    return inCat && inQuery;
-  });
-}
-function renderCats(query){
-  const wrap = byId('hbCatList');
-  if(!wrap) return;
-  const counts = new Map();
-  getItemsForCat('', query).forEach(item => counts.set(item.categoryId, (counts.get(item.categoryId)||0)+1));
-  wrap.innerHTML = '';
-  CATS.forEach(cat => {
-    const btn = document.createElement('button');
-    btn.type='button'; btn.className='hb-cat-btn' + (activeCat===cat.id ? ' active':'');
-    btn.innerHTML = `<div style="font-weight:800;">${esc(cat.icon ? cat.icon + ' ' + cat.title : cat.title)}</div><div class="hb-item-summary">${counts.get(cat.id)||0} item(ns)</div>`;
-    btn.onclick = () => { activeCat = cat.id; const items=getItemsForCat(activeCat, byId('hbSearch').value); activeItem = items[0] ? items[0].id : ''; renderAll(); };
-    wrap.appendChild(btn);
-  });
-}
-function renderItems(){
-  const wrap = byId('hbItemList');
-  const empty = byId('hbItemEmpty');
-  const items = getItemsForCat(activeCat, byId('hbSearch').value);
-  wrap.innerHTML='';
-  empty.style.display = items.length ? 'none':'block';
-  if(!activeItem && items[0]) activeItem = items[0].id;
-  if(activeItem && !items.some(i=>i.id===activeItem)) activeItem = items[0] ? items[0].id : '';
-  items.forEach(item => {
-    const btn = document.createElement('button');
-    btn.type='button'; btn.className='hb-item-btn' + (activeItem===item.id ? ' active':'');
-    btn.innerHTML = `<div style="font-weight:800;">${esc(item.title)}</div>${item.summary ? `<div class="hb-item-summary">${esc(item.summary)}</div>`:''}`;
-    btn.onclick = () => { activeItem = item.id; renderDetail(); renderItems(); };
-    wrap.appendChild(btn);
-  });
-}
-function renderDetail(){
-  const host = byId('hbDetail');
-  const item = ITEMS.find(i=>i.id===activeItem) || getItemsForCat(activeCat, byId('hbSearch').value)[0];
-  if(!item){ host.innerHTML = '<p class="hb-empty">No published handbook item found.</p>'; return; }
-  const cat = CATS.find(c=>c.id===item.categoryId);
-  const chips = [];
-  if(cat) chips.push(`<span class="hb-chip">${esc(cat.icon ? cat.icon + ' ' + cat.title : cat.title)}</span>`);
-  if(item.type === 'link') chips.push('<span class="hb-chip">External link</span>');
-  const linksHtml = item.attachments.length ? `<div class="hb-links">${item.attachments.map(link => `<a class="hb-link" href="${esc(link.url)}" target="_blank" rel="noopener"><span>${esc(link.label)}</span><span aria-hidden="true">↗</span></a>`).join('')}</div>` : '';
-  const cta = item.type === 'link' && item.url ? `<p><a class="btn" href="${esc(item.url)}" target="_blank" rel="noopener">Open link</a></p>` : '';
-  host.innerHTML = `
-    <h2 style="margin-top:0;">${esc(item.title)}</h2>
-    <div class="hb-meta">${chips.join('')}</div>
-    ${item.summary ? `<p class="muted" style="margin-top:0;">${esc(item.summary)}</p>` : ''}
-    ${item.heroUrl ? `<img class="hb-hero" src="${esc(item.heroUrl)}" alt="${esc(item.title)}" />` : ''}
-    ${item.content ? `<div class="hb-content" style="margin-top:18px;">${esc(item.content)}</div>` : ''}
-    ${cta}
-    ${linksHtml}
-  `;
-}
-function renderAll(){ renderCats(byId('hbSearch').value); renderItems(); renderDetail(); }
-function init(){
-  CATS = normalizeCats(safeRead(KEY_HANDBOOK_CATEGORIES, []));
-  ITEMS = normalizeItems(safeRead(KEY_HANDBOOK_ITEMS, []));
-  activeCat = CATS[0] ? CATS[0].id : '';
-  const initial = getItemsForCat(activeCat, '');
-  activeItem = initial[0] ? initial[0].id : '';
-  byId('hbSearch').addEventListener('input', renderAll);
-  renderAll();
-}
-window.addEventListener('DOMContentLoaded', init);
+  document.documentElement.classList.add('anw-preauth-hide');
+  (function () {
+    function allowPage() {
+      try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
+      try { document.body && document.body.removeAttribute('data-acl-loading'); } catch (_) {}
+    }
+
+    function protectHandbook() {
+      try {
+        var api = window.ANWIdentity || null;
+        if (!api || typeof api.requireRole !== 'function') return false;
+
+        var allowed = api.requireRole(['resident', 'owner'], {
+          redirectTo: 'login.html',
+          onAuthorized: allowPage
+        });
+
+        return !!allowed;
+      } catch (_) {
+        try { window.location.replace('login.html'); }
+        catch (e) { window.location.href = 'login.html'; }
+        return true;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      if (protectHandbook()) return;
+
+      var tries = 0;
+      var waitForIdentity = window.setInterval(function () {
+        tries += 1;
+        if (protectHandbook() || tries >= 40) {
+          window.clearInterval(waitForIdentity);
+        }
+      }, 150);
+    });
+  })();
 </script>
+
+  <title>Handbook — Aderrig NW</title>
+  <link rel="stylesheet" href="assets/style.css" />
+
+<style>
+  html.anw-preauth-hide body { visibility: hidden; }
+</style>
+
+
+  <style>
+    /* Match the existing “premium” styling used across the site */
+    .hb-top{ display:flex; gap:12px; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; }
+    .hb-search{ max-width:360px; width:100%; }
+
+    .hb-grid{ display:grid; gap:12px; grid-template-columns:repeat(3,1fr); }
+    @media (max-width: 980px){ .hb-grid{ grid-template-columns:repeat(2,1fr);} }
+    @media (max-width: 620px){ .hb-grid{ grid-template-columns:1fr;} }
+
+    .hb-card{ display:flex; align-items:center; gap:12px; padding:14px; text-decoration:none; color:inherit; }
+    .hb-card:hover{ background: rgba(17,24,39,.03); text-decoration:none; }
+    .hb-icon{ width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(17,24,39,.10); background:#fff; font-size:20px; }
+    .hb-card-title{ font-weight:800; color: var(--brand); }
+
+    .hb-item{ display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border:1px solid rgba(17,24,39,.10); background:#fff; padding:12px 14px; border-radius:14px; box-shadow:var(--shadow);
+      text-decoration:none; color:inherit;
+    }
+    .hb-item:hover{ background: rgba(17,24,39,.03); text-decoration:none; }
+    .hb-item-title{ font-weight:800; color: var(--brand); }
+    .hb-item-right{ display:flex; align-items:center; gap:10px; color: rgba(0,0,0,.55); }
+
+    .hb-item-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .hb-hero{ width:100%; border-radius:14px; border:1px solid rgba(17,24,39,.10); margin:12px 0; display:block; }
+    .hb-content p{ margin-top: 0.6rem; }
+    .hb-attach{ display:inline-flex; align-items:center; justify-content:center; padding:10px 12px; border-radius:12px;
+      border:1px solid rgba(17,24,39,.10); background:#fff; box-shadow:var(--shadow); text-decoration:none; color: var(--brand); font-weight:800;
+    }
+    .hb-attach:hover{ background: rgba(17,24,39,.03); text-decoration:none; }
+  </style>
+
+<style id="handbook-public-enhanced-style">
+  .hb-wrap{ display:grid; grid-template-columns:320px minmax(0,1fr); gap:22px; align-items:start; }
+  .hb-sidebar, .hb-main-panel{
+    border:1px solid rgba(17,24,39,.08);
+    border-radius:20px;
+    background:#fff;
+    box-shadow:var(--shadow);
+    padding:20px;
+  }
+  .hb-sidebar h3, .hb-main-panel h3{ margin-top:0; }
+  .hb-category-list, .hb-item-list{ display:grid; gap:10px; }
+  .hb-category-btn{
+    width:100%;
+    border:1px solid rgba(17,24,39,.08);
+    background:#fff;
+    border-radius:16px;
+    padding:12px 14px;
+    text-align:left;
+    cursor:pointer;
+    font:inherit;
+  }
+  .hb-category-btn.active{
+    border-color: rgba(47,125,91,.24);
+    background:#f3faf6;
+  }
+  .hb-category-name{ font-weight:800; color:var(--brand); }
+  .hb-category-sub{ color:rgba(0,0,0,.55); margin-top:4px; font-size:.92rem; }
+  .hb-search-box{ width:100%; }
+  .hb-item-card{
+    display:block;
+    border:1px solid rgba(17,24,39,.08);
+    border-radius:18px;
+    background:#fff;
+    padding:14px 16px;
+    text-decoration:none;
+    color:inherit;
+  }
+  .hb-item-card:hover{ background:#f9fbfa; text-decoration:none; }
+  .hb-item-title{ font-weight:800; color:var(--brand); }
+  .hb-item-summary{ color:#6a7b90; margin-top:6px; line-height:1.5; }
+  .hb-item-link{ margin-top:10px; color:#2f6d50; font-weight:700; }
+  .hb-detail-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+  .hb-detail-image{
+    width:100%;
+    max-height:380px;
+    object-fit:cover;
+    border-radius:18px;
+    border:1px solid rgba(17,24,39,.08);
+    margin:16px 0;
+    display:block;
+  }
+  .hb-detail-content{ line-height:1.7; color:#1f2b3d; }
+  .hb-detail-content p:first-child{ margin-top:0; }
+  .hb-empty-state{
+    padding:16px;
+    border:1px dashed rgba(17,24,39,.16);
+    border-radius:16px;
+    color:#6a7b90;
+    background:#fafcfb;
+  }
+  .hb-link-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:42px;
+    padding:0 14px;
+    border-radius:12px;
+    border:1px solid rgba(17,24,39,.10);
+    text-decoration:none;
+    color:var(--brand);
+    font-weight:800;
+    background:#fff;
+  }
+  .hb-link-btn:hover{ background:#f8fbf9; text-decoration:none; }
+  @media (max-width: 980px){
+    .hb-wrap{ grid-template-columns:1fr; }
+  }
+</style>
+
 </head>
-<body>
+<body data-acl-loading="true" class="page-handbook">
+
 <header class="site-header">
-  <div class="brand">
-    <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
-    <div class="brand-text"><h1>Aderrig NW</h1><p class="muted">Adamstown</p></div>
-  </div>
-  <nav class="nav">
-    <a href="index.html">Home</a>
-    <a href="about.html">About</a>
-    <a class="active" href="handbook.html">Handbook</a>
-    <a href="report.html">Report</a>
-    <a href="alerts.html">Community Alerts</a>
-    <a href="projects.html">Community Projects</a>
-    <a class="nav-login" href="login.html">Login / Register</a>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="household.html">Household</a>
-  </nav>
+<div class="brand">
+<a class="site-logo" href="index.html">
+<img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/>
+</a>
+<div class="brand-text">
+<h1>Aderrig NW</h1>
+<p class="muted">Adamstown</p>
+</div>
+</div>
+<nav class="nav">
+<a href="index.html">Home</a>
+<a href="about.html">About</a>
+<a class="active" href="handbook.html">Handbook</a>
+<a href="report.html">Report</a>
+<a href="alerts.html">Community Alerts</a>
+<a href="projects.html">Community Projects</a>
+<a class="nav-login" href="login.html">Login / Register</a>
+<a href="dashboard.html">Dashboard</a>
+<a href="household.html">Household</a>
+<a href="admin.html">Admin</a>
+</nav>
 </header>
-<main class="wrap">
+
+
+<main class="container">
   <section class="card">
-    <h2 style="margin-top:0;">Resident Handbook</h2>
-    <p class="muted">Published guidance for residents. Use the search box or browse by category.</p>
+    <div class="hb-top">
+      <div>
+        <h2 style="margin:0;">Resident Handbook</h2>
+        <p class="muted" style="margin-top:6px;">Published guidance for residents. Use the search box or browse by category.</p>
+      </div>
+    </div>
   </section>
+
   <div class="hb-wrap" style="margin-top:18px;">
-    <aside class="hb-side" style="display:grid; gap:18px;">
-      <section class="card">
-        <div class="hb-search"><label for="hbSearch">Search</label><input id="hbSearch" type="text" placeholder="Search handbook..." /></div>
-        <h3 style="margin:0 0 10px;">Categories</h3>
-        <div id="hbCatList" class="hb-cat-list"></div>
-      </section>
-      <section class="card">
-        <h3 style="margin:0 0 10px;">Items</h3>
-        <div id="hbItemList" class="hb-item-list"></div>
-        <p id="hbItemEmpty" class="hb-empty" style="display:none; margin:10px 0 0;">No published item in this category.</p>
-      </section>
+    <aside class="hb-sidebar">
+      <h3>Search</h3>
+      <input id="hbSearchInput" class="input hb-search-box" type="text" placeholder="Search handbook..." />
+      <h3 style="margin-top:18px;">Categories</h3>
+      <div id="hbSidebarCategories" class="hb-category-list"></div>
+      <div style="margin-top:18px;">
+        <h3 style="margin-bottom:10px;">Items</h3>
+        <div id="hbSidebarItems" class="hb-item-list"></div>
+      </div>
     </aside>
-    <section class="hb-main">
-      <article id="hbDetail" class="card"></article>
+
+    <section class="hb-main-panel">
+      <div id="hbResidentMain"></div>
     </section>
   </div>
 </main>
-<footer class="site-footer"><div class="page-access">Public</div></footer>
+
+
+<footer class="site-footer">
+  <div class="footer-row">
+    <div class="footer-left">
+      <span class="page-status">Private Page</span>
+    </div>
+    <div class="footer-center">
+      © 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+<script src="assets/app-core.js"></script>
+<script src="assets/acl-guard.js"></script>
+
+
+<script id="handbook-public-renderer">
+(function(){
+  'use strict';
+  const KEYS = window.ANW_KEYS || {};
+  const KEY_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
+  const KEY_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
+
+  const $id = (id) => document.getElementById(id);
+  let categories = [];
+  let items = [];
+  let selectedCategoryId = '';
+  let selectedItemId = '';
+
+  function slugify(value){
+    return String(value || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function esc(value){
+    return String(value == null ? '' : value)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#39;');
+  }
+
+  async function loadStore(key, fallback){
+    try{
+      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
+      return await res.json();
+    }catch(_){
+      try{
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      }catch(__){
+        return fallback;
+      }
+    }
+  }
+
+  function normalizeCategories(list){
+    return (Array.isArray(list) ? list : []).map((cat, index) => {
+      const title = String((cat && (cat.title || cat.name)) || '').trim();
+      if(!title) return null;
+      return {
+        id: String(cat.id || slugify(title) || ('category-' + (index + 1))),
+        title,
+        icon: String(cat.icon || '📘').trim() || '📘',
+        order: Number(cat.order) || (index + 1),
+        active: cat.active !== false
+      };
+    }).filter(Boolean).sort((a,b) => (a.order - b.order) || a.title.localeCompare(b.title));
+  }
+
+  function normalizeItems(list){
+    return (Array.isArray(list) ? list : []).map((item, index) => {
+      const attachments = Array.isArray(item.attachments) ? item.attachments.filter(Boolean) : [];
+      return {
+        id: String(item.id || ('hb-item-' + (index + 1))),
+        categoryId: String(item.categoryId || item.category || '').trim(),
+        categoryTitle: String(item.categoryTitle || '').trim(),
+        title: String(item.title || '').trim(),
+        summary: String(item.summary || item.excerpt || '').trim(),
+        content: String(item.content || '').trim(),
+        status: String(item.status || 'published').toLowerCase(),
+        url: String(item.url || item.linkUrl || '').trim(),
+        linkLabel: String(item.linkLabel || (attachments[0] && attachments[0].label) || '').trim(),
+        heroUrl: String(item.imageData || (item.image && item.image.dataUrl) || item.heroUrl || '').trim(),
+        attachments
+      };
+    }).filter(item => item.title && item.status !== 'draft');
+  }
+
+  function ensureCategoriesFromItems(){
+    const known = new Set(categories.map(cat => cat.id));
+    items.forEach(item => {
+      if(item.categoryId && !known.has(item.categoryId)){
+        categories.push({
+          id: item.categoryId,
+          title: item.categoryTitle || item.categoryId.replace(/-/g,' ').replace(/\b\w/g, m => m.toUpperCase()),
+          icon: '📘',
+          order: categories.length + 1,
+          active: true
+        });
+        known.add(item.categoryId);
+      }
+    });
+    categories = categories.filter(cat => cat.active !== false)
+      .sort((a,b) => (a.order - b.order) || a.title.localeCompare(b.title));
+  }
+
+  function contentToHtml(content){
+    const value = String(content || '').trim();
+    if(!value) return '';
+    const hasHtml = /<\/?[a-z][\s\S]*>/i.test(value);
+    if(hasHtml) return value;
+    return value
+      .split(/\n{2,}/)
+      .map(part => '<p>' + esc(part).replace(/\n/g, '<br>') + '</p>')
+      .join('');
+  }
+
+  function activeQuery(){
+    return String(($id('hbSearchInput') && $id('hbSearchInput').value) || '').trim().toLowerCase();
+  }
+
+  function filteredItems(){
+    const query = activeQuery();
+    return items.filter(item => {
+      const categoryOk = !selectedCategoryId || item.categoryId === selectedCategoryId;
+      const queryOk = !query || [item.title, item.summary, item.content, item.categoryTitle].join(' ').toLowerCase().includes(query);
+      return categoryOk && queryOk;
+    });
+  }
+
+  function renderCategories(){
+    const wrap = $id('hbSidebarCategories');
+    if(!wrap) return;
+    const query = activeQuery();
+    const counts = {};
+    items.forEach(item => {
+      if(query && ![item.title, item.summary, item.content, item.categoryTitle].join(' ').toLowerCase().includes(query)) return;
+      counts[item.categoryId] = (counts[item.categoryId] || 0) + 1;
+    });
+    const available = categories.filter(cat => (counts[cat.id] || 0) > 0);
+    wrap.innerHTML = available.length ? available.map(cat => {
+      return '<button type="button" class="hb-category-btn ' + (selectedCategoryId === cat.id ? 'active' : '') + '" data-hb-category="' + esc(cat.id) + '">'
+        + '<div class="hb-category-name">' + esc(cat.icon + ' ' + cat.title) + '</div>'
+        + '<div class="hb-category-sub">' + (counts[cat.id] || 0) + ' item(s)</div>'
+        + '</button>';
+    }).join('') : '<div class="hb-empty-state">No matching categories.</div>';
+  }
+
+  function renderSidebarItems(){
+    const wrap = $id('hbSidebarItems');
+    if(!wrap) return;
+    const list = filteredItems();
+    wrap.innerHTML = list.length ? list.map(item => {
+      return '<a href="#" class="hb-item-card" data-hb-item="' + esc(item.id) + '">'
+        + '<div class="hb-item-title">' + esc(item.title) + '</div>'
+        + (item.summary ? '<div class="hb-item-summary">' + esc(item.summary) + '</div>' : '')
+        + '</a>';
+    }).join('') : '<div class="hb-empty-state">No published items found.</div>';
+  }
+
+  function renderMain(){
+    const root = $id('hbResidentMain');
+    if(!root) return;
+
+    if(selectedItemId){
+      const item = items.find(entry => entry.id === selectedItemId);
+      if(!item){
+        selectedItemId = '';
+        renderMain();
+        return;
+      }
+      const category = categories.find(cat => cat.id === item.categoryId);
+      const linkMarkup = item.url
+        ? '<a class="hb-link-btn" target="_blank" rel="noopener" href="' + esc(item.url) + '">' + esc(item.linkLabel || 'Open link') + '</a>'
+        : '';
+      root.innerHTML = '<div class="hb-detail-header">'
+        + '<div>'
+        + '<div class="tiny muted">' + esc(category ? (category.icon + ' ' + category.title) : item.categoryTitle) + '</div>'
+        + '<h3 style="margin:6px 0 0;">' + esc(item.title) + '</h3>'
+        + (item.summary ? '<p class="muted" style="margin-top:8px;">' + esc(item.summary) + '</p>' : '')
+        + '</div>'
+        + '<div class="actions" style="gap:10px;">'
+        + '<button type="button" class="btn btn-line small" id="hbBackToItems">Back to items</button>'
+        + linkMarkup
+        + '</div>'
+        + '</div>'
+        + (item.heroUrl ? '<img class="hb-detail-image" src="' + item.heroUrl + '" alt="' + esc(item.title) + '">' : '')
+        + '<div class="hb-detail-content">' + contentToHtml(item.content) + '</div>';
+      return;
+    }
+
+    const list = filteredItems();
+    if(selectedCategoryId){
+      const category = categories.find(cat => cat.id === selectedCategoryId);
+      root.innerHTML = '<div class="hb-detail-header">'
+        + '<div>'
+        + '<div class="tiny muted">Category</div>'
+        + '<h3 style="margin:6px 0 0;">' + esc(category ? (category.icon + ' ' + category.title) : selectedCategoryId) + '</h3>'
+        + '<p class="muted" style="margin-top:8px;">Choose an item to read the full guidance.</p>'
+        + '</div>'
+        + '<button type="button" class="btn btn-line small" id="hbBackToCategories">Back to categories</button>'
+        + '</div>'
+        + '<div class="hb-item-list" style="margin-top:16px;">'
+        + (list.length ? list.map(item => {
+            return '<a href="#" class="hb-item-card" data-hb-item="' + esc(item.id) + '">'
+              + '<div class="hb-item-title">' + esc(item.title) + '</div>'
+              + (item.summary ? '<div class="hb-item-summary">' + esc(item.summary) + '</div>' : '')
+              + (item.url ? '<div class="hb-item-link">' + esc(item.linkLabel || 'Open link') + '</div>' : '')
+              + '</a>';
+          }).join('') : '<div class="hb-empty-state">No published items in this category.</div>')
+        + '</div>';
+      return;
+    }
+
+    root.innerHTML = '<div>'
+      + '<h3 style="margin-top:0;">Welcome</h3>'
+      + '<p class="muted">Select a category on the left to browse published handbook content.</p>'
+      + '<div class="hb-item-list" style="margin-top:16px;">'
+      + (list.length ? list.slice(0, 8).map(item => {
+          return '<a href="#" class="hb-item-card" data-hb-item="' + esc(item.id) + '">'
+            + '<div class="hb-item-title">' + esc(item.title) + '</div>'
+            + '<div class="hb-item-summary">' + esc(item.summary || item.categoryTitle || '') + '</div>'
+            + '</a>';
+        }).join('') : '<div class="hb-empty-state">No handbook items available yet.</div>')
+      + '</div>'
+      + '</div>';
+  }
+
+  function rerender(){
+    renderCategories();
+    renderSidebarItems();
+    renderMain();
+  }
+
+  async function boot(){
+    categories = normalizeCategories(await loadStore(KEY_CATEGORIES, []));
+    items = normalizeItems(await loadStore(KEY_ITEMS, []));
+    ensureCategoriesFromItems();
+    rerender();
+
+    $id('hbSearchInput')?.addEventListener('input', function(){
+      selectedItemId = '';
+      rerender();
+    });
+
+    $id('hbSidebarCategories')?.addEventListener('click', function(event){
+      const button = event.target.closest('[data-hb-category]');
+      if(!button) return;
+      selectedCategoryId = button.getAttribute('data-hb-category') || '';
+      selectedItemId = '';
+      rerender();
+    });
+
+    document.addEventListener('click', function(event){
+      const itemLink = event.target.closest('[data-hb-item]');
+      if(itemLink){
+        event.preventDefault();
+        selectedItemId = itemLink.getAttribute('data-hb-item') || '';
+        rerender();
+        return;
+      }
+      if(event.target && event.target.id === 'hbBackToItems'){
+        selectedItemId = '';
+        rerender();
+      }
+      if(event.target && event.target.id === 'hbBackToCategories'){
+        selectedCategoryId = '';
+        selectedItemId = '';
+        rerender();
+      }
+    });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot, { once:true });
+  }else{
+    boot();
+  }
+})();
+</script>
+
 </body>
 </html>
