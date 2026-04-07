@@ -49,7 +49,6 @@
       --hb-soft-2:#fbfcfd;
       --hb-accent:#2f6d50;
       --hb-accent-soft:#edf7f1;
-      --hb-shadow:0 10px 28px rgba(15,23,42,.05);
     }
 
     .hb-page{display:grid;gap:18px}
@@ -61,7 +60,7 @@
       box-shadow:var(--shadow);
       padding:20px;
       display:grid;
-      gap:14px;
+      gap:16px;
     }
     .hb-badge{
       display:inline-flex;
@@ -89,50 +88,56 @@
       max-width:74ch;
     }
 
+    .hb-top-grid{
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:16px;
+      align-items:start;
+    }
+    .hb-panel{
+      border:1px solid var(--hb-border);
+      border-radius:18px;
+      background:#fff;
+      padding:16px;
+    }
+    .hb-panel-title{
+      margin:0;
+      color:var(--hb-text);
+      font-size:.98rem;
+      font-weight:900;
+    }
+    .hb-panel-sub{
+      margin:4px 0 0;
+      color:var(--hb-muted);
+      font-size:.9rem;
+    }
+
     .hb-stats{
+      margin-top:12px;
       display:grid;
       grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:12px;
+      gap:10px;
     }
     .hb-stat{
       border:1px solid var(--hb-border);
-      background:#fff;
-      border-radius:16px;
-      padding:14px 16px;
+      background:var(--hb-soft-2);
+      border-radius:14px;
+      padding:12px 14px;
     }
     .hb-stat-value{
       color:var(--hb-text);
-      font-size:1.2rem;
+      font-size:1.15rem;
       font-weight:900;
       line-height:1;
     }
     .hb-stat-label{
       margin-top:6px;
       color:var(--hb-muted);
-      font-size:.88rem;
-    }
-
-    .hb-section{
-      border:1px solid var(--hb-border);
-      border-radius:22px;
-      background:#fff;
-      box-shadow:var(--shadow);
-      padding:18px;
-    }
-    .hb-section-title{
-      margin:0;
-      color:var(--hb-text);
-      font-size:1rem;
-      font-weight:900;
-    }
-    .hb-section-sub{
-      margin:4px 0 0;
-      color:var(--hb-muted);
-      font-size:.9rem;
+      font-size:.85rem;
     }
 
     .hb-categories{
-      margin-top:14px;
+      margin-top:12px;
       display:flex;
       gap:10px;
       flex-wrap:wrap;
@@ -154,6 +159,25 @@
       color:var(--hb-muted);
       font-size:.82rem;
       font-weight:700;
+    }
+
+    .hb-section{
+      border:1px solid var(--hb-border);
+      border-radius:22px;
+      background:#fff;
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .hb-section-title{
+      margin:0;
+      color:var(--hb-text);
+      font-size:1rem;
+      font-weight:900;
+    }
+    .hb-section-sub{
+      margin:4px 0 0;
+      color:var(--hb-muted);
+      font-size:.9rem;
     }
 
     .hb-list-shell{
@@ -189,17 +213,8 @@
       padding:16px;
     }
 
-    .hb-subject{
-      min-width:0;
-      display:grid;
-      gap:6px;
-    }
-    .hb-subject-top{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex-wrap:wrap;
-    }
+    .hb-subject{min-width:0;display:grid;gap:6px}
+    .hb-subject-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
     .hb-category-pill{
       display:inline-flex;
       align-items:center;
@@ -221,7 +236,6 @@
       line-height:1.25;
       word-break:break-word;
     }
-
     .hb-summary-text{
       color:var(--hb-muted);
       font-size:.93rem;
@@ -232,13 +246,7 @@
       overflow:hidden;
       word-break:break-word;
     }
-
-    .hb-date{
-      color:#506176;
-      font-size:.92rem;
-      font-weight:700;
-    }
-
+    .hb-date{color:#506176;font-size:.92rem;font-weight:700}
     .hb-status{
       display:inline-flex;
       align-items:center;
@@ -259,20 +267,10 @@
       color:#99671e;
     }
     .hb-status-dot{
-      width:8px;
-      height:8px;
-      border-radius:999px;
-      background:currentColor;
-      display:inline-block;
+      width:8px;height:8px;border-radius:999px;background:currentColor;display:inline-block;
     }
 
-    .hb-actions{
-      display:flex;
-      justify-content:flex-start;
-      align-items:center;
-      gap:8px;
-      flex-wrap:wrap;
-    }
+    .hb-actions{display:flex;justify-content:flex-start;align-items:center;gap:8px;flex-wrap:wrap}
     .hb-btn{
       display:inline-flex;
       align-items:center;
@@ -289,11 +287,7 @@
       cursor:pointer;
     }
     .hb-btn:hover{text-decoration:none;background:#f8fbf9}
-    .hb-btn.primary{
-      background:var(--hb-accent);
-      border-color:var(--hb-accent);
-      color:#fff;
-    }
+    .hb-btn.primary{background:var(--hb-accent);border-color:var(--hb-accent);color:#fff}
     .hb-btn.primary:hover{background:#285b43}
 
     .hb-details{
@@ -310,11 +304,7 @@
       display:grid;
       gap:14px;
     }
-    .hb-content{
-      color:#324458;
-      font-size:.95rem;
-      line-height:1.68;
-    }
+    .hb-content{color:#324458;font-size:.95rem;line-height:1.68}
     .hb-content p:first-child{margin-top:0}
 
     .hb-gallery{
@@ -328,12 +318,7 @@
       background:#fff;
       overflow:hidden;
     }
-    .hb-image-trigger{
-      display:block;
-      cursor:pointer;
-      text-decoration:none;
-      color:inherit;
-    }
+    .hb-image-trigger{display:block;cursor:pointer;text-decoration:none;color:inherit}
     .hb-image{
       width:100%;
       aspect-ratio:4 / 3;
@@ -350,70 +335,31 @@
       color:var(--hb-muted);
       font-size:.85rem;
     }
-
-    .hb-links{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .hb-empty{
-      padding:18px;
-      color:var(--hb-muted);
-      background:#fafcfb;
-    }
+    .hb-links{display:flex;gap:10px;flex-wrap:wrap}
+    .hb-empty{padding:18px;color:var(--hb-muted);background:#fafcfb}
 
     .hb-lightbox{
-      position:fixed;
-      inset:0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:26px;
-      z-index:9999;
-      background:rgba(10,16,24,.76);
-      backdrop-filter:blur(4px);
+      position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+      padding:26px;z-index:9999;background:rgba(10,16,24,.76);backdrop-filter:blur(4px);
     }
     .hb-lightbox.open{display:flex}
-    .hb-lightbox-card{
-      max-width:min(1080px,100%);
-      max-height:100%;
-      display:grid;
-      gap:12px;
-    }
-    .hb-lightbox-tools{
-      display:flex;
-      justify-content:flex-end;
-      gap:10px;
-      flex-wrap:wrap;
-    }
+    .hb-lightbox-card{max-width:min(1080px,100%);max-height:100%;display:grid;gap:12px}
+    .hb-lightbox-tools{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
     .hb-lightbox img{
-      max-width:100%;
-      max-height:calc(100vh - 130px);
-      display:block;
-      border-radius:16px;
-      box-shadow:0 24px 60px rgba(0,0,0,.35);
-      background:#fff;
+      max-width:100%;max-height:calc(100vh - 130px);display:block;border-radius:16px;
+      box-shadow:0 24px 60px rgba(0,0,0,.35);background:#fff;
     }
 
     @media (max-width: 980px){
-      .hb-stats{grid-template-columns:1fr}
+      .hb-top-grid,.hb-stats{grid-template-columns:1fr}
       .hb-list-head{display:none}
-      .hb-row-summary{
-        grid-template-columns:1fr;
-        gap:10px;
-      }
+      .hb-row-summary{grid-template-columns:1fr;gap:10px}
       .hb-summary-cell::before,
       .hb-date-cell::before,
       .hb-status-cell::before,
       .hb-actions-cell::before{
-        display:block;
-        color:#7b8899;
-        font-size:.76rem;
-        font-weight:900;
-        text-transform:uppercase;
-        letter-spacing:.04em;
-        margin-bottom:4px;
+        display:block;color:#7b8899;font-size:.76rem;font-weight:900;text-transform:uppercase;
+        letter-spacing:.04em;margin-bottom:4px;
       }
       .hb-summary-cell::before{content:"Brief report"}
       .hb-date-cell::before{content:"Date"}
@@ -458,33 +404,40 @@
       <div>
         <span class="hb-badge">Resident Handbook</span>
         <h2 class="hb-title">Resident messages</h2>
-        <p class="hb-copy">A simple listing with clear columns for subject, short summary, date and status. Each message stays on its own line and “View more” opens the details, images and links without breaking the layout.</p>
+        <p class="hb-copy">A simple listing with clear columns for subject, short summary, date and status. The summary block above now keeps message totals and categories together in one single area.</p>
       </div>
-      <div class="hb-stats">
-        <div class="hb-stat">
-          <div class="hb-stat-value" id="hbStatItems">0</div>
-          <div class="hb-stat-label">Published messages</div>
-        </div>
-        <div class="hb-stat">
-          <div class="hb-stat-value" id="hbStatUnread">0</div>
-          <div class="hb-stat-label">Unread messages</div>
-        </div>
-        <div class="hb-stat">
-          <div class="hb-stat-value" id="hbStatCategories">0</div>
-          <div class="hb-stat-label">Categories</div>
-        </div>
-      </div>
-    </section>
 
-    <section class="hb-section">
-      <h3 class="hb-section-title">Categories</h3>
-      <p class="hb-section-sub">Summary of the resident handbook categories.</p>
-      <div id="hbCategories" class="hb-categories"></div>
+      <div class="hb-top-grid">
+        <div class="hb-panel">
+          <h3 class="hb-panel-title">Overview</h3>
+          <p class="hb-panel-sub">Published messages, unread messages and categories in one block.</p>
+          <div class="hb-stats">
+            <div class="hb-stat">
+              <div class="hb-stat-value" id="hbStatItems">0</div>
+              <div class="hb-stat-label">Published messages</div>
+            </div>
+            <div class="hb-stat">
+              <div class="hb-stat-value" id="hbStatUnread">0</div>
+              <div class="hb-stat-label">Unread messages</div>
+            </div>
+            <div class="hb-stat">
+              <div class="hb-stat-value" id="hbStatCategories">0</div>
+              <div class="hb-stat-label">Categories</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hb-panel">
+          <h3 class="hb-panel-title">Categories</h3>
+          <p class="hb-panel-sub">Summary of the resident handbook categories.</p>
+          <div id="hbCategories" class="hb-categories"></div>
+        </div>
+      </div>
     </section>
 
     <section class="hb-section">
       <h3 class="hb-section-title">Messages</h3>
-      <p class="hb-section-sub">Subject, brief report, date and status. One message per line.</p>
+      <p class="hb-section-sub">One message per line, with subject, brief report, date, status and actions.</p>
 
       <div class="hb-list-shell">
         <div class="hb-list-head">
@@ -755,28 +708,19 @@
       return '<article class="hb-row" data-item-id="' + esc(item.id) + '">'
         + '<div class="hb-row-summary">'
         +   '<div class="hb-subject">'
-        +     '<div class="hb-subject-top">'
-        +       '<span class="hb-category-pill">' + esc(category ? ((category.icon || '📘') + ' ' + category.title) : (item.categoryTitle || 'General')) + '</span>'
-        +     '</div>'
+        +     '<div class="hb-subject-top"><span class="hb-category-pill">' + esc(category ? ((category.icon || '📘') + ' ' + category.title) : (item.categoryTitle || 'General')) + '</span></div>'
         +     '<div class="hb-subject-title">' + esc(item.title) + '</div>'
         +   '</div>'
         +   '<div class="hb-summary-cell"><div class="hb-summary-text">' + esc(item.summary || 'Open this message to read more details.') + '</div></div>'
         +   '<div class="hb-date-cell"><div class="hb-date">' + esc(formatDate(item.updatedAt || item.createdAt)) + '</div></div>'
         +   '<div class="hb-status-cell"><span class="hb-status ' + (read ? '' : 'unread') + '" data-status-for="' + esc(item.id) + '"><span class="hb-status-dot"></span>' + (read ? 'Read' : 'Unread') + '</span></div>'
-        +   '<div class="hb-actions-cell"><div class="hb-actions">'
-        +     '<button type="button" class="hb-btn primary" data-toggle-details="' + esc(item.id) + '">View more</button>'
-        +   '</div></div>'
+        +   '<div class="hb-actions-cell"><div class="hb-actions"><button type="button" class="hb-btn primary" data-toggle-details="' + esc(item.id) + '">View more</button></div></div>'
         + '</div>'
         + '<div class="hb-details" id="hb-details-' + esc(item.id) + '">'
         +   '<div class="hb-details-card">'
         +     '<div class="hb-content">' + contentToHtml(item.content) + '</div>'
         +     (images.length ? '<div class="hb-gallery">' + images.map(function(image){
-                return '<div class="hb-image-card">'
-                  + '<a href="#" class="hb-image-trigger" data-open-image="' + esc(item.id) + '" data-image-url="' + esc(image.url) + '" data-image-label="' + esc(image.label) + '">'
-                  +   '<img class="hb-image" src="' + esc(image.url) + '" alt="' + esc(image.label || item.title) + '">'
-                  +   '<div class="hb-image-footer"><span>Open image</span><span>Download available</span></div>'
-                  + '</a>'
-                  + '</div>';
+                return '<div class="hb-image-card"><a href="#" class="hb-image-trigger" data-open-image="' + esc(item.id) + '" data-image-url="' + esc(image.url) + '" data-image-label="' + esc(image.label) + '"><img class="hb-image" src="' + esc(image.url) + '" alt="' + esc(image.label || item.title) + '"><div class="hb-image-footer"><span>Open image</span><span>Download available</span></div></a></div>';
               }).join('') + '</div>' : '')
         +     (links.length ? '<div class="hb-links">' + links.map(function(link){
                 return '<a class="hb-btn" href="' + esc(link.url) + '" target="_blank" rel="noopener">' + esc(link.label) + '</a>';
