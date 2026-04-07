@@ -945,32 +945,58 @@
 <style id="handbook-admin-simplified-style">
   #tabHandbook .hb-admin-shell{
     display:grid;
-    grid-template-columns:320px minmax(0,1fr);
+    grid-template-columns:1fr;
     gap:18px;
     align-items:start;
   }
   #tabHandbook .hb-admin-panel{
     border:1px solid rgba(17,24,39,.10);
-    border-radius:20px;
+    border-radius:22px;
     background:linear-gradient(180deg, rgba(250,252,251,.98), rgba(255,255,255,1));
-    padding:18px;
+    padding:20px;
     min-width:0;
+    box-shadow:0 10px 24px rgba(15,23,42,.05);
   }
-  #tabHandbook .hb-admin-panel-head{ margin-bottom:14px; }
+  #tabHandbook .hb-admin-panel-head{
+    margin-bottom:16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  #tabHandbook .hb-admin-top-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 120px 130px;
+    gap:12px;
+    align-items:end;
+  }
+  #tabHandbook .hb-admin-item-top{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 220px 180px;
+    gap:12px;
+    align-items:end;
+  }
+  #tabHandbook .hb-admin-support-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 320px;
+    gap:16px;
+    align-items:start;
+  }
   #tabHandbook .hb-admin-category-list,
   #tabHandbook .hb-admin-items-list{
     display:grid;
-    gap:10px;
+    gap:12px;
   }
   #tabHandbook .hb-admin-category-row,
   #tabHandbook .hb-admin-item-row{
     border:1px solid rgba(17,24,39,.08);
-    border-radius:16px;
+    border-radius:18px;
     background:#fff;
-    padding:12px 14px;
+    padding:14px 16px;
     display:flex;
     justify-content:space-between;
-    gap:12px;
+    gap:14px;
     align-items:flex-start;
   }
   #tabHandbook .hb-admin-category-meta,
@@ -981,6 +1007,7 @@
   #tabHandbook .hb-admin-item-title{
     font-weight:800;
     color:#1f2b3d;
+    line-height:1.35;
   }
   #tabHandbook .hb-admin-item-sub,
   #tabHandbook .hb-admin-category-sub{
@@ -993,9 +1020,10 @@
     gap:8px;
     flex-wrap:wrap;
     justify-content:flex-end;
+    align-items:center;
   }
   #tabHandbook .hb-admin-image-preview{
-    min-height:180px;
+    min-height:220px;
     border:1px dashed rgba(17,24,39,.16);
     border-radius:18px;
     background:#f7faf8;
@@ -1009,14 +1037,15 @@
   }
   #tabHandbook .hb-admin-image-preview img{
     width:100%;
-    max-height:240px;
+    max-height:280px;
     object-fit:cover;
     border-radius:14px;
     display:block;
   }
   #tabHandbook .hb-admin-items-card{
     border-top:1px solid rgba(17,24,39,.08);
-    padding-top:16px;
+    padding-top:18px;
+    margin-top:18px;
   }
   #tabHandbook .hb-admin-items-toolbar{
     display:flex;
@@ -1027,18 +1056,19 @@
     margin-bottom:12px;
   }
   #tabHandbook .hb-admin-items-toolbar input{
-    max-width:260px;
+    max-width:320px;
     width:100%;
   }
   #tabHandbook .hb-status-pill{
     display:inline-flex;
     align-items:center;
-    padding:4px 10px;
+    padding:7px 12px;
     border-radius:999px;
-    font-size:.8rem;
-    font-weight:700;
+    font-size:.84rem;
+    font-weight:800;
     border:1px solid rgba(17,24,39,.10);
     background:#fff;
+    text-transform:none;
   }
   #tabHandbook .hb-status-pill.published{
     color:#2f6d50;
@@ -1050,8 +1080,38 @@
     background:#fff7e8;
     border-color:rgba(139,107,34,.18);
   }
+  #tabHandbook .hb-icon-chip{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:52px;
+    height:52px;
+    border-radius:16px;
+    border:1px solid rgba(17,24,39,.08);
+    background:#fff;
+    font-size:1.4rem;
+  }
+  #tabHandbook .hb-inline-note{
+    padding:12px 14px;
+    border:1px solid rgba(17,24,39,.08);
+    border-radius:16px;
+    background:#fbfcfb;
+    color:#6a7b90;
+    line-height:1.5;
+  }
   @media (max-width: 980px){
-    #tabHandbook .hb-admin-shell{ grid-template-columns:1fr; }
+    #tabHandbook .hb-admin-top-grid,
+    #tabHandbook .hb-admin-item-top,
+    #tabHandbook .hb-admin-support-grid{
+      grid-template-columns:1fr;
+    }
+    #tabHandbook .hb-admin-category-row,
+    #tabHandbook .hb-admin-item-row{
+      flex-direction:column;
+    }
+    #tabHandbook .hb-admin-row-actions{
+      justify-content:flex-start;
+    }
   }
 </style>
 
@@ -1798,83 +1858,71 @@
   <!-- ================= HANDBOOK ================= -->
   <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
     <h3>Handbook</h3>
-    <p class="tiny muted" style="margin-top:0;">Simple handbook registration for the admin. Keep categories light, save one image per item, and publish only what residents should see.</p>
+    <p class="tiny muted" style="margin-top:0;">A cleaner admin flow for the resident handbook: save the category once, use an automatic icon, and register each item in one professional layout.</p>
 
     <div class="hb-admin-shell">
       <div class="hb-admin-panel">
         <div class="hb-admin-panel-head">
           <div>
-            <h4 style="margin:0;">Categories</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Use a suggested category or create a new one quickly. This still feeds the resident handbook.</p>
+            <h4 style="margin:0;">Category setup</h4>
+            <p class="tiny muted" style="margin:6px 0 0;">Choose one clear category name. The system suggests a suitable icon automatically and uses it everywhere in the handbook.</p>
           </div>
         </div>
 
-        <div class="field">
-          <label>Suggested categories</label>
-          <select id="hbQuickCategory" class="input">
-            <option value="">Choose a suggestion…</option>
-            <option value="General">General</option>
-            <option value="Security">Security</option>
-            <option value="Parking">Parking</option>
-            <option value="Emergency">Emergency</option>
-            <option value="Volunteering">Volunteering</option>
-            <option value="Waste & Recycling">Waste &amp; Recycling</option>
-            <option value="Community Services">Community Services</option>
-            <option value="Rules & Guidance">Rules &amp; Guidance</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Category title</label>
-          <input id="hbSimpleCatTitle" type="text" maxlength="80" placeholder="e.g., Waste & Recycling" list="hbSimpleCatSuggestions" />
-          <datalist id="hbSimpleCatSuggestions">
-            <option value="General"></option>
-            <option value="Security"></option>
-            <option value="Parking"></option>
-            <option value="Emergency"></option>
-            <option value="Volunteering"></option>
-            <option value="Waste & Recycling"></option>
-            <option value="Community Services"></option>
-            <option value="Rules & Guidance"></option>
-          </datalist>
-        </div>
-
-        <div class="grid-2" style="gap:12px;">
-          <div class="field">
-            <label>Icon</label>
-            <input id="hbSimpleCatIcon" type="text" maxlength="8" placeholder="📘" />
+        <div class="hb-admin-top-grid">
+          <div class="field" style="margin:0;">
+            <label>Category name</label>
+            <input id="hbSimpleCatTitle" type="text" maxlength="80" placeholder="e.g., Waste & Recycling" list="hbSimpleCatSuggestions" />
+            <datalist id="hbSimpleCatSuggestions">
+              <option value="General"></option>
+              <option value="Security"></option>
+              <option value="Parking"></option>
+              <option value="Emergency"></option>
+              <option value="Volunteering"></option>
+              <option value="Waste & Recycling"></option>
+              <option value="Community Services"></option>
+              <option value="Rules & Guidance"></option>
+            </datalist>
           </div>
-          <div class="field">
-            <label class="chk" style="display:flex; align-items:center; gap:10px; margin-top:34px;">
+          <div class="field" style="margin:0;">
+            <label>Auto icon</label>
+            <div id="hbSimpleCatIconPreview" class="hb-icon-chip" aria-label="Automatic category icon">📘</div>
+          </div>
+          <div class="field" style="margin:0;">
+            <label class="chk" style="display:flex; align-items:center; gap:10px; min-height:46px; margin-top:28px;">
               <input id="hbSimpleCatActive" type="checkbox" checked>
-              <span>Active</span>
+              <span>Active category</span>
             </label>
           </div>
         </div>
 
-        <p id="hbSimpleCatMsg" class="tiny muted" style="margin-top:8px;"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+        <p id="hbSimpleCatMsg" class="tiny muted" style="margin-top:10px;"></p>
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
           <button type="button" class="btn btn-line" id="btnHbSimpleCatClear">Clear</button>
           <button type="button" class="btn" id="btnHbSimpleCatSave">Save category</button>
         </div>
 
-        <div class="hb-admin-category-list" id="hbSimpleCatList" style="margin-top:16px;"></div>
+        <div class="hb-admin-category-list" id="hbSimpleCatList" style="margin-top:18px;"></div>
       </div>
 
       <div class="hb-admin-panel">
         <div class="hb-admin-panel-head">
           <div>
             <h4 style="margin:0;">Handbook item</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">One simple registration flow: category, title, content, one image, one optional link and publish status.</p>
+            <p class="tiny muted" style="margin:6px 0 0;">Select the category once, then complete the item details below. The flow is cleaner and ready for resident publishing.</p>
           </div>
         </div>
 
-        <div class="grid-2" style="gap:12px;">
-          <div class="field">
+        <div class="hb-admin-item-top">
+          <div class="field" style="margin:0;">
+            <label>Title</label>
+            <input id="hbSimpleItemTitle" type="text" maxlength="120" placeholder="e.g., Visitor parking rules" />
+          </div>
+          <div class="field" style="margin:0;">
             <label>Category</label>
             <select id="hbSimpleItemCategory"></select>
           </div>
-          <div class="field">
+          <div class="field" style="margin:0;">
             <label>Status</label>
             <select id="hbSimpleItemStatus">
               <option value="published">Published</option>
@@ -1883,55 +1931,53 @@
           </div>
         </div>
 
-        <div class="field">
-          <label>Title</label>
-          <input id="hbSimpleItemTitle" type="text" maxlength="120" placeholder="e.g., Visitor parking rules" />
-        </div>
-
-        <div class="field">
+        <div class="field" style="margin-top:14px;">
           <label>Short summary (optional)</label>
           <input id="hbSimpleItemSummary" type="text" maxlength="160" placeholder="Short text shown in the resident list" />
         </div>
 
         <div class="field">
           <label>Content</label>
-          <textarea id="hbSimpleItemContent" rows="8" placeholder="Write the handbook content here."></textarea>
+          <textarea id="hbSimpleItemContent" rows="9" placeholder="Write the handbook content here."></textarea>
         </div>
 
-        <div class="grid-2" style="gap:12px; align-items:start;">
-          <div class="field">
-            <label>Image (1 per item)</label>
-            <input id="hbSimpleItemImage" type="file" accept="image/*" />
-            <div class="tiny muted" style="margin-top:6px;">The image is compressed automatically before saving.</div>
-            <div class="actions" style="justify-content:flex-start; margin-top:8px;">
-              <button type="button" class="btn btn-line small" id="btnHbRemoveImage">Remove image</button>
+        <div class="hb-admin-support-grid">
+          <div>
+            <div class="field">
+              <label>Link text (optional)</label>
+              <input id="hbSimpleItemLinkLabel" type="text" maxlength="80" placeholder="e.g., Open map" />
+            </div>
+            <div class="field">
+              <label>Link URL (optional)</label>
+              <input id="hbSimpleItemLinkUrl" type="url" placeholder="https://..." />
+            </div>
+            <div class="hb-inline-note">Use a link only when needed. The selected category already controls where this item appears, so there is no need to repeat the category anywhere else in the form.</div>
+          </div>
+
+          <div>
+            <div class="field">
+              <label>Image (1 per item)</label>
+              <input id="hbSimpleItemImage" type="file" accept="image/*" />
+              <div class="tiny muted" style="margin-top:6px;">The image is compressed automatically before saving.</div>
+              <div class="actions" style="justify-content:flex-start; margin-top:8px;">
+                <button type="button" class="btn btn-line small" id="btnHbRemoveImage">Remove image</button>
+              </div>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label>Image preview</label>
+              <div id="hbSimpleImagePreview" class="hb-admin-image-preview">No image selected</div>
             </div>
           </div>
-          <div class="field">
-            <label>Image preview</label>
-            <div id="hbSimpleImagePreview" class="hb-admin-image-preview">No image selected</div>
-          </div>
         </div>
 
-        <div class="grid-2" style="gap:12px;">
-          <div class="field">
-            <label>Link text (optional)</label>
-            <input id="hbSimpleItemLinkLabel" type="text" maxlength="80" placeholder="e.g., Open map" />
-          </div>
-          <div class="field">
-            <label>Link URL (optional)</label>
-            <input id="hbSimpleItemLinkUrl" type="url" placeholder="https://..." />
-          </div>
-        </div>
-
-        <p id="hbSimpleItemMsg" class="tiny muted" style="margin-top:8px;"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+        <p id="hbSimpleItemMsg" class="tiny muted" style="margin-top:10px;"></p>
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
           <button type="button" class="btn btn-line" id="btnHbSimpleItemDelete" style="display:none;">Delete item</button>
           <button type="button" class="btn btn-line" id="btnHbSimpleItemClear">Clear</button>
           <button type="button" class="btn" id="btnHbSimpleItemSave">Save item</button>
         </div>
 
-        <div class="hb-admin-items-card" style="margin-top:18px;">
+        <div class="hb-admin-items-card">
           <div class="hb-admin-items-toolbar">
             <h4 style="margin:0;">Registered items</h4>
             <input id="hbSimpleItemSearch" type="text" placeholder="Search item title..." />
@@ -4014,6 +4060,21 @@
     }
   }
 
+  function suggestCategoryIcon(value){
+    const title = String(value || '').toLowerCase();
+    if(!title) return '📘';
+    if(title.includes('security') || title.includes('gate') || title.includes('cctv') || title.includes('watch')) return '🛡️';
+    if(title.includes('parking') || title.includes('vehicle') || title.includes('traffic')) return '🚗';
+    if(title.includes('emergency') || title.includes('fire') || title.includes('medical')) return '🚨';
+    if(title.includes('waste') || title.includes('recycling') || title.includes('bin')) return '♻️';
+    if(title.includes('volunteer')) return '🤝';
+    if(title.includes('service')) return '🏢';
+    if(title.includes('rule') || title.includes('guidance') || title.includes('policy')) return '📋';
+    if(title.includes('community') || title.includes('event')) return '🏘️';
+    if(title.includes('pet') || title.includes('animal')) return '🐾';
+    return '📘';
+  }
+
   function normalizeCategories(list){
     const out = [];
     (Array.isArray(list) ? list : []).forEach((cat, index) => {
@@ -4118,7 +4179,7 @@
       return '<div class="hb-admin-category-row">'
         + '<div class="hb-admin-category-meta">'
         + '<div class="hb-admin-category-title">' + esc(cat.icon + ' ' + cat.title) + '</div>'
-        + '<div class="hb-admin-category-sub">ID: ' + esc(cat.id) + ' · ' + (cat.active ? 'Active' : 'Hidden') + '</div>'
+        + '<div class="hb-admin-category-sub">' + esc(cat.id) + ' · ' + (cat.active ? 'Active' : 'Hidden') + '</div>'
         + '</div>'
         + '<div class="hb-admin-row-actions">'
         + '<button type="button" class="btn btn-line small" data-hb-cat-edit="' + esc(cat.id) + '">Edit</button>'
@@ -4170,7 +4231,7 @@
           + '<div class="hb-admin-item-sub">' + (item.heroUrl ? 'Image saved' : 'No image') + (item.url ? ' · Link added' : '') + '</div>'
           + '</div>'
           + '<div class="hb-admin-row-actions">'
-          + '<span class="hb-status-pill ' + esc(item.status) + '">' + esc(item.status) + '</span>'
+          + '<span class="hb-status-pill ' + esc(item.status) + '">' + esc(item.status === 'published' ? 'Published' : 'Draft') + '</span>'
           + '<button type="button" class="btn btn-line small" data-hb-item-edit="' + esc(item.id) + '">Edit</button>'
           + '<button type="button" class="btn btn-line small" data-hb-item-delete="' + esc(item.id) + '">Delete</button>'
           + '</div>'
@@ -4180,9 +4241,8 @@
 
   function clearCategoryForm(){
     currentCategoryId = '';
-    if($id('hbQuickCategory')) $id('hbQuickCategory').value = '';
     if($id('hbSimpleCatTitle')) $id('hbSimpleCatTitle').value = '';
-    if($id('hbSimpleCatIcon')) $id('hbSimpleCatIcon').value = '📘';
+    if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = '📘';
     if($id('hbSimpleCatActive')) $id('hbSimpleCatActive').checked = true;
     setCategoryMessage('');
   }
@@ -4192,7 +4252,7 @@
     if(!cat) return;
     currentCategoryId = cat.id;
     $id('hbSimpleCatTitle').value = cat.title;
-    $id('hbSimpleCatIcon').value = cat.icon || '📘';
+    if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = cat.icon || suggestCategoryIcon(cat.title) || '📘';
     $id('hbSimpleCatActive').checked = cat.active !== false;
     setCategoryMessage('Editing category.');
   }
@@ -4231,10 +4291,10 @@
 
   async function saveCategory(){
     const title = String($id('hbSimpleCatTitle').value || '').trim();
-    const icon = String($id('hbSimpleCatIcon').value || '📘').trim() || '📘';
+    const icon = suggestCategoryIcon(title);
     const active = !!$id('hbSimpleCatActive').checked;
     if(!title){
-      setCategoryMessage('Please enter a category title.');
+      setCategoryMessage('Please enter a category name.');
       return;
     }
     const id = currentCategoryId || slugify(title);
@@ -4405,11 +4465,8 @@
     clearCategoryForm();
     clearItemForm();
 
-    $id('hbQuickCategory')?.addEventListener('change', function(){
-      if(this.value){
-        $id('hbSimpleCatTitle').value = this.value;
-        if(!$id('hbSimpleCatIcon').value) $id('hbSimpleCatIcon').value = '📘';
-      }
+    $id('hbSimpleCatTitle')?.addEventListener('input', function(){
+      if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(this.value);
     });
     $id('btnHbSimpleCatClear')?.addEventListener('click', clearCategoryForm);
     $id('btnHbSimpleCatSave')?.addEventListener('click', saveCategory);
