@@ -407,37 +407,36 @@
     }
   }
 
+  function normalizeReadReceipts(value){
+    return (value && typeof value === 'object' && !Array.isArray(value)) ? value : {};
+  }
+
   function getCurrentResidentReadKey(){
     try{
-      const user = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function'
+      var user = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function'
         ? window.netlifyIdentity.currentUser()
         : null;
       if(!user) return '';
-      const meta = user.user_metadata || {};
-      const app = user.app_metadata || {};
+      var meta = user.user_metadata || {};
+      var app = user.app_metadata || {};
       return String(
         meta.regId || meta.regNo || meta.eircode || meta.email ||
-        user.email || user.id ||
-        app.regId || app.regNo || ''
+        user.email || user.id || app.regId || app.regNo || ''
       ).trim().toLowerCase();
     }catch(_){
       return '';
     }
   }
 
-  function normalizeReadReceipts(value){
-    return (value && typeof value === 'object' && !Array.isArray(value)) ? value : {};
-  }
-
   async function markHandbookItemRead(itemId){
-    const key = getCurrentResidentReadKey();
-    if(!itemId || !key) return;
+    var residentKey = getCurrentResidentReadKey();
+    if(!itemId || !residentKey) return;
     handbookReadReceipts = normalizeReadReceipts(handbookReadReceipts);
-    const bucket = handbookReadReceipts[itemId] && typeof handbookReadReceipts[itemId] === 'object' && !Array.isArray(handbookReadReceipts[itemId])
+    var bucket = handbookReadReceipts[itemId] && typeof handbookReadReceipts[itemId] === 'object' && !Array.isArray(handbookReadReceipts[itemId])
       ? handbookReadReceipts[itemId]
       : {};
-    if(bucket[key]) return;
-    bucket[key] = new Date().toISOString();
+    if(bucket[residentKey]) return;
+    bucket[residentKey] = new Date().toISOString();
     handbookReadReceipts[itemId] = bucket;
     await saveStore(KEY_HANDBOOK_READ_RECEIPTS, handbookReadReceipts);
   }
@@ -683,10 +682,9 @@
     }).join('') : '<div class="hb-empty">This selected item does not include extra attachments or links.</div>';
   }
 
-  async function openLightbox(itemId){
+  function openLightbox(itemId){
     const item = items.find(entry => entry.id === itemId);
     if(!item || !item.heroUrl) return;
-    await markHandbookItemRead(itemId);
     $id('hbLightboxImage').src = item.heroUrl;
     $id('hbLightboxDownload').href = item.heroUrl;
     $id('hbLightboxDownload').setAttribute('download', (item.title.replace(/[^a-z0-9]+/gi,'-').toLowerCase() || 'handbook-image') + '.jpg');
@@ -751,7 +749,9 @@
       const image = event.target.closest('[data-open-image]');
       if(image){
         event.preventDefault();
-        openLightbox(String(image.getAttribute('data-open-image') || '')).catch(function(){});
+        const imageItemId = String(image.getAttribute('data-open-image') || '');
+        markHandbookItemRead(imageItemId).catch(function(){});
+        openLightbox(imageItemId);
       }
     });
 
