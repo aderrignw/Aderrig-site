@@ -1022,6 +1022,32 @@
     justify-content:flex-end;
     align-items:center;
   }
+  #tabHandbook .hb-admin-read-metrics{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+    margin-right:4px;
+  }
+  #tabHandbook .hb-admin-read-chip{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:34px;
+    padding:0 12px;
+    border-radius:999px;
+    border:1px solid rgba(17,24,39,.10);
+    background:#eef7f1;
+    color:#2f6d50;
+    font-size:.84rem;
+    font-weight:800;
+    white-space:nowrap;
+  }
+  #tabHandbook .hb-admin-read-chip.pending{
+    background:#fff7e8;
+    color:#8b6b22;
+    border-color:rgba(139,107,34,.18);
+  }
   #tabHandbook .hb-admin-image-preview{
     min-height:220px;
     border:1px dashed rgba(17,24,39,.16);
@@ -1111,6 +1137,9 @@
     }
     #tabHandbook .hb-admin-row-actions{
       justify-content:flex-start;
+    }
+    #tabHandbook .hb-admin-read-metrics{
+      margin-right:0;
     }
   }
 </style>
@@ -4006,6 +4035,8 @@
   const KEYS = window.ANW_KEYS || {};
   const KEY_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
   const KEY_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
+  const KEY_USERS = KEYS.USERS || 'anw_users';
+  const KEY_HANDBOOK_READ_RECEIPTS = KEYS.HANDBOOK_READ_RECEIPTS || 'anw_handbook_read_receipts';
 
   const $id = (id) => document.getElementById(id);
 
@@ -4014,6 +4045,8 @@
   let currentCategoryId = '';
   let currentItemId = '';
   let currentImageData = '';
+  let handbookReadReceipts = {};
+  let totalHandbookResidents = 0;
 
   function slugify(value){
     return String(value || '')
@@ -4204,6 +4237,38 @@
     return found ? (found.icon + ' ' + found.title) : categoryId;
   }
 
+  function countApprovedResidents(list){
+    return (Array.isArray(list) ? list : []).filter(user => {
+      const status = String((user && user.status) || '').toLowerCase();
+      return status === 'approved' || status === 'active';
+    }).length;
+  }
+
+  function normalizeReadReceipts(value){
+    return (value && typeof value === 'object' && !Array.isArray(value)) ? value : {};
+  }
+
+  function getItemReadStats(itemId){
+    const total = Math.max(0, Number(totalHandbookResidents) || 0);
+    const bucket = handbookReadReceipts && handbookReadReceipts[itemId];
+    let read = 0;
+
+    if(Array.isArray(bucket)){
+      read = new Set(bucket.filter(Boolean).map(v => String(v))).size;
+    }else if(bucket && typeof bucket === 'object'){
+      read = Object.keys(bucket).filter(key => !!bucket[key]).length;
+    }else if(typeof bucket === 'number' && Number.isFinite(bucket)){
+      read = bucket;
+    }
+
+    read = Math.max(0, Math.min(total || read, read));
+    return {
+      read,
+      pending: Math.max(total - read, 0),
+      total
+    };
+  }
+
   function renderItems(){
     const wrap = $id('hbSimpleItemList');
     const empty = $id('hbSimpleItemEmpty');
@@ -4224,6 +4289,7 @@
     wrap.innerHTML = filtered
       .sort((a,b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))
       .map(item => {
+        const stats = getItemReadStats(item.id);
         return '<div class="hb-admin-item-row">'
           + '<div class="hb-admin-item-meta">'
           + '<div class="hb-admin-item-title">' + esc(item.title) + '</div>'
@@ -4231,6 +4297,10 @@
           + '<div class="hb-admin-item-sub">' + (item.heroUrl ? 'Image saved' : 'No image') + (item.url ? ' · Link added' : '') + '</div>'
           + '</div>'
           + '<div class="hb-admin-row-actions">'
+          + '<div class="hb-admin-read-metrics">'
+          + '<span class="hb-admin-read-chip" title="Residents who opened this message">Read ' + esc(String(stats.read)) + '</span>'
+          + '<span class="hb-admin-read-chip pending" title="Residents still pending">Pending ' + esc(String(stats.pending)) + '</span>'
+          + '</div>'
           + '<span class="hb-status-pill ' + esc(item.status) + '">' + esc(item.status === 'published' ? 'Published' : 'Draft') + '</span>'
           + '<button type="button" class="btn btn-line small" data-hb-item-edit="' + esc(item.id) + '">Edit</button>'
           + '<button type="button" class="btn btn-line small" data-hb-item-delete="' + esc(item.id) + '">Delete</button>'
@@ -4453,6 +4523,8 @@
     if(!$id('tabHandbook') || !$id('hbSimpleItemTitle')) return;
     categories = normalizeCategories(await loadStore(KEY_CATEGORIES, []));
     items = normalizeItems(await loadStore(KEY_ITEMS, []));
+    handbookReadReceipts = normalizeReadReceipts(await loadStore(KEY_HANDBOOK_READ_RECEIPTS, {}));
+    totalHandbookResidents = countApprovedResidents(await loadStore(KEY_USERS, []));
     ensureCategoriesFromItems();
     if(categories.length){
       await saveStore(KEY_CATEGORIES, categories);
