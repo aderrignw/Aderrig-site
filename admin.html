@@ -2157,12 +2157,12 @@
               </div>
 
               <div class="field" style="margin-top:1rem;">
-                <label for="restoreBackupFile">Restore backup file</label>
-                <input id="restoreBackupFile" type="file" accept=".json,application/json" />
+                <label>Restore latest backup</label>
+                <div class="tiny muted">The system will automatically use the most recent backup stored in Netlify Blobs.</div>
               </div>
 
               <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap;">
-                <button type="button" class="btn small btn-line" id="btnRestoreBackup">Restore backup</button>
+                <button type="button" class="btn small btn-line" id="btnRestoreBackup">Restore latest backup</button>
               </div>
 
               <p id="backupMsg" class="tiny muted" style="margin-top:0.5rem;"></p>
@@ -3600,34 +3600,69 @@
     }
   });
 
+  function formatBackupSize(bytes){
+    const value = Number(bytes || 0);
+    if(!Number.isFinite(value) || value <= 0) return 'Unknown size';
+    const units = ['B','KB','MB','GB'];
+    let size = value;
+    let unit = 0;
+    while(size >= 1024 && unit < units.length - 1){
+      size /= 1024;
+      unit += 1;
+    }
+    const digits = size >= 10 || unit === 0 ? 0 : 1;
+    return size.toFixed(digits) + ' ' + units[unit];
+  }
+
   byId('btnRestoreBackup')?.addEventListener('click', async () => {
     const msg = byId('backupMsg');
-    const input = byId('restoreBackupFile');
-    const file = input && input.files && input.files[0] ? input.files[0] : null;
-    if(!file){
-      if(msg) msg.textContent = 'Select a backup JSON file first.';
-      return;
-    }
-    if(msg) msg.textContent = 'Restoring backup…';
+    if(msg) msg.textContent = 'Checking latest backup…';
     try{
-      const text = await file.text();
-      const snapshot = JSON.parse(text);
       const headers = await getAdminAuthHeaders();
-      const res = await fetch('/.netlify/functions/restore-backup', {
+      const listRes = await fetch('/.netlify/functions/backup-list', {
+        method: 'GET',
+        headers,
+        cache: 'no-store'
+      });
+      const listData = await listRes.json().catch(() => ({}));
+      if(!listRes.ok || listData.ok === false){
+        throw new Error(listData.error || 'Unable to load backup list');
+      }
+      const latest = Array.isArray(listData.items) && listData.items.length ? listData.items[0] : null;
+      if(!latest || !latest.id){
+        throw new Error('No backup available to restore');
+      }
+
+      const fileName = String(latest.fileName || (latest.id + '.json'));
+      const createdAt = latest.createdAt ? fmtDate(latest.createdAt) : 'Unknown date';
+      const sizeText = formatBackupSize(latest.sizeBytes);
+      const confirmed = window.confirm(
+        'Confirm restore of latest backup?\n\n' +
+        'File: ' + fileName + '\n' +
+        'Date: ' + createdAt + '\n' +
+        'Size: ' + sizeText + '\n\n' +
+        'Click OK to continue.'
+      );
+      if(!confirmed){
+        if(msg) msg.textContent = 'Restore cancelled.';
+        return;
+      }
+
+      if(msg) msg.textContent = 'Restoring latest backup…';
+      const restoreRes = await fetch('/.netlify/functions/restore-backup', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ snapshot })
+        body: JSON.stringify({ id: latest.id })
       });
-      const data = await res.json().catch(() => ({}));
-      if(!res.ok || data.ok === false){
+      const data = await restoreRes.json().catch(() => ({}));
+      if(!restoreRes.ok || data.ok === false){
         throw new Error(data.error || 'Restore failed');
       }
       if(msg){
-        msg.textContent = 'Restore completed successfully from backup ' +
-          String(data.id || snapshot.id || 'uploaded file') +
+        msg.textContent = 'Restore completed successfully from ' +
+          String(data.fileName || fileName || latest.id) +
           (data.safetyBackupId ? (' (safety backup: ' + data.safetyBackupId + ')') : '');
       }
-      if(input) input.value = '';
       await refreshBackupStatus();
     }catch(err){
       if(msg) msg.textContent = 'Restore failed: ' + String(err && err.message ? err.message : err || 'Unknown error');
