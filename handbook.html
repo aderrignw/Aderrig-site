@@ -43,159 +43,153 @@
 
     :root{
       --hb-border: rgba(17,24,39,.08);
-      --hb-text:#23344b;
-      --hb-muted:#6b7b8f;
+      --hb-text:#24354b;
+      --hb-muted:#6e7f93;
       --hb-soft:#f7f9fb;
       --hb-soft-2:#fbfcfd;
       --hb-accent:#2f6d50;
       --hb-accent-soft:#edf7f1;
     }
 
-    .hb-page{display:grid;gap:18px}
+    .hb-page{display:grid;gap:16px}
 
     .hb-top{
       border:1px solid var(--hb-border);
-      border-radius:22px;
+      border-radius:20px;
       background:linear-gradient(180deg,#fbfcfc 0%,#ffffff 100%);
       box-shadow:var(--shadow);
-      padding:20px;
+      padding:18px;
       display:grid;
-      gap:16px;
+      gap:14px;
     }
     .hb-badge{
       display:inline-flex;
       align-items:center;
-      padding:7px 12px;
+      padding:6px 11px;
       border-radius:999px;
       border:1px solid rgba(47,109,80,.12);
       background:var(--hb-accent-soft);
       color:var(--hb-accent);
-      font-size:.82rem;
+      font-size:.78rem;
       font-weight:800;
     }
     .hb-title{
-      margin:8px 0 4px;
+      margin:7px 0 4px;
       color:var(--hb-text);
-      font-size:clamp(1.25rem,2vw,1.7rem);
+      font-size:clamp(1.1rem,1.8vw,1.45rem);
       line-height:1.15;
-      font-weight:900;
+      font-weight:800;
     }
     .hb-copy{
       margin:0;
       color:var(--hb-muted);
-      line-height:1.6;
-      font-size:.95rem;
-      max-width:74ch;
+      line-height:1.55;
+      font-size:.9rem;
+      max-width:68ch;
     }
 
-    .hb-top-grid{
-      display:grid;
-      grid-template-columns:1.15fr .85fr;
-      gap:16px;
-      align-items:start;
-    }
     .hb-panel{
       border:1px solid var(--hb-border);
-      border-radius:18px;
+      border-radius:16px;
       background:#fff;
-      padding:16px;
+      padding:14px;
     }
     .hb-panel-title{
       margin:0;
       color:var(--hb-text);
-      font-size:.98rem;
-      font-weight:900;
+      font-size:.92rem;
+      font-weight:800;
     }
     .hb-panel-sub{
       margin:4px 0 0;
       color:var(--hb-muted);
-      font-size:.9rem;
+      font-size:.84rem;
     }
 
     .hb-stats{
-      margin-top:12px;
+      margin-top:10px;
       display:grid;
       grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:10px;
+      gap:8px;
     }
     .hb-stat{
       border:1px solid var(--hb-border);
       background:var(--hb-soft-2);
-      border-radius:14px;
-      padding:12px 14px;
+      border-radius:12px;
+      padding:10px 12px;
     }
     .hb-stat-value{
       color:var(--hb-text);
-      font-size:1.15rem;
+      font-size:1rem;
       font-weight:900;
       line-height:1;
     }
     .hb-stat-label{
-      margin-top:6px;
+      margin-top:5px;
       color:var(--hb-muted);
-      font-size:.85rem;
+      font-size:.8rem;
     }
 
     .hb-categories{
       margin-top:12px;
       display:flex;
-      gap:10px;
+      gap:8px;
       flex-wrap:wrap;
     }
     .hb-category{
       display:inline-flex;
       align-items:center;
-      gap:8px;
-      min-height:38px;
-      padding:0 12px;
+      gap:7px;
+      min-height:34px;
+      padding:0 11px;
       border-radius:999px;
       border:1px solid var(--hb-border);
       background:var(--hb-soft-2);
       color:#33465a;
-      font-size:.9rem;
+      font-size:.84rem;
       font-weight:800;
     }
     .hb-category small{
       color:var(--hb-muted);
-      font-size:.82rem;
+      font-size:.78rem;
       font-weight:700;
     }
 
     .hb-section{
       border:1px solid var(--hb-border);
-      border-radius:22px;
+      border-radius:20px;
       background:#fff;
       box-shadow:var(--shadow);
-      padding:18px;
+      padding:16px;
     }
     .hb-section-title{
       margin:0;
       color:var(--hb-text);
-      font-size:1rem;
-      font-weight:900;
+      font-size:.94rem;
+      font-weight:800;
     }
     .hb-section-sub{
       margin:4px 0 0;
       color:var(--hb-muted);
-      font-size:.9rem;
+      font-size:.84rem;
     }
 
     .hb-list-shell{
-      margin-top:14px;
+      margin-top:12px;
       border:1px solid var(--hb-border);
-      border-radius:18px;
+      border-radius:16px;
       overflow:hidden;
       background:#fff;
     }
     .hb-list-head{
       display:grid;
-      grid-template-columns:minmax(220px,1.45fr) minmax(220px,1.4fr) 130px 110px 140px;
-      gap:14px;
-      padding:14px 16px;
+      grid-template-columns:minmax(190px,1.45fr) minmax(220px,1.35fr) 110px 95px 112px 110px;
+      gap:12px;
+      padding:12px 14px;
       background:var(--hb-soft);
       border-bottom:1px solid var(--hb-border);
-      color:#5f7085;
-      font-size:.84rem;
+      color:#627489;
+      font-size:.76rem;
       font-weight:900;
       text-transform:uppercase;
       letter-spacing:.04em;
@@ -207,57 +201,52 @@
     .hb-row:last-child{border-bottom:0}
     .hb-row-summary{
       display:grid;
-      grid-template-columns:minmax(220px,1.45fr) minmax(220px,1.4fr) 130px 110px 140px;
-      gap:14px;
+      grid-template-columns:minmax(190px,1.45fr) minmax(220px,1.35fr) 110px 95px 112px 110px;
+      gap:12px;
       align-items:center;
-      padding:16px;
+      padding:13px 14px;
     }
 
-    .hb-subject{min-width:0;display:grid;gap:6px}
-    .hb-subject-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .hb-category-pill{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      min-height:28px;
-      padding:0 10px;
-      border-radius:999px;
-      border:1px solid var(--hb-border);
-      background:#f8faf9;
-      color:#385067;
-      font-size:.8rem;
-      font-weight:800;
-      white-space:nowrap;
-    }
+    .hb-subject{min-width:0;display:grid;gap:5px}
     .hb-subject-title{
       color:var(--hb-text);
-      font-size:1rem;
-      font-weight:900;
+      font-size:.92rem;
+      font-weight:800;
       line-height:1.25;
       word-break:break-word;
     }
     .hb-summary-text{
       color:var(--hb-muted);
-      font-size:.93rem;
-      line-height:1.5;
+      font-size:.87rem;
+      line-height:1.45;
       display:-webkit-box;
       -webkit-line-clamp:2;
       -webkit-box-orient:vertical;
       overflow:hidden;
       word-break:break-word;
     }
-    .hb-date{color:#506176;font-size:.92rem;font-weight:700}
+    .hb-date{
+      color:#55677c;
+      font-size:.85rem;
+      font-weight:700;
+    }
+    .hb-category-cell-text{
+      color:#4d6076;
+      font-size:.85rem;
+      font-weight:700;
+      word-break:break-word;
+    }
     .hb-status{
       display:inline-flex;
       align-items:center;
-      gap:8px;
-      min-height:30px;
-      padding:0 10px;
+      gap:7px;
+      min-height:28px;
+      padding:0 9px;
       border-radius:999px;
       border:1px solid var(--hb-border);
       background:#fbfcfd;
       color:#5a6a7e;
-      font-size:.84rem;
+      font-size:.78rem;
       font-weight:800;
       justify-self:start;
     }
@@ -267,7 +256,7 @@
       color:#99671e;
     }
     .hb-status-dot{
-      width:8px;height:8px;border-radius:999px;background:currentColor;display:inline-block;
+      width:7px;height:7px;border-radius:999px;background:currentColor;display:inline-block;
     }
 
     .hb-actions{display:flex;justify-content:flex-start;align-items:center;gap:8px;flex-wrap:wrap}
@@ -275,46 +264,52 @@
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      min-height:36px;
-      padding:0 12px;
-      border-radius:11px;
+      min-height:30px;
+      padding:0 10px;
+      border-radius:9px;
       border:1px solid var(--hb-border);
       background:#fff;
       color:var(--hb-text);
       text-decoration:none;
-      font-size:.88rem;
+      font-size:.8rem;
       font-weight:800;
       cursor:pointer;
     }
     .hb-btn:hover{text-decoration:none;background:#f8fbf9}
-    .hb-btn.primary{background:var(--hb-accent);border-color:var(--hb-accent);color:#fff}
+    .hb-btn.primary{
+      background:var(--hb-accent);
+      border-color:var(--hb-accent);
+      color:#fff;
+      min-height:30px;
+      padding:0 10px;
+    }
     .hb-btn.primary:hover{background:#285b43}
 
     .hb-details{
       display:none;
-      padding:0 16px 16px 16px;
+      padding:0 14px 14px 14px;
       background:#fcfdfd;
     }
     .hb-row.open .hb-details{display:block}
     .hb-details-card{
       border:1px solid var(--hb-border);
-      border-radius:16px;
+      border-radius:14px;
       background:#fff;
-      padding:16px;
+      padding:14px;
       display:grid;
-      gap:14px;
+      gap:12px;
     }
-    .hb-content{color:#324458;font-size:.95rem;line-height:1.68}
+    .hb-content{color:#324458;font-size:.9rem;line-height:1.62}
     .hb-content p:first-child{margin-top:0}
 
     .hb-gallery{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
-      gap:12px;
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:10px;
     }
     .hb-image-card{
       border:1px solid var(--hb-border);
-      border-radius:14px;
+      border-radius:12px;
       background:#fff;
       overflow:hidden;
     }
@@ -327,48 +322,51 @@
       background:#eef3f0;
     }
     .hb-image-footer{
-      padding:10px 12px;
+      padding:8px 10px;
       display:flex;
       justify-content:space-between;
       align-items:center;
       gap:8px;
       color:var(--hb-muted);
-      font-size:.85rem;
+      font-size:.78rem;
     }
-    .hb-links{display:flex;gap:10px;flex-wrap:wrap}
-    .hb-empty{padding:18px;color:var(--hb-muted);background:#fafcfb}
+    .hb-links{display:flex;gap:8px;flex-wrap:wrap}
+    .hb-empty{padding:16px;color:var(--hb-muted);background:#fafcfb;font-size:.86rem}
 
     .hb-lightbox{
       position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-      padding:26px;z-index:9999;background:rgba(10,16,24,.76);backdrop-filter:blur(4px);
+      padding:22px;z-index:9999;background:rgba(10,16,24,.76);backdrop-filter:blur(4px);
     }
     .hb-lightbox.open{display:flex}
-    .hb-lightbox-card{max-width:min(1080px,100%);max-height:100%;display:grid;gap:12px}
-    .hb-lightbox-tools{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+    .hb-lightbox-card{max-width:min(1080px,100%);max-height:100%;display:grid;gap:10px}
+    .hb-lightbox-tools{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
     .hb-lightbox img{
-      max-width:100%;max-height:calc(100vh - 130px);display:block;border-radius:16px;
+      max-width:100%;max-height:calc(100vh - 120px);display:block;border-radius:14px;
       box-shadow:0 24px 60px rgba(0,0,0,.35);background:#fff;
     }
 
-    @media (max-width: 980px){
-      .hb-top-grid,.hb-stats{grid-template-columns:1fr}
+    @media (max-width: 1080px){
+      .hb-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
       .hb-list-head{display:none}
-      .hb-row-summary{grid-template-columns:1fr;gap:10px}
+      .hb-row-summary{grid-template-columns:1fr;gap:8px}
       .hb-summary-cell::before,
       .hb-date-cell::before,
+      .hb-category-col::before,
       .hb-status-cell::before,
       .hb-actions-cell::before{
-        display:block;color:#7b8899;font-size:.76rem;font-weight:900;text-transform:uppercase;
-        letter-spacing:.04em;margin-bottom:4px;
+        display:block;color:#7b8899;font-size:.72rem;font-weight:900;text-transform:uppercase;
+        letter-spacing:.04em;margin-bottom:3px;
       }
       .hb-summary-cell::before{content:"Brief report"}
       .hb-date-cell::before{content:"Date"}
+      .hb-category-col::before{content:"Category"}
       .hb-status-cell::before{content:"Status"}
       .hb-actions-cell::before{content:"Actions"}
     }
 
     @media (max-width: 640px){
-      .hb-top,.hb-section{padding:16px}
+      .hb-top,.hb-section{padding:14px}
+      .hb-stats{grid-template-columns:1fr}
       .hb-gallery{grid-template-columns:1fr}
     }
   </style>
@@ -403,47 +401,41 @@
     <section class="hb-top">
       <div>
         <span class="hb-badge">Resident Handbook</span>
-        <h2 class="hb-title">Resident messages</h2>
-        <p class="hb-copy">A simple listing with clear columns for subject, short summary, date and status. The summary block above now keeps message totals and categories together in one single area.</p>
+        <h2 class="hb-title">Resident updates</h2>
+        <p class="hb-copy">A lighter layout with the key information at the top and the message list organised below.</p>
       </div>
 
-      <div class="hb-top-grid">
-        <div class="hb-panel">
-          <h3 class="hb-panel-title">Overview</h3>
-          <p class="hb-panel-sub">Published messages, unread messages and categories in one block.</p>
-          <div class="hb-stats">
-            <div class="hb-stat">
-              <div class="hb-stat-value" id="hbStatItems">0</div>
-              <div class="hb-stat-label">Published messages</div>
-            </div>
-            <div class="hb-stat">
-              <div class="hb-stat-value" id="hbStatUnread">0</div>
-              <div class="hb-stat-label">Unread messages</div>
-            </div>
-            <div class="hb-stat">
-              <div class="hb-stat-value" id="hbStatCategories">0</div>
-              <div class="hb-stat-label">Categories</div>
-            </div>
+      <div class="hb-panel">
+        <h3 class="hb-panel-title">Overview</h3>
+        <p class="hb-panel-sub">Messages and categories in one area.</p>
+        <div class="hb-stats">
+          <div class="hb-stat">
+            <div class="hb-stat-value" id="hbStatItems">0</div>
+            <div class="hb-stat-label">Published messages</div>
+          </div>
+          <div class="hb-stat">
+            <div class="hb-stat-value" id="hbStatUnread">0</div>
+            <div class="hb-stat-label">Unread messages</div>
+          </div>
+          <div class="hb-stat">
+            <div class="hb-stat-value" id="hbStatCategories">0</div>
+            <div class="hb-stat-label">Categories</div>
           </div>
         </div>
-
-        <div class="hb-panel">
-          <h3 class="hb-panel-title">Categories</h3>
-          <p class="hb-panel-sub">Summary of the resident handbook categories.</p>
-          <div id="hbCategories" class="hb-categories"></div>
-        </div>
+        <div id="hbCategories" class="hb-categories"></div>
       </div>
     </section>
 
     <section class="hb-section">
       <h3 class="hb-section-title">Messages</h3>
-      <p class="hb-section-sub">One message per line, with subject, brief report, date, status and actions.</p>
+      <p class="hb-section-sub">One message per line.</p>
 
       <div class="hb-list-shell">
         <div class="hb-list-head">
           <div>Subject</div>
           <div>Brief report</div>
           <div>Date</div>
+          <div>Category</div>
           <div>Status</div>
           <div>Actions</div>
         </div>
@@ -707,12 +699,10 @@
 
       return '<article class="hb-row" data-item-id="' + esc(item.id) + '">'
         + '<div class="hb-row-summary">'
-        +   '<div class="hb-subject">'
-        +     '<div class="hb-subject-top"><span class="hb-category-pill">' + esc(category ? ((category.icon || '📘') + ' ' + category.title) : (item.categoryTitle || 'General')) + '</span></div>'
-        +     '<div class="hb-subject-title">' + esc(item.title) + '</div>'
-        +   '</div>'
+        +   '<div class="hb-subject"><div class="hb-subject-title">' + esc(item.title) + '</div></div>'
         +   '<div class="hb-summary-cell"><div class="hb-summary-text">' + esc(item.summary || 'Open this message to read more details.') + '</div></div>'
         +   '<div class="hb-date-cell"><div class="hb-date">' + esc(formatDate(item.updatedAt || item.createdAt)) + '</div></div>'
+        +   '<div class="hb-category-col"><div class="hb-category-cell-text">' + esc(category ? category.title : (item.categoryTitle || 'General')) + '</div></div>'
         +   '<div class="hb-status-cell"><span class="hb-status ' + (read ? '' : 'unread') + '" data-status-for="' + esc(item.id) + '"><span class="hb-status-dot"></span>' + (read ? 'Read' : 'Unread') + '</span></div>'
         +   '<div class="hb-actions-cell"><div class="hb-actions"><button type="button" class="hb-btn primary" data-toggle-details="' + esc(item.id) + '">View more</button></div></div>'
         + '</div>'
