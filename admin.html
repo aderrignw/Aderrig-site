@@ -1935,7 +1935,7 @@
         <div class="hb-admin-panel-head">
           <div>
             <h4 style="margin:0;">Handbook item</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Choose the category, add the message details, and keep the image option when needed.</p>
+            <p class="tiny muted" style="margin:6px 0 0;">Choose the category, add the message details and keep the image option when needed.</p>
           </div>
         </div>
 
@@ -1977,7 +1977,7 @@
               <label>Link URL (optional)</label>
               <input id="hbSimpleItemLinkUrl" type="url" placeholder="https://..." />
             </div>
-            <div class="hb-inline-note">Use a link only when needed. The selected category already controls where this item appears, so there is no need to repeat the category anywhere else in the form.</div>
+            <div class="hb-inline-note">Use a link only when needed.</div>
           </div>
 
           <div>
@@ -2221,6 +2221,7 @@
   const KEY_PROJECT_RECIPIENTS = KEYS.PROJECT_RECIPIENTS || 'anw_project_recipients';
   const KEY_HANDBOOK_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
   const KEY_HANDBOOK_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
+  const KEY_HANDBOOK_READ_RECEIPTS = KEYS.HANDBOOK_READ_RECEIPTS || 'anw_handbook_read_receipts';
   const KEY_ACCESS = KEYS.ACL || KEYS.ACCESS || 'acl';
   const KEY_TASKS = KEYS.TASKS || 'anw_tasks';
   const KEY_NOTICES = window.getNoticesKey();
@@ -4037,6 +4038,8 @@
 
   let categories = [];
   let items = [];
+  let residentUsers = [];
+  let handbookReadReceipts = {};
   let currentCategoryId = '';
   let currentItemId = '';
   let currentImageData = '';
@@ -4101,33 +4104,81 @@
     return '📘';
   }
 
+
   function getCategoryInputValue(){
     const preset = $id('hbSimpleCatPreset');
-    const other = $id('hbSimpleCatTitle');
+    const custom = $id('hbSimpleCatTitle');
     const presetValue = String((preset && preset.value) || '').trim();
     if(presetValue && presetValue !== 'Other') return presetValue;
-    return String((other && other.value) || '').trim();
+    return String((custom && custom.value) || '').trim();
   }
 
   function syncCategoryInput(title){
     const preset = $id('hbSimpleCatPreset');
-    const other = $id('hbSimpleCatTitle');
+    const custom = $id('hbSimpleCatTitle');
     const normalized = String(title || '').trim();
     const presetValues = ['General','Security','Parking','Emergency','Volunteering','Waste & Recycling','Community Services','Rules & Guidance'];
     const matched = presetValues.find(function(value){
       return value.toLowerCase() === normalized.toLowerCase();
     });
 
-    if(preset){
-      preset.value = matched ? matched : 'Other';
-    }
-    if(other){
-      other.style.display = matched ? 'none' : 'block';
-      other.value = matched ? '' : normalized;
+    if(preset) preset.value = matched ? matched : 'Other';
+    if(custom){
+      custom.style.display = matched ? 'none' : 'block';
+      custom.value = matched ? '' : normalized;
     }
     if($id('hbSimpleCatIconPreview')){
-      $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(normalized || (matched || ''));
+      $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(normalized || (matched || 'General'));
     }
+  }
+
+  function normalizeReadReceipts(value){
+    return (value && typeof value === 'object' && !Array.isArray(value)) ? value : {};
+  }
+
+  function getApprovedResidentUsers(list){
+    return (Array.isArray(list) ? list : []).filter(function(user){
+      const status = String((user && user.status) || '').toLowerCase();
+      return status === 'approved' || status === 'active';
+    });
+  }
+
+  function getResidentReadKeys(user){
+    if(!user || typeof user !== 'object') return [];
+    const keys = [
+      user.regId, user.regNo, user.eircode, user.email, user.id,
+      user.uid, user.netlifyId,
+      user.user_metadata && user.user_metadata.regId,
+      user.user_metadata && user.user_metadata.regNo,
+      user.user_metadata && user.user_metadata.eircode,
+      user.user_metadata && user.user_metadata.email,
+      user.app_metadata && user.app_metadata.regId,
+      user.app_metadata && user.app_metadata.regNo
+    ];
+    return keys.map(function(value){
+      return String(value || '').trim().toLowerCase();
+    }).filter(Boolean);
+  }
+
+  function getItemReadStats(itemId){
+    const approvedResidents = getApprovedResidentUsers(residentUsers);
+    const bucket = handbookReadReceipts && handbookReadReceipts[itemId] && typeof handbookReadReceipts[itemId] === 'object'
+      ? handbookReadReceipts[itemId]
+      : {};
+    let read = 0;
+
+    approvedResidents.forEach(function(user){
+      const keys = getResidentReadKeys(user);
+      const hasRead = keys.some(function(key){ return !!bucket[key]; });
+      if(hasRead) read += 1;
+    });
+
+    const total = approvedResidents.length;
+    return {
+      total: total,
+      read: read,
+      unread: Math.max(total - read, 0)
+    };
   }
 
   function normalizeCategories(list){
@@ -4265,7 +4316,7 @@
     if(!wrap || !empty) return;
 
     const query = String(($id('hbSimpleItemSearch') && $id('hbSimpleItemSearch').value) || '').trim().toLowerCase();
-    const filtered = items.filter(item => {
+    const filtered = items.filter(function(item){
       if(!query) return true;
       return [item.title, item.summary, item.content].join(' ').toLowerCase().includes(query);
     });
@@ -4277,19 +4328,21 @@
     }
 
     wrap.innerHTML = filtered
-      .sort((a,b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))
-      .map(item => {
+      .sort(function(a,b){
+        return String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || ''));
+      })
+      .map(function(item){
         const stats = getItemReadStats(item.id);
         return '<div class="hb-admin-item-row">'
           + '<div class="hb-admin-item-meta">'
           + '<div class="hb-admin-item-title">' + esc(item.title) + '</div>'
-          + '<div class="hb-admin-item-sub">' + esc(item.summary || 'No summary added') + '</div>'
-          + '<div class="hb-admin-item-sub">' + esc(getCategoryLabel(item.categoryId)) + ' · ' + esc(item.heroUrl ? 'Image saved' : 'No image') + (item.url ? ' · Link added' : '') + '</div>'
+          + '<div class="hb-admin-item-sub">' + esc(getCategoryLabel(item.categoryId)) + (item.summary ? ' · ' + esc(item.summary) : '') + '</div>'
+          + '<div class="hb-admin-item-sub">' + (item.heroUrl ? 'Image saved' : 'No image') + (item.url ? ' · Link added' : '') + '</div>'
           + '</div>'
           + '<div class="hb-admin-row-actions">'
           + '<span class="hb-admin-read-metrics">'
           +   '<span class="hb-admin-read-chip">Read ' + esc(String(stats.read)) + '</span>'
-          +   '<span class="hb-admin-read-chip pending">Unread ' + esc(String(stats.pending)) + '</span>'
+          +   '<span class="hb-admin-read-chip pending">Unread ' + esc(String(stats.unread)) + '</span>'
           + '</span>'
           + '<span class="hb-status-pill ' + esc(item.status) + '">' + esc(item.status === 'published' ? 'Published' : 'Draft') + '</span>'
           + '<button type="button" class="btn btn-line small" data-hb-item-edit="' + esc(item.id) + '">Edit</button>'
@@ -4515,7 +4568,10 @@
   async function boot(){
     if(!$id('tabHandbook') || !$id('hbSimpleItemTitle')) return;
     categories = normalizeCategories(await loadStore(KEY_CATEGORIES, []));
-    items = normalizeItems(await loadStore(KEY_ITEMS, []));
+    items = normalizeItems(await loadStore(KEY_HANDBOOK_ITEMS, []));
+    const loadedUsers = await loadStore(KEY_USERS, []);
+    residentUsers = Array.isArray(loadedUsers) ? loadedUsers : [];
+    handbookReadReceipts = normalizeReadReceipts(await loadStore(KEY_HANDBOOK_READ_RECEIPTS, {}));
     ensureCategoriesFromItems();
     if(categories.length){
       await saveStore(KEY_CATEGORIES, categories);
@@ -4526,9 +4582,9 @@
     renderPreview();
     renderItems();
     clearCategoryForm();
-    syncCategoryInput('General');
     clearItemForm();
 
+    syncCategoryInput('General');
     $id('hbSimpleCatPreset')?.addEventListener('change', function(){
       syncCategoryInput(this.value);
     });
