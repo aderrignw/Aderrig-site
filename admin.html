@@ -1022,6 +1022,31 @@
     justify-content:flex-end;
     align-items:center;
   }
+  #tabHandbook .hb-admin-read-metrics{
+    display:inline-flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  #tabHandbook .hb-admin-read-chip{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:30px;
+    padding:0 10px;
+    border-radius:999px;
+    border:1px solid rgba(17,24,39,.10);
+    background:#eef7f1;
+    color:#2f6d50;
+    font-size:.78rem;
+    font-weight:800;
+    white-space:nowrap;
+  }
+  #tabHandbook .hb-admin-read-chip.pending{
+    background:#fff7e8;
+    color:#8b6b22;
+    border-color:rgba(139,107,34,.18);
+  }
   #tabHandbook .hb-admin-image-preview{
     min-height:220px;
     border:1px dashed rgba(17,24,39,.16);
@@ -1099,30 +1124,9 @@
     color:#6a7b90;
     line-height:1.5;
   }
-  #tabHandbook #hbSimpleCatTitle{display:none}
-  #tabHandbook .hb-admin-read-metrics{
-    display:inline-flex;
-    gap:8px;
-    align-items:center;
-    flex-wrap:wrap;
-  }
-  #tabHandbook .hb-admin-read-chip{
-    display:inline-flex;
-    align-items:center;
-    min-height:30px;
-    padding:0 10px;
-    border-radius:999px;
-    border:1px solid rgba(17,24,39,.10);
-    background:#eef7f1;
-    color:#2f6d50;
-    font-size:.78rem;
-    font-weight:800;
-    white-space:nowrap;
-  }
-  #tabHandbook .hb-admin-read-chip.pending{
-    background:#fff7e8;
-    color:#8b6b22;
-    border-color:rgba(139,107,34,.18);
+  #tabHandbook #hbSimpleCatTitle{
+    display:none;
+    margin-top:10px;
   }
   @media (max-width: 980px){
     #tabHandbook .hb-admin-top-grid,
@@ -1908,7 +1912,7 @@
               <option value="Rules & Guidance">Rules & Guidance</option>
               <option value="Other">Other</option>
             </select>
-            <input id="hbSimpleCatTitle" type="text" maxlength="80" placeholder="Enter other category name" style="display:none; margin-top:10px;" />
+            <input id="hbSimpleCatTitle" type="text" maxlength="80" placeholder="Enter other category name" />
           </div>
           <div class="field" style="margin:0;">
             <label>Auto icon</label>
@@ -1935,7 +1939,7 @@
         <div class="hb-admin-panel-head">
           <div>
             <h4 style="margin:0;">Handbook item</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Choose the category, add the message details and keep the image option when needed.</p>
+            <p class="tiny muted" style="margin:6px 0 0;">Choose the category, add the message details, and keep the image option when needed.</p>
           </div>
         </div>
 
@@ -2221,7 +2225,6 @@
   const KEY_PROJECT_RECIPIENTS = KEYS.PROJECT_RECIPIENTS || 'anw_project_recipients';
   const KEY_HANDBOOK_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
   const KEY_HANDBOOK_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
-  const KEY_HANDBOOK_READ_RECEIPTS = KEYS.HANDBOOK_READ_RECEIPTS || 'anw_handbook_read_receipts';
   const KEY_ACCESS = KEYS.ACL || KEYS.ACCESS || 'acl';
   const KEY_TASKS = KEYS.TASKS || 'anw_tasks';
   const KEY_NOTICES = window.getNoticesKey();
@@ -4033,23 +4036,21 @@
   const KEYS = window.ANW_KEYS || {};
   const KEY_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
   const KEY_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
+  const KEY_USERS = KEYS.USERS || 'anw_users';
+  const KEY_HANDBOOK_READ_RECEIPTS = KEYS.HANDBOOK_READ_RECEIPTS || 'anw_handbook_read_receipts';
 
   const $id = (id) => document.getElementById(id);
 
   let categories = [];
   let items = [];
-  let residentUsers = [];
-  let handbookReadReceipts = {};
   let currentCategoryId = '';
   let currentItemId = '';
   let currentImageData = '';
+  let handbookReadReceipts = {};
+  let totalHandbookResidents = 0;
 
   function slugify(value){
-    return String(value || '')
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+    return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }
 
   function esc(value){
@@ -4104,136 +4105,29 @@
     return '📘';
   }
 
-
-  function getCategoryInputValue(){
-    const preset = $id('hbSimpleCatPreset');
-    const custom = $id('hbSimpleCatTitle');
-    const presetValue = String((preset && preset.value) || '').trim();
-    if(presetValue && presetValue !== 'Other') return presetValue;
-    return String((custom && custom.value) || '').trim();
-  }
-
-  function syncCategoryInput(title){
-    const preset = $id('hbSimpleCatPreset');
-    const custom = $id('hbSimpleCatTitle');
-    const normalized = String(title || '').trim();
-    const presetValues = ['General','Security','Parking','Emergency','Volunteering','Waste & Recycling','Community Services','Rules & Guidance'];
-    const matched = presetValues.find(function(value){
-      return value.toLowerCase() === normalized.toLowerCase();
-    });
-
-    if(preset) preset.value = matched ? matched : 'Other';
-    if(custom){
-      custom.style.display = matched ? 'none' : 'block';
-      custom.value = matched ? '' : normalized;
-    }
-    if($id('hbSimpleCatIconPreview')){
-      $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(normalized || (matched || 'General'));
-    }
-  }
-
-  function normalizeReadReceipts(value){
-    return (value && typeof value === 'object' && !Array.isArray(value)) ? value : {};
-  }
-
-  function getApprovedResidentUsers(list){
-    return (Array.isArray(list) ? list : []).filter(function(user){
-      const status = String((user && user.status) || '').toLowerCase();
-      return status === 'approved' || status === 'active';
-    });
-  }
-
-  function getResidentReadKeys(user){
-    if(!user || typeof user !== 'object') return [];
-    const keys = [
-      user.regId, user.regNo, user.eircode, user.email, user.id,
-      user.uid, user.netlifyId,
-      user.user_metadata && user.user_metadata.regId,
-      user.user_metadata && user.user_metadata.regNo,
-      user.user_metadata && user.user_metadata.eircode,
-      user.user_metadata && user.user_metadata.email,
-      user.app_metadata && user.app_metadata.regId,
-      user.app_metadata && user.app_metadata.regNo
-    ];
-    return keys.map(function(value){
-      return String(value || '').trim().toLowerCase();
-    }).filter(Boolean);
-  }
-
-  function getItemReadStats(itemId){
-    const approvedResidents = getApprovedResidentUsers(residentUsers);
-    const bucket = handbookReadReceipts && handbookReadReceipts[itemId] && typeof handbookReadReceipts[itemId] === 'object'
-      ? handbookReadReceipts[itemId]
-      : {};
-    let read = 0;
-
-    approvedResidents.forEach(function(user){
-      const keys = getResidentReadKeys(user);
-      const hasRead = keys.some(function(key){ return !!bucket[key]; });
-      if(hasRead) read += 1;
-    });
-
-    const total = approvedResidents.length;
-    return {
-      total: total,
-      read: read,
-      unread: Math.max(total - read, 0)
-    };
-  }
-
   function normalizeCategories(list){
-    const out = [];
-    (Array.isArray(list) ? list : []).forEach((cat, index) => {
+    return (Array.isArray(list) ? list : []).map((cat, index) => {
       const title = String((cat && (cat.title || cat.name)) || '').trim();
-      if(!title) return;
-      out.push({
+      if(!title) return null;
+      return {
         id: String(cat.id || slugify(title) || ('category-' + (index + 1))),
         title,
-        icon: String(cat.icon || '📘').trim() || '📘',
+        icon: String(cat.icon || suggestCategoryIcon(title) || '📘').trim() || '📘',
         order: Number(cat.order) || (index + 1),
         active: cat.active !== false
-      });
-    });
-    return out.sort((a,b) => (a.order - b.order) || a.title.localeCompare(b.title));
-  }
-
-  function ensureCategoriesFromItems(){
-    const titles = new Map(categories.map(cat => [cat.id, cat]));
-    items.forEach(item => {
-      const explicit = String(item.categoryId || item.category || '').trim();
-      if(explicit && !titles.has(explicit)){
-        categories.push({
-          id: explicit,
-          title: String(item.categoryTitle || explicit).replace(/-/g,' ').replace(/\b\w/g, m => m.toUpperCase()),
-          icon: '📘',
-          order: categories.length + 1,
-          active: true
-        });
-        titles.set(explicit, true);
-      }
-    });
-    categories = normalizeCategories(categories);
+      };
+    }).filter(Boolean).sort((a,b) => (a.order - b.order) || a.title.localeCompare(b.title));
   }
 
   function normalizeItems(list){
     return (Array.isArray(list) ? list : []).map((item, index) => {
-      const title = String((item && (item.title || item.name)) || '').trim();
-      const categoryId = String(item.categoryId || item.category || '').trim();
-      const categoryTitle = String(item.categoryTitle || '').trim();
-      const hero = String(
-        item.imageData ||
-        (item.image && item.image.dataUrl) ||
-        item.heroUrl ||
-        ''
-      );
-      const attachments = Array.isArray(item.attachments)
-        ? item.attachments.filter(Boolean)
-        : [];
+      const hero = String(item.imageData || (item.image && item.image.dataUrl) || item.heroUrl || '').trim();
+      const attachments = Array.isArray(item.attachments) ? item.attachments.filter(Boolean) : [];
       return {
         id: String(item.id || item.slug || ('hb-item-' + (index + 1))),
-        categoryId,
-        categoryTitle,
-        title,
+        categoryId: String(item.categoryId || item.category || '').trim(),
+        categoryTitle: String(item.categoryTitle || '').trim(),
+        title: String((item && (item.title || item.name)) || '').trim(),
         summary: String(item.summary || item.excerpt || '').trim(),
         content: String(item.content || '').trim(),
         status: String(item.status || 'published').toLowerCase() === 'draft' ? 'draft' : 'published',
@@ -4241,12 +4135,42 @@
         url: String(item.url || item.linkUrl || '').trim(),
         linkLabel: String(item.linkLabel || (attachments[0] && attachments[0].label) || '').trim(),
         heroUrl: hero,
+        imageData: hero,
         imageName: String(item.imageName || '').trim(),
         attachments,
         createdAt: item.createdAt || '',
         updatedAt: item.updatedAt || ''
       };
     }).filter(item => item.title);
+  }
+
+  function normalizeReadReceipts(value){
+    return (value && typeof value === 'object' && !Array.isArray(value)) ? value : {};
+  }
+
+  function countApprovedResidents(list){
+    return (Array.isArray(list) ? list : []).filter(user => {
+      const status = String((user && user.status) || '').toLowerCase();
+      return status === 'approved' || status === 'active';
+    }).length;
+  }
+
+  function ensureCategoriesFromItems(){
+    const known = new Set(categories.map(cat => cat.id));
+    items.forEach(item => {
+      const explicit = String(item.categoryId || item.category || '').trim();
+      if(explicit && !known.has(explicit)){
+        categories.push({
+          id: explicit,
+          title: String(item.categoryTitle || explicit).replace(/-/g,' ').replace(/\b\w/g, m => m.toUpperCase()),
+          icon: suggestCategoryIcon(item.categoryTitle || explicit),
+          order: categories.length + 1,
+          active: true
+        });
+        known.add(explicit);
+      }
+    });
+    categories = normalizeCategories(categories);
   }
 
   function setCategoryMessage(message){
@@ -4257,6 +4181,31 @@
   function setItemMessage(message){
     const el = $id('hbSimpleItemMsg');
     if(el) el.textContent = message || '';
+  }
+
+  function getCategoryInputValue(){
+    const preset = $id('hbSimpleCatPreset');
+    const other = $id('hbSimpleCatTitle');
+    const presetValue = String((preset && preset.value) || '').trim();
+    if(presetValue && presetValue !== 'Other') return presetValue;
+    return String((other && other.value) || '').trim();
+  }
+
+  function syncCategoryInput(title){
+    const preset = $id('hbSimpleCatPreset');
+    const other = $id('hbSimpleCatTitle');
+    const normalized = String(title || '').trim();
+    const presetValues = ['General','Security','Parking','Emergency','Volunteering','Waste & Recycling','Community Services','Rules & Guidance'];
+    const matched = presetValues.find(value => value.toLowerCase() === normalized.toLowerCase());
+
+    if(preset) preset.value = matched ? matched : 'Other';
+    if(other){
+      other.style.display = matched ? 'none' : 'block';
+      other.value = matched ? '' : normalized;
+    }
+    if($id('hbSimpleCatIconPreview')){
+      $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(normalized || matched || 'General');
+    }
   }
 
   function renderCategorySelect(){
@@ -4307,7 +4256,16 @@
 
   function getCategoryLabel(categoryId){
     const found = categories.find(cat => cat.id === categoryId);
-    return found ? (found.icon + ' ' + found.title) : categoryId;
+    return found ? found.title : categoryId;
+  }
+
+  function getItemReadStats(itemId){
+    const bucket = handbookReadReceipts[itemId] && typeof handbookReadReceipts[itemId] === 'object'
+      ? handbookReadReceipts[itemId]
+      : {};
+    const read = Object.keys(bucket).length;
+    const pending = Math.max(0, Number(totalHandbookResidents || 0) - read);
+    return { read, pending };
   }
 
   function renderItems(){
@@ -4316,7 +4274,7 @@
     if(!wrap || !empty) return;
 
     const query = String(($id('hbSimpleItemSearch') && $id('hbSimpleItemSearch').value) || '').trim().toLowerCase();
-    const filtered = items.filter(function(item){
+    const filtered = items.filter(item => {
       if(!query) return true;
       return [item.title, item.summary, item.content].join(' ').toLowerCase().includes(query);
     });
@@ -4328,21 +4286,19 @@
     }
 
     wrap.innerHTML = filtered
-      .sort(function(a,b){
-        return String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || ''));
-      })
-      .map(function(item){
+      .sort((a,b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))
+      .map(item => {
         const stats = getItemReadStats(item.id);
         return '<div class="hb-admin-item-row">'
           + '<div class="hb-admin-item-meta">'
           + '<div class="hb-admin-item-title">' + esc(item.title) + '</div>'
-          + '<div class="hb-admin-item-sub">' + esc(getCategoryLabel(item.categoryId)) + (item.summary ? ' · ' + esc(item.summary) : '') + '</div>'
-          + '<div class="hb-admin-item-sub">' + (item.heroUrl ? 'Image saved' : 'No image') + (item.url ? ' · Link added' : '') + '</div>'
+          + '<div class="hb-admin-item-sub">' + esc(item.summary || 'No summary added') + '</div>'
+          + '<div class="hb-admin-item-sub">' + esc(getCategoryLabel(item.categoryId)) + ' · ' + esc(item.heroUrl ? 'Image saved' : 'No image') + (item.url ? ' · Link added' : '') + '</div>'
           + '</div>'
           + '<div class="hb-admin-row-actions">'
           + '<span class="hb-admin-read-metrics">'
-          +   '<span class="hb-admin-read-chip">Read ' + esc(String(stats.read)) + '</span>'
-          +   '<span class="hb-admin-read-chip pending">Unread ' + esc(String(stats.unread)) + '</span>'
+          + '<span class="hb-admin-read-chip">Read ' + esc(String(stats.read)) + '</span>'
+          + '<span class="hb-admin-read-chip pending">Unread ' + esc(String(stats.pending)) + '</span>'
           + '</span>'
           + '<span class="hb-status-pill ' + esc(item.status) + '">' + esc(item.status === 'published' ? 'Published' : 'Draft') + '</span>'
           + '<button type="button" class="btn btn-line small" data-hb-item-edit="' + esc(item.id) + '">Edit</button>'
@@ -4369,7 +4325,7 @@
     if(!cat) return;
     currentCategoryId = cat.id;
     syncCategoryInput(cat.title);
-    $id('hbSimpleCatActive').checked = cat.active !== false;
+    if($id('hbSimpleCatActive')) $id('hbSimpleCatActive').checked = cat.active !== false;
     setCategoryMessage('Editing category.');
   }
 
@@ -4407,22 +4363,28 @@
 
   async function saveCategory(){
     const title = getCategoryInputValue();
-    const icon = suggestCategoryIcon(title);
-    const active = !!$id('hbSimpleCatActive').checked;
+    const active = !!($id('hbSimpleCatActive') && $id('hbSimpleCatActive').checked);
+
     if(!title){
-      setCategoryMessage('Please enter a category name.');
+      setCategoryMessage('Please enter a category.');
       return;
     }
-    const id = currentCategoryId || slugify(title);
-    const existing = categories.find(cat => cat.id === id || cat.title.toLowerCase() === title.toLowerCase());
-    const base = existing || { id, order: categories.length + 1 };
+
+    const existing = categories.find(cat => cat.title.toLowerCase() === title.toLowerCase() && cat.id !== currentCategoryId);
+    if(existing){
+      setCategoryMessage('This category already exists.');
+      return;
+    }
+
+    const base = categories.find(cat => cat.id === currentCategoryId) || {};
     const category = {
-      id: base.id || id,
-      title,
-      icon,
+      id: base.id || slugify(title) || ('hb-cat-' + Date.now()),
+      title: title,
+      icon: suggestCategoryIcon(title),
       order: base.order || (categories.length + 1),
-      active
+      active: active
     };
+
     categories = categories.filter(cat => cat.id !== category.id);
     categories.push(category);
     categories = normalizeCategories(categories);
@@ -4450,15 +4412,11 @@
     clearCategoryForm();
   }
 
-  function sanitizeContent(value){
-    return String(value || '').trim();
-  }
-
   async function saveItem(){
     const categoryId = String(($id('hbSimpleItemCategory') && $id('hbSimpleItemCategory').value) || '').trim();
     const title = String($id('hbSimpleItemTitle').value || '').trim();
     const summary = String($id('hbSimpleItemSummary').value || '').trim();
-    const content = sanitizeContent($id('hbSimpleItemContent').value);
+    const content = String($id('hbSimpleItemContent').value || '').trim();
     const status = String($id('hbSimpleItemStatus').value || 'published');
     const linkLabel = String($id('hbSimpleItemLinkLabel').value || '').trim();
     const linkUrl = String($id('hbSimpleItemLinkUrl').value || '').trim();
@@ -4567,12 +4525,13 @@
 
   async function boot(){
     if(!$id('tabHandbook') || !$id('hbSimpleItemTitle')) return;
+
     categories = normalizeCategories(await loadStore(KEY_CATEGORIES, []));
-    items = normalizeItems(await loadStore(KEY_HANDBOOK_ITEMS, []));
-    const loadedUsers = await loadStore(KEY_USERS, []);
-    residentUsers = Array.isArray(loadedUsers) ? loadedUsers : [];
+    items = normalizeItems(await loadStore(KEY_ITEMS, []));
     handbookReadReceipts = normalizeReadReceipts(await loadStore(KEY_HANDBOOK_READ_RECEIPTS, {}));
+    totalHandbookResidents = countApprovedResidents(await loadStore(KEY_USERS, []));
     ensureCategoriesFromItems();
+
     if(categories.length){
       await saveStore(KEY_CATEGORIES, categories);
     }
@@ -4582,9 +4541,9 @@
     renderPreview();
     renderItems();
     clearCategoryForm();
+    syncCategoryInput('General');
     clearItemForm();
 
-    syncCategoryInput('General');
     $id('hbSimpleCatPreset')?.addEventListener('change', function(){
       syncCategoryInput(this.value);
     });
@@ -4632,6 +4591,7 @@
   }
 })();
 </script>
+
 
 </body>
 </html>
