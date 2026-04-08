@@ -1099,6 +1099,31 @@
     color:#6a7b90;
     line-height:1.5;
   }
+  #tabHandbook #hbSimpleCatTitle{display:none}
+  #tabHandbook .hb-admin-read-metrics{
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  #tabHandbook .hb-admin-read-chip{
+    display:inline-flex;
+    align-items:center;
+    min-height:30px;
+    padding:0 10px;
+    border-radius:999px;
+    border:1px solid rgba(17,24,39,.10);
+    background:#eef7f1;
+    color:#2f6d50;
+    font-size:.78rem;
+    font-weight:800;
+    white-space:nowrap;
+  }
+  #tabHandbook .hb-admin-read-chip.pending{
+    background:#fff7e8;
+    color:#8b6b22;
+    border-color:rgba(139,107,34,.18);
+  }
   @media (max-width: 980px){
     #tabHandbook .hb-admin-top-grid,
     #tabHandbook .hb-admin-item-top,
@@ -1113,104 +1138,6 @@
       justify-content:flex-start;
     }
   }
-
-  #tabHandbook .hb-admin-items-card{
-    border-top:1px solid rgba(17,24,39,.08);
-    padding-top:18px;
-    margin-top:18px;
-  }
-  #tabHandbook .hb-admin-items-list{
-    display:grid;
-    gap:0;
-    border:1px solid rgba(17,24,39,.08);
-    border-radius:16px;
-    overflow:hidden;
-    background:#fff;
-  }
-  #tabHandbook .hb-admin-items-head,
-  #tabHandbook .hb-admin-item-row{
-    display:grid;
-    grid-template-columns:minmax(180px,1.4fr) minmax(220px,1.6fr) 110px 120px 92px 110px 108px 74px 82px;
-    gap:10px;
-    align-items:center;
-  }
-  #tabHandbook .hb-admin-items-head{
-    padding:12px 14px;
-    background:#f7f9fb;
-    color:#66778c;
-    font-size:.76rem;
-    font-weight:900;
-    letter-spacing:.04em;
-    text-transform:uppercase;
-    border-bottom:1px solid rgba(17,24,39,.08);
-  }
-  #tabHandbook .hb-admin-item-row{
-    padding:12px 14px;
-    border-bottom:1px solid rgba(17,24,39,.08);
-  }
-  #tabHandbook .hb-admin-item-row:last-child{ border-bottom:0; }
-  #tabHandbook .hb-admin-item-title{ font-size:.94rem; font-weight:800; line-height:1.3; }
-  #tabHandbook .hb-admin-item-summary,
-  #tabHandbook .hb-admin-item-date,
-  #tabHandbook .hb-admin-item-category{
-    color:#6a7b90;
-    font-size:.86rem;
-    line-height:1.45;
-  }
-  #tabHandbook .hb-admin-read-chip{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-height:28px;
-    padding:0 9px;
-    border-radius:999px;
-    border:1px solid rgba(17,24,39,.10);
-    background:#eef7f1;
-    color:#2f6d50;
-    font-size:.76rem;
-    font-weight:800;
-    white-space:nowrap;
-    width:max-content;
-  }
-  #tabHandbook .hb-admin-read-chip.pending{
-    background:#fff7e8;
-    color:#8b6b22;
-    border-color:rgba(139,107,34,.18);
-  }
-  #tabHandbook .hb-admin-item-actions{
-    display:flex;
-    gap:6px;
-    align-items:center;
-    flex-wrap:wrap;
-  }
-  @media (max-width: 1180px){
-    #tabHandbook .hb-admin-items-head{ display:none; }
-    #tabHandbook .hb-admin-item-row{
-      grid-template-columns:1fr;
-      gap:8px;
-      align-items:start;
-    }
-    #tabHandbook .hb-admin-item-row > div::before{
-      display:block;
-      margin-bottom:3px;
-      color:#8a97a8;
-      font-size:.72rem;
-      font-weight:900;
-      text-transform:uppercase;
-      letter-spacing:.04em;
-    }
-    #tabHandbook .hb-admin-col-title::before{ content:'Title'; }
-    #tabHandbook .hb-admin-col-summary::before{ content:'Summary'; }
-    #tabHandbook .hb-admin-col-date::before{ content:'Date'; }
-    #tabHandbook .hb-admin-col-category::before{ content:'Category'; }
-    #tabHandbook .hb-admin-col-read::before{ content:'Read'; }
-    #tabHandbook .hb-admin-col-pending::before{ content:'Pending'; }
-    #tabHandbook .hb-admin-col-published::before{ content:'Published'; }
-    #tabHandbook .hb-admin-col-edit::before{ content:'Edit'; }
-    #tabHandbook .hb-admin-col-delete::before{ content:'Delete'; }
-    #tabHandbook .hb-admin-item-actions{ justify-content:flex-start; }
-  }
-
 </style>
 
 </head>
@@ -1956,31 +1883,32 @@
   <!-- ================= HANDBOOK ================= -->
   <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
     <h3>Handbook</h3>
-    <p class="tiny muted" style="margin-top:0;">A cleaner admin flow for the resident handbook: save the category once, use an automatic icon, and register each item in one professional layout.</p>
+    <p class="tiny muted" style="margin-top:0;">Manage handbook categories and resident messages in one simple place.</p>
 
     <div class="hb-admin-shell">
       <div class="hb-admin-panel">
         <div class="hb-admin-panel-head">
           <div>
             <h4 style="margin:0;">Category setup</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Choose one clear category name. The system suggests a suitable icon automatically and uses it everywhere in the handbook.</p>
+            <p class="tiny muted" style="margin:6px 0 0;">Choose a ready category or use Other when you need a new one.</p>
           </div>
         </div>
 
         <div class="hb-admin-top-grid">
           <div class="field" style="margin:0;">
-            <label>Category name</label>
-            <input id="hbSimpleCatTitle" type="text" maxlength="80" placeholder="e.g., Waste & Recycling" list="hbSimpleCatSuggestions" />
-            <datalist id="hbSimpleCatSuggestions">
-              <option value="General"></option>
-              <option value="Security"></option>
-              <option value="Parking"></option>
-              <option value="Emergency"></option>
-              <option value="Volunteering"></option>
-              <option value="Waste & Recycling"></option>
-              <option value="Community Services"></option>
-              <option value="Rules & Guidance"></option>
-            </datalist>
+            <label>Category</label>
+            <select id="hbSimpleCatPreset">
+              <option value="General">General</option>
+              <option value="Security">Security</option>
+              <option value="Parking">Parking</option>
+              <option value="Emergency">Emergency</option>
+              <option value="Volunteering">Volunteering</option>
+              <option value="Waste & Recycling">Waste & Recycling</option>
+              <option value="Community Services">Community Services</option>
+              <option value="Rules & Guidance">Rules & Guidance</option>
+              <option value="Other">Other</option>
+            </select>
+            <input id="hbSimpleCatTitle" type="text" maxlength="80" placeholder="Enter other category name" style="display:none; margin-top:10px;" />
           </div>
           <div class="field" style="margin:0;">
             <label>Auto icon</label>
@@ -2007,7 +1935,7 @@
         <div class="hb-admin-panel-head">
           <div>
             <h4 style="margin:0;">Handbook item</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Select the category once, then complete the item details below. The flow is cleaner and ready for resident publishing.</p>
+            <p class="tiny muted" style="margin:6px 0 0;">Choose the category, add the message details, and keep the image option when needed.</p>
           </div>
         </div>
 
@@ -2293,7 +2221,6 @@
   const KEY_PROJECT_RECIPIENTS = KEYS.PROJECT_RECIPIENTS || 'anw_project_recipients';
   const KEY_HANDBOOK_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
   const KEY_HANDBOOK_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
-  const KEY_HANDBOOK_READ_RECEIPTS = KEYS.HANDBOOK_READ_RECEIPTS || 'anw_handbook_read_receipts';
   const KEY_ACCESS = KEYS.ACL || KEYS.ACCESS || 'acl';
   const KEY_TASKS = KEYS.TASKS || 'anw_tasks';
   const KEY_NOTICES = window.getNoticesKey();
@@ -4110,8 +4037,6 @@
 
   let categories = [];
   let items = [];
-  let handbookUsers = [];
-  let handbookReadReceipts = {};
   let currentCategoryId = '';
   let currentItemId = '';
   let currentImageData = '';
@@ -4174,6 +4099,35 @@
     if(title.includes('community') || title.includes('event')) return '🏘️';
     if(title.includes('pet') || title.includes('animal')) return '🐾';
     return '📘';
+  }
+
+  function getCategoryInputValue(){
+    const preset = $id('hbSimpleCatPreset');
+    const other = $id('hbSimpleCatTitle');
+    const presetValue = String((preset && preset.value) || '').trim();
+    if(presetValue && presetValue !== 'Other') return presetValue;
+    return String((other && other.value) || '').trim();
+  }
+
+  function syncCategoryInput(title){
+    const preset = $id('hbSimpleCatPreset');
+    const other = $id('hbSimpleCatTitle');
+    const normalized = String(title || '').trim();
+    const presetValues = ['General','Security','Parking','Emergency','Volunteering','Waste & Recycling','Community Services','Rules & Guidance'];
+    const matched = presetValues.find(function(value){
+      return value.toLowerCase() === normalized.toLowerCase();
+    });
+
+    if(preset){
+      preset.value = matched ? matched : 'Other';
+    }
+    if(other){
+      other.style.display = matched ? 'none' : 'block';
+      other.value = matched ? '' : normalized;
+    }
+    if($id('hbSimpleCatIconPreview')){
+      $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(normalized || (matched || ''));
+    }
   }
 
   function normalizeCategories(list){
@@ -4305,59 +4259,6 @@
     return found ? (found.icon + ' ' + found.title) : categoryId;
   }
 
-
-  function formatHandbookDate(value){
-    if(!value) return '—';
-    try{
-      const d = new Date(value);
-      if(Number.isNaN(d.getTime())) return '—';
-      return d.toLocaleDateString('en-IE', { day:'2-digit', month:'short', year:'numeric' });
-    }catch(_){
-      return '—';
-    }
-  }
-
-  function getResidentReadKeyFromRow(row){
-    try{
-      return String(
-        (row && (row.regId || row.regNo || row.eircode || row.email || row.userEmail || row.id)) || ''
-      ).trim().toLowerCase();
-    }catch(_){
-      return '';
-    }
-  }
-
-  function getApprovedResidentsCount(){
-    const seen = new Set();
-    return (Array.isArray(handbookUsers) ? handbookUsers : []).filter(function(row){
-      const status = String((row && row.status) || '').toLowerCase();
-      if(!['active','approved'].includes(status)) return false;
-      const key = getResidentReadKeyFromRow(row);
-      if(!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    }).length;
-  }
-
-  function getReadCountForItem(itemId){
-    const bucket = handbookReadReceipts && typeof handbookReadReceipts === 'object' ? handbookReadReceipts[itemId] : null;
-    if(!bucket || typeof bucket !== 'object' || Array.isArray(bucket)) return 0;
-    const approvedKeys = new Set(
-      (Array.isArray(handbookUsers) ? handbookUsers : [])
-        .filter(function(row){
-          return ['active','approved'].includes(String((row && row.status) || '').toLowerCase());
-        })
-        .map(getResidentReadKeyFromRow)
-        .filter(Boolean)
-    );
-    let count = 0;
-    Object.keys(bucket).forEach(function(key){
-      if(approvedKeys.has(String(key || '').trim().toLowerCase())) count += 1;
-    });
-    return count;
-  }
-
-
   function renderItems(){
     const wrap = $id('hbSimpleItemList');
     const empty = $id('hbSimpleItemEmpty');
@@ -4366,8 +4267,8 @@
     const query = String(($id('hbSimpleItemSearch') && $id('hbSimpleItemSearch').value) || '').trim().toLowerCase();
     const filtered = items.filter(item => {
       if(!query) return true;
-      return [item.title, item.summary, item.content, getCategoryLabel(item.categoryId)].join(' ').toLowerCase().includes(query);
-    }).sort((a,b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
+      return [item.title, item.summary, item.content].join(' ').toLowerCase().includes(query);
+    });
 
     empty.style.display = filtered.length ? 'none' : 'block';
     if(!filtered.length){
@@ -4375,40 +4276,37 @@
       return;
     }
 
-    const totalResidents = getApprovedResidentsCount();
-
-    wrap.innerHTML = '<div class="hb-admin-items-head">'
-      + '<div>Title</div>'
-      + '<div>Summary</div>'
-      + '<div>Date</div>'
-      + '<div>Category</div>'
-      + '<div>Read</div>'
-      + '<div>Pending</div>'
-      + '<div>Published</div>'
-      + '<div>Edit</div>'
-      + '<div>Delete</div>'
-      + '</div>'
-      + filtered.map(item => {
-        const readCount = Math.min(getReadCountForItem(item.id), totalResidents);
-        const pendingCount = Math.max(totalResidents - readCount, 0);
+    wrap.innerHTML = filtered
+      .sort((a,b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))
+      .map(item => {
+        const stats = getItemReadStats(item.id);
         return '<div class="hb-admin-item-row">'
-          + '<div class="hb-admin-col-title"><div class="hb-admin-item-title">' + esc(item.title) + '</div></div>'
-          + '<div class="hb-admin-col-summary"><div class="hb-admin-item-summary">' + esc(item.summary || '—') + '</div></div>'
-          + '<div class="hb-admin-col-date"><div class="hb-admin-item-date">' + esc(formatHandbookDate(item.updatedAt || item.createdAt)) + '</div></div>'
-          + '<div class="hb-admin-col-category"><div class="hb-admin-item-category">' + esc(getCategoryLabel(item.categoryId)) + '</div></div>'
-          + '<div class="hb-admin-col-read"><span class="hb-admin-read-chip">Read ' + esc(String(readCount)) + '</span></div>'
-          + '<div class="hb-admin-col-pending"><span class="hb-admin-read-chip pending">Pending ' + esc(String(pendingCount)) + '</span></div>'
-          + '<div class="hb-admin-col-published"><span class="hb-status-pill ' + esc(item.status) + '">' + esc(item.status === 'published' ? 'Published' : 'Draft') + '</span></div>'
-          + '<div class="hb-admin-col-edit"><div class="hb-admin-item-actions"><button type="button" class="btn btn-line small" data-hb-item-edit="' + esc(item.id) + '">Edit</button></div></div>'
-          + '<div class="hb-admin-col-delete"><div class="hb-admin-item-actions"><button type="button" class="btn btn-line small" data-hb-item-delete="' + esc(item.id) + '">Delete</button></div></div>'
+          + '<div class="hb-admin-item-meta">'
+          + '<div class="hb-admin-item-title">' + esc(item.title) + '</div>'
+          + '<div class="hb-admin-item-sub">' + esc(item.summary || 'No summary added') + '</div>'
+          + '<div class="hb-admin-item-sub">' + esc(getCategoryLabel(item.categoryId)) + ' · ' + esc(item.heroUrl ? 'Image saved' : 'No image') + (item.url ? ' · Link added' : '') + '</div>'
+          + '</div>'
+          + '<div class="hb-admin-row-actions">'
+          + '<span class="hb-admin-read-metrics">'
+          +   '<span class="hb-admin-read-chip">Read ' + esc(String(stats.read)) + '</span>'
+          +   '<span class="hb-admin-read-chip pending">Unread ' + esc(String(stats.pending)) + '</span>'
+          + '</span>'
+          + '<span class="hb-status-pill ' + esc(item.status) + '">' + esc(item.status === 'published' ? 'Published' : 'Draft') + '</span>'
+          + '<button type="button" class="btn btn-line small" data-hb-item-edit="' + esc(item.id) + '">Edit</button>'
+          + '<button type="button" class="btn btn-line small" data-hb-item-delete="' + esc(item.id) + '">Delete</button>'
+          + '</div>'
           + '</div>';
       }).join('');
   }
 
   function clearCategoryForm(){
     currentCategoryId = '';
-    if($id('hbSimpleCatTitle')) $id('hbSimpleCatTitle').value = '';
-    if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = '📘';
+    if($id('hbSimpleCatPreset')) $id('hbSimpleCatPreset').value = 'General';
+    if($id('hbSimpleCatTitle')){
+      $id('hbSimpleCatTitle').value = '';
+      $id('hbSimpleCatTitle').style.display = 'none';
+    }
+    if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon('General');
     if($id('hbSimpleCatActive')) $id('hbSimpleCatActive').checked = true;
     setCategoryMessage('');
   }
@@ -4417,8 +4315,7 @@
     const cat = categories.find(entry => entry.id === categoryId);
     if(!cat) return;
     currentCategoryId = cat.id;
-    $id('hbSimpleCatTitle').value = cat.title;
-    if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = cat.icon || suggestCategoryIcon(cat.title) || '📘';
+    syncCategoryInput(cat.title);
     $id('hbSimpleCatActive').checked = cat.active !== false;
     setCategoryMessage('Editing category.');
   }
@@ -4456,7 +4353,7 @@
   }
 
   async function saveCategory(){
-    const title = String($id('hbSimpleCatTitle').value || '').trim();
+    const title = getCategoryInputValue();
     const icon = suggestCategoryIcon(title);
     const active = !!$id('hbSimpleCatActive').checked;
     if(!title){
@@ -4618,10 +4515,7 @@
   async function boot(){
     if(!$id('tabHandbook') || !$id('hbSimpleItemTitle')) return;
     categories = normalizeCategories(await loadStore(KEY_CATEGORIES, []));
-    items = normalizeItems(await loadStore(KEY_HANDBOOK_ITEMS, []));
-    const loadedUsers = await anwLoadSafe(KEY_USERS, []);
-    handbookUsers = Array.isArray(loadedUsers) ? loadedUsers : [];
-    handbookReadReceipts = await loadStore(KEY_HANDBOOK_READ_RECEIPTS, {});
+    items = normalizeItems(await loadStore(KEY_ITEMS, []));
     ensureCategoriesFromItems();
     if(categories.length){
       await saveStore(KEY_CATEGORIES, categories);
@@ -4632,8 +4526,12 @@
     renderPreview();
     renderItems();
     clearCategoryForm();
+    syncCategoryInput('General');
     clearItemForm();
 
+    $id('hbSimpleCatPreset')?.addEventListener('change', function(){
+      syncCategoryInput(this.value);
+    });
     $id('hbSimpleCatTitle')?.addEventListener('input', function(){
       if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(this.value);
     });
