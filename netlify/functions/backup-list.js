@@ -196,7 +196,40 @@ export default async (req, context) => {
   try {
     const store = getCentralStore(context);
     const idx = (await safeGetJson(store, "anw_backups_index", { items: [] })) ?? { items: [] };
-    const items = Array.isArray(idx.items) ? idx.items : [];
+    const rawItems = Array.isArray(idx.items) ? idx.items : [];
+    const items = [];
+
+    for (const item of rawItems) {
+      if (!item || typeof item !== "object") continue;
+      if (item.fileName && item.sizeBytes != null) {
+        items.push(item);
+        continue;
+      }
+
+      const backupId = String(item.id || "").trim();
+      if (!backupId) {
+        items.push(item);
+        continue;
+      }
+
+      const snap = await safeGetJson(store, `anw_backup_${backupId}`, null);
+      if (snap && typeof snap === "object") {
+        const json = JSON.stringify(snap);
+        items.push({
+          ...item,
+          fileName: item.fileName || `${backupId}.json`,
+          sizeBytes: item.sizeBytes ?? Buffer.byteLength(json, "utf8"),
+          includes: Array.isArray(item.includes) ? item.includes : (Array.isArray(snap.includes) ? snap.includes : []),
+          createdAt: item.createdAt || snap.createdAt || null,
+        });
+      } else {
+        items.push({
+          ...item,
+          fileName: item.fileName || `${backupId}.json`,
+        });
+      }
+    }
+
     return new Response(JSON.stringify({ ok: true, items }), {
       status: 200,
       headers: {
