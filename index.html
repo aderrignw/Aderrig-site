@@ -40,6 +40,70 @@
     }
     body.page-home .btn{ height:44px; }
     body.page-home #coordResult:empty{ display:none; }
+
+    /* Nearby support refinement */
+    body.page-home #coordResult{
+      text-align:left;
+      line-height:1.5;
+    }
+    body.page-home .support-summary{
+      font-weight:700;
+      margin-bottom:10px;
+      color:#334155;
+    }
+    body.page-home .support-login-note{
+      display:block;
+      margin-top:6px;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+    body.page-home .support-groups{
+      display:grid;
+      gap:12px;
+    }
+    body.page-home .support-group{
+      padding:12px 14px;
+      border:1px solid rgba(17,24,39,.08);
+      border-radius:12px;
+      background:#fff;
+    }
+    body.page-home .support-group-title{
+      font-weight:800;
+      color:#1f2937;
+      margin-bottom:8px;
+    }
+    body.page-home .support-list{
+      list-style:none;
+      margin:0;
+      padding:0;
+      display:grid;
+      gap:8px;
+    }
+    body.page-home .support-item{
+      display:grid;
+      gap:2px;
+      padding-left:14px;
+      position:relative;
+    }
+    body.page-home .support-item::before{
+      content:"•";
+      position:absolute;
+      left:0;
+      top:0;
+      color:var(--brand);
+      font-weight:800;
+    }
+    body.page-home .support-name{
+      font-weight:700;
+      color:#111827;
+    }
+    body.page-home .support-role{
+      color:#475569;
+    }
+    body.page-home .support-email{
+      color:#065f46;
+      word-break:break-word;
+    }
   </style>
 </head>
 <body data-acl-shell-public="true" data-acl-loading="true" class="page-home">
@@ -218,38 +282,59 @@
 
           if (data.mode !== 'details') {
             out.innerHTML = `
-              <strong>Nearby support:</strong><br>
-              ${c} street coordinator(s) and ${v} volunteer(s) near your Eircode.<br>
-              <small>Login or register to see names and email addresses.</small>
+              <div class="support-summary">Nearby support:</div>
+              <div>${c} street coordinator(s) and ${v} volunteer(s) near your Eircode.</div>
+              <small class="support-login-note">Login or register to see names and email addresses.</small>
             `;
             return false;
           }
 
-          const lines = [];
-          if (data.coordinators && data.coordinators.length) {
-            lines.push('<strong>Street coordinators near you:</strong>');
-            data.coordinators.forEach(u => {
-              const email = u.email || '(email not available)';
-              lines.push(`${u.name} — Street coordinator — ${email}`);
-            });
-            lines.push('');
-          }
+          const esc = (value) => String(value == null ? '' : value)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
 
-          if (data.volunteers && data.volunteers.length) {
-            lines.push('<strong>Volunteers near you:</strong>');
-            data.volunteers.forEach(u => {
-              const email = u.email || '(email not available)';
-              lines.push(`${u.name} — ${u.role || 'Volunteer'} — ${email}`);
-            });
-          }
+          const buildGroup = (title, items, fallbackRole) => {
+            if (!Array.isArray(items) || !items.length) return '';
+            const rows = items.map(u => {
+              const name = esc(u.name || 'Resident');
+              const role = esc(u.role || fallbackRole);
+              const email = esc(u.email || '(email not available)');
+              return `
+                <li class="support-item">
+                  <div class="support-name">${name}</div>
+                  <div class="support-role">${role}</div>
+                  <div class="support-email">${email}</div>
+                </li>
+              `;
+            }).join('');
 
-          if (!lines.length) {
+            return `
+              <section class="support-group">
+                <div class="support-group-title">${title}</div>
+                <ul class="support-list">${rows}</ul>
+              </section>
+            `;
+          };
+
+          const groups = [
+            buildGroup('Street Coordinators', data.coordinators, 'Street Coordinator'),
+            buildGroup('Volunteers', data.volunteers, 'Volunteer')
+          ].filter(Boolean);
+
+          if (!groups.length) {
             out.innerHTML = `
               <strong>No coordinators or volunteers found near this Eircode.</strong><br>
               Once local residents register and are approved, their roles will appear here.
             `;
           } else {
-            out.innerHTML = lines.join('<br>');
+            out.innerHTML = `
+              <div class="support-groups">
+                ${groups.join('')}
+              </div>
+            `;
           }
 
           return false;
