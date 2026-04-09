@@ -244,20 +244,43 @@ async function purgeExpiredRemovedResidents(store) {
   return { purged, remaining: kept.length };
 }
 
+
+function buildBackupListItem(snapshot, extra = {}) {
+  const json = JSON.stringify(snapshot);
+  return {
+    id: snapshot.id,
+    fileName: `${snapshot.id}.json`,
+    createdAt: snapshot.createdAt,
+    includes: Array.isArray(snapshot.includes) ? snapshot.includes : [],
+    sizeBytes: Buffer.byteLength(json, "utf8"),
+    ...extra,
+  };
+}
+
 const DATA_KEYS = [
   "anw_users",
   "anw_incidents",
   "anw_tasks",
   "anw_projects",
   "anw_project_monitoring",
+  "anw_project_recipients",
   "anw_alerts",
+  "anw_alert_contacts",
   "anw_contacts",
+  "anw_notices",
   "anw_elections",
+  "anw_election_interest",
   "anw_votes",
   "anw_team_votes",
   "anw_election_settings",
-  "anw_acl",
+  "anw_handbook_categories",
+  "anw_handbook_items",
+  "anw_handbook_read_receipts",
+  "anw_parking_registry_v1",
+  "anw_parking_policy_v1",
+  "acl",
   "anw_backup_settings",
+  "anw_audit_log",
 ];
 
 export default async (req, context) => {
@@ -287,7 +310,7 @@ export default async (req, context) => {
     const indexKey = "anw_backups_index";
     const idx = (await safeGetJson(store, indexKey, { items: [] })) ?? { items: [] };
     idx.items = Array.isArray(idx.items) ? idx.items : [];
-    idx.items.unshift({ id, createdAt, includes: DATA_KEYS, purgeResult });
+    idx.items.unshift(buildBackupListItem(snapshot, { purgeResult }));
     idx.items = idx.items.slice(0, 100);
     await safeSetJson(store, indexKey, idx, { metadata: { updatedAt: createdAt } });
 
