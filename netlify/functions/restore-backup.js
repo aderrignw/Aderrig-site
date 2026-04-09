@@ -189,20 +189,43 @@ async function isOwnerAuthorized(context, req) {
   return !!(match && isApprovedUser(match) && hasOwnerRole(match));
 }
 
+
+function buildBackupListItem(snapshot, extra = {}) {
+  const json = JSON.stringify(snapshot);
+  return {
+    id: snapshot.id,
+    fileName: `${snapshot.id}.json`,
+    createdAt: snapshot.createdAt,
+    includes: Array.isArray(snapshot.includes) ? snapshot.includes : [],
+    sizeBytes: Buffer.byteLength(json, "utf8"),
+    ...extra,
+  };
+}
+
 const DATA_KEYS = [
   "anw_users",
   "anw_incidents",
   "anw_tasks",
   "anw_projects",
   "anw_project_monitoring",
+  "anw_project_recipients",
   "anw_alerts",
+  "anw_alert_contacts",
   "anw_contacts",
+  "anw_notices",
   "anw_elections",
+  "anw_election_interest",
   "anw_votes",
   "anw_team_votes",
   "anw_election_settings",
-  "anw_acl",
+  "anw_handbook_categories",
+  "anw_handbook_items",
+  "anw_handbook_read_receipts",
+  "anw_parking_registry_v1",
+  "anw_parking_policy_v1",
+  "acl",
   "anw_backup_settings",
+  "anw_audit_log",
 ];
 
 async function addBackupIndexEntry(store, item) {
@@ -239,12 +262,7 @@ async function createSafetyBackup(store, note) {
       backupType: "safety-before-restore",
     },
   });
-  await addBackupIndexEntry(store, {
-    id,
-    createdAt,
-    includes: DATA_KEYS,
-    kind: "safety-before-restore",
-  });
+  await addBackupIndexEntry(store, buildBackupListItem(snapshot, { kind: "safety-before-restore" }));
   return id;
 }
 
@@ -276,6 +294,13 @@ export default async (req, context) => {
       snap = uploaded;
     } else if (requestedId) {
       snap = await safeGetJson(store, `anw_backup_${requestedId}`, null);
+    } else {
+      const idx = (await safeGetJson(store, "anw_backups_index", { items: [] })) ?? { items: [] };
+      const latest = Array.isArray(idx.items) ? idx.items[0] : null;
+      if (latest?.id) {
+        id = String(latest.id).trim();
+        snap = await safeGetJson(store, `anw_backup_${id}`, null);
+      }
     }
 
     if (!snap || typeof snap !== "object" || !snap.data || typeof snap.data !== "object") {
