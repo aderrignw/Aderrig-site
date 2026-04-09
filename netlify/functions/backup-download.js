@@ -1,45 +1,197 @@
 import { getStore } from "@netlify/blobs";
 
-function getCentralStore(context){
-  const fixed = (process && process.env && process.env.CENTRAL_STORE_NAME) ? String(process.env.CENTRAL_STORE_NAME) : '';
-  const storeName = fixed || (context?.site?.id ? `kv_${context.site.id}` : 'kv_default');
+function getCentralStore(context) {
+  const fixed = (process && process.env && process.env.CENTRAL_STORE_NAME)
+    ? String(process.env.CENTRAL_STORE_NAME)
+    : "";
+  const storeName = fixed || (context?.site?.id ? `kv_${context.site.id}` : "kv_default");
   return getStore(storeName);
 }
 
+async function safeGetJson(store, key, fallback = null) {
+  try {
+    const value = await store.get(key, { type: "json" });
+    return value ?? fallback;
+  } catch (_) {
+    try {
+      const raw = await store.get(key);
+      if (raw == null || raw === "") return fallback;
+      if (typeof raw === "string") return JSON.parse(raw);
+      if (raw && typeof raw === "object") return raw;
+      return fallback;
+    } catch (_err) {
+      return fallback;
+    }
+  }
+}
+
 const ADMIN_TOKEN = (process?.env?.ANW_ADMIN_TOKEN || "").trim();
-function isAuthorized(req) {
+const MASTER_EMAIL = String(process?.env?.MASTER_EMAIL || "claudiosantos1968@gmail.com").trim().toLowerCase();
+
+function getBearerToken(req) {
+  try {
+    const auth = req.headers.get("authorization") || "";
+    const match = auth.match(/^Bearer\s+(.+)$/i);
+    return match ? match[1].trim() : "";
+  } catch {
+    return "";
+  }
+}
+
+function isAuthorizedByAdminToken(req) {
   if (!ADMIN_TOKEN) return false;
-  const auth = req.headers.get("authorization") || "";
-  const m = auth.match(/^Bearer\s+(.+)$/i);
-  return !!m && m[1].trim() === ADMIN_TOKEN;
+  const token = getBearerToken(req);
+  return !!token && token === ADMIN_TOKEN;
 }
 
-function extractRoles(user){
-  const roles =
-    user?.app_metadata?.roles ||
-    user?.app_metadata?.role ||
-    user?.user_metadata?.roles ||
-    [];
-  const list = Array.isArray(roles) ? roles : [roles];
-  return list.map(String).map(r => r.toLowerCase());
-}
-function isOwnerUser(user){
-  return extractRoles(user).includes("owner");
-}
-function isAdminUser(user){
-  const rs = extractRoles(user);
-  return rs.includes("admin") || rs.includes("owner");
-}
-function isPrivileged(context){
-  const user = context?.clientContext?.user;
-  if (!user) return false;
-  return isOwnerUser(user) || isAdminUser(user);
+function decodeBase64Url(value) {
+  const input = String(value || "");
+  if (!input) return "";
+  const normalized = input.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - (normalized.length % 4 || 4)) % 4);
+  return Buffer.from(padded, "base64").toString("utf8");
 }
 
+function parseJwtPayload(token) {
+  try {
+    const parts = String(token || "").split(".");
+    if (parts.length < 2) return null;
+    return JSON.parse(decodeBase64Url(parts[1]));
+  } catch {
+    return null;
+  }
+}
+
+function parseNetlifyCustomContext(context) {
+  try {
+    const raw = context?.clientContext?.custom?.netlify;
+    if (!raw) return null;
+    if (typeof raw === "object") return raw;
+    return JSON.parse(Buffer.from(String(raw), "base64").toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function normalizeRoleName(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (!raw) return "";
+  const clean = raw.replace(/[\s\-]+/g, "_");
+  const aliasMap = {
+    owner: "owner",
+    proprietario: "owner",
+    "proprietário": "owner",
+    homeowner: "owner",
+    householder: "owner",
+    admin: "admin",
+    administrator: "admin",
+  };
+  return aliasMap[clean] || clean;
+}
+
+function collectProfileRoles(user) {
+  const out = [];
+  const pushAny = (value) => {
+    if (value == null || value === "") return;
+    if (Array.isArray(value)) {
+      value.forEach(pushAny);
+      return;
+    }
+    if (typeof value === "string" && /[;,|]/.test(value)) {
+      value.split(/[;,|]/).forEach(pushAny);
+      return;
+    }
+    out.push(String(value));
+  };
+
+  if (!user || typeof user !== "object") return out;
+  pushAny(user.type);
+  pushAny(user.role);
+  pushAny(user.roles);
+  pushAny(user.residentType);
+  pushAny(user.position);
+  pushAny(user.title);
+  pushAny(user.access);
+  pushAny(user.userRole);
+  pushAny(user.userRoles);
+  pushAny(user.app_metadata?.roles);
+  pushAny(user.app_metadata?.role);
+  pushAny(user.user_metadata?.roles);
+  pushAny(user.user_metadata?.role);
+  return out;
+}
+
+function hasBackupAccessRole(user) {
+  const roles = collectProfileRoles(user).map(normalizeRoleName);
+  return roles.includes("owner") || roles.includes("admin");
+}
+
+function isApprovedUser(user) {
+  if (!user || typeof user !== "object") return false;
+  if (user.approved === true || user.active === true) return true;
+  const status = String(user.status ?? user.accountStatus ?? user.registrationStatus ?? "")
+    .trim()
+    .toLowerCase();
+  return status === "approved" || status === "active" || status === "enabled";
+}
+
+function extractCandidateEmails(user) {
+  const values = [
+    user?.email,
+    user?.user_metadata?.email,
+    user?.userEmail,
+    user?.loginEmail,
+    user?.netlifyEmail,
+  ];
+  return [...new Set(values.map(normalizeEmail).filter(Boolean))];
+}
+
+function readCurrentUser(context, req) {
+  const directUser = context?.clientContext?.user;
+  if (directUser?.email) return directUser;
+
+  const netlifyContext = parseNetlifyCustomContext(context);
+  if (netlifyContext?.user?.email) return netlifyContext.user;
+  if (netlifyContext?.identity?.email) return netlifyContext.identity;
+
+  const token = getBearerToken(req);
+  if (token) {
+    const payload = parseJwtPayload(token);
+    if (payload?.email) return payload;
+  }
+
+  return null;
+}
+
+async function isBackupAuthorized(context, req) {
+  const currentUser = readCurrentUser(context, req);
+  if (!currentUser) return false;
+
+  const currentEmails = extractCandidateEmails(currentUser);
+  if (!currentEmails.length) return false;
+
+  if (MASTER_EMAIL && currentEmails.includes(MASTER_EMAIL)) {
+    return true;
+  }
+
+  const store = getCentralStore(context);
+  const users = (await safeGetJson(store, "anw_users", [])) ?? [];
+  if (!Array.isArray(users) || !users.length) return false;
+
+  const match = users.find((user) =>
+    extractCandidateEmails(user).some((email) => currentEmails.includes(email))
+  );
+
+  return !!(match && isApprovedUser(match) && hasBackupAccessRole(match));
+}
 
 export default async (req, context) => {
-  if (!isPrivileged(context) && !isAuthorized(req)) {
-    return new Response(JSON.stringify({ ok:false, error:"Unauthorized" }), {
+  if (!(await isBackupAuthorized(context, req)) && !isAuthorizedByAdminToken(req)) {
+    return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), {
       status: 401,
       headers: { "content-type": "application/json; charset=utf-8" }
     });
@@ -49,12 +201,20 @@ export default async (req, context) => {
     const url = new URL(req.url);
     const id = url.searchParams.get("id");
     if (!id) {
-      return new Response(JSON.stringify({ ok:false, error:"Missing id" }), { status: 400, headers: { "content-type":"application/json; charset=utf-8" } });
+      return new Response(JSON.stringify({ ok: false, error: "Missing id" }), {
+        status: 400,
+        headers: { "content-type": "application/json; charset=utf-8" }
+      });
     }
 
     const store = getCentralStore(context);
-    const snap = await store.get(`anw_backup_${id}`, { type: "json" });
-    if (!snap) return new Response(JSON.stringify({ ok:false, error:"Not found" }), { status: 404, headers: { "content-type":"application/json; charset=utf-8" } });
+    const snap = await safeGetJson(store, `anw_backup_${id}`, null);
+    if (!snap) {
+      return new Response(JSON.stringify({ ok: false, error: "Not found" }), {
+        status: 404,
+        headers: { "content-type": "application/json; charset=utf-8" }
+      });
+    }
 
     return new Response(JSON.stringify(snap, null, 2), {
       status: 200,
@@ -65,6 +225,9 @@ export default async (req, context) => {
       }
     });
   } catch (e) {
-    return new Response(JSON.stringify({ ok:false, error:String(e?.message || e) }), { status: 500, headers: { "content-type":"application/json; charset=utf-8" } });
+    return new Response(JSON.stringify({ ok: false, error: String(e?.message || e) }), {
+      status: 500,
+      headers: { "content-type": "application/json; charset=utf-8" }
+    });
   }
 };
