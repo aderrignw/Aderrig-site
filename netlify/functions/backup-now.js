@@ -133,8 +133,9 @@ function collectProfileRoles(user) {
   return out;
 }
 
-function hasOwnerRole(user) {
-  return collectProfileRoles(user).map(normalizeRoleName).includes("owner");
+function hasBackupAccessRole(user) {
+  const roles = collectProfileRoles(user).map(normalizeRoleName);
+  return roles.includes("owner") || roles.includes("admin");
 }
 
 function isApprovedUser(user) {
@@ -174,7 +175,7 @@ function readCurrentUser(context, req) {
   return null;
 }
 
-async function isOwnerAuthorized(context, req) {
+async function isBackupAuthorized(context, req) {
   const currentUser = readCurrentUser(context, req);
   if (!currentUser) return false;
 
@@ -193,7 +194,7 @@ async function isOwnerAuthorized(context, req) {
     extractCandidateEmails(user).some((email) => currentEmails.includes(email))
   );
 
-  return !!(match && isApprovedUser(match) && hasOwnerRole(match));
+  return !!(match && isApprovedUser(match) && hasBackupAccessRole(match));
 }
 
 const REMOVAL_RETENTION_MS = 180 * 24 * 60 * 60 * 1000;
@@ -284,7 +285,7 @@ const DATA_KEYS = [
 ];
 
 export default async (req, context) => {
-  if (!(await isOwnerAuthorized(context, req)) && !isAuthorizedByAdminToken(req)) {
+  if (!(await isBackupAuthorized(context, req)) && !isAuthorizedByAdminToken(req)) {
     return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), {
       status: 401,
       headers: { "content-type": "application/json; charset=utf-8" },
