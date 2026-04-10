@@ -682,7 +682,9 @@
   hydrateIncidents();
   populateFilters();
   applyFilters();
+  try{ document.body.removeAttribute('data-acl-loading'); }catch(_){ }
 })();
 </script>
+<script src="assets/acl-guard.js"></script>
 </body>
 </html>
