@@ -1691,27 +1691,35 @@
   <section class="card admin-tab-content" id="tabReports" style="display:none;">
     <h3>Reports</h3>
     <p class="tiny muted" style="margin-top:0;">
-      View and manage incident reports submitted via the <a href="report.html">Report</a> page.
+      View and manage incident reports submitted via the <a href="report.html">Report</a> page. This admin view reads the same incident storage used by the resident report form and overview, with no Google Maps dependency.
     </p>
 
-    <div class="actions" style="justify-content:flex-start; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem;">
+    <div class="actions" style="justify-content:flex-start; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem; align-items:flex-end;">
       <div class="field" style="min-width:220px; margin:0;">
         <label class="tiny muted" for="repStatusFilter">Status</label>
         <select id="repStatusFilter" class="input" style="width:100%;">
           <option value="all">All</option>
           <option value="submitted">Submitted</option>
+          <option value="open">Open</option>
           <option value="in_review">In review</option>
+          <option value="review">Review</option>
+          <option value="pending">Pending</option>
           <option value="sent_to_garda">Sent to Gardaí</option>
+          <option value="resolved">Resolved</option>
           <option value="closed">Closed</option>
+          <option value="historical">Historical</option>
+          <option value="blocked">Blocked</option>
+          <option value="suspended">Suspended</option>
+          <option value="deleted">Deleted</option>
         </select>
       </div>
 
-      <div class="field" style="min-width:280px; margin:0;">
-        <label class="tiny muted" for="repSearch">Search (ID / email / location)</label>
-        <input id="repSearch" type="text" placeholder="e.g., RPT-0003 or someone@email.com" />
+      <div class="field" style="min-width:320px; margin:0;">
+        <label class="tiny muted" for="repSearch">Search (ID / email / category / location)</label>
+        <input id="repSearch" type="text" placeholder="e.g., RPT-0003, historical, someone@email.com or Oak Street" />
       </div>
 
-      <div style="display:flex; gap:0.5rem; align-items:flex-end;">
+      <div style="display:flex; gap:0.5rem; align-items:flex-end; flex-wrap:wrap;">
         <button type="button" class="btn" id="btnRepRefresh">Refresh</button>
         <button type="button" class="btn btn-line" id="btnRepExport">Export file</button>
       </div>
@@ -1737,6 +1745,76 @@
     </div>
 
     <p id="repEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No reports found.</p>
+
+    <div id="repDetailCard" class="card" style="display:none; background:#f9fafb; margin-top:0.85rem;">
+      <div class="actions" style="justify-content:space-between; align-items:center; gap:10px; margin-bottom:0.5rem;">
+        <div>
+          <h4 style="margin:0;">Report details</h4>
+          <p class="tiny muted" style="margin:4px 0 0;">Review the full report and update its status without removing the stored incident record.</p>
+        </div>
+        <button type="button" class="btn-line small" id="btnRepCloseDetail">Close</button>
+      </div>
+
+      <div class="grid-2" style="gap:1rem; align-items:start;">
+        <div>
+          <div class="field">
+            <label>ID</label>
+            <input id="repDetailId" type="text" disabled />
+          </div>
+          <div class="field">
+            <label>Created</label>
+            <input id="repDetailCreated" type="text" disabled />
+          </div>
+          <div class="field">
+            <label>Category</label>
+            <input id="repDetailCategory" type="text" disabled />
+          </div>
+          <div class="field">
+            <label>Location</label>
+            <input id="repDetailLocation" type="text" disabled />
+          </div>
+          <div class="field">
+            <label>Reporter email</label>
+            <input id="repDetailEmail" type="text" disabled />
+          </div>
+          <div class="field">
+            <label>Attachments</label>
+            <textarea id="repDetailAttachments" rows="4" disabled></textarea>
+          </div>
+        </div>
+        <div>
+          <div class="field">
+            <label>Status</label>
+            <select id="repDetailStatus">
+              <option value="submitted">Submitted</option>
+              <option value="open">Open</option>
+              <option value="in_review">In review</option>
+              <option value="review">Review</option>
+              <option value="pending">Pending</option>
+              <option value="sent_to_garda">Sent to Gardaí</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+              <option value="historical">Historical</option>
+              <option value="blocked">Blocked</option>
+              <option value="suspended">Suspended</option>
+              <option value="deleted">Deleted</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Description</label>
+            <textarea id="repDetailDescription" rows="7" disabled></textarea>
+          </div>
+          <div class="field">
+            <label>Admin notes</label>
+            <textarea id="repDetailNotes" rows="5" placeholder="Optional internal note for follow-up, archive reason or status change."></textarea>
+          </div>
+          <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+            <button type="button" class="btn-line small" id="btnRepMarkHistorical">Mark historical</button>
+            <button type="button" class="btn small" id="btnRepSaveDetail">Save report</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- ================= NOTICES ================= -->
@@ -3144,18 +3222,137 @@
     if(empty) empty.style.display = rows.length ? 'none' : 'block';
   }
 
+  const REPORT_STATUS_LABELS = {
+    submitted:'Submitted',
+    open:'Open',
+    in_review:'In review',
+    review:'Review',
+    pending:'Pending',
+    sent_to_garda:'Sent to Gardaí',
+    resolved:'Resolved',
+    closed:'Closed',
+    historical:'Historical',
+    blocked:'Blocked',
+    suspended:'Suspended',
+    deleted:'Deleted'
+  };
+  let REPORTS_CACHE = [];
+  let CURRENT_REPORT_ID = '';
+
+  function normStatus(value){
+    return String(value == null ? '' : value).trim().toLowerCase().replace(/\s+/g, '_');
+  }
+  function reportStatusLabel(value){
+    const key = normStatus(value) || 'submitted';
+    return REPORT_STATUS_LABELS[key] || String(value || 'submitted').replace(/_/g, ' ').replace(/(^|\s)\S/g, s => s.toUpperCase());
+  }
+  function reportStatusClass(value){
+    const key = normStatus(value);
+    if(['resolved','closed'].includes(key)) return 'tag ok';
+    if(['historical','blocked','suspended','deleted'].includes(key)) return 'tag gray';
+    return 'tag';
+  }
+  function reportAttachmentSummary(report){
+    const list = Array.isArray(report?.attachments) ? report.attachments : [];
+    if(!list.length) return 'No attachment metadata stored.';
+    return list.map((item) => {
+      if(typeof item === 'string') return item;
+      const parts = [item.filename || item.name || 'attachment'];
+      if(item.size != null && item.size !== '') parts.push(String(item.size));
+      if(item.type) parts.push(String(item.type));
+      return parts.join(' — ');
+    }).join('\n');
+  }
+  function reportSearchHaystack(report){
+    return [
+      report.id,
+      report.category,
+      report.location,
+      report.address,
+      report.email,
+      report.reporterEmail,
+      report.status,
+      report.description,
+      report.notes,
+      report.adminNotes
+    ].map(v => String(v || '').toLowerCase()).join(' ');
+  }
+  function reportSortValue(report){
+    return Date.parse(report.updatedAt || report.createdAt || report.created || report.date || 0) || 0;
+  }
+  function closeReportDetail(){
+    CURRENT_REPORT_ID = '';
+    const card = byId('repDetailCard');
+    if(card) card.style.display = 'none';
+  }
+  function openReportDetail(reportId){
+    const report = REPORTS_CACHE.find(r => String(r.id || '') === String(reportId || ''));
+    if(!report) return;
+    CURRENT_REPORT_ID = String(report.id || '');
+    byId('repDetailId').value = report.id || '';
+    byId('repDetailCreated').value = fmtDate(report.createdAt || report.created || report.date || '');
+    byId('repDetailCategory').value = report.category || '—';
+    byId('repDetailLocation').value = report.location || report.address || '—';
+    byId('repDetailEmail').value = report.email || report.reporterEmail || '—';
+    byId('repDetailDescription').value = report.description || report.notes || '';
+    byId('repDetailAttachments').value = reportAttachmentSummary(report);
+    byId('repDetailStatus').value = normStatus(report.status || 'submitted') || 'submitted';
+    byId('repDetailNotes').value = report.adminNotes || '';
+    const card = byId('repDetailCard');
+    if(card) card.style.display = 'block';
+  }
+  async function updateReportStatus(nextStatus){
+    if(!CURRENT_REPORT_ID) return;
+    const rows = await anwLoadSafe(KEY_REPORTS, []);
+    const next = Array.isArray(rows) ? rows.slice() : [];
+    const idx = next.findIndex(r => String(r && r.id || '') === CURRENT_REPORT_ID);
+    if(idx < 0) return;
+    const existing = Object.assign({}, next[idx]);
+    existing.status = normStatus(nextStatus || byId('repDetailStatus')?.value || existing.status || 'submitted');
+    existing.adminNotes = String(byId('repDetailNotes')?.value || '').trim();
+    existing.updatedAt = new Date().toISOString();
+    next[idx] = existing;
+    await anwSaveSafe(KEY_REPORTS, next);
+    byId('repMsg').textContent = `Report ${existing.id || ''} saved with status ${reportStatusLabel(existing.status)}.`.trim();
+    await loadReports();
+    openReportDetail(existing.id);
+  }
   async function loadReports(){
-    await renderSimpleTable(KEY_REPORTS, 'repBody', 'repEmpty', r => `
+    const rows = await anwLoadSafe(KEY_REPORTS, []);
+    REPORTS_CACHE = (Array.isArray(rows) ? rows.slice() : []).sort((a,b) => reportSortValue(b) - reportSortValue(a));
+    const filterStatus = normStatus(byId('repStatusFilter')?.value || 'all');
+    const query = String(byId('repSearch')?.value || '').trim().toLowerCase();
+    const filtered = REPORTS_CACHE.filter((report) => {
+      const statusOk = filterStatus === 'all' || normStatus(report.status || 'submitted') === filterStatus;
+      const queryOk = !query || reportSearchHaystack(report).includes(query);
+      return statusOk && queryOk;
+    });
+    const body = byId('repBody');
+    const empty = byId('repEmpty');
+    if(!body) return;
+    body.innerHTML = filtered.map((r) => `
       <tr>
         <td>${esc(r.id || '—')}</td>
-        <td>${esc(fmtDate(r.createdAt || r.created || ''))}</td>
+        <td>${esc(fmtDate(r.createdAt || r.created || r.date || ''))}</td>
         <td>${esc(r.category || '—')}</td>
         <td>${esc(r.location || r.address || '—')}</td>
         <td>${esc(r.email || r.reporterEmail || '—')}</td>
-        <td>${esc(r.status || 'submitted')}</td>
-        <td><button type="button" class="btn-line small" disabled>View</button></td>
+        <td><span class="${reportStatusClass(r.status)}">${esc(reportStatusLabel(r.status || 'submitted'))}</span></td>
+        <td>
+          <div class="actions" style="justify-content:flex-start; gap:0.4rem; flex-wrap:wrap;">
+            <button type="button" class="btn-line small" data-rep-view="${esc(r.id || '')}">View</button>
+            <button type="button" class="btn-line small" data-rep-historical="${esc(r.id || '')}">Historical</button>
+          </div>
+        </td>
       </tr>
-    `);
+    `).join('');
+    if(empty) empty.style.display = filtered.length ? 'none' : 'block';
+    byId('repMsg').textContent = filtered.length ? `${filtered.length} report${filtered.length === 1 ? '' : 's'} shown.` : 'No reports match the current filters.';
+    $$('#repBody [data-rep-view]').forEach((btn) => btn.addEventListener('click', () => openReportDetail(btn.getAttribute('data-rep-view'))));
+    $$('#repBody [data-rep-historical]').forEach((btn) => btn.addEventListener('click', async () => {
+      openReportDetail(btn.getAttribute('data-rep-historical'));
+      await updateReportStatus('historical');
+    }));
   }
 
   async function loadProjects(){
@@ -3491,6 +3688,12 @@
   byId('btnClearBinNotices')?.addEventListener('click', clearImportedBinNotices);
 
   byId('btnRepRefresh')?.addEventListener('click', loadReports);
+  byId('repStatusFilter')?.addEventListener('change', loadReports);
+  byId('repSearch')?.addEventListener('input', loadReports);
+  byId('btnRepExport')?.addEventListener('click', async () => downloadText('reports.json', JSON.stringify(await anwLoadSafe(KEY_REPORTS, []), null, 2)));
+  byId('btnRepCloseDetail')?.addEventListener('click', closeReportDetail);
+  byId('btnRepSaveDetail')?.addEventListener('click', async () => { await updateReportStatus(); });
+  byId('btnRepMarkHistorical')?.addEventListener('click', async () => { byId('repDetailStatus').value = 'historical'; await updateReportStatus('historical'); });
   byId('btnPmRefresh')?.addEventListener('click', loadProjects);
   byId('btnAcRefresh')?.addEventListener('click', loadAccessControl);
   byId('btnDiagRun')?.addEventListener('click', loadDiagnostics);
