@@ -1,403 +1,688 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<script>
-    // Injected by Netlify at build time
-    window.GOOGLE_MAPS_API_KEY = "{{ GOOGLE_MAPS_BROWSER_KEY }}";
-  </script>
 <meta charset="utf-8"/>
 <meta content="page:report-map" name="anw-acl-key"/>
-<meta content="width=device-width, initial-scale=1" name="viewport"/>
-<!-- Auth pre-check disabled (temporary public mode) -->
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <script>
   (function(){
     try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
   })();
 </script>
-<title>Incidents map — Aderrig NW</title>
+<title>Incidents overview — Aderrig NW</title>
 <link href="assets/style.css" rel="stylesheet"/>
-<style id="page-access-style">
-  /* Public/Private indicator aligned to the same container as the footer (like Home) */
+<style>
   .site-footer{ position: relative; text-align: center; }
   .site-footer .page-access{ position:absolute; left:0; color:green; font-weight:normal; }
-</style>
-<style id="anw-access-overlay-style">
-  #anwAccessOverlay{
-    position:fixed; inset:0; background:rgba(0,0,0,0.35);
-    display:none; align-items:center; justify-content:center; z-index:9999;
+  body.anw-locked .report-panel{ display:none; }
+
+  .io-hero{
+    border:1px solid #d9e7dd;
+    border-radius:18px;
+    background:linear-gradient(180deg,var(--brandSoft,#eaf6ee) 0%, #f8fbf9 100%);
+    padding:14px 16px;
+    margin-top:.4rem;
   }
-  #anwAccessOverlay .box{
-    background:#fff; border-radius:12px; padding:18px 18px; max-width:520px; width:92%;
-    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+  .io-hero-head{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;
   }
-  #anwAccessOverlay .title{ font-size:1.1rem; margin:0 0 8px 0; }
-  #anwAccessOverlay .msg{ margin:0 0 14px 0; line-height:1.35; }
-  #anwAccessOverlay .actions{ display:flex; gap:10px; justify-content:flex-end; }
-  #anwAccessOverlay a.btn, #anwAccessOverlay button.btn{
-    display:inline-block; padding:10px 12px; border-radius:10px; border:0; cursor:pointer;
-    text-decoration:none;
+  .io-eyebrow{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#5f7d66; font-weight:800; margin-bottom:4px}
+  .io-title{margin:0; font-size:1.05rem; color:var(--ink,#1f2937)}
+  .io-sub{margin:.15rem 0 0; font-size:13px; color:#61706a}
+
+  .io-layout{display:grid; grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr); gap:16px; margin-top:14px}
+  .io-col{display:grid; gap:14px}
+
+  .io-kpis{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px}
+  .io-kpi{
+    border:1px solid #e4e7eb; border-radius:12px; background:#fff; padding:10px 12px;
+    min-height:62px;
   }
-  #anwAccessOverlay a.btn-primary, #anwAccessOverlay button.btn-primary{ background:#111; color:#fff; }
-  #anwAccessOverlay a.btn-ghost, #anwAccessOverlay button.btn-ghost{ background:#eee; color:#111; }
-</style>
-<style id="anw-dashboard-gate-style">
-  body.anw-locked .report-panel { display:none; }
-  body.anw-locked .map-panel { display:none; }
-</style>
-<style id="anw-locked-style">
-  .anw-locked .anw-protected { display: none !important; }
+  .io-kpi-label{font-size:11px; line-height:1.2; text-transform:uppercase; letter-spacing:.06em; color:#6b7280; font-weight:800}
+  .io-kpi-value{margin-top:4px; font-size:15px; line-height:1.2; font-weight:800; color:#1f2937; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .io-kpi-sub{margin-top:3px; font-size:11px; color:#6b7280}
+
+  .io-card{border:1px solid #e4e7eb; border-radius:16px; background:#fff; padding:14px}
+  .io-card h3{margin:0; font-size:1rem}
+  .io-card .tiny.muted{margin-top:4px}
+  .io-card-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px}
+
+  .io-filterbar{
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr)) auto; gap:8px; align-items:end;
+  }
+  .io-filterbar .field{margin:0}
+  .io-filterbar label{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:#6b7280; font-weight:800}
+  .io-filterbar select{min-height:38px}
+  .io-filter-actions{display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap}
+
+  .io-list{display:grid; gap:10px}
+  .io-item{border:1px solid #e4e7eb; border-radius:14px; background:#fff; padding:12px}
+  .io-item-top{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  .io-item-title{margin:6px 0 0; font-size:15px; line-height:1.35; font-weight:800; color:#1f2937}
+  .io-item-text{margin:6px 0 0; font-size:13px; color:#46515f; line-height:1.5}
+  .io-item-side{min-width:170px; border:1px solid #edf0f3; background:#f8fafc; border-radius:12px; padding:9px 10px}
+  .io-item-side .meta-label{font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:#6b7280; font-weight:800}
+  .io-item-side .meta-value{font-size:12px; margin-top:2px; color:#334155; font-weight:700}
+  .io-badges{display:flex; flex-wrap:wrap; gap:6px}
+  .io-badge{display:inline-flex; align-items:center; padding:5px 9px; border-radius:999px; font-size:11px; font-weight:800; border:1px solid #dde5df; background:#f8fbf9; color:#285f3f}
+  .io-badge.status-submitted,.io-badge.status-open,.io-badge.priority-high{background:#fff1f2; border-color:#fecdd3; color:#be123c}
+  .io-badge.status-review,.io-badge.status-pending,.io-badge.priority-medium{background:#fffbeb; border-color:#fde68a; color:#a16207}
+  .io-badge.status-resolved,.io-badge.status-closed,.io-badge.priority-low{background:#ecfdf3; border-color:#bbf7d0; color:#15803d}
+  .io-badge.status-historical,.io-badge.status-deleted,.io-badge.status-suspended,.io-badge.status-blocked{background:#f8fafc; border-color:#cbd5e1; color:#475569}
+
+  .io-bars{display:flex; align-items:flex-end; gap:8px; height:170px; padding:14px; border-radius:14px; background:#f8fafc; border:1px solid #eef2f5}
+  .io-bar-wrap{display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:6px; flex:1 1 0; min-width:0; height:100%}
+  .io-bar{width:100%; max-width:40px; border-radius:10px 10px 4px 4px; background:linear-gradient(180deg, #2e8b57 0%, var(--brand,#1f7a3f) 100%); min-height:6px}
+  .io-bar-value{font-size:11px; color:#475569; font-weight:700}
+  .io-bar-label{font-size:10px; color:#6b7280; font-weight:700; text-align:center; line-height:1.2}
+
+  .io-breakdown{display:grid; gap:10px}
+  .io-row-btn{
+    width:100%; border:1px solid #e4e7eb; background:#fff; border-radius:12px; padding:10px 12px; text-align:left;
+    display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer; transition:.15s ease;
+  }
+  .io-row-btn:hover, .io-row-btn:focus-visible{background:#f8fbf9; border-color:#cfe8d7; outline:none}
+  .io-row-left{display:flex; align-items:center; gap:10px; min-width:0}
+  .io-rank{display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:999px; background:var(--brandSoft,#eaf6ee); color:var(--brand,#1f7a3f); font-size:11px; font-weight:800; flex:0 0 26px}
+  .io-row-text{min-width:0}
+  .io-row-title{font-size:13px; font-weight:800; color:#1f2937; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .io-row-sub{font-size:11px; color:#6b7280; margin-top:2px}
+  .io-count{display:inline-flex; align-items:center; justify-content:center; min-width:34px; padding:4px 8px; border-radius:999px; background:#f8fafc; border:1px solid #e5e7eb; font-size:11px; font-weight:800; color:#475569}
+
+  .io-details{margin-top:12px; border-top:1px solid #eef0f2; padding-top:12px; display:none}
+  .io-details.is-open{display:block}
+  .io-detail-grid{display:grid; gap:8px}
+  .io-detail-chip{display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid #e4e7eb; border-radius:12px; padding:9px 10px; background:#fbfcfe}
+  .io-detail-name{font-size:13px; font-weight:700; color:#1f2937}
+  .io-detail-meta{font-size:11px; color:#6b7280}
+
+  .io-note{font-size:12px; color:#61706a; margin-top:8px}
+  .io-empty{padding:16px; border:1px dashed #d6dbe1; border-radius:14px; background:#fbfcfe; font-size:13px; color:#667085}
+
+  @media (max-width: 980px){
+    .io-layout{grid-template-columns:1fr}
+  }
+  @media (max-width: 760px){
+    .io-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .io-filterbar{grid-template-columns:1fr 1fr}
+    .io-filter-actions{grid-column:1/-1; justify-content:flex-start}
+    .io-item-side{min-width:0; width:100%}
+    .io-bars{gap:6px; padding:10px; height:150px}
+    .io-bar{max-width:none}
+  }
 </style>
 </head>
 <body data-acl-loading="true">
 <header class="site-header">
-<div class="brand">
-<a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
-<div class="brand-text">
-<h1>Aderrig NW</h1>
-<p class="muted">Adamstown</p>
-</div>
-</div>
-<nav class="nav">
-<a href="index.html">Home</a>
-<a href="about.html">About</a>
-<a class="active" href="report.html">Report</a>
-<a href="alerts.html">Community Alerts</a>
-<a href="projects.html">Community Projects</a>
-<a href="handbook.html">Handbook</a>
-<a href="login.html">Login / Register</a>
-<a href="dashboard.html">Dashboard</a>
-<a href="household.html">Household</a>
-<a href="admin.html">Admin</a>
-</nav>
+  <div class="brand">
+    <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
+    <div class="brand-text"><h1>Aderrig NW</h1><p class="muted">Adamstown</p></div>
+  </div>
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a class="active" href="report.html">Report</a>
+    <a href="alerts.html">Community Alerts</a>
+    <a href="projects.html">Community Projects</a>
+    <a href="handbook.html">Handbook</a>
+    <a href="login.html">Login / Register</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="household.html">Household</a>
+    <a href="admin.html">Admin</a>
+  </nav>
 </header>
+
 <main class="wrap">
-<section class="card">
-<h2>Report an incident</h2>
-<p class="muted tiny">
-      This tool helps you prepare an incident report to send to Gardaí using your own email.
-      The Aderrig Neighbourhood Watch website does <strong>not</strong> upload or store photos, videos or other files —
-      only the text you enter here is kept locally in this browser.
-    </p>
-<div class="tiny muted" id="anwAccessNotice" style="margin-top:12px; display:none;">
-      You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to continue.
+  <section class="card">
+    <h2>Report an incident</h2>
+    <p class="muted tiny">This area lets residents report incidents and review community activity in a clear overview without using Google Maps.</p>
+    <div class="tiny muted" id="anwAccessNotice" style="margin-top:12px; display:none;">You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to continue.</div>
+    <div class="actions" style="gap:0.5rem; justify-content:flex-start; flex-wrap:wrap; margin-top:0.75rem;">
+      <button class="btn btn-line" id="btnTabReport" onclick="window.location.href='report.html'" type="button">Report incident</button>
+      <button class="btn btn-line" id="btnTabStatus" onclick="window.location.href='report.html#status'" type="button">My reports status</button>
+      <button class="btn btn-line active" id="btnTabMap" type="button">Incidents overview</button>
     </div>
-<div class="actions" style="gap:0.5rem; justify-content:flex-start; flex-wrap:wrap; margin-top:0.75rem;">
-<button class="btn btn-line" id="btnTabReport" onclick="window.location.href='report.html'" type="button">Report incident</button>
-<button class="btn btn-line" id="btnTabStatus" onclick="window.location.href='report.html#status'" type="button">My reports status</button>
-<button class="btn btn-line active" id="btnTabMap" type="button">Incidents map</button>
-</div>
-</section>
-<section class="card anw-protected">
-<h2>Incidents map</h2>
-<div class="actions" style="gap:0.75rem; justify-content:flex-start; flex-wrap:wrap; margin-bottom:1rem;">
-<div class="field" style="min-width:180px;">
-<label class="tiny muted" for="mapCategory">Category</label>
-<select class="input" id="mapCategory" style="width:100%;">
-<option value="all">All</option>
-<option value="Suspicious activity">Suspicious activity</option>
-<option value="Burglary / attempted burglary">Burglary / attempted burglary</option>
-<option value="Damage / vandalism">Damage / vandalism</option>
-<option value="Anti-social behaviour">Anti-social behaviour</option>
-<option value="Theft / vehicle related">Theft / vehicle related</option>
-<option value="other">Other</option>
-</select>
-</div>
-<div class="field" style="min-width:160px;">
-<label class="tiny muted" for="mapPeriod">Period</label>
-<select class="input" id="mapPeriod" style="width:100%;">
-<option value="all">All</option>
-<option value="7">Last 7 days</option>
-<option value="30">Last 30 days</option>
-<option value="90">Last 90 days</option>
-<option value="365">Last 12 months</option>
-</select>
-</div>
-<div style="display:flex; gap:0.5rem; align-items:flex-end;">
-<button aria-label="Fit map to markers" class="btn" id="btnMapFit" type="button">Fit</button>
-<button aria-label="Refresh incidents on map" class="btn btn-line" id="btnMapRefresh" type="button">Refresh</button>
-</div>
-</div>
-<div id="mapWrap" style="border-radius:18px; border:1px solid #e4e7eb; overflow:hidden; background:#f3f6fb; min-height:420px;">
-<div id="map" style="width:100%; height:420px;"></div>
-</div>
-<p class="tiny muted" style="margin-top:10px;">
-      If the map stays blank, check that the Google Maps API key is set and enabled (Maps JavaScript API) and that billing is enabled for the project.
-    </p>
-</section>
+  </section>
+
+  <section class="card report-panel">
+    <div class="io-hero">
+      <div class="io-hero-head">
+        <div>
+          <div class="io-eyebrow">Community visibility</div>
+          <h3 class="io-title">Incidents overview</h3>
+          <p class="io-sub">Track trends, areas and streets with the highest number of reports using the same incident records already saved on the site, including historical, suspended, blocked and deleted-status records when they remain stored.</p>
+        </div>
+        <div class="actions" style="gap:0.5rem; margin:0;">
+          <button class="btn btn-line small" id="btnOverviewReset" type="button">Reset</button>
+          <button class="btn small" id="btnOverviewRefresh" type="button">Refresh</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="io-layout">
+      <div class="io-col">
+        <div class="io-kpis" id="overviewKpis"></div>
+
+        <div class="io-card">
+          <div class="io-filterbar">
+            <div class="field">
+              <label for="fltCategory">Category</label>
+              <select id="fltCategory">
+                <option value="all">All</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="fltPeriod">Period</label>
+              <select id="fltPeriod">
+                <option value="all">All</option>
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="365">Last 12 months</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="fltArea">Area</label>
+              <select id="fltArea">
+                <option value="all">All areas</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="fltStatus">Status</label>
+              <select id="fltStatus">
+                <option value="all">Any</option>
+              </select>
+            </div>
+            <div class="io-filter-actions">
+              <button class="btn btn-line small" id="btnApplyFilters" type="button">Apply</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="io-card">
+          <div class="io-card-head">
+            <div>
+              <h3>Recent incidents</h3>
+              <p class="tiny muted">Latest reports from the same incident storage used by the report form, including historical-status records still stored in the system.</p>
+            </div>
+            <span class="io-count" id="recentCount">0</span>
+          </div>
+          <div class="io-list" id="recentList"></div>
+        </div>
+      </div>
+
+      <div class="io-col">
+        <div class="io-card">
+          <div class="io-card-head">
+            <div>
+              <h3>Trend</h3>
+              <p class="tiny muted">Incident volume across the selected period.</p>
+            </div>
+            <span class="io-count" id="trendLabel">7 points</span>
+          </div>
+          <div class="io-bars" id="trendBars"></div>
+          <p class="io-note" id="trendNote">Shows how many incident reports were created in each interval.</p>
+        </div>
+
+        <div class="io-card">
+          <div class="io-card-head">
+            <div>
+              <h3>Top categories</h3>
+              <p class="tiny muted">Most common incident types in the current filter.</p>
+            </div>
+          </div>
+          <div class="io-breakdown" id="categoryBreakdown"></div>
+        </div>
+
+        <div class="io-card">
+          <div class="io-card-head">
+            <div>
+              <h3>Top problem areas</h3>
+              <p class="tiny muted">Click an area to view the streets with the most reports.</p>
+            </div>
+          </div>
+          <div class="io-breakdown" id="areaBreakdown"></div>
+          <div class="io-details" id="areaDetails"></div>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
+
 <footer class="site-footer">
   <div class="footer-row">
-    <div class="footer-left">
-      <span class="page-status">Private Page</span>
-    </div>
-
-    <div class="footer-center">
-      © 2025 Aderrig NW · 
-      <a href="privacy.html">Privacy Policy</a>
-    </div>
+    <div class="footer-left"><span class="page-status">Private Page</span></div>
+    <div class="footer-center">© 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a></div>
   </div>
 </footer>
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script><script src="assets/identity.js"></script><script src="assets/app-core.js"></script>
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+<script src="assets/app-core.js"></script>
 <script>
-/**
- * Incidents Map
- * - This page WAS a placeholder (no Google Maps script / no container), so nothing could render.
- * - Set your API key below (or inject via build env) to enable the live map.
- */
-let GOOGLE_MAPS_API_KEY = window.GOOGLE_MAPS_API_KEY || ""; // browser key only
+(async function(){
+  'use strict';
 
-// If the key was not injected at build time (common), fetch it from the config function.
-async function ensureMapsKey(){
-  if(GOOGLE_MAPS_API_KEY && !String(GOOGLE_MAPS_API_KEY).includes("{{")) return GOOGLE_MAPS_API_KEY;
-  try{
-    const res = await fetch('/.netlify/functions/config', { cache: 'no-store' });
-    const data = await res.json().catch(()=>null);
-    const k = data && (
-      data.googleMapsApiKey ||
-      data.GOOGLE_MAPS_BROWSER_KEY ||
-      data.GOOGLE_MAPS_API_KEY ||
-      data.google_maps_browser_key
-    );
-    if(k) GOOGLE_MAPS_API_KEY = k;
-  }catch(e){}
-  return GOOGLE_MAPS_API_KEY;
-}
-
-
-let map;
-let markers = [];
-
-async function loadGoogleMaps() {
-  await ensureMapsKey();
-  // If key not set, show a friendly placeholder instead of failing silently.
-  if(!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === "YOUR_GOOGLE_MAPS_API_KEY" || String(GOOGLE_MAPS_API_KEY).includes("{{")) {
-    const el = document.getElementById('map');
-    if(el) {
-      el.innerHTML = '<div style="padding:28px; text-align:center; color:#6d7680;">' +
-        '<strong>Google Maps not configured</strong><br><br>' +
-        'Set <code>GOOGLE_MAPS_BROWSER_KEY</code> in Netlify Environment variables. If you already set it, make sure <code>/.netlify/functions/config</code> returns the key to the browser page.' +
-        '</div>';
-    }
-    return;
-  }
-
-  const s = document.createElement('script');
-  s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(GOOGLE_MAPS_API_KEY) + '&callback=initMap';
-  s.async = true;
-  s.defer = true;
-  document.head.appendChild(s);
-}
-
-function initMap() {
-  // Default centre (Adamstown / Lucan area) — adjust as needed
-  const centre = { lat: 53.3385, lng: -6.4555 };
-
-  map = new google.maps.Map(document.getElementById('map'), {
-    center: centre,
-    zoom: 13,
-    mapTypeControl: false,
-    fullscreenControl: true,
-    streetViewControl: false
-  });
-
-  // First render
-  refreshMap();
-}
-
-// Example: load incidents from central store (if you later store coordinates)
-// For now we support incidents with {lat,lng,category,createdAt,title}
-async function loadIncidents() {
-  try { await window.anwInitStore?.(); } catch(e) { /* store init failed (offline/local). */ }
-  const incidents = window.anwLoad ? window.anwLoad(window.ANW_KEYS?.INCIDENTS || 'anw_incidents', []) : [];
-  return Array.isArray(incidents) ? incidents : [];
-}
-
-function clearMarkers() {
-  markers.forEach(m => m.setMap(null));
-  markers = [];
-}
-
-function withinDays(iso, days) {
-  if(!days || days === 'all') return true;
-  const n = Number(days);
-  if(!n) return true;
-  const d = new Date(iso || '');
-  if(String(d) === 'Invalid Date') return true;
-  const cutoff = Date.now() - n * 24 * 60 * 60 * 1000;
-  return d.getTime() >= cutoff;
-}
-
-async function refreshMap() {
-  if(!map || !window.google || !google.maps) return;
-
-  const cat = document.getElementById('mapCategory')?.value || 'all';
-  const per = document.getElementById('mapPeriod')?.value || 'all';
-
-  const items = await loadIncidents();
-
-  // Only incidents that have coordinates can be shown
-  const filtered = items.filter(i => {
-    const okCoords = typeof i.lat === 'number' && typeof i.lng === 'number';
-    if(!okCoords) return false;
-    const okCat = (cat === 'all') ? true : String(i.category || i.type || 'other') === cat;
-    const okPer = withinDays(i.createdAt || i.date || i.when, per);
-    return okCat && okPer;
-  });
-
-  clearMarkers();
-
-  const bounds = new google.maps.LatLngBounds();
-
-  filtered.forEach(i => {
-    const pos = { lat: i.lat, lng: i.lng };
-    bounds.extend(pos);
-
-    const m = new google.maps.Marker({
-      position: pos,
-      map,
-      title: (i.title || i.category || 'Incident')
-    });
-
-    const info = new google.maps.InfoWindow({
-      content:
-        '<div style="min-width:220px;">' +
-        '<div style="font-weight:800;">' + escapeHtml(i.category || i.type || 'Incident') + '</div>' +
-        '<div style="margin-top:4px; color:#6b7280; font-size:12px;">' + escapeHtml(i.createdAt || i.date || '') + '</div>' +
-        (i.address ? ('<div style="margin-top:6px; font-size:12px; color:#374151;">' + escapeHtml(i.address) + '</div>') : '') +
-        (i.description ? ('<div style="margin-top:8px; font-size:13px;">' + escapeHtml(i.description) + '</div>') : '') +
-        '</div>'
-    });
-
-    m.addListener('click', () => info.open({ map, anchor: m }));
-    markers.push(m);
-  });
-
-  // If we have markers, fit bounds; else keep default centre
-  if(filtered.length) map.fitBounds(bounds);
-}
-
-function fitMap() {
-  if(!map || !markers.length) return;
-  const bounds = new google.maps.LatLngBounds();
-  markers.forEach(m => bounds.extend(m.getPosition()));
-  map.fitBounds(bounds);
-}
-
-function escapeHtml(s){
-  return String(s||'')
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#039;');
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-  // Dashboard-standard gate:
-  // - Tabs/layout remain visible
-  // - Protected map card is hidden until user is logged in + approved
-  // - Inline notice appears under the header (anwAccessNotice) and disappears automatically when allowed
-
-  const notice = document.getElementById('anwAccessNotice');
-  const protectedEls = Array.from(document.querySelectorAll('.anw-protected'));
-
-  const showNotice = (msgHtml) => {
-    if(notice){
-      notice.style.display = 'block';
-      notice.innerHTML = msgHtml;
+  const anwShowAccessOverlay = (msg) => {
+    document.body.classList.add('anw-locked');
+    const n = document.getElementById('anwAccessNotice');
+    if(n){
+      n.style.display = 'block';
+      n.innerHTML = `${msg} <a href="login.html">Log in</a> or <a href="login.html#signup">Register</a>.`;
     }
   };
-  const hideNotice = () => { if(notice) notice.style.display = 'none'; };
 
-  const hideProtected = () => protectedEls.forEach(el => { el.style.display = 'none'; });
-  const showProtected = () => protectedEls.forEach(el => { el.style.display = ''; });
-
-  const ensureIdentityUser = async () => {
+  const anwEnsureIdentityUser = async () => {
     if(!window.netlifyIdentity) return null;
-    return await new Promise((resolve)=>{
-      let done=false;
-      const finish=(u)=>{ if(done) return; done=true; resolve(u||null); };
-      try{
-        window.netlifyIdentity.on('init', (u)=>finish(u));
+    return await new Promise((resolve) => {
+      let done = false;
+      const finish = (u) => { if(done) return; done = true; resolve(u || null); };
+      try {
+        window.netlifyIdentity.on('init', (u) => finish(u));
         window.netlifyIdentity.init();
-      }catch(e){}
-      setTimeout(()=>{
-        try{
-          const u = window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser();
-          finish(u);
-        }catch(e){ finish(null); }
+      } catch(_) {}
+      setTimeout(() => {
+        const u = (typeof window.netlifyIdentity.currentUser === 'function') ? window.netlifyIdentity.currentUser() : null;
+        finish(u);
       }, 300);
     });
   };
 
-  const getRegistryProfile = async (user) => {
-    try { await window.anwInitStore?.(); } catch(e){}
-    try{
-      const users = (window.anwLoad && window.ANW_KEYS) ? window.anwLoad(window.ANW_KEYS.USERS, []) : [];
-      const email = String((user && user.email) || '').toLowerCase();
-      return (users||[]).find(u => String(u.email||'').toLowerCase() === email) || null;
-    }catch(e){
-      return null;
-    }
-  };
+  await anwInitStore();
+  const user = await anwEnsureIdentityUser();
+  const KEY_INCIDENTS = ANW_KEYS.INCIDENTS;
+  const KEY_USERS = ANW_KEYS.USERS;
 
-  const user = await ensureIdentityUser();
-  const fallbackEmail = (typeof window.anwGetLoggedEmail === 'function' ? String(window.anwGetLoggedEmail()||'') : '').toLowerCase().trim();
-  if(window.ANW_PUBLIC_MODE){
-    // Temporary public mode: show everything, no gating.
-    showProtected();
-    hideNotice();
-  } else {
-    if(!user && !fallbackEmail){
-      hideProtected();
-      showNotice('You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to view the incidents map.');
-      return;
-    }
-
-    const profile = await getRegistryProfile(user || { email: fallbackEmail });
-    if(!profile){
-      hideProtected();
-      showNotice('Your account is logged in, but you are not registered/approved yet. Please wait for approval.');
-      return;
-    }
-
-    const status = String(profile.status || profile.accountStatus || '').toLowerCase();
-    const approved = (profile.approved === true) || (profile.active === true) || status === 'active' || status === 'approved';
-    if(!approved){
-      hideProtected();
-      showNotice('Your account is not approved yet. Please wait for approval.');
-      return;
-    }
-
-    // Allowed
-    showProtected();
-    hideNotice();
+  function loadIncidents(){
+    const list = anwLoad(KEY_INCIDENTS, []);
+    return Array.isArray(list) ? list : [];
+  }
+  function loadUsers(){
+    const list = anwLoad(KEY_USERS, []);
+    return Array.isArray(list) ? list : [];
+  }
+  function norm(v){ return String(v || '').trim(); }
+  function lower(v){ return norm(v).toLowerCase(); }
+  function fmtDate(value){
+    const d = new Date(value || '');
+    if(String(d) === 'Invalid Date') return '—';
+    return d.toLocaleDateString('en-IE', { day:'2-digit', month:'short', year:'numeric' });
+  }
+  function parseDate(item){
+    const raw = item.createdAt || item.updatedAt || item.date || item.when || '';
+    const d = new Date(raw);
+    return String(d) === 'Invalid Date' ? null : d;
+  }
+  function statusClass(status){
+    const key = lower(status).replace(/[^a-z0-9]+/g, '-');
+    return `status-${key || 'submitted'}`;
+  }
+  function inferPriority(item){
+    const txt = lower([item.category, item.description, item.location].join(' '));
+    if(/burglary|attempted burglary|weapon|violent|break in|emergency/.test(txt)) return 'High';
+    if(/damage|vandalism|theft|vehicle|anti-social/.test(txt)) return 'Medium';
+    return 'Low';
+  }
+  function withinDays(item, days){
+    if(days === 'all') return true;
+    const n = Number(days);
+    if(!Number.isFinite(n) || n <= 0) return true;
+    const d = parseDate(item);
+    if(!d) return false;
+    const cutoff = Date.now() - (n * 24 * 60 * 60 * 1000);
+    return d.getTime() >= cutoff;
+  }
+  function extractLocationParts(item){
+    const raw = norm(item.location || item.address || item.place || '');
+    if(!raw) return { raw:'', area:'Unspecified area', street:'Unspecified street' };
+    let clean = raw.replace(/\s+/g, ' ').trim();
+    clean = clean.replace(/\bireland\b/ig, '').replace(/\bdublin\b/ig, '').replace(/\bco\.\s*dublin\b/ig,'').replace(/\beircode\b.*$/ig,'').replace(/\s+,/g, ',').trim();
+    const paren = clean.match(/\(([^)]+)\)/);
+    const parenText = paren ? norm(paren[1]) : '';
+    const base = clean.replace(/\([^)]*\)/g, '').trim();
+    const tokens = base.split(',').map(s => norm(s)).filter(Boolean);
+    let street = tokens[0] || parenText || clean;
+    let area = tokens[1] || parenText || street;
+    if(tokens.length >= 3 && /(adamstown|aderrig|lucan)/i.test(tokens[1])) area = tokens[2] || tokens[1] || street;
+    if(/near|beside|opposite|block|walkway|entrance|parking|playground/i.test(parenText) && parenText.length >= 3) area = parenText;
+    street = street.replace(/\b(adamstown|lucan)\b/ig, '').replace(/\s{2,}/g,' ').replace(/^[-–,\s]+|[-–,\s]+$/g,'') || 'Unspecified street';
+    area = area.replace(/\s{2,}/g,' ').replace(/^[-–,\s]+|[-–,\s]+$/g,'') || street;
+    return { raw: clean, area, street };
   }
 
-  // Wire up controls (avoid "dead" buttons)
-  const btnFit = document.getElementById('btnMapFit');
-  const btnRefresh = document.getElementById('btnMapRefresh');
-  const selCat = document.getElementById('mapCategory');
-  const selPer = document.getElementById('mapPeriod');
+  const loggedEmail = (((user && user.email) || (typeof anwGetLoggedEmail === 'function' ? anwGetLoggedEmail() : '') || '')).toLowerCase().trim();
+  const users = loadUsers();
+  const me = users.find(u => anwNormEmail(u.email) === anwNormEmail(loggedEmail)) || null;
+  if(!me){
+    anwShowAccessOverlay('This page is private. Your account is logged in, but you are not registered or approved for the residents area yet.');
+    return;
+  }
+  const status = String(me.status || me.accountStatus || '').toLowerCase();
+  const approved = (me.approved === true) || (me.active === true) || status === 'active' || status === 'approved';
+  if(!approved){
+    anwShowAccessOverlay('Your account is not approved yet. Please wait for approval to access Reports.');
+    return;
+  }
+  document.body.classList.remove('anw-locked');
+  const accessNotice = document.getElementById('anwAccessNotice');
+  if(accessNotice) accessNotice.style.display = 'none';
 
-  if(btnFit) btnFit.addEventListener('click', () => { try{ fitMap(); }catch(e){} });
-  if(btnRefresh) btnRefresh.addEventListener('click', () => { try{ refreshMap(); }catch(e){} });
-  if(selCat) selCat.addEventListener('change', () => { try{ refreshMap(); }catch(e){} });
-  if(selPer) selPer.addEventListener('change', () => { try{ refreshMap(); }catch(e){} });
+  const fltCategory = document.getElementById('fltCategory');
+  const fltPeriod = document.getElementById('fltPeriod');
+  const fltArea = document.getElementById('fltArea');
+  const fltStatus = document.getElementById('fltStatus');
+  const overviewKpis = document.getElementById('overviewKpis');
+  const recentList = document.getElementById('recentList');
+  const recentCount = document.getElementById('recentCount');
+  const trendBars = document.getElementById('trendBars');
+  const trendLabel = document.getElementById('trendLabel');
+  const trendNote = document.getElementById('trendNote');
+  const categoryBreakdown = document.getElementById('categoryBreakdown');
+  const areaBreakdown = document.getElementById('areaBreakdown');
+  const areaDetails = document.getElementById('areaDetails');
 
-  // Only load the map once authorised
-  loadGoogleMaps();
+  let allIncidents = [];
+  let filteredIncidents = [];
+  let selectedArea = '';
 
-});
+  function hydrateIncidents(){
+    allIncidents = loadIncidents().map((item) => {
+      const parts = extractLocationParts(item);
+      const created = parseDate(item);
+      return Object.assign({}, item, {
+        _created: created,
+        _ts: created ? created.getTime() : 0,
+        _category: norm(item.category || item.type || 'Other') || 'Other',
+        _status: norm(item.status || 'submitted') || 'submitted',
+        _parts: parts,
+        _area: parts.area,
+        _street: parts.street,
+        _priority: inferPriority(item)
+      });
+    }).sort((a,b) => b._ts - a._ts);
+  }
+
+  function uniqueSorted(values){ return Array.from(new Set(values.filter(Boolean))).sort((a,b)=> String(a).localeCompare(String(b))); }
+
+  function populateFilters(){
+    const categories = uniqueSorted(allIncidents.map(i => i._category));
+    const areas = uniqueSorted(allIncidents.map(i => i._area));
+    const statuses = uniqueSorted(allIncidents.map(i => i._status));
+
+    const fill = (select, placeholder, values) => {
+      const current = select.value;
+      select.innerHTML = '';
+      const baseOpt = document.createElement('option');
+      baseOpt.value = 'all';
+      baseOpt.textContent = placeholder;
+      select.appendChild(baseOpt);
+      values.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        select.appendChild(opt);
+      });
+      if(Array.from(select.options).some(o => o.value === current)) select.value = current;
+    };
+
+    fill(fltCategory, 'All', categories);
+    fill(fltArea, 'All areas', areas);
+    fill(fltStatus, 'Any', statuses);
+  }
+
+  function applyFilters(){
+    const category = fltCategory.value || 'all';
+    const period = fltPeriod.value || 'all';
+    const area = fltArea.value || 'all';
+    const status = fltStatus.value || 'all';
+
+    filteredIncidents = allIncidents.filter((item) => {
+      if(category !== 'all' && item._category !== category) return false;
+      if(area !== 'all' && item._area !== area) return false;
+      if(status !== 'all' && item._status !== status) return false;
+      if(!withinDays(item, period)) return false;
+      return true;
+    });
+
+    if(selectedArea && !filteredIncidents.some(i => i._area === selectedArea)) selectedArea = '';
+    renderOverview();
+  }
+
+  function renderKpis(){
+    const total = filteredIncidents.length;
+    const openCount = filteredIncidents.filter(i => /submitted|open|review|pending/i.test(i._status)).length;
+    const resolvedCount = filteredIncidents.filter(i => /resolved|closed/i.test(i._status)).length;
+    const archivedCount = filteredIncidents.filter(i => /historical|deleted|suspended|blocked/i.test(i._status)).length;
+
+    const areaCounts = new Map();
+    filteredIncidents.forEach(i => areaCounts.set(i._area, (areaCounts.get(i._area) || 0) + 1));
+    let topArea = '—';
+    let topAreaCount = 0;
+    areaCounts.forEach((count, area) => { if(count > topAreaCount){ topArea = area; topAreaCount = count; } });
+
+    const items = [
+      { label:'Total', value: String(total), sub: total === 1 ? '1 report incl. archive' : `${total} reports incl. archive` },
+      { label:'Open', value: String(openCount), sub: openCount === 1 ? 'needs follow-up' : 'need follow-up' },
+      { label:'Archive', value: String(archivedCount), sub: archivedCount ? 'historical / blocked / suspended / deleted' : 'no archived records' },
+      { label:'Top area', value: topArea, sub: topAreaCount ? `${topAreaCount} reports` : 'no concentration yet' }
+    ];
+
+    overviewKpis.innerHTML = items.map(item => `
+      <div class="io-kpi">
+        <div class="io-kpi-label">${item.label}</div>
+        <div class="io-kpi-value" title="${item.value}">${item.value}</div>
+        <div class="io-kpi-sub">${item.sub}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderRecent(){
+    recentCount.textContent = String(filteredIncidents.length);
+    if(!filteredIncidents.length){
+      recentList.innerHTML = '<div class="io-empty">No incidents match the current filters.</div>';
+      return;
+    }
+    recentList.innerHTML = filteredIncidents.slice(0, 8).map((item) => `
+      <article class="io-item">
+        <div class="io-item-top">
+          <div style="min-width:0; flex:1 1 auto;">
+            <div class="io-badges">
+              <span class="io-badge">${item._category}</span>
+              <span class="io-badge ${statusClass(item._status)}">${item._status}</span>
+              <span class="io-badge priority-${item._priority.toLowerCase()}">${item._priority}</span>
+            </div>
+            <div class="io-item-title">${item.id || 'Incident'} · ${item._street}</div>
+            <p class="io-item-text">${norm(item.description || item.notes || 'No description provided.')}</p>
+          </div>
+          <div class="io-item-side">
+            <div class="meta-label">Area</div>
+            <div class="meta-value">${item._area}</div>
+            <div class="meta-label" style="margin-top:8px;">Date</div>
+            <div class="meta-value">${item.date || fmtDate(item._created)}</div>
+          </div>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  function buildTrend(){
+    const days = fltPeriod.value === 'all' ? 30 : Number(fltPeriod.value || 30);
+    const totalDays = Number.isFinite(days) && days > 0 ? days : 30;
+    const bucketCount = 7;
+    const bucketMs = Math.max(1, Math.round((totalDays * 24 * 60 * 60 * 1000) / bucketCount));
+    const now = Date.now();
+    const start = now - (totalDays * 24 * 60 * 60 * 1000);
+    const buckets = Array.from({length: bucketCount}, (_, idx) => ({
+      label: totalDays <= 14 ? `D${idx+1}` : `P${idx+1}`,
+      count: 0
+    }));
+
+    filteredIncidents.forEach(item => {
+      if(!item._ts) return;
+      if(item._ts < start || item._ts > now) return;
+      const index = Math.min(bucketCount - 1, Math.max(0, Math.floor((item._ts - start) / bucketMs)));
+      buckets[index].count += 1;
+    });
+    return buckets;
+  }
+
+  function renderTrend(){
+    const buckets = buildTrend();
+    const max = Math.max(1, ...buckets.map(b => b.count));
+    trendLabel.textContent = `${buckets.length} points`;
+    trendNote.textContent = fltPeriod.value === '7'
+      ? 'Daily view of reports in the last 7 days.'
+      : 'Report volume split across the selected timeframe.';
+    trendBars.innerHTML = buckets.map((bucket) => {
+      const pct = Math.max(6, Math.round((bucket.count / max) * 100));
+      return `
+        <div class="io-bar-wrap">
+          <div class="io-bar-value">${bucket.count}</div>
+          <div class="io-bar" style="height:${pct}%;"></div>
+          <div class="io-bar-label">${bucket.label}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderCategories(){
+    const counts = new Map();
+    filteredIncidents.forEach(i => counts.set(i._category, (counts.get(i._category) || 0) + 1));
+    const rows = Array.from(counts.entries()).sort((a,b) => b[1]-a[1]).slice(0,5);
+    if(!rows.length){
+      categoryBreakdown.innerHTML = '<div class="io-empty">No categories to show.</div>';
+      return;
+    }
+    categoryBreakdown.innerHTML = rows.map(([name, count], idx) => `
+      <div class="io-row-btn" style="cursor:default;">
+        <div class="io-row-left">
+          <span class="io-rank">${idx + 1}</span>
+          <div class="io-row-text">
+            <div class="io-row-title">${name}</div>
+            <div class="io-row-sub">${count === 1 ? '1 report' : `${count} reports`}</div>
+          </div>
+        </div>
+        <span class="io-count">${count}</span>
+      </div>
+    `).join('');
+  }
+
+  function getAreaStats(){
+    const map = new Map();
+    filteredIncidents.forEach(item => {
+      const area = item._area || 'Unspecified area';
+      const entry = map.get(area) || { count:0, streets:new Map(), latest:0 };
+      entry.count += 1;
+      entry.latest = Math.max(entry.latest, item._ts || 0);
+      const street = item._street || 'Unspecified street';
+      entry.streets.set(street, (entry.streets.get(street) || 0) + 1);
+      map.set(area, entry);
+    });
+    return Array.from(map.entries()).sort((a,b) => b[1].count - a[1].count || b[1].latest - a[1].latest);
+  }
+
+  function renderAreaDetails(){
+    if(!selectedArea){
+      areaDetails.className = 'io-details';
+      areaDetails.innerHTML = '';
+      return;
+    }
+    const areaEntry = getAreaStats().find(([area]) => area === selectedArea);
+    if(!areaEntry){
+      areaDetails.className = 'io-details';
+      areaDetails.innerHTML = '';
+      return;
+    }
+    const [area, data] = areaEntry;
+    const streets = Array.from(data.streets.entries()).sort((a,b)=> b[1]-a[1]).slice(0,8);
+    areaDetails.className = 'io-details is-open';
+    areaDetails.innerHTML = `
+      <div class="io-card-head" style="margin-bottom:8px;">
+        <div>
+          <h3 style="font-size:.98rem;">${area}</h3>
+          <p class="tiny muted" style="margin-top:4px;">Streets with the highest number of reports in this area.</p>
+        </div>
+        <button class="btn btn-line small" id="btnCloseAreaDetails" type="button">Close</button>
+      </div>
+      <div class="io-detail-grid">
+        ${streets.map(([street, count]) => `
+          <div class="io-detail-chip">
+            <div>
+              <div class="io-detail-name">${street}</div>
+              <div class="io-detail-meta">${count === 1 ? '1 incident' : `${count} incidents`}</div>
+            </div>
+            <span class="io-count">${count}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    const closeBtn = document.getElementById('btnCloseAreaDetails');
+    if(closeBtn) closeBtn.addEventListener('click', () => { selectedArea = ''; renderAreaDetails(); });
+  }
+
+  function renderAreas(){
+    const rows = getAreaStats().slice(0,6);
+    if(!rows.length){
+      areaBreakdown.innerHTML = '<div class="io-empty">No areas to show yet.</div>';
+      renderAreaDetails();
+      return;
+    }
+    areaBreakdown.innerHTML = rows.map(([area, data], idx) => {
+      const topStreet = Array.from(data.streets.entries()).sort((a,b)=> b[1]-a[1])[0];
+      const active = selectedArea === area;
+      return `
+        <button class="io-row-btn${active ? ' is-active' : ''}" data-area="${String(area).replace(/"/g,'&quot;')}" type="button">
+          <div class="io-row-left">
+            <span class="io-rank">${idx + 1}</span>
+            <div class="io-row-text">
+              <div class="io-row-title">${area}</div>
+              <div class="io-row-sub">${topStreet ? `Top street: ${topStreet[0]}` : 'No street detail'}</div>
+            </div>
+          </div>
+          <span class="io-count">${data.count}</span>
+        </button>
+      `;
+    }).join('');
+    areaBreakdown.querySelectorAll('[data-area]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const next = btn.getAttribute('data-area') || '';
+        selectedArea = selectedArea === next ? '' : next;
+        renderAreas();
+        renderAreaDetails();
+      });
+    });
+    renderAreaDetails();
+  }
+
+  function renderOverview(){
+    renderKpis();
+    renderRecent();
+    renderTrend();
+    renderCategories();
+    renderAreas();
+  }
+
+  function resetFilters(){
+    fltCategory.value = 'all';
+    fltPeriod.value = 'all';
+    fltArea.value = 'all';
+    fltStatus.value = 'all';
+    selectedArea = '';
+    applyFilters();
+  }
+
+  document.getElementById('btnApplyFilters').addEventListener('click', applyFilters);
+  document.getElementById('btnOverviewRefresh').addEventListener('click', () => {
+    hydrateIncidents();
+    populateFilters();
+    applyFilters();
+  });
+  document.getElementById('btnOverviewReset').addEventListener('click', resetFilters);
+
+  hydrateIncidents();
+  populateFilters();
+  applyFilters();
+})();
 </script>
-<div aria-live="polite" aria-modal="true" id="anwAccessOverlay" role="dialog">
-<div class="box">
-<h3 class="title" id="anwAccessTitle">Private Page</h3>
-<p class="msg" id="anwAccessMsg">This page is private.</p>
-<div class="actions" id="anwAccessActions"></div>
-</div>
-</div>
-<script src="assets/acl-guard.js"></script>
 </body>
 </html>
