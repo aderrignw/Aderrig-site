@@ -212,6 +212,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 <h3>Expression of Interest (Elections)</h3>
 <p class="tiny muted" style="margin-top:0;">Submit your interest for an elected role. Admin approval is required before your name appears for resident voting.</p>
 <div class="card" id="interestBlocked" style="background:#f9fafb; display:none;"><p class="tiny muted" style="margin:0;">Your registration must be approved before submitting interest.</p></div>
+<div class="card" id="interestNoElection" style="background:#f9fafb; display:none;"><p class="tiny muted" style="margin:0;">There is no open election at the moment, so interest submission is currently unavailable.</p></div>
 <div id="interestArea" style="display:none;">
 <div class="field"><label>Role</label><select id="intRole"><option value="">Select…</option><option value="area">Area Coordinator</option><option value="assistant">Assistant Area Coordinator</option></select></div>
 <div class="field"><label>Motivation / experience (visible to residents)</label><textarea id="intText" rows="6"></textarea></div>
@@ -285,6 +286,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   const notLoggedBox = document.getElementById('dbNotLogged');
   const profileArea = document.getElementById('dbProfileArea');
   const interestBlocked = document.getElementById('interestBlocked');
+  const interestNoElection = document.getElementById('interestNoElection');
   const interestArea = document.getElementById('interestArea');
   const volunteerRolesWrap = document.getElementById('pfVolRolesWrap');
 
@@ -1044,13 +1046,49 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   window.anwIsApprovedDashboardProfile = function(profile){ return isApprovedResident(profile); };
 
+  function loadElectionList(){
+    try{
+      const stored = anwLoad(KEY_ELECTIONS, []);
+      return Array.isArray(stored) ? stored : [];
+    }catch(_){
+      return [];
+    }
+  }
+
+  function getOpenInterestRoles(){
+    const elections = loadElectionList();
+    const today = new Date();
+    const openRoles = new Set();
+
+    elections.forEach((entry) => {
+      if(!entry || typeof entry !== 'object') return;
+      const role = String(entry.role || '').trim().toLowerCase();
+      if(!role) return;
+
+      const status = String(entry.status || '').trim().toLowerCase();
+      const startAt = entry.start ? new Date(entry.start + 'T00:00:00') : null;
+      const endAt = entry.end ? new Date(entry.end + 'T23:59:59') : null;
+      const statusClosed = ['closed','ended','complete','completed','cancelled','canceled','archived','inactive'].includes(status);
+      const statusOpen = ['open','active','live','ongoing','running','current'].includes(status);
+      const withinWindow = (!startAt || !Number.isNaN(startAt.getTime()) && today >= startAt) && (!endAt || !Number.isNaN(endAt.getTime()) && today <= endAt);
+
+      if(statusClosed) return;
+      if(statusOpen || withinWindow) openRoles.add(role);
+    });
+
+    return Array.from(openRoles);
+  }
+
   function syncInterestAccess(){
     const __demo = (location.protocol === 'file:' || (new URLSearchParams(location.search)).get('demo') === '1' || localStorage.getItem('anw_demo') === '1');
-    const allowed = __demo ? true : !!(currentProfile && isApprovedResident(currentProfile));
-    if(!interestBlocked || !interestArea) return allowed;
-    interestBlocked.style.display = allowed ? 'none' : 'block';
-    interestArea.style.display = allowed ? 'block' : 'none';
-    return allowed;
+    const approved = __demo ? true : !!(currentProfile && isApprovedResident(currentProfile));
+    const openRoles = getOpenInterestRoles();
+    const hasOpenElection = openRoles.length > 0;
+    if(!interestBlocked || !interestArea) return approved && hasOpenElection;
+    interestBlocked.style.display = approved ? 'none' : 'block';
+    if(interestNoElection) interestNoElection.style.display = (approved && !hasOpenElection) ? 'block' : 'none';
+    interestArea.style.display = approved ? 'block' : 'none';
+    return approved && hasOpenElection;
   }
 
   await resolveDashboardContext();
@@ -1216,6 +1254,22 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   const btnWithdrawInterest = document.getElementById('btnWithdrawInterest');
 
   function renderInterest(){
+    const openRoles = getOpenInterestRoles();
+    const hasOpenElection = openRoles.length > 0;
+    const roleLabels = {
+      area: 'Area Coordinator',
+      assistant: 'Assistant Area Coordinator'
+    };
+
+    if(intRole){
+      const currentValue = currentProfile?.interest?.role || intRole.value || '';
+      intRole.innerHTML = '<option value="">Select…</option>' + openRoles.map((role) => `<option value="${role}">${roleLabels[role] || role}</option>`).join('');
+      intRole.value = openRoles.includes(currentValue) ? currentValue : '';
+      intRole.disabled = !hasOpenElection;
+    }
+    if(intText) intText.disabled = !hasOpenElection;
+    if(btnSubmitInterest) btnSubmitInterest.style.display = hasOpenElection ? 'inline-block' : 'none';
+
     if(!currentProfile){
       if(intRole) intRole.value = '';
       if(intText) intText.value = '';
@@ -1224,18 +1278,21 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       if(btnSubmitInterest) btnSubmitInterest.textContent = 'Submit';
       return;
     }
+
     if(currentProfile.interest){
-      intRole.value = currentProfile.interest.role || '';
-      intText.value = currentProfile.interest.text || '';
-      intMeta.textContent = 'Submitted on ' + (currentProfile.interest.date || '—') + ' · Status: ' + (currentProfile.interest.status || 'pending');
-      btnWithdrawInterest.style.display = 'inline-block';
-      btnSubmitInterest.textContent = 'Update';
+      if(intRole && (!hasOpenElection || openRoles.includes(currentProfile.interest.role || ''))){
+        intRole.value = currentProfile.interest.role || '';
+      }
+      if(intText) intText.value = currentProfile.interest.text || '';
+      if(intMeta) intMeta.textContent = 'Submitted on ' + (currentProfile.interest.date || '—') + ' · Status: ' + (currentProfile.interest.status || 'pending');
+      if(btnWithdrawInterest) btnWithdrawInterest.style.display = hasOpenElection ? 'inline-block' : 'none';
+      if(btnSubmitInterest) btnSubmitInterest.textContent = 'Update';
     } else {
-      intRole.value = '';
-      intText.value = '';
-      intMeta.textContent = '';
-      btnWithdrawInterest.style.display = 'none';
-      btnSubmitInterest.textContent = 'Submit';
+      if(intRole) intRole.value = '';
+      if(intText) intText.value = '';
+      if(intMeta) intMeta.textContent = hasOpenElection ? '' : 'There is no open election at the moment.';
+      if(btnWithdrawInterest) btnWithdrawInterest.style.display = 'none';
+      if(btnSubmitInterest) btnSubmitInterest.textContent = 'Submit';
     }
   }
 
@@ -1251,7 +1308,18 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   btnSubmitInterest?.addEventListener('click', async ()=>{
     if(!currentProfile) return;
+    const openRoles = getOpenInterestRoles();
+    if(!openRoles.length){
+      intMeta.textContent = 'There is no open election at the moment.';
+      toast('There is no open election at the moment.', 'warn');
+      return;
+    }
     const roleVal = (intRole.value || '').trim();
+    if(!openRoles.includes(roleVal)){
+      intMeta.textContent = 'Please select a role from the currently open election.';
+      toast('Please select a role from the currently open election.', 'warn');
+      return;
+    }
     const textVal = (intText.value || '').trim();
     if(!roleVal || !textVal){
       intMeta.textContent = 'Please complete all fields.';
@@ -1308,7 +1376,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   const electionsBody = document.getElementById('electionsBody');
   const electionsEmpty = document.getElementById('electionsEmpty');
-  const elections = anwLoad(KEY_ELECTIONS, []);
+  const elections = loadElectionList();
   electionsBody.innerHTML = '';
   if(!Array.isArray(elections) || !elections.length) electionsEmpty.style.display = 'block';
   else {
