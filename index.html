@@ -164,43 +164,6 @@
 <section class="card home-notices-section" id="homeNoticesSection">
 <h3 class="home-notices-title"><span class="home-notices-title__icon" aria-hidden="true">📢</span><span>Community Notices</span></h3>
 <div class="home-notices-list" id="homeNoticeList" aria-live="polite"></div>
-<section class="mail-board" hidden="" id="misdeliveredMailBoard" aria-labelledby="misdeliveredMailTitle">
-<div class="mail-board__top">
-<div class="mail-board__heading">
-<h4 class="mail-board__title" id="misdeliveredMailTitle">📬 Misdelivered Mail</h4>
-<p class="mail-board__intro">Members only. Show only where it was delivered and the correct address.</p>
-</div>
-<button class="btn-line mail-board__add-btn" id="mailBoardToggleBtn" type="button">+ Add entry</button>
-</div>
-<form class="mail-board__form" hidden="" id="misdeliveredMailForm">
-<div class="mail-board__form-grid">
-<label class="mail-board__field">
-<span>Item type</span>
-<select class="input" id="mailItemType" required="">
-<option value="">Select type</option>
-<option value="letter">Letter</option>
-<option value="envelope">Envelope</option>
-<option value="parcel">Parcel</option>
-</select>
-</label>
-<label class="mail-board__field">
-<span>Delivered at</span>
-<input class="input" id="mailDeliveredAddress" maxlength="120" placeholder="Address where the item was delivered" required="" type="text"/>
-</label>
-<label class="mail-board__field">
-<span>Correct address</span>
-<input class="input" id="mailCorrectAddress" maxlength="120" placeholder="Address shown on the letter or parcel" required="" type="text"/>
-</label>
-</div>
-<div class="mail-board__form-actions">
-<button class="btn" id="mailBoardSubmitBtn" type="submit">Publish</button>
-<button class="btn-line" id="mailBoardCancelBtn" type="button">Cancel</button>
-</div>
-<p class="tiny muted mail-board__hint">The message stays visible for 5 days unless the resident marks it as Collected or Returned to sender.</p>
-<div class="tiny" id="misdeliveredMailMsg" role="status" aria-live="polite"></div>
-</form>
-<div class="mail-board__table" id="misdeliveredMailList" aria-live="polite"></div>
-</section>
 </section>
 
 <section class="card">
@@ -412,4 +375,4 @@
   </script>
 <script src="assets/acl-guard.js"></script>
 </body>
-</html>test
+</html>
