@@ -117,63 +117,83 @@
     style.id = 'anw-mail-board-styles';
     style.textContent = `
       .mail-board{
-        margin-top:20px;
-        padding-top:18px;
+        margin-top:18px;
+        padding-top:14px;
         border-top:1px solid rgba(15,23,42,.08);
       }
+      .mail-board__top{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:12px;
+        margin-bottom:10px;
+      }
+      .mail-board__heading{
+        min-width:0;
+      }
       .mail-board__title{
-        margin:0 0 6px;
-        font-size:1.05rem;
+        margin:0 0 2px;
+        font-size:1rem;
         font-weight:900;
         color:#1f2937;
       }
       .mail-board__intro{
-        margin:0 0 14px;
-        color:#475569;
+        margin:0;
+        color:#64748b;
+        font-size:.92rem;
+        line-height:1.4;
       }
-      .mail-board__actions,
+      .mail-board__add-btn{
+        flex:0 0 auto;
+        height:34px;
+        padding:0 12px;
+        border-radius:999px;
+        font-size:.9rem;
+        font-weight:800;
+        white-space:nowrap;
+      }
       .mail-board__form-actions{
         display:flex;
-        gap:10px;
+        gap:8px;
         flex-wrap:wrap;
         align-items:center;
       }
       .mail-board__form{
-        margin:14px 0 16px;
-        padding:14px;
+        margin:8px 0 12px;
+        padding:12px;
         border:1px solid rgba(15,23,42,.10);
-        border-radius:14px;
+        border-radius:12px;
         background:#f8fbfa;
       }
       .mail-board__form-grid{
         display:grid;
-        grid-template-columns:1fr 2fr 2fr;
-        gap:12px;
+        grid-template-columns:130px minmax(220px,1fr) minmax(220px,1fr);
+        gap:10px;
       }
       .mail-board__field{ display:flex; flex-direction:column; gap:6px; font-weight:700; color:#1f2937; }
-      .mail-board__field span{ font-size:.92rem; }
-      .mail-board__hint{ margin:10px 0 0; }
+      .mail-board__field span{ font-size:.88rem; }
+      .mail-board__hint{ margin:8px 0 0; }
       .mail-board__table{
         border:1px solid rgba(15,23,42,.10);
-        border-radius:16px;
+        border-radius:14px;
         overflow:hidden;
         background:#fff;
       }
       .mail-board__row,
       .mail-board__head{
         display:grid;
-        grid-template-columns:120px minmax(180px,1.35fr) minmax(180px,1.35fr) 130px minmax(140px,.9fr);
-        gap:12px;
+        grid-template-columns:92px minmax(170px,1.2fr) minmax(170px,1.25fr) 118px 165px;
+        gap:10px;
         align-items:center;
-        padding:12px 14px;
+        padding:9px 12px;
       }
       .mail-board__head{
         background:#17324d;
         color:#fff;
-        font-size:.82rem;
+        font-size:.78rem;
         font-weight:800;
         text-transform:uppercase;
-        letter-spacing:.04em;
+        letter-spacing:.03em;
       }
       .mail-board__row{ border-top:1px solid rgba(15,23,42,.08); }
       .mail-board__row:first-of-type{ border-top:none; }
@@ -182,53 +202,90 @@
       .mail-board__type{
         display:inline-flex;
         align-items:center;
-        gap:8px;
+        gap:6px;
         font-weight:800;
       }
-      .mail-board__type-icon{ font-size:1rem; }
+      .mail-board__type-icon{ font-size:.95rem; }
       .mail-board__status{
         display:inline-flex;
         align-items:center;
-        justify-content:flex-start;
-        padding:6px 10px;
+        justify-content:center;
+        padding:4px 8px;
         border-radius:999px;
         background:#eef6f1;
         color:#1f6f4a;
         font-weight:800;
-        font-size:.84rem;
+        font-size:.78rem;
+        line-height:1.15;
+        white-space:nowrap;
       }
-      .mail-board__row-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+      .mail-board__row-actions{
+        display:inline-flex;
+        gap:6px;
+        flex-wrap:nowrap;
+        align-items:center;
+        white-space:nowrap;
+      }
       .mail-board__small-btn{
         border:1px solid rgba(15,23,42,.12);
         background:#fff;
         color:#17324d;
         border-radius:999px;
-        padding:7px 11px;
+        padding:5px 9px;
         font-weight:800;
+        font-size:.78rem;
+        line-height:1.1;
         cursor:pointer;
+        min-height:28px;
+        white-space:nowrap;
+      }
+      .mail-board__small-btn:hover{
+        background:#f8fafc;
       }
       .mail-board__empty{
-        padding:16px 14px;
+        padding:12px;
         color:#475569;
+        font-size:.92rem;
       }
-      .mail-board__meta{ font-size:.82rem; color:#64748b; }
-      @media (max-width: 980px){
+      .mail-board__meta{
+        font-size:.78rem;
+        color:#94a3b8;
+      }
+      @media (max-width: 1040px){
+        .mail-board__row,
+        .mail-board__head{
+          grid-template-columns:92px minmax(160px,1fr) minmax(160px,1fr) 110px 150px;
+          gap:8px;
+          padding:8px 10px;
+        }
+        .mail-board__small-btn{
+          padding:4px 8px;
+          font-size:.74rem;
+        }
+      }
+      @media (max-width: 860px){
+        .mail-board__top{
+          flex-direction:column;
+          align-items:flex-start;
+        }
         .mail-board__form-grid{ grid-template-columns:1fr; }
         .mail-board__head{ display:none; }
         .mail-board__row{
           grid-template-columns:1fr;
-          gap:8px;
+          gap:7px;
+          padding:10px 12px;
         }
         .mail-board__cell::before{
           content:attr(data-label);
           display:block;
-          margin-bottom:4px;
-          font-size:.78rem;
+          margin-bottom:3px;
+          font-size:.74rem;
           font-weight:800;
           text-transform:uppercase;
           letter-spacing:.04em;
           color:#64748b;
         }
+        .mail-board__row-actions{ flex-wrap:wrap; }
       }
     `;
     document.head.appendChild(style);
@@ -807,7 +864,7 @@
             <button class="mail-board__small-btn" type="button" data-mail-action="collected" data-mail-id="${esc(item.id)}">Collected</button>
             <button class="mail-board__small-btn" type="button" data-mail-action="returned_to_sender" data-mail-id="${esc(item.id)}">Returned to sender</button>
           </div>`
-        : `<div class="mail-board__meta">Posted ${esc(formatDateShort(item.createdAt))}</div>`;
+        : `<div class="mail-board__meta"></div>`;
 
       return `
         <div class="mail-board__row">
