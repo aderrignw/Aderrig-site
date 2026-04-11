@@ -4,7 +4,7 @@
    - Shows Home + Public notices to everyone
    - Shows Home + Private notices to logged-in members when targeting matches
    - Condenses bin notices into one card
-   - Bin card shows: completed this week + next week
+   - Members-only Misdelivered Mail board with fixed fields and 5-day expiry
    ========================= */
 
 (function () {
@@ -14,9 +14,21 @@
   const sectionEl = document.getElementById('homeNoticesSection');
   if (!listEl || !sectionEl) return;
 
+  const mailBoardEl = document.getElementById('misdeliveredMailBoard');
+  const mailListEl = document.getElementById('misdeliveredMailList');
+  const mailFormEl = document.getElementById('misdeliveredMailForm');
+  const mailMsgEl = document.getElementById('misdeliveredMailMsg');
+  const mailToggleBtn = document.getElementById('mailBoardToggleBtn');
+  const mailCancelBtn = document.getElementById('mailBoardCancelBtn');
+  const mailTypeEl = document.getElementById('mailItemType');
+  const mailDeliveredEl = document.getElementById('mailDeliveredAddress');
+  const mailCorrectEl = document.getElementById('mailCorrectAddress');
+
   const STORE_URL = '/.netlify/functions/store';
   const PUBLIC_URL = '/.netlify/functions/public-notices';
   const KEY_NOTICES = (window.ANW_KEYS && window.ANW_KEYS.NOTICES) || 'anw_notices';
+  const MAIL_NOTICE_TYPE = 'misdelivered_mail';
+  const MAIL_VISIBLE_DAYS = 5;
 
   function esc(s) {
     return String(s || '')
@@ -99,6 +111,129 @@
     document.head.appendChild(style);
   }
 
+  function injectMailBoardStyles() {
+    if (document.getElementById('anw-mail-board-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'anw-mail-board-styles';
+    style.textContent = `
+      .mail-board{
+        margin-top:20px;
+        padding-top:18px;
+        border-top:1px solid rgba(15,23,42,.08);
+      }
+      .mail-board__title{
+        margin:0 0 6px;
+        font-size:1.05rem;
+        font-weight:900;
+        color:#1f2937;
+      }
+      .mail-board__intro{
+        margin:0 0 14px;
+        color:#475569;
+      }
+      .mail-board__actions,
+      .mail-board__form-actions{
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        align-items:center;
+      }
+      .mail-board__form{
+        margin:14px 0 16px;
+        padding:14px;
+        border:1px solid rgba(15,23,42,.10);
+        border-radius:14px;
+        background:#f8fbfa;
+      }
+      .mail-board__form-grid{
+        display:grid;
+        grid-template-columns:1fr 2fr 2fr;
+        gap:12px;
+      }
+      .mail-board__field{ display:flex; flex-direction:column; gap:6px; font-weight:700; color:#1f2937; }
+      .mail-board__field span{ font-size:.92rem; }
+      .mail-board__hint{ margin:10px 0 0; }
+      .mail-board__table{
+        border:1px solid rgba(15,23,42,.10);
+        border-radius:16px;
+        overflow:hidden;
+        background:#fff;
+      }
+      .mail-board__row,
+      .mail-board__head{
+        display:grid;
+        grid-template-columns:120px minmax(180px,1.35fr) minmax(180px,1.35fr) 130px minmax(140px,.9fr);
+        gap:12px;
+        align-items:center;
+        padding:12px 14px;
+      }
+      .mail-board__head{
+        background:#17324d;
+        color:#fff;
+        font-size:.82rem;
+        font-weight:800;
+        text-transform:uppercase;
+        letter-spacing:.04em;
+      }
+      .mail-board__row{ border-top:1px solid rgba(15,23,42,.08); }
+      .mail-board__row:first-of-type{ border-top:none; }
+      .mail-board__cell{ min-width:0; color:#1f2937; }
+      .mail-board__cell strong{ font-weight:800; }
+      .mail-board__type{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        font-weight:800;
+      }
+      .mail-board__type-icon{ font-size:1rem; }
+      .mail-board__status{
+        display:inline-flex;
+        align-items:center;
+        justify-content:flex-start;
+        padding:6px 10px;
+        border-radius:999px;
+        background:#eef6f1;
+        color:#1f6f4a;
+        font-weight:800;
+        font-size:.84rem;
+      }
+      .mail-board__row-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+      .mail-board__small-btn{
+        border:1px solid rgba(15,23,42,.12);
+        background:#fff;
+        color:#17324d;
+        border-radius:999px;
+        padding:7px 11px;
+        font-weight:800;
+        cursor:pointer;
+      }
+      .mail-board__empty{
+        padding:16px 14px;
+        color:#475569;
+      }
+      .mail-board__meta{ font-size:.82rem; color:#64748b; }
+      @media (max-width: 980px){
+        .mail-board__form-grid{ grid-template-columns:1fr; }
+        .mail-board__head{ display:none; }
+        .mail-board__row{
+          grid-template-columns:1fr;
+          gap:8px;
+        }
+        .mail-board__cell::before{
+          content:attr(data-label);
+          display:block;
+          margin-bottom:4px;
+          font-size:.78rem;
+          font-weight:800;
+          text-transform:uppercase;
+          letter-spacing:.04em;
+          color:#64748b;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   const ICONS = {
     info: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20Zm0 4a1.25 1.25 0 1 1 0 2.5A1.25 1.25 0 0 1 12 6Zm2 14h-4v-2h1v-5h-1v-2h3v7h1v2Z"/></svg>',
     success: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20Zm4.3 7.7-5.2 6.1a1 1 0 0 1-1.5.1l-2.6-2.6 1.4-1.4 1.9 1.9 4.5-5.2 1.5 1.1Z"/></svg>',
@@ -107,6 +242,7 @@
   };
 
   function normalizeText(v){ return String(v || '').trim().toLowerCase(); }
+  function normEmail(v){ return String(v||'').trim().toLowerCase(); }
 
   function pickVariant(it){
     const cat = normalizeText(it?.category);
@@ -123,11 +259,6 @@
     if (cat === 'volunteer') return 'success';
     if (cat === 'meeting') return 'info';
     return 'info';
-  }
-
-  function formatVisibility(it){
-    const vis = String(it?.home?.visibility || 'private').toLowerCase();
-    return vis === 'public' ? 'Public' : 'Members only';
   }
 
   function parseDateValue(value) {
@@ -184,6 +315,12 @@
     return d.toLocaleDateString('en-IE', { weekday: 'short' });
   }
 
+  function formatDateShort(value) {
+    const d = parseDateValue(value);
+    if (!d) return '';
+    return d.toLocaleDateString('en-IE', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
   function getDayNumber(value) {
     const d = parseDateValue(value);
     return d ? String(d.getDate()) : '';
@@ -194,6 +331,10 @@
     const type = normalizeText(it?.meta?.type);
     const title = normalizeText(it?.title);
     return cat === 'bins' || type === 'bin_collection_import' || title.includes('bin collection');
+  }
+
+  function isMisdeliveredMailNotice(it) {
+    return normalizeText(it?.meta?.type) === MAIL_NOTICE_TYPE || normalizeText(it?.category) === MAIL_NOTICE_TYPE;
   }
 
   function getBinDate(it) {
@@ -274,8 +415,8 @@
     if (!dated.length) return [];
 
     const today = startOfDay(new Date());
-    const weekStart = startOfWeek(today); // Sunday
-    const weekEnd = endOfWeek(today);     // Saturday
+    const weekStart = startOfWeek(today);
+    const weekEnd = endOfWeek(today);
     const nextWeekStart = addDays(weekEnd, 1);
     const nextWeekEnd = addDays(nextWeekStart, 6);
 
@@ -322,9 +463,7 @@
 
       if (completedThisWeekItem) {
         lines.push(`Completed this week: ${getBinName(completedThisWeekItem)} bin on ${formatLongDate(completedThisWeekItem.__binDate)}.`);
-      } else if (latestCompleted && !lines.length) {
-        lines.push(`Last collection: ${getBinName(latestCompleted)} bin on ${formatLongDate(latestCompleted.__binDate)}.`);
-      } else if (latestCompleted && lines.length) {
+      } else if (latestCompleted) {
         lines.push(`Last collection: ${getBinName(latestCompleted)} bin on ${formatLongDate(latestCompleted.__binDate)}.`);
       }
 
@@ -387,7 +526,6 @@
       const variant = it?._displayVariant || pickVariant(it);
       const title = esc(it?.title || 'Notice');
       const msgHtml = it?._displayMessageHtml || esc(it?.message || it?.text || '');
-      const visibility = '';
       const meta = String(it?._displayMeta || '').trim();
       return `
         <article class="home-notice-card home-notice-card--${variant}">
@@ -395,7 +533,6 @@
           <div class="home-notice-card__body">
             <div class="home-notice-card__head">
               <h4 class="home-notice-card__title">${title}</h4>
-              ${visibility ? `<span class="home-notice-card__badge">${visibility}</span>` : ''}
             </div>
             <div class="home-notice-card__msg">${msgHtml}</div>
             ${meta ? `<div class="home-notice-card__meta">${esc(meta)}</div>` : ''}
@@ -412,8 +549,6 @@
     try { return await user.jwt(); } catch { return null; }
   }
 
-  function normEmail(v){ return String(v||'').trim().toLowerCase(); }
-  function normEir(v){ return String(v||'').replace(/\s+/g,'').toUpperCase(); }
   function getStreetName(address){
     const a = String(address||'').trim();
     if(!a) return '';
@@ -422,10 +557,13 @@
     s = s.replace(/^\s*\d+[A-Za-z]?\s+/, '').trim();
     return s;
   }
+
+  function normEir(v){ return String(v||'').replace(/\s+/g,'').toUpperCase(); }
   function isAdminRole(role){
     const r = String(role||'').toLowerCase();
     return r === 'admin' || r === 'owner';
   }
+
   function noticeMatchesUser(n, user){
     const t = n?.target || {};
     const inc = t.include || {};
@@ -488,31 +626,58 @@
     return [];
   }
 
-  async function loadPrivateNoticesForLoggedUser() {
+  function getLoggedUserProfile() {
+    try {
+      const raw = localStorage.getItem('anw_logged');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.email) return parsed;
+      }
+    } catch {}
+    const currentUser = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function'
+      ? window.netlifyIdentity.currentUser()
+      : null;
+    if (currentUser && currentUser.email) {
+      return { email: currentUser.email, role: 'resident' };
+    }
+    return null;
+  }
+
+  async function loadAllNoticesForLoggedUser() {
     const token = await getIdentityToken();
-    if (!token) return [];
+    if (!token) return { me: null, items: [] };
     if (typeof window.anwInitStore === 'function') {
       try { await window.anwInitStore(); } catch {}
     }
-
-    let me = null;
-    try {
-      const raw = localStorage.getItem('anw_logged');
-      if (raw) me = JSON.parse(raw);
-    } catch {}
-    if (!me || !me.email) return [];
+    const me = getLoggedUserProfile();
+    if (!me || !me.email) return { me: null, items: [] };
 
     const res = await fetch(`${STORE_URL}?key=${encodeURIComponent(KEY_NOTICES)}`, {
-      headers: { authorization: `Bearer ${token}` }
+      headers: { authorization: `Bearer ${token}` },
+      cache: 'no-store'
     });
     const data = await res.json().catch(() => ({}));
     const all = Array.isArray(data?.value) ? data.value : (Array.isArray(data) ? data : []);
+    return { me, items: all };
+  }
 
-    return all
-      .filter(n => !isExpired(n))
-      .filter(n => !isNotStarted(n))
-      .filter(n => isPrivateHome(n))
-      .filter(n => noticeMatchesUser(n, me));
+  async function saveAllNotices(items) {
+    const token = await getIdentityToken();
+    if (!token) throw new Error('Please log in again and retry.');
+    const res = await fetch(`${STORE_URL}?key=${encodeURIComponent(KEY_NOTICES)}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(Array.isArray(items) ? items : [])
+    });
+    if (!res.ok) {
+      let message = '';
+      try { message = await res.text(); } catch {}
+      throw new Error(message || `Unable to save notices (${res.status}).`);
+    }
+    return await res.json().catch(() => ({}));
   }
 
   function getNoticeSortValue(it){
@@ -521,21 +686,282 @@
     return fromDate ? fromDate.getTime() : 0;
   }
 
+  function normalizeAddress(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function getMailTypeMeta(value) {
+    const key = normalizeText(value);
+    if (key === 'parcel') return { icon: '📦', label: 'Parcel' };
+    if (key === 'envelope') return { icon: '✉️', label: 'Envelope' };
+    return { icon: '📄', label: 'Letter' };
+  }
+
+  function getMailStatusLabel(value) {
+    const key = normalizeText(value);
+    if (key === 'collected') return 'Collected';
+    if (key === 'returned_to_sender') return 'Returned to sender';
+    if (key === 'expired') return 'Expired';
+    return 'Not collected';
+  }
+
+  function buildMailMessage(itemType, deliveredAddress, intendedAddress) {
+    const typeMeta = getMailTypeMeta(itemType);
+    return `${typeMeta.label} delivered at ${deliveredAddress}. Correct address: ${intendedAddress}.`;
+  }
+
+  function buildMailNotice(itemType, deliveredAddress, intendedAddress, createdBy) {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + MAIL_VISIBLE_DAYS * 24 * 60 * 60 * 1000);
+    return {
+      id: `mail_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      title: 'Misdelivered mail',
+      message: buildMailMessage(itemType, deliveredAddress, intendedAddress),
+      category: MAIL_NOTICE_TYPE,
+      createdAt: now.toISOString(),
+      createdBy: normEmail(createdBy || ''),
+      expiresAt: expiresAt.toISOString(),
+      status: 'not_collected',
+      home: {
+        enabled: true,
+        visibility: 'private'
+      },
+      target: {
+        include: { allLoggedIn: true },
+        exclude: {}
+      },
+      meta: {
+        type: MAIL_NOTICE_TYPE,
+        itemType: normalizeText(itemType),
+        deliveredAddress,
+        intendedAddress
+      }
+    };
+  }
+
+  function isMailActive(it) {
+    return isMisdeliveredMailNotice(it) && normalizeText(it?.status || 'not_collected') === 'not_collected' && !isExpired(it);
+  }
+
+  function setMailBoardMessage(message, kind) {
+    if (!mailMsgEl) return;
+    mailMsgEl.textContent = String(message || '');
+    mailMsgEl.style.color = kind === 'error' ? '#b91c1c' : '#1f6f4a';
+  }
+
+  function toggleMailForm(show) {
+    if (!mailFormEl) return;
+    mailFormEl.hidden = !show;
+    if (mailToggleBtn) mailToggleBtn.hidden = !!show;
+    if (show) {
+      mailTypeEl?.focus();
+    }
+  }
+
+  function resetMailForm() {
+    if (mailFormEl) mailFormEl.reset();
+    setMailBoardMessage('', 'ok');
+    toggleMailForm(false);
+  }
+
+  async function syncExpiredMailNotices(allItems) {
+    const items = Array.isArray(allItems) ? allItems.slice() : [];
+    let changed = false;
+    const next = items.map((item) => {
+      if (!isMisdeliveredMailNotice(item)) return item;
+      if (normalizeText(item?.status || 'not_collected') !== 'not_collected') return item;
+      if (!isExpired(item)) return item;
+      changed = true;
+      return { ...item, status: 'expired', expiredAt: new Date().toISOString() };
+    });
+    if (changed) {
+      try { await saveAllNotices(next); } catch {}
+      return next;
+    }
+    return items;
+  }
+
+  function renderMailBoard(items, me) {
+    if (!mailBoardEl || !mailListEl) return;
+    injectMailBoardStyles();
+    mailBoardEl.hidden = !me;
+    if (!me) return;
+
+    const mailItems = (Array.isArray(items) ? items : [])
+      .filter(isMailActive)
+      .sort((a, b) => getNoticeSortValue(b) - getNoticeSortValue(a));
+
+    if (!mailItems.length) {
+      mailListEl.innerHTML = `<div class="mail-board__empty">No active entries right now.</div>`;
+      return;
+    }
+
+    const rows = mailItems.map((item) => {
+      const meta = item?.meta || {};
+      const typeMeta = getMailTypeMeta(meta.itemType);
+      const deliveredAddress = esc(meta.deliveredAddress || '—');
+      const intendedAddress = esc(meta.intendedAddress || '—');
+      const mine = normEmail(item?.createdBy) === normEmail(me?.email);
+      const actions = mine
+        ? `<div class="mail-board__row-actions">
+            <button class="mail-board__small-btn" type="button" data-mail-action="collected" data-mail-id="${esc(item.id)}">Collected</button>
+            <button class="mail-board__small-btn" type="button" data-mail-action="returned_to_sender" data-mail-id="${esc(item.id)}">Returned to sender</button>
+          </div>`
+        : `<div class="mail-board__meta">Posted ${esc(formatDateShort(item.createdAt))}</div>`;
+
+      return `
+        <div class="mail-board__row">
+          <div class="mail-board__cell" data-label="Type">
+            <span class="mail-board__type"><span class="mail-board__type-icon" aria-hidden="true">${typeMeta.icon}</span><span>${esc(typeMeta.label)}</span></span>
+          </div>
+          <div class="mail-board__cell" data-label="Delivered at"><strong>${deliveredAddress}</strong></div>
+          <div class="mail-board__cell" data-label="Correct address"><strong>${intendedAddress}</strong></div>
+          <div class="mail-board__cell" data-label="Status"><span class="mail-board__status">${esc(getMailStatusLabel(item.status))}</span></div>
+          <div class="mail-board__cell" data-label="Action">${actions}</div>
+        </div>
+      `;
+    }).join('');
+
+    mailListEl.innerHTML = `
+      <div class="mail-board__head">
+        <div>Type</div>
+        <div>Delivered at</div>
+        <div>Correct address</div>
+        <div>Status</div>
+        <div>Action</div>
+      </div>
+      ${rows}
+    `;
+
+    Array.from(mailListEl.querySelectorAll('[data-mail-action][data-mail-id]')).forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const action = String(btn.getAttribute('data-mail-action') || '');
+        const noticeId = String(btn.getAttribute('data-mail-id') || '');
+        if (!action || !noticeId) return;
+        btn.disabled = true;
+        try {
+          setMailBoardMessage('Saving update…', 'ok');
+          const state = await loadAllNoticesForLoggedUser();
+          const next = state.items.map((item) => {
+            if (String(item?.id || '') !== noticeId) return item;
+            if (normEmail(item?.createdBy) !== normEmail(state?.me?.email)) return item;
+            return {
+              ...item,
+              status: action,
+              resolvedAt: new Date().toISOString()
+            };
+          });
+          await saveAllNotices(next);
+          setMailBoardMessage('Entry updated.', 'ok');
+          await refreshMailBoardOnly();
+        } catch (err) {
+          setMailBoardMessage(err?.message || 'Unable to update this entry.', 'error');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  async function refreshMailBoardOnly() {
+    const state = await loadAllNoticesForLoggedUser();
+    if (!state.me) {
+      if (mailBoardEl) mailBoardEl.hidden = true;
+      return;
+    }
+    const synced = await syncExpiredMailNotices(state.items);
+    const visible = synced.filter((n) => !isNotStarted(n)).filter((n) => isPrivateHome(n)).filter((n) => noticeMatchesUser(n, state.me));
+    renderMailBoard(visible, state.me);
+  }
+
+  function bindMailBoardEvents() {
+    if (mailToggleBtn && !mailToggleBtn.dataset.bound) {
+      mailToggleBtn.dataset.bound = '1';
+      mailToggleBtn.addEventListener('click', () => {
+        setMailBoardMessage('', 'ok');
+        toggleMailForm(true);
+      });
+    }
+
+    if (mailCancelBtn && !mailCancelBtn.dataset.bound) {
+      mailCancelBtn.dataset.bound = '1';
+      mailCancelBtn.addEventListener('click', () => {
+        resetMailForm();
+      });
+    }
+
+    if (mailFormEl && !mailFormEl.dataset.bound) {
+      mailFormEl.dataset.bound = '1';
+      mailFormEl.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const itemType = normalizeText(mailTypeEl?.value || '');
+        const deliveredAddress = normalizeAddress(mailDeliveredEl?.value || '');
+        const intendedAddress = normalizeAddress(mailCorrectEl?.value || '');
+        if (!itemType || !deliveredAddress || !intendedAddress) {
+          setMailBoardMessage('Please complete all fields.', 'error');
+          return;
+        }
+        if (deliveredAddress.toLowerCase() === intendedAddress.toLowerCase()) {
+          setMailBoardMessage('Delivered at and correct address must be different.', 'error');
+          return;
+        }
+
+        const submitBtn = mailFormEl.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+          setMailBoardMessage('Publishing entry…', 'ok');
+          const state = await loadAllNoticesForLoggedUser();
+          if (!state.me || !state.me.email) throw new Error('Please log in again and retry.');
+          const next = Array.isArray(state.items) ? state.items.slice() : [];
+          next.push(buildMailNotice(itemType, deliveredAddress, intendedAddress, state.me.email));
+          await saveAllNotices(next);
+          resetMailForm();
+          setMailBoardMessage('Entry published.', 'ok');
+          await refreshMailBoardOnly();
+        } catch (err) {
+          setMailBoardMessage(err?.message || 'Unable to publish this entry.', 'error');
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+        }
+      });
+    }
+  }
+
   async function main() {
     try {
+      bindMailBoardEvents();
+
       const publicItems = (await loadPublicNotices())
         .filter(n => !isExpired(n))
-        .filter(n => isPublicHome(n));
+        .filter(n => isPublicHome(n))
+        .filter(n => !isMisdeliveredMailNotice(n));
 
-      const privateItems = await loadPrivateNoticesForLoggedUser();
+      const privateState = await loadAllNoticesForLoggedUser();
+      const privateItemsRaw = privateState.me
+        ? privateState.items
+            .filter(n => !isExpired(n))
+            .filter(n => !isNotStarted(n))
+            .filter(n => isPrivateHome(n))
+            .filter(n => noticeMatchesUser(n, privateState.me))
+        : [];
+
+      const syncedItems = privateState.me ? await syncExpiredMailNotices(privateState.items) : privateState.items;
+      const privateItems = privateState.me
+        ? syncedItems
+            .filter(n => !isExpired(n))
+            .filter(n => !isNotStarted(n))
+            .filter(n => isPrivateHome(n))
+            .filter(n => noticeMatchesUser(n, privateState.me))
+        : privateItemsRaw;
 
       const publicBinItems = publicItems.filter(isBinNotice);
-      const publicRegularItems = publicItems.filter(n => !isBinNotice(n)).filter(n => !isNotStarted(n));
+      const publicRegularItems = publicItems.filter(n => !isBinNotice(n));
+      const privateRegularItems = privateItems.filter(n => !isMisdeliveredMailNotice(n));
 
       const binSummary = buildBinSummary(publicBinItems);
 
       const seen = new Set();
-      const merged = [...binSummary, ...publicRegularItems, ...privateItems]
+      const merged = [...binSummary, ...publicRegularItems, ...privateRegularItems]
         .filter(it => {
           const id = String(it?.id || '');
           if (!id) return true;
@@ -547,9 +973,11 @@
         .slice(0, 8);
 
       render(merged);
+      renderMailBoard(privateItems, privateState.me);
     } catch (err) {
       console.error('home-notices.js failed:', err);
       renderPlaceholder();
+      if (mailBoardEl) mailBoardEl.hidden = true;
     }
   }
 
