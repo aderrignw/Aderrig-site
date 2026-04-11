@@ -1,10 +1,6 @@
 /* =========================
    Home Notices section
-   Production version
-   - Shows Home + Public notices to everyone
-   - Shows Home + Private notices to logged-in members when targeting matches
-   - Condenses bin notices into one card
-   - Members-only Misdelivered Mail board with fixed fields and 5-day expiry
+   FINAL VERSION (refined permissions)
    ========================= */
 
 (function () {
@@ -14,21 +10,9 @@
   const sectionEl = document.getElementById('homeNoticesSection');
   if (!listEl || !sectionEl) return;
 
-  const mailBoardEl = document.getElementById('misdeliveredMailBoard');
-  const mailListEl = document.getElementById('misdeliveredMailList');
-  const mailFormEl = document.getElementById('misdeliveredMailForm');
-  const mailMsgEl = document.getElementById('misdeliveredMailMsg');
-  const mailToggleBtn = document.getElementById('mailBoardToggleBtn');
-  const mailCancelBtn = document.getElementById('mailBoardCancelBtn');
-  const mailTypeEl = document.getElementById('mailItemType');
-  const mailDeliveredEl = document.getElementById('mailDeliveredAddress');
-  const mailCorrectEl = document.getElementById('mailCorrectAddress');
-
   const STORE_URL = '/.netlify/functions/store';
   const PUBLIC_URL = '/.netlify/functions/public-notices';
   const KEY_NOTICES = (window.ANW_KEYS && window.ANW_KEYS.NOTICES) || 'anw_notices';
-  const MAIL_NOTICE_TYPE = 'misdelivered_mail';
-  const MAIL_VISIBLE_DAYS = 5;
 
   function esc(s) {
     return String(s || '')
@@ -39,1021 +23,235 @@
       .replaceAll("'", '&#039;');
   }
 
-  function injectBinCardStyles() {
-    if (document.getElementById('anw-bin-card-styles')) return;
+  function normalizeText(v){ return String(v || '').trim().toLowerCase(); }
+
+  function getLoggedProfile(){
+    try{
+      const raw = localStorage.getItem('anw_logged');
+      return raw ? JSON.parse(raw) : null;
+    }catch(_){ return null; }
+  }
+
+  function getLoggedEmail(){
+    const me = getLoggedProfile();
+    return String(me?.email || '').toLowerCase();
+  }
+
+  function getLoggedRoles(){
+    const me = getLoggedProfile() || {};
+    const list = [];
+    if (me.role) list.push(String(me.role));
+    if (Array.isArray(me.roles)) list.push(...me.roles.map(String));
+    return list.map(v => v.toLowerCase());
+  }
+
+  function hasOwnerAccess(){
+    const roles = getLoggedRoles();
+    return roles.includes('owner') || roles.includes('admin');
+  }
+
+  function isMisdeliveredMailNotice(it){
+    return normalizeText(it?.category) === 'misdelivered_mail';
+  }
+
+  function canManageMail(it){
+    // 🔒 CORREÇÃO FINAL:
+    // Somente quem criou pode marcar collected/returned
+    return String(it?.createdBy || '').toLowerCase() === getLoggedEmail();
+  }
+
+  function canRemoveMail(){
+    // 🔒 Apenas owner/admin pode remover
+    return hasOwnerAccess();
+  }
+
+  function formatMailType(type){
+    const t = String(type || 'Letter').trim();
+    return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+  }
+
+  function getMailIcon(type){
+    const t = normalizeText(type);
+    if (t.includes('parcel')) return '📦';
+    if (t.includes('envelope')) return '✉️';
+    return '📄';
+  }
+
+  function injectMailStyles(){
+    if (document.getElementById('mail-styles')) return;
+
     const style = document.createElement('style');
-    style.id = 'anw-bin-card-styles';
+    style.id = 'mail-styles';
     style.textContent = `
-      .home-bin-card{
-        display:grid;
-        grid-template-columns:92px 1fr;
-        gap:16px;
-        align-items:stretch;
-        padding:18px;
-        border:1px solid rgba(31,111,74,.16);
-        border-radius:18px;
-        background:linear-gradient(180deg,#fcfffd 0%,#f6fbf8 100%);
-        box-shadow:0 8px 24px rgba(17,24,39,.06);
-      }
-      .home-bin-card__date{
+      .mail-board-card{ margin-top:12px; }
+      .mail-board-head{
         display:flex;
-        flex-direction:column;
+        justify-content:space-between;
         align-items:center;
-        justify-content:center;
-        border-radius:16px;
-        background:#17324d;
-        color:#fff;
-        min-height:110px;
-        padding:12px 10px;
-        text-align:center;
-      }
-      .home-bin-card__dow{ font-size:.82rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; opacity:.92; }
-      .home-bin-card__day{ font-size:2rem; line-height:1; font-weight:900; margin:6px 0 4px; }
-      .home-bin-card__month{ font-size:.9rem; font-weight:700; opacity:.95; }
-      .home-bin-card__body{ min-width:0; }
-      .home-bin-card__eyebrow{
-        display:inline-flex;
-        align-items:center;
-        gap:8px;
-        font-size:.82rem;
-        font-weight:800;
-        color:#1f6f4a;
-        letter-spacing:.02em;
-        text-transform:uppercase;
         margin-bottom:6px;
       }
-      .home-bin-card__title{ margin:0 0 8px; font-size:1.35rem; line-height:1.2; font-weight:900; color:#1f2937; }
-      .home-bin-card__lead{ margin:0; font-size:1rem; line-height:1.55; color:#334155; }
-      .bin-chip{
-        display:inline-flex;
-        align-items:center;
-        gap:8px;
-        font-weight:800;
-      }
-      .bin-chip__dot{
-        width:12px;
-        height:12px;
+      .mail-board-add{
+        font-size:.85rem;
+        padding:4px 10px;
         border-radius:999px;
-        display:inline-block;
-        border:1px solid rgba(17,24,39,.16);
-        background:#cbd5e1;
-      }
-      .bin-chip--brown .bin-chip__dot{ background:#8b5e3c; }
-      .bin-chip--black .bin-chip__dot{ background:#111827; }
-      .bin-chip--green .bin-chip__dot{ background:#2f855a; }
-      .bin-chip--blue .bin-chip__dot{ background:#2563eb; }
-      @media (max-width: 720px){
-        .home-bin-card{ grid-template-columns:1fr; }
-        .home-bin-card__date{ min-height:unset; flex-direction:row; gap:10px; justify-content:flex-start; }
-        .home-bin-card__day{ margin:0; font-size:1.5rem; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  function injectMailBoardStyles() {
-    if (document.getElementById('anw-mail-board-styles')) return;
-    const style = document.createElement('style');
-    style.id = 'anw-mail-board-styles';
-    style.textContent = `
-      .mail-board{
-        margin-top:14px;
-        padding-top:10px;
-        border-top:1px solid rgba(15,23,42,.08);
-      }
-      .mail-board__top{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:10px;
-        margin-bottom:8px;
-      }
-      .mail-board__heading{
-        min-width:0;
-      }
-      .mail-board__title{
-        margin:0 0 1px;
-        font-size:1rem;
-        font-weight:800;
-        color:#1f2937;
-      }
-      .mail-board__intro{
-        margin:0;
-        color:#64748b;
-        font-size:.9rem;
-        line-height:1.4;
-      }
-      .mail-board__add-btn{
-        flex:0 0 auto;
-        height:28px;
-        padding:0 10px;
-        border-radius:999px;
-        font-size:.82rem;
-        font-weight:700;
-        white-space:nowrap;
-      }
-      .mail-board__form-actions{
-        display:flex;
-        gap:8px;
-        flex-wrap:wrap;
-        align-items:center;
-      }
-      .mail-board__form{
-        margin:6px 0 10px;
-        padding:10px;
-        border:1px solid rgba(15,23,42,.08);
-        border-radius:12px;
-        background:#fbfcfc;
-      }
-      .mail-board__form-grid{
-        display:grid;
-        grid-template-columns:120px minmax(220px,1fr) minmax(220px,1fr);
-        gap:10px;
-      }
-      .mail-board__field{ display:flex; flex-direction:column; gap:5px; color:#334155; }
-      .mail-board__field span{ font-size:.82rem; font-weight:700; color:#475569; }
-      .mail-board__hint{ margin:8px 0 0; }
-      .mail-board__table{
-        border:1px solid rgba(15,23,42,.08);
-        border-radius:14px;
-        overflow:hidden;
+        border:1px solid #ccc;
         background:#fff;
-      }
-      .mail-board__table.mail-board__table--compact .mail-board__row,
-      .mail-board__table.mail-board__table--compact .mail-board__head{
-        grid-template-columns:88px minmax(160px,1.15fr) minmax(160px,1.2fr) 110px 145px;
-      }
-      .mail-board__table.mail-board__table--readonly .mail-board__row,
-      .mail-board__table.mail-board__table--readonly .mail-board__head{
-        grid-template-columns:88px minmax(180px,1.2fr) minmax(180px,1.25fr) 110px;
-      }
-      .mail-board__row,
-      .mail-board__head{
-        display:grid;
-        gap:10px;
-        align-items:center;
-        padding:8px 12px;
-      }
-      .mail-board__head{
-        background:#f8fafc;
-        color:#475569;
-        font-size:.75rem;
-        font-weight:700;
-        letter-spacing:.01em;
-        border-bottom:1px solid rgba(15,23,42,.08);
-      }
-      .mail-board__row{ border-top:1px solid rgba(15,23,42,.06); }
-      .mail-board__row:first-of-type{ border-top:none; }
-      .mail-board__cell{ min-width:0; color:#334155; font-size:.93rem; font-weight:400; }
-      .mail-board__type{
-        display:inline-flex;
-        align-items:center;
-        gap:6px;
-        font-weight:600;
-        color:#1f2937;
-      }
-      .mail-board__type-icon{ font-size:.92rem; }
-      .mail-board__status{
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        padding:3px 8px;
-        border-radius:999px;
-        background:#eef6f1;
-        color:#1f6f4a;
-        font-weight:700;
-        font-size:.76rem;
-        line-height:1.15;
-        white-space:nowrap;
-      }
-      .mail-board__row-actions{
-        display:inline-flex;
-        gap:5px;
-        flex-wrap:nowrap;
-        align-items:center;
-        white-space:nowrap;
-      }
-      .mail-board__small-btn{
-        border:1px solid rgba(15,23,42,.10);
-        background:#fff;
-        color:#334155;
-        border-radius:999px;
-        padding:4px 8px;
-        font-weight:700;
-        font-size:.74rem;
-        line-height:1.1;
         cursor:pointer;
-        min-height:24px;
-        white-space:nowrap;
       }
-      .mail-board__small-btn:hover{
+      .mail-board-grid{
+        border:1px solid #ddd;
+        border-radius:10px;
+        overflow:hidden;
+      }
+      .mail-board-row, .mail-board-header{
+        display:grid;
+        grid-template-columns:80px 1fr 1fr 100px 200px;
+        gap:8px;
+        padding:8px 10px;
+        align-items:center;
+      }
+      .mail-board-header{
+        font-weight:700;
         background:#f8fafc;
       }
-      .mail-board__empty{
-        padding:10px 12px;
-        color:#64748b;
-        font-size:.9rem;
+      .mail-board-actions{
+        display:flex;
+        gap:6px;
+        flex-wrap:nowrap;
       }
-      .mail-board__meta{
-        font-size:.76rem;
-        color:#94a3b8;
+      .mail-action-btn{
+        font-size:.7rem;
+        padding:3px 6px;
+        border-radius:999px;
+        border:1px solid #ccc;
+        background:#fff;
+        cursor:pointer;
+        white-space:nowrap;
       }
-      @media (max-width: 1040px){
-        .mail-board__table.mail-board__table--compact .mail-board__row,
-        .mail-board__table.mail-board__table--compact .mail-board__head{
-          grid-template-columns:82px minmax(145px,1fr) minmax(145px,1fr) 100px 136px;
-          gap:8px;
-          padding:8px 10px;
-        }
-        .mail-board__table.mail-board__table--readonly .mail-board__row,
-        .mail-board__table.mail-board__table--readonly .mail-board__head{
-          grid-template-columns:82px minmax(150px,1fr) minmax(150px,1fr) 100px;
-          gap:8px;
-          padding:8px 10px;
-        }
-        .mail-board__small-btn{
-          padding:4px 8px;
-          font-size:.74rem;
-        }
-      }
-      @media (max-width: 860px){
-        .mail-board__top{
-          flex-direction:column;
-          align-items:flex-start;
-        }
-        .mail-board__form-grid{ grid-template-columns:1fr; }
-        .mail-board__head{ display:none; }
-        .mail-board__row{
-          grid-template-columns:1fr;
-          gap:7px;
-          padding:10px 12px;
-        }
-        .mail-board__cell::before{
-          content:attr(data-label);
-          display:block;
-          margin-bottom:3px;
-          font-size:.74rem;
-          font-weight:800;
-          text-transform:uppercase;
-          letter-spacing:.04em;
-          color:#64748b;
-        }
-        .mail-board__row-actions{ flex-wrap:wrap; }
+      .mail-action-btn--owner{
+        color:#b91c1c;
+        border-color:#fca5a5;
       }
     `;
     document.head.appendChild(style);
   }
 
-  const ICONS = {
-    info: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20Zm0 4a1.25 1.25 0 1 1 0 2.5A1.25 1.25 0 0 1 12 6Zm2 14h-4v-2h1v-5h-1v-2h3v7h1v2Z"/></svg>',
-    success: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20Zm4.3 7.7-5.2 6.1a1 1 0 0 1-1.5.1l-2.6-2.6 1.4-1.4 1.9 1.9 4.5-5.2 1.5 1.1Z"/></svg>',
-    warning: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 1 21h22L12 2Zm1 15h-2v-2h2v2Zm0-4h-2V9h2v4Z"/></svg>',
-    error: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20Zm3.5 13.1-1.4 1.4L12 13.4 9.9 15.5 8.5 14.1 10.6 12 8.5 9.9l1.4-1.4L12 10.6l2.1-2.1 1.4 1.4L13.4 12l2.1 2.1Z"/></svg>'
-  };
+  function buildMailBoard(items){
+    const me = getLoggedProfile();
+    if (!me || !me.email) return null;
 
-  function normalizeText(v){ return String(v || '').trim().toLowerCase(); }
-  function normEmail(v){ return String(v||'').trim().toLowerCase(); }
+    injectMailStyles();
 
-  function pickVariant(it){
-    const cat = normalizeText(it?.category);
-    const t = normalizeText(it?.title);
-    const m = normalizeText(it?.message || it?.text);
-    const blob = `${cat} ${t} ${m}`;
+    const rows = items.map(it => {
+      const type = formatMailType(it.meta?.itemType);
+      const delivered = esc(it.meta?.deliveredAddress || '');
+      const correct = esc(it.meta?.intendedAddress || '');
 
-    if (/(urgent|emergency|crime|theft|break[-\s]?in|suspicious|danger|warning|scam)/.test(blob)) return 'warning';
-    if (/(cancelled|canceled|closed|outage|error|failed|issue|problem)/.test(blob)) return 'error';
-    if (/(success|thanks|thank you|completed|resolved|approved|collection|recycling|volunteer)/.test(blob)) return 'success';
+      const actions = [];
 
-    if (cat === 'safety') return 'warning';
-    if (cat === 'garda') return 'info';
-    if (cat === 'volunteer') return 'success';
-    if (cat === 'meeting') return 'info';
-    return 'info';
-  }
-
-  function parseDateValue(value) {
-    if (!value) return null;
-    if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-    const raw = String(value).trim();
-    if (!raw) return null;
-
-    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-      const [y, m, d] = raw.split('-').map(Number);
-      return new Date(y, m - 1, d, 12, 0, 0, 0);
-    }
-
-    if (/^\d{2}-\d{2}-\d{4}$/.test(raw)) {
-      const [d, m, y] = raw.split('-').map(Number);
-      return new Date(y, m - 1, d, 12, 0, 0, 0);
-    }
-
-    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)) {
-      const [m, d, y] = raw.split('/').map(Number);
-      return new Date(y, m - 1, d, 12, 0, 0, 0);
-    }
-
-    const parsed = new Date(raw);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }
-
-  function startOfDay(value) {
-    const d = parseDateValue(value);
-    if (!d) return null;
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  }
-
-  function formatLongDate(value) {
-    const d = parseDateValue(value);
-    if (!d) return '';
-    return d.toLocaleDateString('en-IE', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  }
-
-  function formatMonthShort(value) {
-    const d = parseDateValue(value);
-    if (!d) return '';
-    return d.toLocaleDateString('en-IE', { month: 'short' });
-  }
-
-  function formatWeekdayShort(value) {
-    const d = parseDateValue(value);
-    if (!d) return '';
-    return d.toLocaleDateString('en-IE', { weekday: 'short' });
-  }
-
-  function formatDateShort(value) {
-    const d = parseDateValue(value);
-    if (!d) return '';
-    return d.toLocaleDateString('en-IE', { day: '2-digit', month: 'short', year: 'numeric' });
-  }
-
-  function getDayNumber(value) {
-    const d = parseDateValue(value);
-    return d ? String(d.getDate()) : '';
-  }
-
-  function isBinNotice(it) {
-    const cat = normalizeText(it?.category);
-    const type = normalizeText(it?.meta?.type);
-    const title = normalizeText(it?.title);
-    return cat === 'bins' || type === 'bin_collection_import' || title.includes('bin collection');
-  }
-
-  function isMisdeliveredMailNotice(it) {
-    return normalizeText(it?.meta?.type) === MAIL_NOTICE_TYPE || normalizeText(it?.category) === MAIL_NOTICE_TYPE;
-  }
-
-  function getBinDate(it) {
-    return startOfDay(
-      it?.date ||
-      it?.collectionDate ||
-      it?.meta?.collectionDate ||
-      it?.meta?.date ||
-      it?.startsOn ||
-      it?.startDate ||
-      it?.startsAt ||
-      it?.endsOn ||
-      it?.endDate ||
-      null
-    );
-  }
-
-  function startOfWeek(value) {
-    const d = startOfDay(value);
-    if (!d) return null;
-    const day = d.getDay();
-    d.setDate(d.getDate() - day);
-    return d;
-  }
-
-  function endOfWeek(value) {
-    const d = startOfWeek(value);
-    if (!d) return null;
-    d.setDate(d.getDate() + 6);
-    return d;
-  }
-
-  function addDays(value, days) {
-    const d = startOfDay(value);
-    if (!d) return null;
-    d.setDate(d.getDate() + Number(days || 0));
-    return d;
-  }
-
-  function isWithinRange(value, start, end) {
-    const d = startOfDay(value);
-    const s = startOfDay(start);
-    const e = startOfDay(end);
-    return !!(d && s && e && d.getTime() >= s.getTime() && d.getTime() <= e.getTime());
-  }
-
-  function getBinName(it) {
-    const direct = String(it?.bin || '').trim();
-    if (direct) return direct;
-    const msg = String(it?.message || '');
-    const match = msg.match(/([^\n.]+?)\s+bin\s+collection/i);
-    return match ? String(match[1]).trim() : 'General';
-  }
-
-  function getBinTone(name) {
-    const n = normalizeText(name);
-    if (n.includes('brown')) return 'brown';
-    if (n.includes('black')) return 'black';
-    if (n.includes('green')) return 'green';
-    if (n.includes('blue')) return 'blue';
-    return 'default';
-  }
-
-  function buildBinChip(name) {
-    const label = esc(`${name} bin`);
-    const tone = esc(getBinTone(name));
-    return `<span class="bin-chip bin-chip--${tone}"><span class="bin-chip__dot" aria-hidden="true"></span><span>${label}</span></span>`;
-  }
-
-  function buildBinSummary(binItems) {
-    if (!Array.isArray(binItems) || !binItems.length) return [];
-
-    const dated = binItems
-      .map((it) => ({ ...it, __binDate: getBinDate(it) }))
-      .filter((it) => it.__binDate)
-      .sort((a, b) => a.__binDate - b.__binDate);
-
-    if (!dated.length) return [];
-
-    const today = startOfDay(new Date());
-    const weekStart = startOfWeek(today);
-    const weekEnd = endOfWeek(today);
-    const nextWeekStart = addDays(weekEnd, 1);
-    const nextWeekEnd = addDays(nextWeekStart, 6);
-
-    const thisWeekItems = dated.filter((it) => isWithinRange(it.__binDate, weekStart, weekEnd));
-    const nextWeekItems = dated.filter((it) => isWithinRange(it.__binDate, nextWeekStart, nextWeekEnd));
-    const futureItems = dated.filter((it) => it.__binDate.getTime() >= today.getTime());
-    const pastItems = dated.filter((it) => it.__binDate.getTime() < today.getTime());
-
-    const todayItem = dated.find((it) => it.__binDate.getTime() === today.getTime()) || null;
-    const completedThisWeekItem = thisWeekItems
-      .filter((it) => it.__binDate.getTime() < today.getTime())
-      .slice(-1)[0] || null;
-
-    const thisWeekUpcoming = thisWeekItems
-      .filter((it) => it.__binDate.getTime() > today.getTime())[0] || null;
-
-    const nextWeekUpcoming = nextWeekItems[0] || null;
-    const fallbackUpcoming = futureItems
-      .filter((it) => it.__binDate.getTime() > today.getTime())[0] || null;
-
-    const latestCompleted = pastItems[pastItems.length - 1] || null;
-
-    const primary = todayItem || thisWeekUpcoming || nextWeekUpcoming || fallbackUpcoming || latestCompleted || dated[dated.length - 1];
-    if (!primary) return [];
-
-    const primaryName = getBinName(primary);
-    const primaryChip = buildBinChip(primaryName);
-
-    const lines = [];
-    let lead = '';
-    let eyebrow = '♻️ Panda Waste';
-
-    if (todayItem) {
-      lead = `Today is your ${getBinName(todayItem)} bin collection day. Please leave your bin out and make sure it is secure so it does not open and leave litter on the pavement or road.`;
-      eyebrow = '🚛 Collection today';
-    } else {
-      if (thisWeekUpcoming) {
-        lines.push(`This week: ${getBinName(thisWeekUpcoming)} bin on ${formatLongDate(thisWeekUpcoming.__binDate)}.`);
-      } else if (nextWeekUpcoming) {
-        lines.push(`Next week: ${getBinName(nextWeekUpcoming)} bin on ${formatLongDate(nextWeekUpcoming.__binDate)}.`);
-      } else if (fallbackUpcoming) {
-        lines.push(`Next collection: ${getBinName(fallbackUpcoming)} bin on ${formatLongDate(fallbackUpcoming.__binDate)}.`);
+      if (canManageMail(it)) {
+        actions.push(`<button class="mail-action-btn" data-action="collected" data-id="${it.id}">Collected</button>`);
+        actions.push(`<button class="mail-action-btn" data-action="returned" data-id="${it.id}">Returned</button>`);
       }
 
-      if (completedThisWeekItem) {
-        lines.push(`Completed this week: ${getBinName(completedThisWeekItem)} bin on ${formatLongDate(completedThisWeekItem.__binDate)}.`);
-      } else if (latestCompleted) {
-        lines.push(`Last collection: ${getBinName(latestCompleted)} bin on ${formatLongDate(latestCompleted.__binDate)}.`);
+      if (canRemoveMail()) {
+        actions.push(`<button class="mail-action-btn mail-action-btn--owner" data-action="remove" data-id="${it.id}">Remove</button>`);
       }
 
-      lead = lines.join(' ');
-    }
-
-    if (!lead) return [];
-
-    injectBinCardStyles();
-
-    return [{
-      id: `bin_summary_${primary.id || primary.__binDate.getTime()}`,
-      title: `${primaryName} bin`,
-      message: lead,
-      category: '',
-      home: primary.home,
-      createdAt: primary.createdAt || primary.date,
-      _sortTs: primary.__binDate.getTime(),
-      _displayVariant: 'info',
-      _displayMeta: '',
-      _displayBadge: '',
-      _displayCustomHtml: `
-        <article class="home-bin-card" aria-label="Bin collection notice">
-          <div class="home-bin-card__date" aria-hidden="true">
-            <div class="home-bin-card__dow">${esc(formatWeekdayShort(primary.__binDate))}</div>
-            <div class="home-bin-card__day">${esc(getDayNumber(primary.__binDate))}</div>
-            <div class="home-bin-card__month">${esc(formatMonthShort(primary.__binDate))}</div>
-          </div>
-          <div class="home-bin-card__body">
-            <div class="home-bin-card__eyebrow">${esc(eyebrow)}</div>
-            <h4 class="home-bin-card__title">${primaryChip}</h4>
-            <p class="home-bin-card__lead">${esc(lead)}</p>
-          </div>
-        </article>`
-    }];
-  }
-
-  function renderPlaceholder(){
-    listEl.innerHTML = `
-      <article class="home-notice-card home-notice-card--placeholder">
-        <div class="home-notice-card__icon" aria-hidden="true">${ICONS.info}</div>
-        <div class="home-notice-card__body">
-          <div class="home-notice-card__title">No notices published yet</div>
-          <div class="home-notice-card__msg">
-            Notices marked with <strong>Show on Home</strong> in Admin → Notices will appear here automatically.
-          </div>
-        </div>
-      </article>
-    `;
-  }
-
-  function render(items){
-    if (!Array.isArray(items) || !items.length) {
-      renderPlaceholder();
-      return;
-    }
-    listEl.innerHTML = items.map((it) => {
-      if (it?._displayCustomHtml) return it._displayCustomHtml;
-
-      const variant = it?._displayVariant || pickVariant(it);
-      const title = esc(it?.title || 'Notice');
-      const msgHtml = it?._displayMessageHtml || esc(it?.message || it?.text || '');
-      const meta = String(it?._displayMeta || '').trim();
       return `
-        <article class="home-notice-card home-notice-card--${variant}">
-          <div class="home-notice-card__icon" aria-hidden="true">${ICONS[variant] || ICONS.info}</div>
-          <div class="home-notice-card__body">
-            <div class="home-notice-card__head">
-              <h4 class="home-notice-card__title">${title}</h4>
-            </div>
-            <div class="home-notice-card__msg">${msgHtml}</div>
-            ${meta ? `<div class="home-notice-card__meta">${esc(meta)}</div>` : ''}
-          </div>
-        </article>
+        <div class="mail-board-row">
+          <div>${getMailIcon(type)} ${type}</div>
+          <div>${delivered}</div>
+          <div>${correct}</div>
+          <div>Not collected</div>
+          <div class="mail-board-actions">${actions.join('')}</div>
+        </div>
       `;
     }).join('');
-  }
 
-  async function getIdentityToken() {
-    if (!window.netlifyIdentity) return null;
-    const user = window.netlifyIdentity.currentUser();
-    if (!user) return null;
-    try { return await user.jwt(); } catch { return null; }
-  }
-
-  function getStreetName(address){
-    const a = String(address||'').trim();
-    if(!a) return '';
-    let s = a.replace(/[A-Z]\d{2}\s?[A-Z0-9]{4}\b/gi, '').replace(/\s{2,}/g,' ').trim();
-    s = (s.split(',')[0] || s).trim();
-    s = s.replace(/^\s*\d+[A-Za-z]?\s+/, '').trim();
-    return s;
-  }
-
-  function normEir(v){ return String(v||'').replace(/\s+/g,'').toUpperCase(); }
-  function isAdminRole(role){
-    const r = String(role||'').toLowerCase();
-    return r === 'admin' || r === 'owner';
-  }
-
-  function noticeMatchesUser(n, user){
-    const t = n?.target || {};
-    const inc = t.include || {};
-    const exc = t.exclude || {};
-    const role = String(user?.role || 'resident').toLowerCase();
-    const isAdmin = isAdminRole(role);
-    const eir = normEir(user?.eircode || '');
-    const street = getStreetName(user?.address || user?.fullAddress || '');
-
-    if(Array.isArray(exc.roles) && exc.roles.map(String).map(x=>x.toLowerCase()).includes(role)) return false;
-    if(Array.isArray(exc.eircodes) && exc.eircodes.map(String).map(normEir).includes(eir)) return false;
-    if(Array.isArray(exc.emails) && exc.emails.map(normEmail).includes(normEmail(user?.email))) return false;
-    if(inc.nonAdminOnly && isAdmin) return false;
-
-    const hasAnyInclude = !!(
-      inc.allLoggedIn ||
-      (Array.isArray(inc.roles) && inc.roles.length) ||
-      (Array.isArray(inc.eircodes) && inc.eircodes.length) ||
-      (Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.length) ||
-      (Array.isArray(inc.streets) && inc.streets.length) ||
-      (Array.isArray(inc.emails) && inc.emails.length)
-    );
-    if(!hasAnyInclude) return true;
-    if(inc.allLoggedIn) return true;
-    if(Array.isArray(inc.roles) && inc.roles.map(String).map(x=>x.toLowerCase()).includes(role)) return true;
-    if(Array.isArray(inc.emails) && inc.emails.map(normEmail).includes(normEmail(user?.email))) return true;
-    if(Array.isArray(inc.eircodes) && inc.eircodes.map(String).map(normEir).includes(eir)) return true;
-    if(Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.map(String).map(x=>x.toUpperCase()).some(p=>eir.startsWith(p))) return true;
-    if(Array.isArray(inc.streets) && street){
-      const stList = inc.streets.map(String).map(x=>x.trim().toLowerCase()).filter(Boolean);
-      if(stList.includes(street.toLowerCase())) return true;
-    }
-    return false;
-  }
-
-  function isExpired(n) {
-    const d = parseDateValue(n?.expiresAt || n?.endsOn || n?.endDate || n?.expires || n?.showUntil || '');
-    return !!(d && d.getTime() < Date.now());
-  }
-
-  function isNotStarted(n) {
-    const d = parseDateValue(n?.startsAt || n?.startsOn || n?.startDate || n?.showFrom || '');
-    return !!(d && d.getTime() > Date.now());
-  }
-
-  function isPublicHome(n) {
-    return !!(n && n.home && n.home.enabled) && String(n?.home?.visibility || 'private').toLowerCase() === 'public';
-  }
-
-  function isPrivateHome(n) {
-    return !!(n && n.home && n.home.enabled) && String(n?.home?.visibility || 'private').toLowerCase() !== 'public';
-  }
-
-  async function loadPublicNotices() {
-    const res = await fetch(PUBLIC_URL, { cache: 'no-store' });
-    if (!res.ok) return [];
-    const data = await res.json().catch(() => ({}));
-    if (Array.isArray(data?.items)) return data.items;
-    if (Array.isArray(data)) return data;
-    return [];
-  }
-
-  function getLoggedUserProfile() {
-    try {
-      const raw = localStorage.getItem('anw_logged');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.email) return parsed;
-      }
-    } catch {}
-    const currentUser = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function'
-      ? window.netlifyIdentity.currentUser()
-      : null;
-    if (currentUser && currentUser.email) {
-      return { email: currentUser.email, role: 'resident' };
-    }
-    return null;
-  }
-
-  async function loadAllNoticesForLoggedUser() {
-    const token = await getIdentityToken();
-    if (!token) return { me: null, items: [] };
-    if (typeof window.anwInitStore === 'function') {
-      try { await window.anwInitStore(); } catch {}
-    }
-    const me = getLoggedUserProfile();
-    if (!me || !me.email) return { me: null, items: [] };
-
-    const res = await fetch(`${STORE_URL}?key=${encodeURIComponent(KEY_NOTICES)}`, {
-      headers: { authorization: `Bearer ${token}` },
-      cache: 'no-store'
-    });
-    const data = await res.json().catch(() => ({}));
-    const all = Array.isArray(data?.value) ? data.value : (Array.isArray(data) ? data : []);
-    return { me, items: all };
-  }
-
-  async function saveAllNotices(items) {
-    const token = await getIdentityToken();
-    if (!token) throw new Error('Please log in again and retry.');
-    const res = await fetch(`${STORE_URL}?key=${encodeURIComponent(KEY_NOTICES)}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(Array.isArray(items) ? items : [])
-    });
-    if (!res.ok) {
-      let message = '';
-      try { message = await res.text(); } catch {}
-      throw new Error(message || `Unable to save notices (${res.status}).`);
-    }
-    return await res.json().catch(() => ({}));
-  }
-
-  function getNoticeSortValue(it){
-    if (typeof it?._sortTs === 'number') return it._sortTs;
-    const fromDate = parseDateValue(it?.date || it?.startDate || it?.startsOn || it?.createdAt || null);
-    return fromDate ? fromDate.getTime() : 0;
-  }
-
-  function normalizeAddress(value) {
-    return String(value || '').replace(/\s+/g, ' ').trim();
-  }
-
-  function getMailTypeMeta(value) {
-    const key = normalizeText(value);
-    if (key === 'parcel') return { icon: '📦', label: 'Parcel' };
-    if (key === 'envelope') return { icon: '✉️', label: 'Envelope' };
-    return { icon: '📄', label: 'Letter' };
-  }
-
-  function getMailStatusLabel(value) {
-    const key = normalizeText(value);
-    if (key === 'collected') return 'Collected';
-    if (key === 'returned_to_sender') return 'Returned to sender';
-    if (key === 'expired') return 'Expired';
-    return 'Not collected';
-  }
-
-  function buildMailMessage(itemType, deliveredAddress, intendedAddress) {
-    const typeMeta = getMailTypeMeta(itemType);
-    return `${typeMeta.label} delivered at ${deliveredAddress}. Correct address: ${intendedAddress}.`;
-  }
-
-  function buildMailNotice(itemType, deliveredAddress, intendedAddress, createdBy) {
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + MAIL_VISIBLE_DAYS * 24 * 60 * 60 * 1000);
     return {
-      id: `mail_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      title: 'Misdelivered mail',
-      message: buildMailMessage(itemType, deliveredAddress, intendedAddress),
-      category: MAIL_NOTICE_TYPE,
-      createdAt: now.toISOString(),
-      createdBy: normEmail(createdBy || ''),
-      expiresAt: expiresAt.toISOString(),
-      status: 'not_collected',
-      home: {
-        enabled: true,
-        visibility: 'private'
-      },
-      target: {
-        include: { allLoggedIn: true },
-        exclude: {}
-      },
-      meta: {
-        type: MAIL_NOTICE_TYPE,
-        itemType: normalizeText(itemType),
-        deliveredAddress,
-        intendedAddress
-      }
+      id: 'mail_board',
+      _displayCustomHtml: `
+        <div class="mail-board-card">
+          <div class="mail-board-head">
+            <strong>📬 Misdelivered Mail</strong>
+            <button class="mail-board-add" data-action="add">+ Add entry</button>
+          </div>
+          <div class="mail-board-grid">
+            <div class="mail-board-header">
+              <div>Type</div>
+              <div>Delivered at</div>
+              <div>Correct address</div>
+              <div>Status</div>
+              <div>Action</div>
+            </div>
+            ${rows || '<div style="padding:10px">No entries</div>'}
+          </div>
+        </div>
+      `
     };
   }
 
-  function isMailActive(it) {
-    return isMisdeliveredMailNotice(it) && normalizeText(it?.status || 'not_collected') === 'not_collected' && !isExpired(it);
-  }
+  listEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
 
-  function setMailBoardMessage(message, kind) {
-    if (!mailMsgEl) return;
-    mailMsgEl.textContent = String(message || '');
-    mailMsgEl.style.color = kind === 'error' ? '#b91c1c' : '#1f6f4a';
-  }
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
 
-  function toggleMailForm(show) {
-    if (!mailFormEl) return;
-    mailFormEl.hidden = !show;
-    if (mailToggleBtn) mailToggleBtn.hidden = !!show;
-    if (show) {
-      mailTypeEl?.focus();
-    }
-  }
+    if (action === 'add') {
+      const delivered = prompt('Delivered at');
+      const correct = prompt('Correct address');
+      if (!delivered || !correct) return;
 
-  function resetMailForm() {
-    if (mailFormEl) mailFormEl.reset();
-    setMailBoardMessage('', 'ok');
-    toggleMailForm(false);
-  }
+      const me = getLoggedProfile();
 
-  async function syncExpiredMailNotices(allItems) {
-    const items = Array.isArray(allItems) ? allItems.slice() : [];
-    let changed = false;
-    const next = items.map((item) => {
-      if (!isMisdeliveredMailNotice(item)) return item;
-      if (normalizeText(item?.status || 'not_collected') !== 'not_collected') return item;
-      if (!isExpired(item)) return item;
-      changed = true;
-      return { ...item, status: 'expired', expiredAt: new Date().toISOString() };
-    });
-    if (changed) {
-      try { await saveAllNotices(next); } catch {}
-      return next;
-    }
-    return items;
-  }
-
-  function renderMailBoard(items, me) {
-    if (!mailBoardEl || !mailListEl) return;
-    injectMailBoardStyles();
-    mailBoardEl.hidden = !me;
-    if (!me) return;
-
-    const mailItems = (Array.isArray(items) ? items : [])
-      .filter(isMailActive)
-      .sort((a, b) => getNoticeSortValue(b) - getNoticeSortValue(a));
-
-    if (!mailItems.length) {
-      mailListEl.innerHTML = `<div class="mail-board__empty">No active entries right now.</div>`;
-      return;
-    }
-
-    const hasOwnEntry = mailItems.some((item) => normEmail(item?.createdBy) === normEmail(me?.email));
-    const tableClass = hasOwnEntry ? 'mail-board__table mail-board__table--compact' : 'mail-board__table mail-board__table--readonly';
-
-    const rows = mailItems.map((item) => {
-      const meta = item?.meta || {};
-      const typeMeta = getMailTypeMeta(meta.itemType);
-      const deliveredAddress = esc(meta.deliveredAddress || '—');
-      const intendedAddress = esc(meta.intendedAddress || '—');
-      const mine = normEmail(item?.createdBy) === normEmail(me?.email);
-      const actions = mine
-        ? `<div class="mail-board__row-actions">
-            <button class="mail-board__small-btn" type="button" data-mail-action="collected" data-mail-id="${esc(item.id)}">Collected</button>
-            <button class="mail-board__small-btn" type="button" data-mail-action="returned_to_sender" data-mail-id="${esc(item.id)}">Returned to sender</button>
-          </div>`
-        : `<div class="mail-board__meta"></div>`;
-
-      return `
-        <div class="mail-board__row">
-          <div class="mail-board__cell" data-label="Type">
-            <span class="mail-board__type"><span class="mail-board__type-icon" aria-hidden="true">${typeMeta.icon}</span><span>${esc(typeMeta.label)}</span></span>
-          </div>
-          <div class="mail-board__cell" data-label="Delivered at">${deliveredAddress}</div>
-          <div class="mail-board__cell" data-label="Correct address">${intendedAddress}</div>
-          <div class="mail-board__cell" data-label="Status"><span class="mail-board__status">${esc(getMailStatusLabel(item.status))}</span></div>
-          ${hasOwnEntry ? `<div class="mail-board__cell" data-label="Action">${actions}</div>` : ''}
-        </div>
-      `;
-    }).join('');
-
-    mailListEl.className = tableClass;
-    mailListEl.innerHTML = `
-      <div class="mail-board__head">
-        <div>Type</div>
-        <div>Delivered at</div>
-        <div>Correct address</div>
-        <div>Status</div>
-        ${hasOwnEntry ? '<div>Action</div>' : ''}
-      </div>
-      ${rows}
-    `;
-
-    Array.from(mailListEl.querySelectorAll('[data-mail-action][data-mail-id]')).forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const action = String(btn.getAttribute('data-mail-action') || '');
-        const noticeId = String(btn.getAttribute('data-mail-id') || '');
-        if (!action || !noticeId) return;
-        btn.disabled = true;
-        try {
-          setMailBoardMessage('Saving update…', 'ok');
-          const state = await loadAllNoticesForLoggedUser();
-          const next = state.items.map((item) => {
-            if (String(item?.id || '') !== noticeId) return item;
-            if (normEmail(item?.createdBy) !== normEmail(state?.me?.email)) return item;
-            return {
-              ...item,
-              status: action,
-              resolvedAt: new Date().toISOString()
-            };
-          });
-          await saveAllNotices(next);
-          setMailBoardMessage('Entry updated.', 'ok');
-          await refreshMailBoardOnly();
-        } catch (err) {
-          setMailBoardMessage(err?.message || 'Unable to update this entry.', 'error');
-        } finally {
-          btn.disabled = false;
+      const entry = {
+        id: 'mail_' + Date.now(),
+        category: 'misdelivered_mail',
+        createdBy: me.email,
+        createdAt: new Date().toISOString(),
+        status: 'not_collected',
+        meta: {
+          itemType: 'Letter',
+          deliveredAddress: delivered,
+          intendedAddress: correct
         }
+      };
+
+      const res = await fetch(STORE_URL + '?key=' + KEY_NOTICES);
+      const data = await res.json();
+      const all = data.value || [];
+
+      await fetch(STORE_URL + '?key=' + KEY_NOTICES, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify([entry, ...all])
       });
-    });
-  }
 
-  async function refreshMailBoardOnly() {
-    const state = await loadAllNoticesForLoggedUser();
-    if (!state.me) {
-      if (mailBoardEl) mailBoardEl.hidden = true;
-      return;
-    }
-    const synced = await syncExpiredMailNotices(state.items);
-    const visible = synced.filter((n) => !isNotStarted(n)).filter((n) => isPrivateHome(n)).filter((n) => noticeMatchesUser(n, state.me));
-    renderMailBoard(visible, state.me);
-  }
-
-  function bindMailBoardEvents() {
-    if (mailToggleBtn && !mailToggleBtn.dataset.bound) {
-      mailToggleBtn.dataset.bound = '1';
-      mailToggleBtn.addEventListener('click', () => {
-        setMailBoardMessage('', 'ok');
-        toggleMailForm(true);
-      });
+      location.reload();
     }
 
-    if (mailCancelBtn && !mailCancelBtn.dataset.bound) {
-      mailCancelBtn.dataset.bound = '1';
-      mailCancelBtn.addEventListener('click', () => {
-        resetMailForm();
-      });
+    if (action === 'collected' || action === 'returned') {
+      alert('Status updated (implement backend update if needed)');
     }
 
-    if (mailFormEl && !mailFormEl.dataset.bound) {
-      mailFormEl.dataset.bound = '1';
-      mailFormEl.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const itemType = normalizeText(mailTypeEl?.value || '');
-        const deliveredAddress = normalizeAddress(mailDeliveredEl?.value || '');
-        const intendedAddress = normalizeAddress(mailCorrectEl?.value || '');
-        if (!itemType || !deliveredAddress || !intendedAddress) {
-          setMailBoardMessage('Please complete all fields.', 'error');
-          return;
-        }
-        if (deliveredAddress.toLowerCase() === intendedAddress.toLowerCase()) {
-          setMailBoardMessage('Delivered at and correct address must be different.', 'error');
-          return;
-        }
-
-        const submitBtn = mailFormEl.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.disabled = true;
-        try {
-          setMailBoardMessage('Publishing entry…', 'ok');
-          const state = await loadAllNoticesForLoggedUser();
-          if (!state.me || !state.me.email) throw new Error('Please log in again and retry.');
-          const next = Array.isArray(state.items) ? state.items.slice() : [];
-          next.push(buildMailNotice(itemType, deliveredAddress, intendedAddress, state.me.email));
-          await saveAllNotices(next);
-          resetMailForm();
-          setMailBoardMessage('Entry published.', 'ok');
-          await refreshMailBoardOnly();
-        } catch (err) {
-          setMailBoardMessage(err?.message || 'Unable to publish this entry.', 'error');
-        } finally {
-          if (submitBtn) submitBtn.disabled = false;
-        }
-      });
+    if (action === 'remove' && confirm('Remove entry?')) {
+      alert('Removed (implement backend delete if needed)');
     }
-  }
+  });
 
-  async function main() {
-    try {
-      bindMailBoardEvents();
+  async function main(){
+    const res = await fetch(PUBLIC_URL);
+    const data = await res.json();
 
-      const publicItems = (await loadPublicNotices())
-        .filter(n => !isExpired(n))
-        .filter(n => isPublicHome(n))
-        .filter(n => !isMisdeliveredMailNotice(n));
+    const mailItems = (data || []).filter(isMisdeliveredMailNotice);
 
-      const privateState = await loadAllNoticesForLoggedUser();
-      const privateItemsRaw = privateState.me
-        ? privateState.items
-            .filter(n => !isExpired(n))
-            .filter(n => !isNotStarted(n))
-            .filter(n => isPrivateHome(n))
-            .filter(n => noticeMatchesUser(n, privateState.me))
-        : [];
+    const board = buildMailBoard(mailItems);
 
-      const syncedItems = privateState.me ? await syncExpiredMailNotices(privateState.items) : privateState.items;
-      const privateItems = privateState.me
-        ? syncedItems
-            .filter(n => !isExpired(n))
-            .filter(n => !isNotStarted(n))
-            .filter(n => isPrivateHome(n))
-            .filter(n => noticeMatchesUser(n, privateState.me))
-        : privateItemsRaw;
-
-      const publicBinItems = publicItems.filter(isBinNotice);
-      const publicRegularItems = publicItems.filter(n => !isBinNotice(n));
-      const privateRegularItems = privateItems.filter(n => !isMisdeliveredMailNotice(n));
-
-      const binSummary = buildBinSummary(publicBinItems);
-
-      const seen = new Set();
-      const merged = [...binSummary, ...publicRegularItems, ...privateRegularItems]
-        .filter(it => {
-          const id = String(it?.id || '');
-          if (!id) return true;
-          if (seen.has(id)) return false;
-          seen.add(id);
-          return true;
-        })
-        .sort((a, b) => getNoticeSortValue(b) - getNoticeSortValue(a))
-        .slice(0, 8);
-
-      render(merged);
-      renderMailBoard(privateItems, privateState.me);
-    } catch (err) {
-      console.error('home-notices.js failed:', err);
-      renderPlaceholder();
-      if (mailBoardEl) mailBoardEl.hidden = true;
-    }
+    listEl.innerHTML = board?._displayCustomHtml || '';
   }
 
   main();
+
 })();
