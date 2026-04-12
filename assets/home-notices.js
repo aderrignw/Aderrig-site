@@ -660,7 +660,25 @@
 
     injectMisdeliveredMailStyles();
 
-    const rows = (Array.isArray(items) ? items : []).map((it) => {
+    const safeItems = Array.isArray(items) ? items : [];
+    const hasItems = safeItems.length > 0;
+
+    if (!hasItems) {
+      return {
+        id: 'misdelivered_mail_board',
+        createdAt: new Date().toISOString(),
+        _sortTs: Date.now() - 1,
+        _displayCustomHtml: `
+          <section class="mail-board-card" aria-label="Misdelivered mail">
+            <div class="mail-board-head" style="margin-bottom:0;">
+              <div></div>
+              <button type="button" class="mail-board-add" data-mail-action="add">+ Add entry</button>
+            </div>
+          </section>`
+      };
+    }
+
+    const rows = safeItems.map((it) => {
       const type = formatMailType(getMailItemType(it));
       const delivered = esc(it?.meta?.deliveredAddress || '');
       const correct = esc(it?.meta?.intendedAddress || '');
@@ -684,8 +702,6 @@
         </div>`;
     }).join('');
 
-    const empty = `<div class="mail-board-empty">No active entries right now.</div>`;
-
     return {
       id: 'misdelivered_mail_board',
       createdAt: new Date().toISOString(),
@@ -705,7 +721,7 @@
               <div>Status</div>
               <div>Action</div>
             </div>
-            ${rows || empty}
+            ${rows}
           </div>
         </section>`
     };
