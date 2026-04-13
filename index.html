@@ -420,54 +420,113 @@
 
 <script>
 (function(){
-  const STATE = { wired:false };
   function isLogged(){
     try{
       if(window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function' && window.netlifyIdentity.currentUser()) return true;
     }catch(_){ }
     try{ if(typeof window.anwIsLoggedIn === 'function') return !!window.anwIsLoggedIn(); }catch(_){ }
-    try{ return !!localStorage.getItem('anw_logged') || !!localStorage.getItem((window.ANW_KEYS && window.ANW_KEYS.SESSION) ? window.ANW_KEYS.SESSION : 'anw_session'); }catch(_){ }
+    try{
+      const sessionKey=(window.ANW_KEYS && window.ANW_KEYS.SESSION) ? window.ANW_KEYS.SESSION : 'anw_session';
+      return !!localStorage.getItem('anw_logged') || !!localStorage.getItem(sessionKey);
+    }catch(_){ }
     return false;
   }
+
   function ensureLoginPrompt(){
     let modal=document.getElementById('mailEntryLoginPrompt');
     if(modal) return modal;
     modal=document.createElement('div');
     modal.id='mailEntryLoginPrompt';
     modal.className='mail-entry-login-modal';
-    modal.innerHTML = `<div class="mail-entry-login-card"><h3>Log in to add a misdelivered mail entry</h3><p>Please log in or register first. Once you are logged in, you will be able to add the delivery details in the residents area.</p><div class="mail-entry-login-actions"><button type="button" class="btn btn-line" data-mail-close>Close</button><a class="btn btn-primary" href="login.html">Login / Register</a></div></div>`;
-    modal.addEventListener('click', function(e){ if(e.target === modal || e.target.closest('[data-mail-close]')) modal.classList.remove('open'); });
+    modal.innerHTML = '<div class="mail-entry-login-card"><h3>Log in to add a misdelivered mail entry</h3><p>Please log in or register first. Once you are logged in, you will be able to add the delivery details in the residents area.</p><div class="mail-entry-login-actions"><button type="button" class="btn btn-line" data-mail-close>Close</button><a class="btn btn-primary" href="login.html">Login / Register</a></div></div>';
+    modal.addEventListener('click', function(e){
+      if(e.target === modal || e.target.closest('[data-mail-close]')) modal.classList.remove('open');
+    });
     document.body.appendChild(modal);
     return modal;
   }
-  function openLoginPrompt(){ ensureLoginPrompt().classList.add('open'); }
-  function getMailCard(){
-    const list=document.getElementById('homeNoticeList'); if(!list) return null;
-    const candidates=[...list.children];
-    return candidates.find(el => /misdelivered\s+mail/i.test((el.textContent||''))) || null;
+
+  function openLoginPrompt(){
+    ensureLoginPrompt().classList.add('open');
   }
+
+  function textMatches(el, pattern){
+    return !!el && pattern.test((el.textContent || '').replace(/\s+/g,' ').trim());
+  }
+
+  function getMailSection(){
+    const nodes=[...document.querySelectorAll('#homeNoticeList > *, #homeNoticeList *')];
+    for(const node of nodes){
+      if(textMatches(node, /misdelivered\s+mail/i)){
+        return node.closest('.mail-entry-card-upgraded, .card, section, article, div') || node;
+      }
+    }
+    return null;
+  }
+
+  function hideStaticLoginText(scope){
+    if(!scope) return;
+    const texts=[...scope.querySelectorAll('p,div,span,small')];
+    texts.forEach(function(el){
+      const txt=(el.textContent || '').replace(/\s+/g,' ').trim();
+      if(/members only\.? login or register to add an entry\.?/i.test(txt)){
+        el.style.display='none';
+        el.setAttribute('data-mail-hidden-login-note','true');
+      }
+    });
+  }
+
   function styleMailCard(card){
-    if(!card || card.dataset.mailUpgraded==='true') return;
-    card.dataset.mailUpgraded='true';
+    if(!card) return;
     card.classList.add('mail-entry-card-upgraded');
-    const addBtn=[...card.querySelectorAll('button,a')].find(el => /add\s*entry/i.test((el.textContent||'')));
-    const titleNode=[...card.querySelectorAll('h3,h4,strong,.title')].find(el => /misdelivered\s+mail/i.test((el.textContent||'')));
-    const loginNote=[...card.querySelectorAll('p,div,span')].find(el => /members only|login or register/i.test((el.textContent||'')));
-    const emptyNote=[...card.querySelectorAll('p,div,span')].find(el => /no open misdelivered mail entries/i.test((el.textContent||'')));
-    const top=document.createElement('div'); top.className='mail-entry-head';
-    const titleWrap=document.createElement('div'); titleWrap.className='mail-entry-title';
-    const badge=document.createElement('span'); badge.className='mail-entry-badge'; badge.setAttribute('aria-hidden','true'); badge.textContent='📬';
-    const titleBox=document.createElement('div');
-    const title=document.createElement('h4'); title.textContent='Misdelivered Mail';
-    const sub=document.createElement('p'); sub.className='mail-entry-sub'; sub.textContent='Post a delivery that reached the wrong address, so residents can help it get to the right place quickly.';
-    titleBox.appendChild(title); titleBox.appendChild(sub); titleWrap.appendChild(badge); titleWrap.appendChild(titleBox); top.appendChild(titleWrap);
-    const actions=document.createElement('div'); actions.className='mail-entry-actions';
-    if(addBtn){ addBtn.setAttribute('data-mail-add-entry','true'); actions.appendChild(addBtn); }
-    top.appendChild(actions);
-    card.insertBefore(top, card.firstChild);
-    if(titleNode && titleNode !== title) titleNode.style.display='none';
-    if(loginNote) loginNote.style.display='none';
-    if(emptyNote){ emptyNote.classList.add('mail-entry-empty'); }
+
+    let titleAnchor=[...card.querySelectorAll('h1,h2,h3,h4,strong,span,div')].find(el => textMatches(el, /^misdelivered\s+mail$/i) || textMatches(el, /misdelivered\s+mail/i));
+    let addBtn=[...card.querySelectorAll('button,a')].find(el => /add\s*entry/i.test((el.textContent||'')));
+    let emptyNote=[...card.querySelectorAll('p,div,span')].find(el => /no open misdelivered mail entries/i.test((el.textContent||'')));
+
+    hideStaticLoginText(card);
+
+    if(!card.querySelector('.mail-entry-head')){
+      const top=document.createElement('div');
+      top.className='mail-entry-head';
+      const titleWrap=document.createElement('div');
+      titleWrap.className='mail-entry-title';
+      const badge=document.createElement('span');
+      badge.className='mail-entry-badge';
+      badge.setAttribute('aria-hidden','true');
+      badge.textContent='📬';
+      const titleBox=document.createElement('div');
+      const title=document.createElement('h4');
+      title.textContent='Misdelivered Mail';
+      const sub=document.createElement('p');
+      sub.className='mail-entry-sub';
+      sub.textContent='Post a delivery that reached the wrong address, so residents can help it get to the right place quickly.';
+      titleBox.appendChild(title);
+      titleBox.appendChild(sub);
+      titleWrap.appendChild(badge);
+      titleWrap.appendChild(titleBox);
+      top.appendChild(titleWrap);
+      const actions=document.createElement('div');
+      actions.className='mail-entry-actions';
+      if(addBtn){
+        addBtn.setAttribute('data-mail-add-entry','true');
+        actions.appendChild(addBtn);
+      }
+      top.appendChild(actions);
+      card.insertBefore(top, card.firstChild);
+    }
+
+    if(titleAnchor && !titleAnchor.closest('.mail-entry-head')){
+      const row=titleAnchor.closest('div,section,article') || titleAnchor;
+      if(row && row !== card.firstChild) row.style.display='none';
+    }
+
+    hideStaticLoginText(card);
+
+    if(emptyNote){
+      emptyNote.classList.add('mail-entry-empty');
+    }
+
     if(addBtn && !addBtn.dataset.mailHandlerBound){
       addBtn.dataset.mailHandlerBound='true';
       addBtn.addEventListener('click', function(e){
@@ -483,26 +542,41 @@
       }, true);
     }
   }
+
   function polishModal(){
     const candidates=[...document.querySelectorAll('.modal,.dialog,[role="dialog"]')];
-    candidates.forEach(el => {
+    candidates.forEach(function(el){
       const txt=(el.textContent||'').toLowerCase();
-      if(/misdelivered|mail entry|delivered mail/.test(txt)) document.body.classList.add('mail-entry-polish');
+      if(/misdelivered|mail entry|delivered mail/.test(txt)){
+        document.body.classList.add('mail-entry-polish');
+      }
     });
   }
-  function boot(){ const card=getMailCard(); if(card) styleMailCard(card); }
+
+  function boot(){
+    const card=getMailSection();
+    if(card) styleMailCard(card);
+    hideStaticLoginText(document);
+  }
+
   document.addEventListener('DOMContentLoaded', function(){
     boot();
-    const host=document.getElementById('homeNoticeList');
-    if(host && !STATE.wired){
-      STATE.wired=true;
-      const mo=new MutationObserver(function(){ boot(); polishModal(); });
-      mo.observe(host,{childList:true,subtree:true});
-      document.body.addEventListener('click', function(){ window.setTimeout(polishModal, 80); window.setTimeout(polishModal, 240); }, true);
-    }
+    const host=document.getElementById('homeNoticeList') || document.body;
+    const mo=new MutationObserver(function(){
+      boot();
+      polishModal();
+    });
+    mo.observe(host,{childList:true,subtree:true});
+    document.body.addEventListener('click', function(){
+      window.setTimeout(boot, 60);
+      window.setTimeout(polishModal, 80);
+      window.setTimeout(polishModal, 240);
+    }, true);
+    window.setTimeout(boot, 300);
+    window.setTimeout(boot, 900);
   });
 })();
-</script>
+</script></script>
 
 </body>
 </html>
