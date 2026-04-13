@@ -78,13 +78,13 @@
     </div>
 <!-- Sub-tabs (match Report-map) -->
 <div class="actions" style="gap:0.5rem; justify-content:flex-start; flex-wrap:wrap; margin-top:0.75rem;">
-<button class="btn btn-line" id="btnTabReport" type="button">Report incident</button>
-<button class="btn btn-line" id="btnTabStatus" type="button">My reports status</button>
-<button class="btn btn-line" id="btnTabMap" onclick="window.location.href='report-map.html'" type="button">Incidents overview</button>
+<button class="btn btn-line" data-acl-feature="report:tab_incident" id="btnTabReport" type="button">Report incident</button>
+<button class="btn btn-line" data-acl-feature="report:tab_status" id="btnTabStatus" type="button">My reports status</button>
+<button class="btn btn-line" data-acl="page:report-map" data-acl-feature="report:tab_map" id="btnTabMap" onclick="window.location.href='report-map.html'" type="button">Incidents overview</button>
 </div>
 </section>
 <!-- ================= NEW REPORT ================= -->
-<section class="card report-panel" id="tabNew">
+<section class="card report-panel" data-acl-feature="report:tab_incident" id="tabNew">
 <h3>Incident details</h3>
 <div class="grid" style="grid-template-columns:1fr 1fr; gap:1rem;">
 <div class="field">
@@ -176,7 +176,7 @@
 </div>
 </section>
 <!-- ================= STATUS ================= -->
-<section class="card report-panel" id="tabStatus" style="display:none;">
+<section class="card report-panel" data-acl-feature="report:tab_status" id="tabStatus" style="display:none;">
 <h3>My reports status</h3>
 <p class="tiny muted" style="margin-top:0;">
       Shows reports created with your account email.
