@@ -114,23 +114,23 @@
         box-sizing:border-box;
       }
       .mail-board-head{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:12px;
-        padding:0 0 10px;
-      }
-      .mail-board-title{
-        margin:0;
-        display:flex;
-        align-items:center;
-        gap:8px;
-        font-size:1rem;
-        line-height:1.2;
-        font-weight:800;
-        color:#1f2937;
-        min-width:0;
-      }
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:0 0 10px;
+}
+.mail-board-title{
+  margin:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:1rem;
+  line-height:1.2;
+  font-weight:800;
+  color:#1f2937;
+  min-width:0;
+}
       .mail-board-add{
         display:inline-flex;
         align-items:center;
@@ -149,6 +149,14 @@
         box-shadow:0 6px 20px rgba(15,23,42,.08);
       }
       .mail-board-add:hover{ background:rgba(31,111,74,.05); }
+      .mail-board-card > :not(.mail-board-head):not(.mail-board-grid){
+        display:none !important;
+      }
+      .mail-board-card .mail-board-sub,
+      .mail-board-card .mail-entry-sub{
+        display:none !important;
+      }
+
 
       .mail-board-grid{
         width:100%;
