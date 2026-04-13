@@ -656,7 +656,7 @@
 
   function buildMisdeliveredMailBoard(items){
     const me = getLoggedProfile();
-    if (!me || !me.email) return null;
+    const isLoggedIn = !!(me && me.email);
 
     injectMisdeliveredMailStyles();
 
@@ -670,9 +670,15 @@
         _sortTs: Date.now() - 1,
         _displayCustomHtml: `
           <section class="mail-board-card" aria-label="Misdelivered mail">
-            <div class="mail-board-head" style="margin-bottom:0;">
-              <div></div>
+            <div class="mail-board-head">
+              <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
               <button type="button" class="mail-board-add" data-mail-action="add">+ Add entry</button>
+            </div>
+            <p class="mail-board-sub">${isLoggedIn
+              ? 'Members only. Show only where it was delivered and the correct address.'
+              : 'Members only. Login or register to add an entry.'}</p>
+            <div class="mail-board-grid">
+              <div class="mail-board-empty">No open misdelivered mail entries right now.</div>
             </div>
           </section>`
       };
