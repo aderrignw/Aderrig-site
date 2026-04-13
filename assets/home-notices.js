@@ -101,6 +101,7 @@
 
 
 
+
   function injectMisdeliveredMailStyles() {
     if (document.getElementById('anw-mail-board-styles')) return;
     const style = document.createElement('style');
@@ -118,7 +119,7 @@
         align-items:center;
         justify-content:space-between;
         gap:12px;
-        margin:0 0 6px;
+        margin:0 0 8px;
       }
       .mail-board-title{
         margin:0;
@@ -132,7 +133,7 @@
         min-width:0;
       }
       .mail-board-sub{
-        margin:0 0 10px;
+        margin:0 0 12px;
         font-size:.95rem;
         color:#64748b;
       }
@@ -140,14 +141,14 @@
         display:inline-flex;
         align-items:center;
         justify-content:center;
-        min-height:32px;
-        padding:0 10px;
+        min-height:36px;
+        padding:0 12px;
         border-radius:999px;
         border:1px solid rgba(31,111,74,.28);
         background:#fff;
         color:#1f6f4a;
         font-size:.84rem;
-        font-weight:700;
+        font-weight:800;
         cursor:pointer;
         white-space:nowrap;
         flex:0 0 auto;
@@ -278,6 +279,136 @@
         font-size:.95rem;
       }
 
+      .mail-entry-overlay{
+        position:fixed;
+        inset:0;
+        display:none;
+        align-items:center;
+        justify-content:center;
+        padding:20px;
+        z-index:9999;
+        background:rgba(15,23,42,.42);
+        backdrop-filter:blur(4px);
+      }
+      .mail-entry-overlay.open{ display:flex; }
+
+      .mail-entry-modal{
+        width:min(640px,100%);
+        background:#fff;
+        border:1px solid rgba(17,24,39,.08);
+        border-radius:24px;
+        box-shadow:0 24px 60px rgba(15,23,42,.18);
+        overflow:hidden;
+      }
+      .mail-entry-modal__header{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:14px;
+        padding:20px 22px 16px;
+        border-bottom:1px solid rgba(17,24,39,.08);
+        background:linear-gradient(180deg,#ffffff 0%,#fbfdfc 100%);
+      }
+      .mail-entry-modal__title{
+        margin:0;
+        color:#1f2937;
+        font-size:1.2rem;
+        font-weight:900;
+      }
+      .mail-entry-modal__subtitle{
+        margin:6px 0 0;
+        color:#64748b;
+        line-height:1.55;
+        font-size:.94rem;
+      }
+      .mail-entry-close{
+        border:0;
+        background:transparent;
+        color:#64748b;
+        font-size:1.5rem;
+        line-height:1;
+        cursor:pointer;
+      }
+      .mail-entry-modal__body{
+        padding:20px 22px;
+        display:grid;
+        gap:14px;
+      }
+      .mail-entry-grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:14px;
+      }
+      .mail-entry-field{
+        display:grid;
+        gap:7px;
+      }
+      .mail-entry-field--full{
+        grid-column:1 / -1;
+      }
+      .mail-entry-label{
+        font-size:.88rem;
+        font-weight:800;
+        color:#1f2937;
+      }
+      .mail-entry-input,
+      .mail-entry-select,
+      .mail-entry-textarea{
+        width:100%;
+        min-height:46px;
+        padding:12px 14px;
+        border-radius:14px;
+        border:1px solid rgba(17,24,39,.12);
+        background:#fff;
+        color:#1f2937;
+        box-sizing:border-box;
+      }
+      .mail-entry-textarea{
+        min-height:104px;
+        resize:vertical;
+      }
+      .mail-entry-help{
+        margin:0;
+        color:#64748b;
+        font-size:.84rem;
+        line-height:1.55;
+      }
+      .mail-entry-error{
+        display:none;
+        padding:12px 14px;
+        border-radius:14px;
+        border:1px solid rgba(185,28,28,.12);
+        background:#fff7f7;
+        color:#b91c1c;
+        font-size:.9rem;
+      }
+      .mail-entry-error.open{ display:block; }
+      .mail-entry-modal__footer{
+        padding:16px 22px;
+        border-top:1px solid rgba(17,24,39,.08);
+        background:#fcfdfd;
+        display:flex;
+        justify-content:flex-end;
+        gap:10px;
+        flex-wrap:wrap;
+      }
+      .mail-entry-btn{
+        min-height:42px;
+        padding:0 16px;
+        border-radius:999px;
+        font-weight:800;
+        border:1px solid rgba(17,24,39,.10);
+        cursor:pointer;
+      }
+      .mail-entry-btn--ghost{
+        background:#fff;
+        color:#1f2937;
+      }
+      .mail-entry-btn--primary{
+        background:#2f7d5b;
+        color:#fff;
+        border:0;
+      }
       @media (max-width: 860px){
         .mail-board-head{
           align-items:flex-start;
@@ -288,6 +419,11 @@
         .mail-board-header,
         .mail-board-row{
           min-width:620px;
+        }
+      }
+      @media (max-width: 720px){
+        .mail-entry-grid{
+          grid-template-columns:1fr;
         }
       }
     `;
@@ -654,35 +790,11 @@
     return mine;
   }
 
+
   function buildMisdeliveredMailBoard(items){
-    const me = getLoggedProfile();
-    const isLoggedIn = !!(me && me.email);
+    const safeItems = Array.isArray(items) ? items : [];
 
     injectMisdeliveredMailStyles();
-
-    const safeItems = Array.isArray(items) ? items : [];
-    const hasItems = safeItems.length > 0;
-
-    if (!hasItems) {
-      return {
-        id: 'misdelivered_mail_board',
-        createdAt: new Date().toISOString(),
-        _sortTs: Date.now() - 1,
-        _displayCustomHtml: `
-          <section class="mail-board-card" aria-label="Misdelivered mail">
-            <div class="mail-board-head">
-              <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
-              <button type="button" class="mail-board-add" data-mail-action="add">+ Add entry</button>
-            </div>
-            <p class="mail-board-sub">${isLoggedIn
-              ? 'Members only. Show only where it was delivered and the correct address.'
-              : 'Members only. Login or register to add an entry.'}</p>
-            <div class="mail-board-grid">
-              <div class="mail-board-empty">No open misdelivered mail entries right now.</div>
-            </div>
-          </section>`
-      };
-    }
 
     const rows = safeItems.map((it) => {
       const type = formatMailType(getMailItemType(it));
@@ -708,6 +820,10 @@
         </div>`;
     }).join('');
 
+    const emptyState = `
+      <div class="mail-board-empty">No open misdelivered mail entries right now.</div>
+    `;
+
     return {
       id: 'misdelivered_mail_board',
       createdAt: new Date().toISOString(),
@@ -718,16 +834,18 @@
             <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
             <button type="button" class="mail-board-add" data-mail-action="add">+ Add entry</button>
           </div>
-          <p class="mail-board-sub">Members only. Show only where it was delivered and the correct address.</p>
+          <p class="mail-board-sub">Use this board to help a letter or parcel reach the correct address quickly.</p>
           <div class="mail-board-grid">
-            <div class="mail-board-header">
-              <div>Type</div>
-              <div>Delivered at</div>
-              <div>Correct address</div>
-              <div>Status</div>
-              <div>Action</div>
-            </div>
-            ${rows}
+            ${safeItems.length ? `
+              <div class="mail-board-header">
+                <div>Type</div>
+                <div>Delivered at</div>
+                <div>Correct address</div>
+                <div>Status</div>
+                <div>Action</div>
+              </div>
+              ${rows}
+            ` : emptyState}
           </div>
         </section>`
     };
@@ -788,20 +906,172 @@
     }
   }
 
-  async function createMisdeliveredMailEntry(){
-    const itemType = window.prompt('Item type: Letter, Envelope or Parcel', 'Letter');
-    if (itemType == null) return;
 
-    const deliveredAddress = window.prompt('Delivered at address', '');
-    if (deliveredAddress == null || !String(deliveredAddress).trim()) return;
+  function ensureMailLoginPrompt(){
+    let overlay = document.getElementById('mailEntryLoginPrompt');
+    if (overlay) return overlay;
 
-    const intendedAddress = window.prompt('Correct address on the item', '');
-    if (intendedAddress == null || !String(intendedAddress).trim()) return;
+    overlay = document.createElement('div');
+    overlay.id = 'mailEntryLoginPrompt';
+    overlay.className = 'mail-entry-overlay';
+    overlay.innerHTML = `
+      <div class="mail-entry-modal" role="dialog" aria-modal="true" aria-labelledby="mailLoginPromptTitle">
+        <div class="mail-entry-modal__header">
+          <div>
+            <h3 class="mail-entry-modal__title" id="mailLoginPromptTitle">Log in to add a misdelivered mail entry</h3>
+            <p class="mail-entry-modal__subtitle">Please log in or register first. Once you are signed in, you can add the delivery details in a few quick steps.</p>
+          </div>
+          <button type="button" class="mail-entry-close" data-mail-close aria-label="Close">×</button>
+        </div>
+        <div class="mail-entry-modal__footer">
+          <button type="button" class="mail-entry-btn mail-entry-btn--ghost" data-mail-close>Close</button>
+          <a class="mail-entry-btn mail-entry-btn--primary" href="login.html" style="text-decoration:none;display:inline-flex;align-items:center;">Login / Register</a>
+        </div>
+      </div>
+    `;
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay || event.target.closest('[data-mail-close]')) {
+        overlay.classList.remove('open');
+      }
+    });
+    document.body.appendChild(overlay);
+    return overlay;
+  }
 
+  function openMailLoginPrompt(){
+    injectMisdeliveredMailStyles();
+    ensureMailLoginPrompt().classList.add('open');
+  }
+
+  function ensureMailEntryModal(){
+    let overlay = document.getElementById('mailEntryFormModal');
+    if (overlay) return overlay;
+
+    overlay = document.createElement('div');
+    overlay.id = 'mailEntryFormModal';
+    overlay.className = 'mail-entry-overlay';
+    overlay.innerHTML = `
+      <div class="mail-entry-modal" role="dialog" aria-modal="true" aria-labelledby="mailEntryModalTitle">
+        <form id="mailEntryForm">
+          <div class="mail-entry-modal__header">
+            <div>
+              <h3 class="mail-entry-modal__title" id="mailEntryModalTitle">Add misdelivered mail</h3>
+              <p class="mail-entry-modal__subtitle">Only include where the item was delivered and the correct address shown on the letter or parcel.</p>
+            </div>
+            <button type="button" class="mail-entry-close" data-mail-close aria-label="Close">×</button>
+          </div>
+          <div class="mail-entry-modal__body">
+            <div id="mailEntryError" class="mail-entry-error" aria-live="polite"></div>
+            <div class="mail-entry-grid">
+              <div class="mail-entry-field">
+                <label class="mail-entry-label" for="mailEntryType">Item type</label>
+                <select class="mail-entry-select" id="mailEntryType" name="itemType">
+                  <option value="Letter">Letter</option>
+                  <option value="Envelope">Envelope</option>
+                  <option value="Parcel">Parcel</option>
+                </select>
+              </div>
+              <div class="mail-entry-field">
+                <label class="mail-entry-label" for="mailEntryDelivered">Delivered at</label>
+                <input class="mail-entry-input" id="mailEntryDelivered" name="deliveredAddress" type="text" maxlength="140" placeholder="House / apartment where it arrived" />
+              </div>
+              <div class="mail-entry-field mail-entry-field--full">
+                <label class="mail-entry-label" for="mailEntryIntended">Correct address</label>
+                <input class="mail-entry-input" id="mailEntryIntended" name="intendedAddress" type="text" maxlength="180" placeholder="Address shown on the item" />
+              </div>
+              <div class="mail-entry-field mail-entry-field--full">
+                <label class="mail-entry-label" for="mailEntryNotes">Extra note (optional)</label>
+                <textarea class="mail-entry-textarea" id="mailEntryNotes" name="note" placeholder="Optional note to help identify the item"></textarea>
+                <p class="mail-entry-help">Do not include names, account numbers or any sensitive content from the mail item.</p>
+              </div>
+            </div>
+          </div>
+          <div class="mail-entry-modal__footer">
+            <button type="button" class="mail-entry-btn mail-entry-btn--ghost" data-mail-close>Cancel</button>
+            <button type="submit" class="mail-entry-btn mail-entry-btn--primary">Save entry</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay || event.target.closest('[data-mail-close]')) {
+        overlay.classList.remove('open');
+      }
+    });
+
+    const form = overlay.querySelector('#mailEntryForm');
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const errorEl = overlay.querySelector('#mailEntryError');
+      const saveBtn = form.querySelector('[type="submit"]');
+      const formData = new FormData(form);
+      const itemType = String(formData.get('itemType') || '').trim();
+      const deliveredAddress = String(formData.get('deliveredAddress') || '').trim();
+      const intendedAddress = String(formData.get('intendedAddress') || '').trim();
+      const note = String(formData.get('note') || '').trim();
+
+      if (!deliveredAddress || !intendedAddress) {
+        errorEl.textContent = 'Please fill in both address fields before saving.';
+        errorEl.classList.add('open');
+        return;
+      }
+
+      errorEl.classList.remove('open');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      try {
+        await createMisdeliveredMailEntry({
+          itemType,
+          deliveredAddress,
+          intendedAddress,
+          note
+        });
+        form.reset();
+        overlay.classList.remove('open');
+      } catch (err) {
+        errorEl.textContent = (err && err.message) ? err.message : 'Could not save this mail entry right now.';
+        errorEl.classList.add('open');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save entry';
+      }
+    });
+
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  function openMailEntryModal(){
+    injectMisdeliveredMailStyles();
+    const overlay = ensureMailEntryModal();
+    const errorEl = overlay.querySelector('#mailEntryError');
+    const form = overlay.querySelector('#mailEntryForm');
+    if (errorEl) {
+      errorEl.textContent = '';
+      errorEl.classList.remove('open');
+    }
+    if (form) form.reset();
+    overlay.classList.add('open');
+    const firstField = overlay.querySelector('#mailEntryType');
+    if (firstField) window.setTimeout(() => firstField.focus(), 20);
+  }
+
+
+  async function createMisdeliveredMailEntry(payload){
     const me = getLoggedProfile();
     if (!me || !me.email) {
-      window.alert('Please log in first.');
-      return;
+      throw new Error('Please log in first.');
+    }
+
+    const itemType = formatMailType(payload && payload.itemType);
+    const deliveredAddress = String((payload && payload.deliveredAddress) || '').trim();
+    const intendedAddress = String((payload && payload.intendedAddress) || '').trim();
+    const note = String((payload && payload.note) || '').trim();
+
+    if (!deliveredAddress || !intendedAddress) {
+      throw new Error('Please fill in both address fields before saving.');
     }
 
     const all = await loadAllNoticesForEdit();
@@ -827,9 +1097,10 @@
       home: { enabled: true, visibility: 'private' },
       meta: {
         type: 'misdelivered_mail',
-        itemType: formatMailType(itemType),
-        deliveredAddress: String(deliveredAddress).trim(),
-        intendedAddress: String(intendedAddress).trim()
+        itemType,
+        deliveredAddress,
+        intendedAddress,
+        note
       }
     };
 
@@ -1037,7 +1308,11 @@
 
     try {
       if (action === 'add') {
-        await createMisdeliveredMailEntry();
+        if (!getLoggedEmail()) {
+          openMailLoginPrompt();
+          return;
+        }
+        openMailEntryModal();
         return;
       }
 
@@ -1062,15 +1337,27 @@
     }
   });
 
+
   async function main() {
     try {
       await syncExpiredMisdeliveredMail();
 
-      const publicItems = (await loadPublicNotices())
-        .filter(n => !isExpired(n))
-        .filter(n => isPublicHome(n));
+      let publicItems = [];
+      let privateItems = [];
 
-      const privateItems = await loadPrivateNoticesForLoggedUser();
+      try {
+        publicItems = (await loadPublicNotices())
+          .filter(n => !isExpired(n))
+          .filter(n => isPublicHome(n));
+      } catch (err) {
+        console.warn('public notices load failed', err);
+      }
+
+      try {
+        privateItems = await loadPrivateNoticesForLoggedUser();
+      } catch (err) {
+        console.warn('private notices load failed', err);
+      }
 
       const publicBinItems = publicItems.filter(isBinNotice);
       const publicRegularItems = publicItems
@@ -1092,9 +1379,10 @@
       const merged = [
         ...binSummary,
         ...publicRegularItems,
-        ...(mailBoard ? [mailBoard] : []),
+        mailBoard,
         ...privateRegularItems
       ]
+        .filter(Boolean)
         .filter(it => {
           const id = String(it?.id || '');
           if (!id) return true;
@@ -1108,7 +1396,11 @@
       render(merged);
     } catch (err) {
       console.error('home-notices.js failed:', err);
-      renderPlaceholder();
+      try {
+        render([buildMisdeliveredMailBoard([])]);
+      } catch (_) {
+        renderPlaceholder();
+      }
     }
   }
 
