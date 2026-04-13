@@ -138,9 +138,9 @@
     <p class="muted tiny">This area lets residents report incidents and review community activity in a clear overview without using Google Maps.</p>
     <div class="tiny muted" id="anwAccessNotice" style="margin-top:12px; display:none;">You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to continue.</div>
     <div class="actions" style="gap:0.5rem; justify-content:flex-start; flex-wrap:wrap; margin-top:0.75rem;">
-      <button class="btn btn-line" id="btnTabReport" onclick="window.location.href='report.html'" type="button">Report incident</button>
-      <button class="btn btn-line" id="btnTabStatus" onclick="window.location.href='report.html#status'" type="button">My reports status</button>
-      <button class="btn btn-line active" id="btnTabMap" type="button">Incidents overview</button>
+      <button class="btn btn-line" data-acl-feature="report:tab_incident" id="btnTabReport" onclick="window.location.href='report.html'" type="button">Report incident</button>
+      <button class="btn btn-line" data-acl-feature="report:tab_status" id="btnTabStatus" onclick="window.location.href='report.html#status'" type="button">My reports status</button>
+      <button class="btn btn-line active" data-acl="page:report-map" data-acl-feature="report:tab_map" id="btnTabMap" type="button">Incidents overview</button>
     </div>
   </section>
 
