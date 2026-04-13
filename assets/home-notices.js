@@ -113,14 +113,23 @@
         overflow:hidden;
         box-sizing:border-box;
       }
-      .mail-board-toolbar{
-        position:sticky;
-        top:10px;
-        z-index:2;
+      .mail-board-head{
         display:flex;
-        justify-content:flex-end;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
         padding:0 0 10px;
-        background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,.96) 75%,rgba(255,255,255,0) 100%);
+      }
+      .mail-board-title{
+        margin:0;
+        display:flex;
+        align-items:center;
+        gap:8px;
+        font-size:1rem;
+        line-height:1.2;
+        font-weight:800;
+        color:#1f2937;
+        min-width:0;
       }
       .mail-board-add{
         display:inline-flex;
@@ -394,8 +403,8 @@
       }
 
       @media (max-width: 860px){
-        .mail-board-toolbar{
-          top:8px;
+        .mail-board-head{
+          flex-wrap:nowrap;
         }
         .mail-board-grid{
           overflow-x:auto;
@@ -896,7 +905,8 @@
         _sortTs: Date.now() - 1,
         _displayCustomHtml: `
           <section class="mail-board-card" aria-label="Misdelivered mail">
-            <div class="mail-board-toolbar">
+            <div class="mail-board-head">
+              <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
               <button type="button" class="mail-board-add" data-mail-action="add">+ Add entry</button>
             </div>
             <div class="mail-board-grid">
@@ -936,7 +946,8 @@
       _sortTs: Date.now() - 1,
       _displayCustomHtml: `
         <section class="mail-board-card" aria-label="Misdelivered mail">
-          <div class="mail-board-toolbar">
+          <div class="mail-board-head">
+            <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
             <button type="button" class="mail-board-add" data-mail-action="add">+ Add entry</button>
           </div>
           <div class="mail-board-grid">
