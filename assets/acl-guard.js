@@ -440,7 +440,6 @@
     return roleAllows(clean, role);
   }
 
-
   function renderGlobalHeader(role, acl) {
     try {
       if (isAdminPath()) return;
@@ -477,7 +476,39 @@
         })
         .join("");
 
-      if (html) nav.innerHTML = html;
+      if (!html) return;
+
+      nav.innerHTML = html + '<a href="#" id="navLogout">Logout</a>';
+
+      const logoutLink = nav.querySelector("#navLogout");
+      if (!logoutLink) return;
+
+      logoutLink.addEventListener("click", function (e) {
+        e.preventDefault();
+
+        try {
+          if (
+            window.netlifyIdentity &&
+            typeof window.netlifyIdentity.logout === "function"
+          ) {
+            window.netlifyIdentity.logout();
+          }
+        } catch (_) {}
+
+        try {
+          localStorage.removeItem("anw_logged");
+        } catch (_) {}
+
+        try {
+          const key =
+            window.ANW_KEYS && window.ANW_KEYS.SESSION
+              ? window.ANW_KEYS.SESSION
+              : "anw_session";
+          localStorage.removeItem(key);
+        } catch (_) {}
+
+        location.href = "index.html";
+      });
     } catch (e) {
       console.warn("[acl-guard] renderGlobalHeader failed:", e);
     }
