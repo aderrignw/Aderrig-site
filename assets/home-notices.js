@@ -113,44 +113,31 @@
         overflow:hidden;
         box-sizing:border-box;
       }
-      .mail-board-head{
+      .mail-board-toolbar{
+        position:sticky;
+        top:10px;
+        z-index:2;
         display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:12px;
-        margin:0 0 6px;
-      }
-      .mail-board-title{
-        margin:0;
-        font-size:1rem;
-        line-height:1.25;
-        font-weight:800;
-        color:#1f2937;
-        display:flex;
-        align-items:center;
-        gap:8px;
-        min-width:0;
-      }
-      .mail-board-sub{
-        margin:0 0 10px;
-        font-size:.95rem;
-        color:#64748b;
+        justify-content:flex-end;
+        padding:0 0 10px;
+        background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,.96) 75%,rgba(255,255,255,0) 100%);
       }
       .mail-board-add{
         display:inline-flex;
         align-items:center;
         justify-content:center;
-        min-height:32px;
-        padding:0 10px;
+        min-height:40px;
+        padding:0 14px;
         border-radius:999px;
         border:1px solid rgba(31,111,74,.28);
         background:#fff;
         color:#1f6f4a;
-        font-size:.84rem;
-        font-weight:700;
+        font-size:.88rem;
+        font-weight:800;
         cursor:pointer;
         white-space:nowrap;
         flex:0 0 auto;
+        box-shadow:0 6px 20px rgba(15,23,42,.08);
       }
       .mail-board-add:hover{ background:rgba(31,111,74,.05); }
 
@@ -168,11 +155,11 @@
       .mail-board-header,
       .mail-board-row{
         display:grid;
-        grid-template-columns:70px minmax(120px,1fr) minmax(140px,1fr) 90px 130px;
+        grid-template-columns:70px minmax(140px,1fr) minmax(160px,1fr) 100px 130px;
         gap:8px;
         align-items:center;
-        padding:8px 10px;
-        min-width:580px;
+        padding:10px 12px;
+        min-width:620px;
         box-sizing:border-box;
       }
 
@@ -273,81 +260,10 @@
       }
 
       .mail-board-empty{
-        padding:12px 14px;
+        padding:14px 16px;
         color:#64748b;
         font-size:.95rem;
       }
-
-      .mail-entry-form{
-        margin:0 0 12px;
-        padding:14px;
-        border:1px solid rgba(31,111,74,.14);
-        border-radius:14px;
-        background:#f8fcfa;
-      }
-      .mail-entry-form[hidden]{ display:none !important; }
-      .mail-entry-form-grid{
-        display:grid;
-        grid-template-columns:160px 1fr 1fr;
-        gap:10px;
-      }
-      .mail-entry-field{
-        display:grid;
-        gap:6px;
-      }
-      .mail-entry-label{
-        font-size:.82rem;
-        font-weight:700;
-        color:#334155;
-      }
-      .mail-entry-input,
-      .mail-entry-select{
-        width:100%;
-        min-height:42px;
-        padding:0 12px;
-        border:1px solid rgba(17,24,39,.12);
-        border-radius:10px;
-        background:#fff;
-        color:#111827;
-        box-sizing:border-box;
-      }
-      .mail-entry-actions{
-        display:flex;
-        gap:8px;
-        align-items:center;
-        justify-content:flex-end;
-        margin-top:12px;
-        flex-wrap:wrap;
-      }
-      .mail-entry-submit,
-      .mail-entry-cancel{
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        min-height:38px;
-        padding:0 14px;
-        border-radius:999px;
-        font-size:.84rem;
-        font-weight:700;
-        cursor:pointer;
-      }
-      .mail-entry-submit{
-        border:1px solid rgba(31,111,74,.28);
-        background:#1f6f4a;
-        color:#fff;
-      }
-      .mail-entry-cancel{
-        border:1px solid rgba(17,24,39,.12);
-        background:#fff;
-        color:#334155;
-      }
-      .mail-entry-error{
-        margin-top:10px;
-        font-size:.9rem;
-        color:#b91c1c;
-      }
-      .mail-entry-error:empty{ display:none; }
-
 
       .mail-entry-overlay{
         position:fixed;
@@ -362,12 +278,13 @@
       }
       .mail-entry-overlay.open{ display:flex; }
       .mail-entry-modal{
-        width:min(520px,100%);
+        width:min(560px,100%);
+        max-height:min(92vh,820px);
+        overflow:auto;
         background:#fff;
         border:1px solid rgba(17,24,39,.08);
         border-radius:24px;
         box-shadow:0 24px 60px rgba(15,23,42,.18);
-        overflow:hidden;
       }
       .mail-entry-modal__header{
         display:flex;
@@ -398,6 +315,49 @@
         line-height:1;
         cursor:pointer;
       }
+      .mail-entry-modal__body{
+        padding:18px 22px 8px;
+      }
+      .mail-entry-form-grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:12px;
+      }
+      .mail-entry-field{
+        display:grid;
+        gap:6px;
+      }
+      .mail-entry-field--full{
+        grid-column:1 / -1;
+      }
+      .mail-entry-label{
+        font-size:.82rem;
+        font-weight:700;
+        color:#334155;
+      }
+      .mail-entry-input,
+      .mail-entry-select{
+        width:100%;
+        min-height:44px;
+        padding:0 12px;
+        border:1px solid rgba(17,24,39,.12);
+        border-radius:10px;
+        background:#fff;
+        color:#111827;
+        box-sizing:border-box;
+      }
+      .mail-entry-help{
+        margin:0;
+        font-size:.88rem;
+        line-height:1.5;
+        color:#64748b;
+      }
+      .mail-entry-error{
+        margin-top:12px;
+        font-size:.9rem;
+        color:#b91c1c;
+      }
+      .mail-entry-error:empty{ display:none; }
       .mail-entry-modal__footer{
         padding:16px 22px;
         border-top:1px solid rgba(17,24,39,.08);
@@ -426,21 +386,42 @@
         text-decoration:none;
         display:inline-flex;
         align-items:center;
+        justify-content:center;
+      }
+      .mail-entry-btn[disabled]{
+        opacity:.65;
+        cursor:wait;
       }
 
       @media (max-width: 860px){
-        .mail-board-head{
-          align-items:flex-start;
+        .mail-board-toolbar{
+          top:8px;
         }
         .mail-board-grid{
           overflow-x:auto;
+          -webkit-overflow-scrolling:touch;
         }
         .mail-board-header,
         .mail-board-row{
-          min-width:620px;
+          min-width:640px;
+        }
+      }
+
+      @media (max-width: 640px){
+        .mail-entry-overlay{
+          align-items:flex-end;
+          padding:12px;
+        }
+        .mail-entry-modal{
+          width:100%;
+          border-radius:22px 22px 0 0;
+          max-height:88vh;
         }
         .mail-entry-form-grid{
           grid-template-columns:1fr;
+        }
+        .mail-entry-field--full{
+          grid-column:auto;
         }
       }
     `;
@@ -807,60 +788,106 @@
     return mine;
   }
 
-  function isMailEntryFormOpen(){
-    return !!window.ANW_MAIL_ENTRY_FORM_OPEN;
+  function ensureMailEntryModal(){
+    let overlay = document.getElementById('mailEntryCreateModal');
+    if (overlay) return overlay;
+
+    overlay = document.createElement('div');
+    overlay.id = 'mailEntryCreateModal';
+    overlay.className = 'mail-entry-overlay';
+    overlay.innerHTML = `
+      <div class="mail-entry-modal" role="dialog" aria-modal="true" aria-labelledby="mailEntryModalTitle">
+        <div class="mail-entry-modal__header">
+          <div>
+            <h3 class="mail-entry-modal__title" id="mailEntryModalTitle">Add misdelivered mail entry</h3>
+            <p class="mail-entry-modal__subtitle">Fill in the delivery details below. The entry will appear on the home board in the same clean table format.</p>
+          </div>
+          <button type="button" class="mail-entry-close" data-mail-entry-close aria-label="Close">×</button>
+        </div>
+        <form class="mail-entry-modal-form" data-mail-entry-form novalidate>
+          <div class="mail-entry-modal__body">
+            <div class="mail-entry-form-grid">
+              <label class="mail-entry-field">
+                <span class="mail-entry-label">Item type</span>
+                <select class="mail-entry-select" name="itemType">
+                  <option value="Letter">Letter</option>
+                  <option value="Envelope">Envelope</option>
+                  <option value="Parcel">Parcel</option>
+                </select>
+              </label>
+              <div class="mail-entry-field">
+                <span class="mail-entry-label">Status</span>
+                <input class="mail-entry-input" type="text" value="Not collected" disabled />
+              </div>
+              <label class="mail-entry-field mail-entry-field--full">
+                <span class="mail-entry-label">Delivered at</span>
+                <input class="mail-entry-input" type="text" name="deliveredAddress" autocomplete="street-address" placeholder="Address where it was delivered" />
+              </label>
+              <label class="mail-entry-field mail-entry-field--full">
+                <span class="mail-entry-label">Correct address</span>
+                <input class="mail-entry-input" type="text" name="intendedAddress" autocomplete="street-address" placeholder="Correct address on the item" />
+              </label>
+            </div>
+            <p class="mail-entry-help">Residents who are signed in can add the entry here without leaving the home page.</p>
+            <div class="mail-entry-error" data-mail-form-error role="alert" aria-live="polite"></div>
+          </div>
+          <div class="mail-entry-modal__footer">
+            <button type="button" class="mail-entry-btn mail-entry-btn--ghost" data-mail-entry-close>Cancel</button>
+            <button type="submit" class="mail-entry-btn mail-entry-btn--primary" data-mail-entry-submit>Save entry</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay || event.target.closest('[data-mail-entry-close]')) {
+        closeMailEntryModal();
+      }
+    });
+
+    document.body.appendChild(overlay);
+    return overlay;
   }
 
-  function setMailEntryFormOpen(open){
-    window.ANW_MAIL_ENTRY_FORM_OPEN = !!open;
+  function closeMailEntryModal(){
+    const overlay = document.getElementById('mailEntryCreateModal');
+    if (!overlay) return;
+    overlay.classList.remove('open');
+    const form = overlay.querySelector('[data-mail-entry-form]');
+    if (form) form.reset();
+    showMailFormError('');
+    const submitBtn = overlay.querySelector('[data-mail-entry-submit]');
+    if (submitBtn) submitBtn.disabled = false;
   }
 
-  function buildMailEntryFormMarkup(isLoggedIn){
-    if (!isLoggedIn || !isMailEntryFormOpen()) return '';
-    return `
-      <form class="mail-entry-form" data-mail-entry-form novalidate>
-        <div class="mail-entry-form-grid">
-          <label class="mail-entry-field">
-            <span class="mail-entry-label">Item type</span>
-            <select class="mail-entry-select" name="itemType">
-              <option value="Letter">Letter</option>
-              <option value="Envelope">Envelope</option>
-              <option value="Parcel">Parcel</option>
-            </select>
-          </label>
-          <label class="mail-entry-field">
-            <span class="mail-entry-label">Delivered at</span>
-            <input class="mail-entry-input" type="text" name="deliveredAddress" autocomplete="street-address" placeholder="Address where it was delivered"/>
-          </label>
-          <label class="mail-entry-field">
-            <span class="mail-entry-label">Correct address</span>
-            <input class="mail-entry-input" type="text" name="intendedAddress" autocomplete="street-address" placeholder="Correct address on the item"/>
-          </label>
-        </div>
-        <div class="mail-entry-actions">
-          <button type="button" class="mail-entry-cancel" data-mail-action="cancel-add">Cancel</button>
-          <button type="submit" class="mail-entry-submit">Save entry</button>
-        </div>
-        <div class="mail-entry-error" data-mail-form-error role="alert" aria-live="polite"></div>
-      </form>`;
+  function openMailEntryModal(){
+    injectMisdeliveredMailStyles();
+    const overlay = ensureMailEntryModal();
+    overlay.classList.add('open');
+    showMailFormError('');
+    window.setTimeout(() => {
+      const firstInput = overlay.querySelector('[name="deliveredAddress"]');
+      if (firstInput && typeof firstInput.focus === 'function') firstInput.focus();
+    }, 30);
+  }
+
+  function getMailEntryForm(){
+    return document.querySelector('#mailEntryCreateModal [data-mail-entry-form]');
   }
 
   function showMailFormError(message){
-    const el = listEl.querySelector('[data-mail-form-error]');
+    const el = document.querySelector('#mailEntryCreateModal [data-mail-form-error]');
     if (!el) return;
     el.textContent = String(message || '');
   }
 
 
-  function buildMisdeliveredMailBoard(items){
-    const me = getLoggedProfile();
-    const isLoggedIn = !!(me && me.email);
 
+  function buildMisdeliveredMailBoard(items){
     injectMisdeliveredMailStyles();
 
     const safeItems = Array.isArray(items) ? items : [];
     const hasItems = safeItems.length > 0;
-    const formMarkup = buildMailEntryFormMarkup(isLoggedIn);
 
     if (!hasItems) {
       return {
@@ -869,13 +896,10 @@
         _sortTs: Date.now() - 1,
         _displayCustomHtml: `
           <section class="mail-board-card" aria-label="Misdelivered mail">
-            <div class="mail-board-head">
-              <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
+            <div class="mail-board-toolbar">
               <button type="button" class="mail-board-add" data-mail-action="add">+ Add entry</button>
             </div>
-            <p class="mail-board-sub">Use this board to help a letter or parcel reach the correct address quickly.</p>
-            ${formMarkup}
-                        <div class="mail-board-grid">
+            <div class="mail-board-grid">
               <div class="mail-board-empty">No open misdelivered mail entries right now.</div>
             </div>
           </section>`
@@ -912,13 +936,10 @@
       _sortTs: Date.now() - 1,
       _displayCustomHtml: `
         <section class="mail-board-card" aria-label="Misdelivered mail">
-          <div class="mail-board-head">
-            <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
+          <div class="mail-board-toolbar">
             <button type="button" class="mail-board-add" data-mail-action="add">+ Add entry</button>
           </div>
-          <p class="mail-board-sub">Use this board to help a letter or parcel reach the correct address quickly.</p>
-          ${formMarkup}
-                    <div class="mail-board-grid">
+          <div class="mail-board-grid">
             <div class="mail-board-header">
               <div>Type</div>
               <div>Delivered at</div>
@@ -931,6 +952,8 @@
         </section>`
     };
   }
+
+
 
   async function loadAllNoticesForEdit(){
     const token = await getIdentityToken();
@@ -1031,13 +1054,13 @@
       return;
     }
 
-    const form = listEl.querySelector('[data-mail-entry-form]');
+    const form = getMailEntryForm();
     if (!form) {
-      setMailEntryFormOpen(true);
-      await main();
+      openMailEntryModal();
       return;
     }
 
+    const submitBtn = form.querySelector('[data-mail-entry-submit]');
     const itemType = String(form.querySelector('[name="itemType"]')?.value || 'Letter').trim() || 'Letter';
     const deliveredAddress = String(form.querySelector('[name="deliveredAddress"]')?.value || '').trim();
     const intendedAddress = String(form.querySelector('[name="intendedAddress"]')?.value || '').trim();
@@ -1048,6 +1071,7 @@
     }
 
     showMailFormError('');
+    if (submitBtn) submitBtn.disabled = true;
 
     const all = await loadAllNoticesForEdit();
     const now = new Date();
@@ -1078,8 +1102,8 @@
       }
     };
 
-    setMailEntryFormOpen(false);
     await saveAllNotices([entry].concat(all || []));
+    closeMailEntryModal();
     await main();
   }
 
@@ -1273,17 +1297,6 @@
     return fromDate ? fromDate.getTime() : 0;
   }
 
-  listEl.addEventListener('submit', async (event) => {
-    const form = event.target && event.target.closest ? event.target.closest('[data-mail-entry-form]') : null;
-    if (!form) return;
-    event.preventDefault();
-    try {
-      await createMisdeliveredMailEntry();
-    } catch (err) {
-      console.error('mail submit failed', err);
-      showMailFormError('Could not save this mail entry right now.');
-    }
-  });
 
 
   listEl.addEventListener('click', async (event) => {
@@ -1300,14 +1313,7 @@
           openMailLoginPrompt();
           return;
         }
-        setMailEntryFormOpen(true);
-        await main();
-        return;
-      }
-
-      if (action === 'cancel-add') {
-        setMailEntryFormOpen(false);
-        await main();
+        openMailEntryModal();
         return;
       }
 
@@ -1331,6 +1337,21 @@
       window.alert('Could not update this mail entry right now.');
     }
   });
+
+  document.addEventListener('submit', async (event) => {
+    const form = event.target && event.target.closest ? event.target.closest('#mailEntryCreateModal [data-mail-entry-form]') : null;
+    if (!form) return;
+    event.preventDefault();
+    try {
+      await createMisdeliveredMailEntry();
+    } catch (err) {
+      console.error('mail submit failed', err);
+      const submitBtn = form.querySelector('[data-mail-entry-submit]');
+      if (submitBtn) submitBtn.disabled = false;
+      showMailFormError('Could not save this mail entry right now.');
+    }
+  });
+
 
   async function main() {
     try {
