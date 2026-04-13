@@ -121,6 +121,100 @@
   </style>
 
 
+
+<style id="mail-board-home-fix">
+  /* Misdelivered Mail on Home: keep only one compact row with title + button */
+  #homeNoticeList .mail-board-card{
+    padding:10px 0 0 !important;
+    border-top:1px solid rgba(17,24,39,.08) !important;
+    overflow:hidden;
+  }
+
+  #homeNoticeList .mail-board-head{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:12px !important;
+    margin:0 !important;
+    width:100% !important;
+  }
+
+  #homeNoticeList .mail-board-title{
+    margin:0 !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    font-size:1rem !important;
+    line-height:1.2 !important;
+    font-weight:800 !important;
+    color:#1f2937 !important;
+    min-width:0 !important;
+  }
+
+  #homeNoticeList .mail-board-sub{
+    display:none !important;
+  }
+
+  #homeNoticeList .mail-board-add{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    margin-left:auto !important;
+    min-height:38px !important;
+    padding:0 14px !important;
+    border-radius:999px !important;
+    border:1px solid rgba(31,111,74,.28) !important;
+    background:#fff !important;
+    color:#1f6f4a !important;
+    font-size:.84rem !important;
+    font-weight:800 !important;
+    white-space:nowrap !important;
+    opacity:1 !important;
+  }
+
+  #homeNoticeList .mail-board-add:hover{
+    background:rgba(31,111,74,.05) !important;
+  }
+
+  /* When the table is empty, keep layout compact */
+  #homeNoticeList .mail-board-grid{
+    margin-top:10px !important;
+  }
+
+  /* Safety net for any legacy markup that still prints description text */
+  #homeNoticeList .mail-entry-sub,
+  #homeNoticeList [data-mail-hidden-login-note],
+  #homeNoticeList p,
+  #homeNoticeList small{
+  }
+
+  #homeNoticeList .mail-board-card p.mail-board-sub,
+  #homeNoticeList .mail-entry-card-upgraded .mail-entry-sub{
+    display:none !important;
+  }
+
+  /* Legacy upgraded card fallback */
+  #homeNoticeList .mail-entry-card-upgraded .mail-entry-head{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:12px !important;
+  }
+  #homeNoticeList .mail-entry-card-upgraded .mail-entry-actions{
+    margin-left:auto !important;
+  }
+
+  @media (max-width: 860px){
+    #homeNoticeList .mail-board-head{
+      align-items:center !important;
+      flex-wrap:nowrap !important;
+    }
+    #homeNoticeList .mail-board-add{
+      flex:0 0 auto !important;
+    }
+  }
+</style>
+
 </head>
 <body data-acl-shell-public="true" data-acl-loading="true" class="page-home">
 <header class="site-header">
@@ -535,7 +629,7 @@
     window.setTimeout(boot, 900);
   });
 })();
-</script>
+</script></script>
 
 </body>
 </html>
