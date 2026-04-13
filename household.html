@@ -271,11 +271,11 @@
 <section class="card">
 <h2>Household</h2>
 <div class="subtabs">
-<button class="btn btn-line small hh-tab active" data-pane="paneVols" type="button">Household volunteers</button>
-<button class="btn btn-line small hh-tab" data-pane="paneTasks" type="button">Volunteer tasks</button>
+<button class="btn btn-line small hh-tab active" data-acl-feature="household:tab_volunteers" data-pane="paneVols" type="button">Household volunteers</button>
+<button class="btn btn-line small hh-tab" data-acl-feature="household:tab_tasks" data-pane="paneTasks" type="button">Volunteer tasks</button>
 </div>
 <!-- =================== PANE: VOLUNTEERS =================== -->
-<div class="pane" id="paneVols">
+<div class="pane" data-acl-feature="household:tab_volunteers" id="paneVols">
 <div class="info-card">
 <strong>Household volunteers</strong> is where you add people in your home and select what they can help with.
         This does <strong>not</strong> accept tasks — it only sets up who can help.
@@ -362,7 +362,7 @@
 </div>
 </div>
 <!-- =================== PANE: TASKS =================== -->
-<div class="pane" id="paneTasks" style="display:none;">
+<div class="pane" data-acl-feature="household:tab_tasks" id="paneTasks" style="display:none;">
 <div class="info-card">
 <strong>Volunteer tasks</strong> shows tasks created by the admin team. You can accept an open task and assign it to one of your
         household volunteers, then select a planned date and time.
