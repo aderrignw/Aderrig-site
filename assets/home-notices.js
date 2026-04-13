@@ -909,7 +909,7 @@
           <section class="mail-board-card" aria-label="Misdelivered mail">
             <div class="mail-board-head">
               <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
-              <button type="button" class="mail-board-add" data-mail-action="add">+ Add entry</button>
+              <button type="button" class="mail-board-add" data-mail-action="add">+ Add</button>
             </div>
             <div class="mail-board-grid">
               <div class="mail-board-empty">No open misdelivered mail entries right now.</div>
@@ -950,7 +950,7 @@
         <section class="mail-board-card" aria-label="Misdelivered mail">
           <div class="mail-board-head">
             <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
-            <button type="button" class="mail-board-add" data-mail-action="add">+ Add entry</button>
+            <button type="button" class="mail-board-add" data-mail-action="add">+ Add</button>
           </div>
           <div class="mail-board-grid">
             <div class="mail-board-header">
