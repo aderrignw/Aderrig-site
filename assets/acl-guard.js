@@ -287,11 +287,23 @@
     "page:login": "Public",
     "page:privacy": "Public",
     "page:dashboard": "Public",
-    "page:report": "Authenticated",
-    "page:household": "Authenticated",
-    "page:alerts": "Authenticated",
-    "page:projects": "Authenticated",
+    "page:report": "resident",
+    "page:report-map": "resident",
+    "page:household": "resident",
+    "page:alerts": "assistant_area_coordinator",
+    "page:projects": "projects",
     "page:admin": "owner"
+  };
+
+  const BUILTIN_FEATURE_RULES = {
+    "report:tab_incident": "resident",
+    "report:tab_status": "resident",
+    "report:tab_map": "resident",
+    "household:tab_volunteers": "resident",
+    "household:tab_tasks": "resident",
+    "alerts:tab_send_alert": "assistant_area_coordinator",
+    "alerts:tab_send_action": "assistant_area_coordinator",
+    "alerts:tab_authorised_contacts": "assistant_area_coordinator"
   };
 
   function getPageKey() {
@@ -316,6 +328,7 @@
       if (file === "privacy" || file === "privacy.html") return "page:privacy";
       if (file === "dashboard" || file === "dashboard.html") return "page:dashboard";
       if (file === "report" || file === "report.html") return "page:report";
+      if (file === "report-map" || file === "report-map.html") return "page:report-map";
       if (file === "household" || file === "household.html") return "page:household";
       if (file === "alerts" || file === "alerts.html") return "page:alerts";
       if (file === "projects" || file === "projects.html") return "page:projects";
@@ -408,6 +421,10 @@
       return BUILTIN_PAGE_RULES[raw];
     }
 
+    if (Object.prototype.hasOwnProperty.call(BUILTIN_FEATURE_RULES, raw)) {
+      return BUILTIN_FEATURE_RULES[raw];
+    }
+
     return "Authenticated";
   }
 
@@ -438,6 +455,107 @@
     if (clean.toLowerCase() === "public") return true;
     if (clean.toLowerCase() === "authenticated") return isLoggedIn();
     return roleAllows(clean, role);
+  }
+
+
+  function renderGlobalHeader(role, acl) {
+    try {
+      if (isAdminPath()) return;
+
+      const nav = document.querySelector("header.site-header nav.nav");
+      if (!nav) return;
+
+      const pageKey = getPageKey();
+      const loggedIn = isLoggedIn();
+      const items = [
+        { key: "page:home", href: "index.html", label: "Home", publicOnly: false },
+        { key: "page:about", href: "about.html", label: "About", publicOnly: false },
+        { key: "page:handbook", href: "handbook.html", label: "Handbook", publicOnly: false },
+        { key: "page:report", href: "report.html", label: "Report", authOnly: true },
+        { key: "page:alerts", href: "alerts.html", label: "Community Alerts", authOnly: true },
+        { key: "page:projects", href: "projects.html", label: "Community Projects", authOnly: true },
+        { key: "page:dashboard", href: "dashboard.html", label: "Dashboard", authOnly: true },
+        { key: "page:household", href: "household.html", label: "Household", authOnly: true },
+        { key: "page:admin", href: "admin.html", label: "Admin", authOnly: true },
+        { key: "page:login", href: "login.html", label: "Login / Register", guestOnly: true, className: "nav-login" }
+      ];
+
+      const html = items.filter(function (item) {
+        if (item.guestOnly) return !loggedIn;
+        if (item.authOnly && !loggedIn) return false;
+        const rule = resolveAclRule(acl, item.key);
+        return ruleAllows(rule, role);
+      }).map(function (item) {
+        const classes = [];
+        if (item.className) classes.push(item.className);
+        if (pageKey === item.key) classes.push("active");
+        const classAttr = classes.length ? ' class="' + classes.join(" ") + '"' : "";
+        return '<a' + classAttr + ' href="' + item.href + '">' + item.label + '</a>';
+      }).join("");
+
+      if (html) nav.innerHTML = html;
+    } catch (e) {
+      console.warn("[acl-guard] renderGlobalHeader failed:", e);
+    }
+  }
+
+  function isVisibleNode(el) {
+    if (!el) return false;
+    try {
+      const style = window.getComputedStyle(el);
+      return style.display !== "none" && style.visibility !== "hidden";
+    } catch (_) {
+      return el.style.display !== "none";
+    }
+  }
+
+  function syncResidentSubtabs() {
+    const pageKey = getPageKey();
+
+    if (pageKey === "page:report") {
+      const btnReport = document.getElementById("btnTabReport");
+      const btnStatus = document.getElementById("btnTabStatus");
+      const panelNew = document.getElementById("tabNew");
+      const panelStatus = document.getElementById("tabStatus");
+      const visible = [];
+      if (isVisibleNode(btnReport) && isVisibleNode(panelNew)) visible.push({ btn: btnReport, panel: panelNew });
+      if (isVisibleNode(btnStatus) && isVisibleNode(panelStatus)) visible.push({ btn: btnStatus, panel: panelStatus });
+      if (!visible.length) return;
+
+      let active = visible.find(function (entry) { return entry.btn.classList.contains("active"); });
+      if (!active || !isVisibleNode(active.panel)) active = visible[0];
+
+      [panelNew, panelStatus].forEach(function (panel) {
+        if (panel) panel.style.display = panel === active.panel ? "block" : "none";
+      });
+      [btnReport, btnStatus].forEach(function (btn) {
+        if (btn) btn.classList.toggle("active", btn === active.btn);
+      });
+    }
+
+    if (pageKey === "page:household") {
+      const buttons = Array.from(document.querySelectorAll(".hh-tab"));
+      const visibleButtons = buttons.filter(isVisibleNode);
+      if (!visibleButtons.length) return;
+
+      let active = visibleButtons.find(function (btn) { return btn.classList.contains("active"); });
+      if (!active) active = visibleButtons[0];
+
+      visibleButtons.forEach(function (btn) {
+        const paneId = btn.getAttribute("data-pane");
+        const pane = paneId ? document.getElementById(paneId) : null;
+        const on = btn === active;
+        btn.classList.toggle("active", on);
+        if (pane) pane.style.display = on ? "block" : "none";
+      });
+
+      buttons.filter(function (btn) { return !visibleButtons.includes(btn); }).forEach(function (btn) {
+        const paneId = btn.getAttribute("data-pane");
+        const pane = paneId ? document.getElementById(paneId) : null;
+        btn.classList.remove("active");
+        if (pane) pane.style.display = "none";
+      });
+    }
   }
 
   function applyNav(role, acl) {
@@ -564,8 +682,10 @@
       const acl = loadAcl() || {};
       const role = getRole();
 
+      renderGlobalHeader(role, acl);
       applyNav(role, acl);
       applyFeatures(role, acl);
+      syncResidentSubtabs();
       enforcePage(role, acl);
     } catch (e) {
       console.warn("[acl-guard] fallback after error:", e);
