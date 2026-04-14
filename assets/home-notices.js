@@ -241,10 +241,11 @@
 
       .mail-board-actions{
         display:flex;
-        flex-direction:column;
-        align-items:flex-start;
+        flex-direction:row;
+        align-items:center;
         justify-content:flex-start;
-        gap:4px;
+        gap:6px;
+        flex-wrap:wrap;
         min-width:0;
         max-width:100%;
       }
@@ -266,7 +267,6 @@
         flex:0 0 auto;
         max-width:100%;
       }
-
       .mail-action-btn:hover{
         background:#f8fafc;
       }
@@ -470,6 +470,7 @@
     if (cat === 'meeting') return 'info';
     return 'info';
   }
+
   function formatVisibility(it){
     const vis = String(it?.home?.visibility || 'private').toLowerCase();
     return vis === 'public' ? 'Public' : 'Members only';
@@ -499,7 +500,6 @@
     const parsed = new Date(raw);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
-
   function startOfDay(value) {
     const d = parseDateValue(value);
     if (!d) return null;
@@ -619,8 +619,8 @@
     if (!dated.length) return [];
 
     const today = startOfDay(new Date());
-    const weekStart = startOfWeek(today); // Sunday
-    const weekEnd = endOfWeek(today);     // Saturday
+    const weekStart = startOfWeek(today);
+    const weekEnd = endOfWeek(today);
     const nextWeekStart = addDays(weekEnd, 1);
     const nextWeekEnd = addDays(nextWeekStart, 6);
 
@@ -674,7 +674,6 @@
 
       lead = lines.join(' ');
     }
-
     if (!lead) return [];
 
     injectBinCardStyles();
@@ -804,13 +803,69 @@
   }
 
   function buildMisdeliveredMailBoard(items){
-  injectMisdeliveredMailStyles();
+    injectMisdeliveredMailStyles();
 
-  const me = getLoggedProfile();
-  const safeItems = Array.isArray(items) ? items : [];
-  const hasItems = safeItems.length > 0;
+    const me = getLoggedProfile();
+    const safeItems = Array.isArray(items) ? items : [];
+    const hasItems = safeItems.length > 0;
 
-  if (!me || !me.email) {
+    if (!me || !me.email) {
+      return {
+        id: 'misdelivered_mail_board',
+        createdAt: new Date().toISOString(),
+        _sortTs: Date.now() - 1,
+        _displayCustomHtml: `
+          <section class="mail-board-card" aria-label="Misdelivered mail">
+            <div class="mail-board-head">
+              <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
+              <button type="button" class="mail-board-add" data-mail-action="add">+ Add</button>
+            </div>
+            <p class="mail-board-sub">Report misdelivered mail received at your address.</p>
+          </section>`
+      };
+    }
+    if (!hasItems) {
+      return {
+        id: 'misdelivered_mail_board',
+        createdAt: new Date().toISOString(),
+        _sortTs: Date.now() - 1,
+        _displayCustomHtml: `
+          <section class="mail-board-card" aria-label="Misdelivered mail">
+            <div class="mail-board-head">
+              <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
+              <button type="button" class="mail-board-add" data-mail-action="add">+ Add</button>
+            </div>
+            <p class="mail-board-sub">Report misdelivered mail received at your address.</p>
+            <div class="mail-board-grid">
+              <div class="mail-board-empty">No open misdelivered mail entries right now.</div>
+            </div>
+          </section>`
+      };
+    }
+
+    const rows = safeItems.map((it) => {
+      const type = formatMailType(getMailItemType(it));
+      const delivered = esc(it?.meta?.deliveredAddress || '');
+      const correct = esc(it?.meta?.intendedAddress || '');
+      const actions = [];
+      if (canManageMail(it)) {
+        actions.push(`<button type="button" class="mail-action-btn" data-mail-action="collected" data-mail-id="${esc(it.id || '')}">Collected</button>`);
+        actions.push(`<button type="button" class="mail-action-btn" data-mail-action="returned" data-mail-id="${esc(it.id || '')}">Returned</button>`);
+      }
+      if (hasOwnerAccess()) {
+        actions.push(`<button type="button" class="mail-action-btn mail-action-btn--owner" data-mail-action="remove" data-mail-id="${esc(it.id || '')}">Remove</button>`);
+      }
+
+      return `
+        <div class="mail-board-row">
+          <div class="mail-board-cell"><span class="mail-board-type"><span class="mail-board-type-icon" aria-hidden="true">${getMailIcon(type)}</span><span>${esc(type)}</span></span></div>
+          <div class="mail-board-cell">${delivered}</div>
+          <div class="mail-board-cell">${correct}</div>
+          <div class="mail-board-cell mail-board-status"><span class="mail-pill">Not collected</span></div>
+          <div class="mail-board-cell"><div class="mail-board-actions">${actions.join('')}</div></div>
+        </div>`;
+    }).join('');
+
     return {
       id: 'misdelivered_mail_board',
       createdAt: new Date().toISOString(),
@@ -823,79 +878,18 @@
           </div>
           <p class="mail-board-sub">Report misdelivered mail received at your address.</p>
           <div class="mail-board-grid">
-            <div class="mail-board-empty">Log in to view or post misdelivered mail entries.</div>
+            <div class="mail-board-header">
+              <div>Type</div>
+              <div>Delivered at</div>
+              <div>Correct address</div>
+              <div>Status</div>
+              <div>Action</div>
+            </div>
+            ${rows}
           </div>
         </section>`
     };
   }
-
-  if (!hasItems) {
-    return {
-      id: 'misdelivered_mail_board',
-      createdAt: new Date().toISOString(),
-      _sortTs: Date.now() - 1,
-      _displayCustomHtml: `
-        <section class="mail-board-card" aria-label="Misdelivered mail">
-          <div class="mail-board-head">
-            <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
-            <button type="button" class="mail-board-add" data-mail-action="add">+ Add</button>
-          </div>
-          <p class="mail-board-sub">Report misdelivered mail received at your address.</p>
-          <div class="mail-board-grid">
-            <div class="mail-board-empty">No open misdelivered mail entries right now.</div>
-          </div>
-        </section>`
-    };
-  }
-
-  const rows = safeItems.map((it) => {
-    const type = formatMailType(getMailItemType(it));
-    const delivered = esc(it?.meta?.deliveredAddress || '');
-    const correct = esc(it?.meta?.intendedAddress || '');
-    const actions = [];
-
-    if (canManageMail(it)) {
-      actions.push(`<button type="button" class="mail-action-btn" data-mail-action="collected" data-mail-id="${esc(it.id || '')}">Collected</button>`);
-      actions.push(`<button type="button" class="mail-action-btn" data-mail-action="returned" data-mail-id="${esc(it.id || '')}">Returned</button>`);
-    }
-    if (hasOwnerAccess()) {
-      actions.push(`<button type="button" class="mail-action-btn mail-action-btn--owner" data-mail-action="remove" data-mail-id="${esc(it.id || '')}">Remove</button>`);
-    }
-
-    return `
-      <div class="mail-board-row">
-        <div class="mail-board-cell"><span class="mail-board-type"><span class="mail-board-type-icon" aria-hidden="true">${getMailIcon(type)}</span><span>${esc(type)}</span></span></div>
-        <div class="mail-board-cell">${delivered}</div>
-        <div class="mail-board-cell">${correct}</div>
-        <div class="mail-board-cell mail-board-status"><span class="mail-pill">Not collected</span></div>
-        <div class="mail-board-cell"><div class="mail-board-actions">${actions.join('')}</div></div>
-      </div>`;
-  }).join('');
-
-  return {
-    id: 'misdelivered_mail_board',
-    createdAt: new Date().toISOString(),
-    _sortTs: Date.now() - 1,
-    _displayCustomHtml: `
-      <section class="mail-board-card" aria-label="Misdelivered mail">
-        <div class="mail-board-head">
-          <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
-          <button type="button" class="mail-board-add" data-mail-action="add">+ Add</button>
-        </div>
-        <p class="mail-board-sub">Report misdelivered mail received at your address.</p>
-        <div class="mail-board-grid">
-          <div class="mail-board-header">
-            <div>Type</div>
-            <div>Delivered at</div>
-            <div>Correct address</div>
-            <div>Status</div>
-            <div>Action</div>
-          </div>
-          ${rows}
-        </div>
-      </section>`
-  };
-}
 
   async function loadAllNoticesForEdit(){
     const token = await getIdentityToken();
@@ -951,7 +945,6 @@
       console.warn('mail expiry sync failed', err);
     }
   }
-
   function ensureMailEntryModal(){
     let overlay = document.getElementById('mailEntryOverlay');
     if (overlay) return overlay;
@@ -1088,7 +1081,6 @@
       setTimeout(() => firstInput.focus(), 30);
     }
   }
-
   function closeMailEntryModal(){
     const overlay = document.getElementById('mailEntryOverlay');
     if (!overlay) return;
@@ -1245,7 +1237,6 @@
       `;
     }).join('');
   }
-
   async function getIdentityToken() {
     if (!window.netlifyIdentity) return null;
     const user = window.netlifyIdentity.currentUser();
@@ -1255,6 +1246,7 @@
 
   function normEmail(v){ return String(v||'').trim().toLowerCase(); }
   function normEir(v){ return String(v||'').replace(/\s+/g,'').toUpperCase(); }
+
   function getStreetName(address){
     const a = String(address||'').trim();
     if(!a) return '';
@@ -1263,10 +1255,12 @@
     s = s.replace(/^\s*\d+[A-Za-z]?\s+/, '').trim();
     return s;
   }
+
   function isAdminRole(role){
     const r = String(role||'').toLowerCase();
     return r === 'admin' || r === 'owner';
   }
+
   function noticeMatchesUser(n, user){
     const t = n?.target || {};
     const inc = t.include || {};
@@ -1289,16 +1283,19 @@
       (Array.isArray(inc.streets) && inc.streets.length) ||
       (Array.isArray(inc.emails) && inc.emails.length)
     );
+
     if(!hasAnyInclude) return true;
     if(inc.allLoggedIn) return true;
     if(Array.isArray(inc.roles) && inc.roles.map(String).map(x=>x.toLowerCase()).includes(role)) return true;
     if(Array.isArray(inc.emails) && inc.emails.map(normEmail).includes(normEmail(user?.email))) return true;
     if(Array.isArray(inc.eircodes) && inc.eircodes.map(String).map(normEir).includes(eir)) return true;
     if(Array.isArray(inc.eircodePrefixes) && inc.eircodePrefixes.map(String).map(x=>x.toUpperCase()).some(p=>eir.startsWith(p))) return true;
+
     if(Array.isArray(inc.streets) && street){
       const stList = inc.streets.map(String).map(x=>x.trim().toLowerCase()).filter(Boolean);
       if(stList.includes(street.toLowerCase())) return true;
     }
+
     return false;
   }
 
@@ -1358,7 +1355,6 @@
     const fromDate = parseDateValue(it?.date || it?.startDate || it?.startsOn || it?.createdAt || null);
     return fromDate ? fromDate.getTime() : 0;
   }
-
 
   listEl.addEventListener('click', async (event) => {
     const btn = event.target && event.target.closest ? event.target.closest('[data-mail-action]') : null;
@@ -1421,10 +1417,8 @@
       const mailBoard = buildMisdeliveredMailBoard(privateMailItems);
 
       const seen = new Set();
-      const merged = [
-        ...binSummary,
+      const regularItems = [
         ...publicRegularItems,
-        ...(mailBoard ? [mailBoard] : []),
         ...privateRegularItems
       ]
         .filter(it => {
@@ -1434,8 +1428,16 @@
           seen.add(id);
           return true;
         })
-        .sort((a, b) => getNoticeSortValue(b) - getNoticeSortValue(a))
-        .slice(0, 8);
+        .sort((a, b) => getNoticeSortValue(b) - getNoticeSortValue(a));
+
+      const reservedForMail = mailBoard ? 1 : 0;
+      const maxRegularItems = Math.max(0, 8 - binSummary.length - reservedForMail);
+
+      const merged = [
+        ...binSummary,
+        ...regularItems.slice(0, maxRegularItems),
+        ...(mailBoard ? [mailBoard] : [])
+      ];
 
       render(merged);
     } catch (err) {
