@@ -2730,7 +2730,6 @@
     const residentType = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '—';
 
     if(byId('mStatus')) byId('mStatus').value = statusLabel;
-    if(byId('mName')) byId('mName').value = CURRENT_RESIDENT.name || '';
     if(byId('mEmail')) byId('mEmail').value = CURRENT_RESIDENT.email || '';
     if(byId('mEir')) byId('mEir').value = CURRENT_RESIDENT.eircode || '';
     if(byId('mPhone')) byId('mPhone').value = CURRENT_RESIDENT.phone || '';
@@ -2842,6 +2841,7 @@
     if(byId('mRegIdBadge')) byId('mRegIdBadge').textContent = regLabel;
     if(byId('mStatusBadge')) byId('mStatusBadge').textContent = String(statusLabel || 'pending').replace(/^./, c => c.toUpperCase());
     if(byId('mNameHeading')) byId('mNameHeading').textContent = CURRENT_RESIDENT.name || 'Resident profile';
+    if(byId('mName')) byId('mName').value = CURRENT_RESIDENT.name || '';
     if(byId('mPrimaryRoleView')) byId('mPrimaryRoleView').textContent = primaryRole || '—';
     if(byId('mAddressView')) byId('mAddressView').textContent = CURRENT_RESIDENT.address || '—';
     if(byId('mEirView')) byId('mEirView').textContent = CURRENT_RESIDENT.eircode || '—';
@@ -2877,7 +2877,6 @@
 
   async function saveCurrentResident(nextStatus){
     if(!CURRENT_RESIDENT) return false;
-
     const users = await anwLoadSafe(KEY_USERS, []);
     const idx = users.findIndex(u => String(u.email||'').toLowerCase() === String(CURRENT_RESIDENT.email||'').toLowerCase());
     if(idx < 0){
@@ -2885,11 +2884,10 @@
       return false;
     }
 
-    const user = users[idx] || {};
     const roles = [];
     if(byId('mCoord')?.checked) roles.push('street_admin');
     if(byId('mVol')?.checked) roles.push('volunteer');
-    if(normList(user.roles).includes('admin')) roles.push('admin');
+    if(normList(users[idx].roles).includes('admin')) roles.push('admin');
 
     const volunteerRoles = [
       byId('mVStreet')?.checked ? 'Street watch / patrols' : '',
@@ -2901,7 +2899,6 @@
       byId('mVMeet')?.checked ? 'Meeting organiser' : '',
       byId('mVTrans')?.checked ? 'Translation' : ''
     ].filter(Boolean);
-
     const volunteerRoleFlags = {
       streetWatch: !!byId('mVStreet')?.checked,
       leaflets: !!byId('mVLeaf')?.checked,
@@ -2913,45 +2910,36 @@
       translation: !!byId('mVTrans')?.checked
     };
 
-    user.name = String((byId('mName') && byId('mName').value) || user.name || CURRENT_RESIDENT.name || '').trim();
-    user.phone = String((byId('mPhone') && byId('mPhone').value) || user.phone || '').trim();
-    user.residentType = (byId('mType') && byId('mType').value) || user.residentType || user.type || '';
-    user.type = user.residentType;
-    user.managementCompany = String((byId('mMgmt') && byId('mMgmt').value) || user.managementCompany || user.mgmt || '').trim();
-    user.roles = uniqueBy(roles, x => x);
-    user.role = user.roles[0] || user.role || '';
-    user.volunteerRoles = volunteerRoles;
-    user.vol_roles = volunteerRoleFlags;
-    user.volunteer_roles = volunteerRoleFlags;
-    user.streetCoordinator = !!byId('mCoord')?.checked;
-    user.volunteer = !!byId('mVol')?.checked;
+    users[idx].name = String((byId('mName') && byId('mName').value) || users[idx].name || CURRENT_RESIDENT.name || '').trim();
+    users[idx].phone = String((byId('mPhone') && byId('mPhone').value) || users[idx].phone || '').trim();
+    users[idx].residentType = (byId('mType') && byId('mType').value) || users[idx].residentType || users[idx].type || '';
+    users[idx].type = users[idx].residentType;
+    users[idx].managementCompany = String((byId('mMgmt') && byId('mMgmt').value) || users[idx].managementCompany || '').trim();
+    users[idx].roles = uniqueBy(roles, x => x);
+    users[idx].role = users[idx].roles[0] || users[idx].role || '';
+    users[idx].volunteerRoles = volunteerRoles;
+    users[idx].vol_roles = volunteerRoleFlags;
+    users[idx].volunteer_roles = volunteerRoleFlags;
+    users[idx].streetCoordinator = !!byId('mCoord')?.checked;
+    users[idx].volunteer = !!byId('mVol')?.checked;
 
     if(nextStatus){
-      user.status = nextStatus;
-      if(['approved','active'].includes(String(nextStatus).toLowerCase()) && !(user.regId || user.regNo)){
+      users[idx].status = nextStatus;
+      if(['approved','active'].includes(String(nextStatus).toLowerCase()) && !(users[idx].regId || users[idx].regNo)){
         const nextId = anwNextRegId(users);
-        user.regId = nextId;
-        user.regNo = nextId;
+        users[idx].regId = nextId;
+        users[idx].regNo = nextId;
       }
     }
 
-    users[idx] = user;
     assignMissingResidentNumbers(users);
     await anwSaveSafe(KEY_USERS, users);
     RESIDENTS_CACHE = users;
-    CURRENT_RESIDENT = user;
-
-    if(byId('mMsg')) {
-      const statusMsg = nextStatus ? ` Status changed to ${nextStatus}.` : '';
-      byId('mMsg').textContent = `Resident saved.${statusMsg}`;
-    }
-
-    const activeSubtab = $('.resident-tab.active')?.getAttribute('data-subtab');
-    renderResidents(
-      activeSubtab === 'subApproved' ? 'approved'
-      : activeSubtab === 'subAll' ? 'all'
-      : 'pending'
-    );
+    CURRENT_RESIDENT = users[idx];
+    if(byId('mMsg')) byId('mMsg').textContent = 'Resident saved.' + (nextStatus ? ' Status changed to ' + nextStatus + '.' : '');
+    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
+      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
+      : 'pending');
     return true;
   }
 
@@ -3696,49 +3684,36 @@
   byId('modalResident')?.addEventListener('click', (ev) => {
     if(ev.target === byId('modalResident')) closeResidentModal();
   });
-  byId('btnSaveResident')?.addEventListener('click', async () => {
-    await saveCurrentResident();
-  });
-
+  byId('btnSaveResident')?.addEventListener('click', () => saveCurrentResident());
   byId('btnApprove')?.addEventListener('click', async () => {
     if(!CURRENT_RESIDENT) return;
-    const ok = window.confirm(`Approve registration for ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'}?`);
-    if(!ok) return;
+    if(!window.confirm(`Approve registration for ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'}?`)) return;
     const saved = await saveCurrentResident('approved');
     if(saved) closeResidentModal();
   });
-
   byId('btnReject')?.addEventListener('click', async () => {
     if(!CURRENT_RESIDENT) return;
-    const ok = window.confirm(`Reject registration for ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'}?`);
-    if(!ok) return;
+    if(!window.confirm(`Reject registration for ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'}?`)) return;
     const saved = await saveCurrentResident('rejected');
     if(saved) closeResidentModal();
   });
-
   byId('btnSuspendResident')?.addEventListener('click', async () => {
     if(!CURRENT_RESIDENT) return;
-    const ok = window.confirm(`Suspend ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'}?`);
-    if(!ok) return;
+    if(!window.confirm(`Suspend ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'}?`)) return;
     const saved = await saveCurrentResident('suspended');
     if(saved) closeResidentModal();
   });
-
   byId('btnRemoveResident')?.addEventListener('click', async () => {
     if(!CURRENT_RESIDENT) return;
-    const ok = window.confirm(`Remove ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'} permanently? This cannot be undone.`);
-    if(!ok) return;
+    if(!window.confirm(`Remove ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'} permanently? This cannot be undone.`)) return;
     const users = await anwLoadSafe(KEY_USERS, []);
     const next = users.filter(u => String(u.email||'').toLowerCase() !== String(CURRENT_RESIDENT.email||'').toLowerCase());
     await anwSaveSafe(KEY_USERS, next);
     RESIDENTS_CACHE = next;
     closeResidentModal();
-    const activeSubtab = $('.resident-tab.active')?.getAttribute('data-subtab');
-    renderResidents(
-      activeSubtab === 'subApproved' ? 'approved'
-      : activeSubtab === 'subAll' ? 'all'
-      : 'pending'
-    );
+    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
+      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
+      : 'pending');
   });
 
   byId('btnNtPublish')?.addEventListener('click', publishNotice);
