@@ -169,7 +169,7 @@ function anwCollectProfileRoles(user) {
 
 function anwNormalizeRoleName(value) {
   const raw = String(value || "").trim().toLowerCase();
-  if (!raw) return "resident";
+  if (!raw) return "";
   const clean = raw.replace(/[\s\-]+/g, "_");
 
   const aliasMap = {
@@ -215,27 +215,28 @@ function anwProfileHasRole(user, roleName) {
 function anwGetLoggedRole() {
   try {
     const email = anwNormEmail(anwGetLoggedEmail());
-    if (!email) return "resident";
+    if (!email) return "";
 
     if (anwIsMasterEmail(email)) return "owner";
 
     const users = anwLoad(ANW_KEYS.USERS, []);
-    if (!Array.isArray(users)) return "resident";
+    if (!Array.isArray(users)) return "";
 
     const me = users.find(u => anwNormEmail(u && u.email) === email);
-    if (!me) return "resident";
+    if (!me) return "";
 
-    const normalized = anwCollectProfileRoles(me).map(anwNormalizeRoleName);
+    const normalized = anwCollectProfileRoles(me).map(anwNormalizeRoleName).filter(Boolean);
     if (normalized.includes("owner")) return "owner";
     if (normalized.includes("admin")) return "admin";
     if (normalized.includes("area_coordinator")) return "area_coordinator";
     if (normalized.includes("assistant_area_coordinator")) return "assistant_area_coordinator";
     if (normalized.includes("street_coordinator")) return "street_coordinator";
     if (normalized.includes("projects")) return "projects";
-    return "resident";
+    if (normalized.includes("resident")) return "resident";
+    return "";
   } catch (e) {
     console.warn("Erro ao obter role do usuário:", e);
-    return "resident";
+    return "";
   }
 }
 
