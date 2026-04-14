@@ -2730,6 +2730,7 @@
     const residentType = CURRENT_RESIDENT.residentType || CURRENT_RESIDENT.type || '—';
 
     if(byId('mStatus')) byId('mStatus').value = statusLabel;
+    if(byId('mName')) byId('mName').value = CURRENT_RESIDENT.name || '';
     if(byId('mEmail')) byId('mEmail').value = CURRENT_RESIDENT.email || '';
     if(byId('mEir')) byId('mEir').value = CURRENT_RESIDENT.eircode || '';
     if(byId('mPhone')) byId('mPhone').value = CURRENT_RESIDENT.phone || '';
@@ -2841,7 +2842,6 @@
     if(byId('mRegIdBadge')) byId('mRegIdBadge').textContent = regLabel;
     if(byId('mStatusBadge')) byId('mStatusBadge').textContent = String(statusLabel || 'pending').replace(/^./, c => c.toUpperCase());
     if(byId('mNameHeading')) byId('mNameHeading').textContent = CURRENT_RESIDENT.name || 'Resident profile';
-    if(byId('mName')) byId('mName').value = CURRENT_RESIDENT.name || '';
     if(byId('mPrimaryRoleView')) byId('mPrimaryRoleView').textContent = primaryRole || '—';
     if(byId('mAddressView')) byId('mAddressView').textContent = CURRENT_RESIDENT.address || '—';
     if(byId('mEirView')) byId('mEirView').textContent = CURRENT_RESIDENT.eircode || '—';
@@ -2877,6 +2877,7 @@
 
   async function saveCurrentResident(nextStatus){
     if(!CURRENT_RESIDENT) return false;
+
     const users = await anwLoadSafe(KEY_USERS, []);
     const idx = users.findIndex(u => String(u.email||'').toLowerCase() === String(CURRENT_RESIDENT.email||'').toLowerCase());
     if(idx < 0){
@@ -2884,10 +2885,11 @@
       return false;
     }
 
+    const user = users[idx] || {};
     const roles = [];
     if(byId('mCoord')?.checked) roles.push('street_admin');
     if(byId('mVol')?.checked) roles.push('volunteer');
-    if(normList(users[idx].roles).includes('admin')) roles.push('admin');
+    if(normList(user.roles).includes('admin')) roles.push('admin');
 
     const volunteerRoles = [
       byId('mVStreet')?.checked ? 'Street watch / patrols' : '',
@@ -2899,6 +2901,7 @@
       byId('mVMeet')?.checked ? 'Meeting organiser' : '',
       byId('mVTrans')?.checked ? 'Translation' : ''
     ].filter(Boolean);
+
     const volunteerRoleFlags = {
       streetWatch: !!byId('mVStreet')?.checked,
       leaflets: !!byId('mVLeaf')?.checked,
@@ -2910,810 +2913,87 @@
       translation: !!byId('mVTrans')?.checked
     };
 
-    users[idx].name = String((byId('mName') && byId('mName').value) || users[idx].name || CURRENT_RESIDENT.name || '').trim();
-    users[idx].phone = String((byId('mPhone') && byId('mPhone').value) || users[idx].phone || '').trim();
-    users[idx].residentType = (byId('mType') && byId('mType').value) || users[idx].residentType || users[idx].type || '';
-    users[idx].type = users[idx].residentType;
-    users[idx].managementCompany = String((byId('mMgmt') && byId('mMgmt').value) || users[idx].managementCompany || '').trim();
-    users[idx].roles = uniqueBy(roles, x => x);
-    users[idx].role = users[idx].roles[0] || users[idx].role || '';
-    users[idx].volunteerRoles = volunteerRoles;
-    users[idx].vol_roles = volunteerRoleFlags;
-    users[idx].volunteer_roles = volunteerRoleFlags;
-    users[idx].streetCoordinator = !!byId('mCoord')?.checked;
-    users[idx].volunteer = !!byId('mVol')?.checked;
+    user.name = String((byId('mName') && byId('mName').value) || user.name || CURRENT_RESIDENT.name || '').trim();
+    user.phone = String((byId('mPhone') && byId('mPhone').value) || user.phone || '').trim();
+    user.residentType = (byId('mType') && byId('mType').value) || user.residentType || user.type || '';
+    user.type = user.residentType;
+    user.managementCompany = String((byId('mMgmt') && byId('mMgmt').value) || user.managementCompany || user.mgmt || '').trim();
+    user.roles = uniqueBy(roles, x => x);
+    user.role = user.roles[0] || user.role || '';
+    user.volunteerRoles = volunteerRoles;
+    user.vol_roles = volunteerRoleFlags;
+    user.volunteer_roles = volunteerRoleFlags;
+    user.streetCoordinator = !!byId('mCoord')?.checked;
+    user.volunteer = !!byId('mVol')?.checked;
 
     if(nextStatus){
-      users[idx].status = nextStatus;
-      if(['approved','active'].includes(String(nextStatus).toLowerCase()) && !(users[idx].regId || users[idx].regNo)){
+      user.status = nextStatus;
+      if(['approved','active'].includes(String(nextStatus).toLowerCase()) && !(user.regId || user.regNo)){
         const nextId = anwNextRegId(users);
-        users[idx].regId = nextId;
-        users[idx].regNo = nextId;
+        user.regId = nextId;
+        user.regNo = nextId;
       }
     }
 
+    users[idx] = user;
     assignMissingResidentNumbers(users);
     await anwSaveSafe(KEY_USERS, users);
     RESIDENTS_CACHE = users;
-    CURRENT_RESIDENT = users[idx];
-    if(byId('mMsg')) byId('mMsg').textContent = 'Resident saved.' + (nextStatus ? ' Status changed to ' + nextStatus + '.' : '');
-    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
-      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
-      : 'pending');
+    CURRENT_RESIDENT = user;
+
+    if(byId('mMsg')) {
+      const statusMsg = nextStatus ? ` Status changed to ${nextStatus}.` : '';
+      byId('mMsg').textContent = `Resident saved.${statusMsg}`;
+    }
+
+    const activeSubtab = $('.resident-tab.active')?.getAttribute('data-subtab');
+    renderResidents(
+      activeSubtab === 'subApproved' ? 'approved'
+      : activeSubtab === 'subAll' ? 'all'
+      : 'pending'
+    );
     return true;
   }
 
-  // ---------- Notices ----------
-  let NOTICE_EDITING_ID = '';
-
-  function sanitizeNoticeCollection(list){
-    const now = Date.now();
-    const seen = new Set();
-    return (Array.isArray(list) ? list : []).filter(n => {
-      if(!n || typeof n !== 'object') return false;
-      const title = String(n.title || '').trim();
-      const message = String(n.message || '').trim();
-      const isBinImport = !!(n.meta && n.meta.type === 'bin_collection_import');
-      if(!isBinImport && !title && !message) return false;
-      if(!isBinImport && /^\d+$/.test(title)) return false;
-      if(!isBinImport && /^(null|undefined|untitled)$/i.test(title)) return false;
-      const exp = n.expires || n.expiresAt || n.endsOn || n.endDate;
-      if(exp){
-        const t = Date.parse(exp);
-        if(!Number.isNaN(t) && t < now) return false;
-      }
-      const key = [String(n.id || ''), title.toLowerCase(), message.toLowerCase()].join('|');
-      if(seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }
-
-  async function loadNoticesFresh(){
-    const key = window.getNoticesKey();
-    const raw = await anwLoadSafe(key, []);
-    const cleaned = sanitizeNoticeCollection(raw);
-    if(JSON.stringify(cleaned) !== JSON.stringify(Array.isArray(raw) ? raw : [])){
-      try{ await anwSaveSafe(key, cleaned); }catch(_){}
-    }
-    return cleaned;
-  }
-
-  function collectNoticeForm(){
-    return {
-      title: byId('ntTitle').value.trim(),
-      message: byId('ntMessage').value.trim(),
-      category: byId('ntCategory').value || 'General',
-      expires: byId('ntExpires').value || '',
-      targets: {
-        allLogged: !!byId('ntAllLogged').checked,
-        nonAdminOnly: !!byId('ntNonAdminOnly').checked,
-        roles: $$('.ntRole').filter(x => x.checked).map(x => x.value),
-        eirPrefixes: normList(byId('ntEirPrefixes').value),
-        streets: normList(byId('ntStreets').value),
-        eircodes: byId('ntEircodes').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean),
-        emails: byId('ntEmails').value.split(/\r?\n/).map(s => s.trim().toLowerCase()).filter(Boolean)
-      },
-      home: {
-        enabled: !!byId('ntHomeEnabled').checked,
-        visibility: byId('ntHomeVisibility').value || 'private'
-      }
-    };
-  }
-
-  function resetNoticeForm(message){
-    NOTICE_EDITING_ID = '';
-    ['ntTitle','ntMessage','ntExpires','ntEirPrefixes','ntStreets','ntEircodes','ntEmails'].forEach(id => { if(byId(id)) byId(id).value = ''; });
-    if(byId('ntCategory')) byId('ntCategory').value = 'General';
-    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = false;
-    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = 'private';
-    if(byId('ntAllLogged')) byId('ntAllLogged').checked = true;
-    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = false;
-    $$('.ntRole').forEach(x => x.checked = false);
-    if(byId('btnNtPublish')) byId('btnNtPublish').textContent = 'Publish notice';
-    if(byId('ntMsg')) byId('ntMsg').textContent = message || '';
-  }
-
-  function populateNoticeForm(notice){
-    const n = notice && typeof notice === 'object' ? notice : {};
-    const targets = n.targets || n.target || {};
-    const home = n.home || {};
-
-    NOTICE_EDITING_ID = String(n.id || '');
-    if(byId('ntTitle')) byId('ntTitle').value = String(n.title || '');
-    if(byId('ntMessage')) byId('ntMessage').value = String(n.message || '');
-    if(byId('ntCategory')) byId('ntCategory').value = String(n.category || 'General') || 'General';
-    if(byId('ntExpires')) byId('ntExpires').value = String(n.expires || n.expiresAt || n.endsOn || n.endDate || '').slice(0, 10);
-    if(byId('ntHomeEnabled')) byId('ntHomeEnabled').checked = !!(home.enabled || n.showOnHome);
-    if(byId('ntHomeVisibility')) byId('ntHomeVisibility').value = String(home.visibility || ((n.public || n.isPublic) ? 'public' : 'private')) || 'private';
-    if(byId('ntAllLogged')) byId('ntAllLogged').checked = ('allLogged' in targets) ? !!targets.allLogged : true;
-    if(byId('ntNonAdminOnly')) byId('ntNonAdminOnly').checked = !!targets.nonAdminOnly;
-    if(byId('ntEirPrefixes')) byId('ntEirPrefixes').value = Array.isArray(targets.eirPrefixes) ? targets.eirPrefixes.join(', ') : '';
-    if(byId('ntStreets')) byId('ntStreets').value = Array.isArray(targets.streets) ? targets.streets.join(', ') : '';
-    if(byId('ntEircodes')) byId('ntEircodes').value = Array.isArray(targets.eircodes) ? targets.eircodes.join('\n') : '';
-    if(byId('ntEmails')) byId('ntEmails').value = Array.isArray(targets.emails) ? targets.emails.join('\n') : '';
-    $$('.ntRole').forEach(x => {
-      x.checked = Array.isArray(targets.roles) && targets.roles.includes(x.value);
-    });
-    if(byId('btnNtPublish')) byId('btnNtPublish').textContent = 'Update notice';
-    if(byId('ntMsg')) byId('ntMsg').textContent = 'Editing selected notice.';
-  }
-
-  async function startEditNotice(id){
-    const list = await loadNoticesFresh();
-    const notice = (list || []).find(n => String((n && n.id) || '') === String(id || ''));
-    if(!notice){
-      if(byId('ntMsg')) byId('ntMsg').textContent = 'Notice not found.';
-      return;
-    }
-    populateNoticeForm(notice);
-    try{ byId('ntTitle')?.focus(); }catch(_){ }
-  }
-
-  async function publishNotice(){
-    const msg = byId('ntMsg');
-    const form = collectNoticeForm();
-    if(!form.title || !form.message){
-      msg.textContent = 'Title and message are required.';
-      return;
-    }
-
-    const list = await loadNoticesFresh();
-    const editId = String(NOTICE_EDITING_ID || '').trim();
-    const nowIso = new Date().toISOString();
-    const current = editId ? (list || []).find(n => String((n && n.id) || '') === editId) : null;
-    const payload = Object.assign({}, current || {}, {
-      id: editId || ('nt_' + Date.now()),
-      title: form.title,
-      message: form.message,
-      category: form.category,
-      createdAt: current && current.createdAt ? current.createdAt : nowIso,
-      updatedAt: nowIso,
-      expires: form.expires,
-      public: form.home.enabled && form.home.visibility === 'public',
-      isPublic: form.home.enabled && form.home.visibility === 'public',
-      showOnHome: !!form.home.enabled,
-      published: true,
-      status: (form.home.enabled && form.home.visibility === 'public') ? 'public' : 'private',
-      targets: form.targets,
-      home: form.home
-    });
-
-    const filtered = (list || []).filter(n => String((n && n.id) || '') !== String(payload.id || ''));
-    const next = [payload].concat(filtered);
-
-    await anwSaveSafe(window.getNoticesKey(), next);
-    resetNoticeForm(editId ? 'Notice updated.' : 'Notice published.');
-    await renderNoticesList();
-  }
-
-  function renderNoticeRowActions(n){
-    return `
-      <div class="notice-actions">
-        <button type="button" class="btn btn-line small" data-edit-notice="${esc(n.id || '')}">Edit</button>
-        <button type="button" class="btn btn-line small" data-del-notice="${esc(n.id || '')}">Delete</button>
-      </div>
-    `;
-  }
-
-  async function deleteNoticeById(id){
-    const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => String((n && n.id) || '') !== String(id || ''));
-    await anwSaveSafe(window.getNoticesKey(), next);
-    await renderNoticesList();
-  }
-
-  async function clearImportedBinNotices(){
-    const list = await loadNoticesFresh();
-    const next = (list || []).filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
-    await anwSaveSafe(window.getNoticesKey(), next);
-    byId('binMsg').textContent = 'Imported bin notices removed from dashboard notices.';
-    await renderNoticesList();
-  }
-
-  async function renderNoticesList(){
-    const listEl = byId('ntList');
-    const notes = await loadNoticesFresh();
-    const sorted = (notes || []).slice().sort((a,b)=> Date.parse(b?.createdAt||0) - Date.parse(a?.createdAt||0));
-
-    if(byId('ntListMsg')){
-      byId('ntListMsg').textContent = sorted.length ? `${sorted.length} notice(s) saved.` : 'No notices found.';
-    }
-
-    listEl.innerHTML = sorted.map(n => `
-      <div class="card" style="padding:12px; margin-bottom:10px;">
-        <div>
-          <strong>${esc(n.title || 'Untitled')}</strong>
-          <div class="tiny muted">${esc(n.category || 'General')} · ${esc(fmtDate(n.createdAt || n.date || ''))}</div>
-          <div style="margin-top:6px;">${esc(n.message || '')}</div>
-
-          <div class="notice-card-meta">
-            <span class="notice-chip">Home: ${(n.home && n.home.enabled) ? esc(n.home.visibility || 'private') : 'disabled'}</span>
-            ${n.date ? `<span class="notice-chip">Collection date: ${esc(fmtDateShort(n.date))}</span>` : ''}
-            ${n.startsOn ? `<span class="notice-chip">Show from: ${esc(fmtDateShort(n.startsOn))}</span>` : ''}
-            ${n.endsOn ? `<span class="notice-chip">Show until: ${esc(fmtDateShort(n.endsOn))}</span>` : ''}
-          </div>
-
-          ${renderNoticeRowActions(n)}
-        </div>
-      </div>
-    `).join('') || '<p class="tiny muted">No notices found.</p>';
-
-    $$('[data-edit-notice]', listEl).forEach(btn => {
-      btn.addEventListener('click', async () => {
-        await startEditNotice(btn.getAttribute('data-edit-notice'));
-      });
-    });
-
-    $$('[data-del-notice]', listEl).forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.getAttribute('data-del-notice');
-        if(String(NOTICE_EDITING_ID || '') === String(id || '')){
-          resetNoticeForm('Notice removed.');
-        }
-        await deleteNoticeById(id);
-      });
-    });
-  }
-
-  async function importPandaSchedule(){
-    const fileEl = byId('binCsvFile');
-    const msg = byId('binMsg');
-    const file = fileEl && fileEl.files && fileEl.files[0];
-    if(!file){
-      msg.textContent = 'Please select the CSV file first.';
-      return;
-    }
-
-    const text = await file.text();
-    const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-
-    const imported = [];
-    for(const line of lines){
-      const cols = parseCsvLine(line);
-      if(!cols.length) continue;
-
-      const headerLike = cols.join(' ').toLowerCase();
-      if(headerLike.includes('date') && headerLike.includes('provider')) continue;
-      if(cols.length < 3) continue;
-
-      const date = parseFlexibleDate(cols[0]);
-      if(!date) continue;
-
-      const provider = String(cols[1] || '').trim();
-      const bin = String(cols[2] || '').trim();
-      const visibility = String(cols[3] || 'public').trim().toLowerCase();
-
-      const startsOn = startOfWeekMonday(date);
-      const endsOn = endOfNextWeekSunday(date);
-
-      imported.push({
-        id: `bin_${date}_${slugify(bin)}`,
-        title: 'Bin collection update',
-        message: `${bin} bin collection scheduled for ${date}.`,
-        category: 'Bins',
-        provider,
-        bin,
-        date,
-        startsOn,
-        endsOn,
-        startDate: startsOn,
-        endDate: endsOn,
-        createdAt: new Date().toISOString(),
-        showOnHome: true,
-        public: true,
-        isPublic: true,
-        published: true,
-        status: visibility === 'private' ? 'private' : 'public',
-        home: { enabled: true, visibility: 'public' },
-        meta: { type: 'bin_collection_import' }
-      });
-    }
-
-    const current = sanitizeNoticeCollection(await anwLoadSafe(KEY_NOTICES, []));
-    const kept = current.filter(n => !(n && n.meta && n.meta.type === 'bin_collection_import'));
-    const merged = sanitizeNoticeCollection([...kept, ...imported]);
-
-    await anwSaveSafe(KEY_NOTICES, merged);
-
-    msg.textContent = `${imported.length} collection row(s) imported and saved.`;
-    if(fileEl) fileEl.value = '';
-    await renderNoticesList();
-  }
-
-  // ---------- Light stubs for remaining tabs ----------
-  async function renderSimpleTable(key, tbodyId, emptyId, mapRow){
-    const rows = await anwLoadSafe(key, []);
-    const body = byId(tbodyId);
-    const empty = byId(emptyId);
-    if(!body) return;
-    body.innerHTML = rows.map(mapRow).join('');
-    if(empty) empty.style.display = rows.length ? 'none' : 'block';
-  }
-
-  const REPORT_STATUS_LABELS = {
-    submitted:'Submitted',
-    open:'Open',
-    in_review:'In review',
-    review:'Review',
-    pending:'Pending',
-    sent_to_garda:'Sent to Gardaí',
-    resolved:'Resolved',
-    closed:'Closed',
-    historical:'Historical',
-    blocked:'Blocked',
-    suspended:'Suspended',
-    deleted:'Deleted'
-  };
-  let REPORTS_CACHE = [];
-  let CURRENT_REPORT_ID = '';
-
-  function normStatus(value){
-    return String(value == null ? '' : value).trim().toLowerCase().replace(/\s+/g, '_');
-  }
-  function reportStatusLabel(value){
-    const key = normStatus(value) || 'submitted';
-    return REPORT_STATUS_LABELS[key] || String(value || 'submitted').replace(/_/g, ' ').replace(/(^|\s)\S/g, s => s.toUpperCase());
-  }
-  function reportStatusClass(value){
-    const key = normStatus(value);
-    if(['resolved','closed'].includes(key)) return 'tag ok';
-    if(['historical','blocked','suspended','deleted'].includes(key)) return 'tag gray';
-    return 'tag';
-  }
-  function reportAttachmentSummary(report){
-    const list = Array.isArray(report?.attachments) ? report.attachments : [];
-    if(!list.length) return 'No attachment metadata stored.';
-    return list.map((item) => {
-      if(typeof item === 'string') return item;
-      const parts = [item.filename || item.name || 'attachment'];
-      if(item.size != null && item.size !== '') parts.push(String(item.size));
-      if(item.type) parts.push(String(item.type));
-      return parts.join(' — ');
-    }).join('\n');
-  }
-  function reportSearchHaystack(report){
-    return [
-      report.id,
-      report.category,
-      report.location,
-      report.address,
-      report.email,
-      report.reporterEmail,
-      report.status,
-      report.description,
-      report.notes,
-      report.adminNotes
-    ].map(v => String(v || '').toLowerCase()).join(' ');
-  }
-  function reportSortValue(report){
-    return Date.parse(report.updatedAt || report.createdAt || report.created || report.date || 0) || 0;
-  }
-  function closeReportDetail(){
-    CURRENT_REPORT_ID = '';
-    const card = byId('repDetailCard');
-    if(card) card.style.display = 'none';
-  }
-  function openReportDetail(reportId){
-    const report = REPORTS_CACHE.find(r => String(r.id || '') === String(reportId || ''));
-    if(!report) return;
-    CURRENT_REPORT_ID = String(report.id || '');
-    byId('repDetailId').value = report.id || '';
-    byId('repDetailCreated').value = fmtDate(report.createdAt || report.created || report.date || '');
-    byId('repDetailCategory').value = report.category || '—';
-    byId('repDetailLocation').value = report.location || report.address || '—';
-    byId('repDetailEmail').value = report.email || report.reporterEmail || '—';
-    byId('repDetailDescription').value = report.description || report.notes || '';
-    byId('repDetailAttachments').value = reportAttachmentSummary(report);
-    byId('repDetailStatus').value = normStatus(report.status || 'submitted') || 'submitted';
-    byId('repDetailNotes').value = report.adminNotes || '';
-    const card = byId('repDetailCard');
-    if(card) card.style.display = 'block';
-  }
-  async function updateReportStatus(nextStatus){
-    if(!CURRENT_REPORT_ID) return;
-    const rows = await anwLoadSafe(KEY_REPORTS, []);
-    const next = Array.isArray(rows) ? rows.slice() : [];
-    const idx = next.findIndex(r => String(r && r.id || '') === CURRENT_REPORT_ID);
-    if(idx < 0) return;
-    const existing = Object.assign({}, next[idx]);
-    existing.status = normStatus(nextStatus || byId('repDetailStatus')?.value || existing.status || 'submitted');
-    existing.adminNotes = String(byId('repDetailNotes')?.value || '').trim();
-    existing.updatedAt = new Date().toISOString();
-    next[idx] = existing;
-    await anwSaveSafe(KEY_REPORTS, next);
-    byId('repMsg').textContent = `Report ${existing.id || ''} saved with status ${reportStatusLabel(existing.status)}.`.trim();
-    await loadReports();
-    openReportDetail(existing.id);
-  }
-  async function loadReports(){
-    const rows = await anwLoadSafe(KEY_REPORTS, []);
-    REPORTS_CACHE = (Array.isArray(rows) ? rows.slice() : []).sort((a,b) => reportSortValue(b) - reportSortValue(a));
-    const filterStatus = normStatus(byId('repStatusFilter')?.value || 'all');
-    const query = String(byId('repSearch')?.value || '').trim().toLowerCase();
-    const filtered = REPORTS_CACHE.filter((report) => {
-      const statusOk = filterStatus === 'all' || normStatus(report.status || 'submitted') === filterStatus;
-      const queryOk = !query || reportSearchHaystack(report).includes(query);
-      return statusOk && queryOk;
-    });
-    const body = byId('repBody');
-    const empty = byId('repEmpty');
-    if(!body) return;
-    body.innerHTML = filtered.map((r) => `
-      <tr>
-        <td>${esc(r.id || '—')}</td>
-        <td>${esc(fmtDate(r.createdAt || r.created || r.date || ''))}</td>
-        <td>${esc(r.category || '—')}</td>
-        <td>${esc(r.location || r.address || '—')}</td>
-        <td>${esc(r.email || r.reporterEmail || '—')}</td>
-        <td><span class="${reportStatusClass(r.status)}">${esc(reportStatusLabel(r.status || 'submitted'))}</span></td>
-        <td>
-          <div class="actions" style="justify-content:flex-start; gap:0.4rem; flex-wrap:wrap;">
-            <button type="button" class="btn-line small" data-rep-view="${esc(r.id || '')}">View</button>
-            <button type="button" class="btn-line small" data-rep-historical="${esc(r.id || '')}">Historical</button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-    if(empty) empty.style.display = filtered.length ? 'none' : 'block';
-    byId('repMsg').textContent = filtered.length ? `${filtered.length} report${filtered.length === 1 ? '' : 's'} shown.` : 'No reports match the current filters.';
-    $$('#repBody [data-rep-view]').forEach((btn) => btn.addEventListener('click', () => openReportDetail(btn.getAttribute('data-rep-view'))));
-    $$('#repBody [data-rep-historical]').forEach((btn) => btn.addEventListener('click', async () => {
-      openReportDetail(btn.getAttribute('data-rep-historical'));
-      await updateReportStatus('historical');
-    }));
-  }
-
-  async function loadProjects(){
-    await renderSimpleTable(KEY_PROJECTS, 'pmBody', 'pmEmpty', p => `
-      <tr>
-        <td>${esc(p.id || '—')}</td>
-        <td>${esc(p.title || p.project || '—')}</td>
-        <td>${esc(p.status || '—')}</td>
-        <td>${esc(p.owner || '—')}</td>
-        <td>${esc(fmtDate(p.updatedAt || p.updated || ''))}</td>
-        <td><button type="button" class="btn-line small" disabled>View</button></td>
-      </tr>
-    `);
-    await renderSimpleTable(KEY_PROJECT_RECIPIENTS, 'pmRecipientsBody', 'pmRecipientsEmpty', p => `
-      <tr>
-        <td>${esc(p.project || p.projectTitle || '—')}</td>
-        <td>${esc(p.recipient || p.name || '—')}</td>
-        <td>${esc([p.address, p.eircode].filter(Boolean).join(' · ') || '—')}</td>
-        <td>${esc(p.status || '—')}</td>
-        <td>${esc(fmtDate(p.updatedAt || p.updated || ''))}</td>
-      </tr>
-    `);
-  }
-
-  
-  
-  const ACL_ROLES = ['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'];
-
-  const ACL_ITEMS = [
-    { key:'page:home', label:'Home', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:about', label:'About', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:report', label:'Report Incident', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'report:tab_incident', label:'Report · Report incident', group:'Site pages', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'report:tab_status', label:'Report · My reports status', group:'Site pages', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'report:tab_map', label:'Report · Incidents overview', group:'Site pages', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:alerts', label:'Community Alerts', group:'Site pages', indent:0, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'alerts:tab_send_alert', label:'Alerts · Send alert', group:'Site pages', indent:1, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'alerts:tab_send_action', label:'Alerts · Send action', group:'Site pages', indent:1, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'alerts:tab_authorised_contacts', label:'Alerts · Authorised contacts', group:'Site pages', indent:1, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:projects', label:'Community Projects page', group:'Projects', indent:0, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_monitoring', label:'Projects · Monitoring', group:'Projects', indent:1, defaults:{ projects:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_builder', label:'Projects · Build project', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'projects:tab_published', label:'Projects · Confirm sending', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
-    { key:'page:handbook', label:'Handbook', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:privacy', label:'Privacy Policy', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:login', label:'Login / Register', group:'Site pages', indent:0, defaults:{ public:true } },
-
-    { key:'page:dashboard', label:'Dashboard', group:'Dashboard', indent:0, defaults:{ public:true } },
-    { key:'dashboard:tab_profile', label:'Dashboard · Profile', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_parking', label:'Dashboard · Parking & Vehicles', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_interest', label:'Dashboard · Interest', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_elections', label:'Dashboard · Elections', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_notices', label:'Dashboard · Notices', group:'Dashboard', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, projects:true, owner:true } },
-    { key:'dashboard:tab_garda', label:'Dashboard · Garda & Safety', group:'Dashboard', indent:1, defaults:{ public:true } },
-
-    { key:'page:household', label:'Household', group:'Residents', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'household:tab_volunteers', label:'Household · Household volunteers', group:'Residents', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'household:tab_tasks', label:'Household · Volunteer tasks', group:'Residents', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:resident-profile', label:'Resident profile data', group:'Residents', indent:1, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:street-management', label:'Street management', group:'Residents', indent:1, defaults:{ street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-    { key:'page:regional-management', label:'Regional management', group:'Residents', indent:1, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-
-    { key:'page:admin', label:'Admin panel', group:'Owner controls', indent:0, defaults:{ owner:true } },
-    { key:'page:access-control', label:'Access Control sub-tab', group:'Owner controls', indent:1, defaults:{ owner:true } },
-    { key:'page:admin-parking', label:'Admin · Parking & Vehicles', group:'Owner controls', indent:1, defaults:{ owner:true } },
-    { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
-  ];
-
-  const ROLE_RANK = {
-    public: 0,
-    resident: 1,
-    street_coordinator: 2,
-    assistant_area_coordinator: 3,
-    area_coordinator: 4,
-    projects: 4,
-    owner: 5
-  };
-
-  let ACCESS_RULES_CACHE = [];
-
-  function aclEmptyRule(item){
-    const out = { key:item.key, label:item.label, group:item.group || '', indent:Number(item.indent || 0) };
-    ACL_ROLES.forEach(role => { out[role] = false; });
-    const defaults = item.defaults || {};
-    Object.keys(defaults).forEach(k => { out[k] = !!defaults[k]; });
-    return out;
-  }
-
-  function classifyMatrixToRule(entry){
-    if(entry.public) return 'Public';
-
-    const selected = ACL_ROLES.filter(role => role !== 'public' && !!entry[role]);
-    if(!selected.length) return 'owner';
-
-    if(selected.length === ACL_ROLES.length - 1) return 'Authenticated';
-
-    const rankMap = selected.map(role => ROLE_RANK[role] ?? 999);
-    const minRank = Math.min(...rankMap);
-    const rankMatchedRoles = selected.filter(role => (ROLE_RANK[role] ?? 999) === minRank);
-
-    if(rankMatchedRoles.length === 1){
-      return rankMatchedRoles[0];
-    }
-
-    if(rankMatchedRoles.includes('projects') && rankMatchedRoles.length === 1){
-      return 'projects';
-    }
-
-    return 'Authenticated';
-  }
-
-  function applyRuleToRow(row, rule){
-    const clean = String(rule == null ? '' : rule).trim();
-    ACL_ROLES.forEach(role => { row[role] = false; });
-
-    if(clean === 'Public'){
-      row.public = true;
-      return;
-    }
-
-    if(clean === 'Authenticated'){
-      ACL_ROLES.filter(role => role !== 'public').forEach(role => { row[role] = true; });
-      return;
-    }
-
-    if(clean === 'projects'){
-      row.projects = true;
-      row.owner = true;
-      return;
-    }
-
-    const rank = ROLE_RANK[clean];
-    if(typeof rank === 'number'){
-      ACL_ROLES.filter(role => role !== 'public').forEach(role => {
-        const roleRank = ROLE_RANK[role];
-        if(typeof roleRank === 'number' && roleRank >= rank){
-          row[role] = true;
-        }
-      });
-    }
-  }
-
-  function mapSavedAclToMatrix(saved){
-    const matrix = ACL_ITEMS.map(aclEmptyRule);
-
-    const source = (saved && typeof saved === 'object' && !Array.isArray(saved)) ? saved : {};
-    const matrixSource = (source.__matrix && typeof source.__matrix === 'object') ? source.__matrix : {};
-
-    matrix.forEach((row) => {
-      const fromMatrix = matrixSource[row.key];
-      if(fromMatrix && typeof fromMatrix === 'object'){
-        ACL_ROLES.forEach(role => {
-          if(role in fromMatrix) row[role] = !!fromMatrix[role];
-        });
-        return;
-      }
-
-      const direct = (
-        Object.prototype.hasOwnProperty.call(source, row.key) ? source[row.key] :
-        source.features && Object.prototype.hasOwnProperty.call(source.features, row.key) ? source.features[row.key] :
-        null
-      );
-
-      applyRuleToRow(row, direct);
-    });
-
-    return matrix;
-  }
-
-  function matrixToAclPayload(matrix){
-    const payload = {
-      features:{},
-      pages:{},
-      publicFeatures:[],
-      __matrix:{},
-      rolesMeta:{
-        order:['public','resident','street_coordinator','assistant_area_coordinator','area_coordinator','projects','owner'],
-        rank: ROLE_RANK
-      }
-    };
-
-    matrix.forEach((row) => {
-      const rule = classifyMatrixToRule(row);
-      payload[row.key] = rule;
-      payload.__matrix[row.key] = Object.fromEntries(ACL_ROLES.map(role => [role, !!row[role]]));
-
-      if(row.key.startsWith('dashboard:') || row.key.startsWith('projects:')){
-        payload.features[row.key] = rule;
-        if(row.public) payload.publicFeatures.push(row.key);
-      }
-
-      if(row.key === 'page:dashboard'){
-        payload.pages['page:dashboard'] = payload.pages['page:dashboard'] || { shell: rule, features:{} };
-        payload.pages['page:dashboard'].shell = rule;
-      }
-
-      if(row.key.startsWith('dashboard:tab_')){
-        payload.pages['page:dashboard'] = payload.pages['page:dashboard'] || { shell:'resident', features:{} };
-        payload.pages['page:dashboard'].features[row.key] = rule;
-      }
-
-      if(row.key === 'page:projects'){
-        payload.pages['page:projects'] = payload.pages['page:projects'] || { shell: rule, features:{} };
-        payload.pages['page:projects'].shell = rule;
-      }
-
-      if(row.key.startsWith('projects:tab_')){
-        payload.pages['page:projects'] = payload.pages['page:projects'] || { shell:'projects', features:{} };
-        payload.pages['page:projects'].features[row.key] = rule;
-      }
-    });
-
-    return payload;
-  }
-
-  function renderAccessControlFromData(rules){
-    const body = byId('acBody');
-    if(!body) return;
-
-    let lastGroup = '';
-    body.innerHTML = rules.map((r, idx) => {
-      const groupHeader = (r.group && r.group !== lastGroup)
-        ? `<tr class="ac-group"><td colspan="8"><strong>${esc(r.group)}</strong></td></tr>`
-        : '';
-      lastGroup = r.group || lastGroup;
-
-      return `${groupHeader}
-      <tr data-ac-row="${idx}">
-        <td>
-          <div class="ac-item">
-            <div>
-              <div class="ac-indent-${Math.min(Number(r.indent || 0), 3)}">${esc(r.label)}</div>
-              <div class="ac-key">${esc(r.key)}</div>
-            </div>
-          </div>
-        </td>
-        ${ACL_ROLES.map(role => `
-          <td>
-            <button
-              type="button"
-              class="ac-toggle ${r[role] ? 'allowed' : 'denied'}"
-              data-role="${role}"
-              data-row="${idx}"
-              title="${role === 'public' ? 'Visible without login' : role.replaceAll('_',' ')}"
-            >${r[role] ? '✓' : '—'}</button>
-          </td>
-        `).join('')}
-      </tr>`;
-    }).join('');
-
-    $$('.ac-toggle', body).forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const row = Number(btn.getAttribute('data-row'));
-        const role = btn.getAttribute('data-role');
-        if(!Number.isFinite(row) || !rules[row]) return;
-
-        if(role === 'public'){
-          const next = !rules[row].public;
-          ACL_ROLES.forEach(k => { rules[row][k] = false; });
-          rules[row].public = next;
-        } else {
-          rules[row][role] = !rules[row][role];
-          if(rules[row][role]) rules[row].public = false;
-        }
-
-        ACCESS_RULES_CACHE = rules;
-        renderAccessControlFromData(rules);
-      });
-    });
-
-    byId('btnAcSave').onclick = async () => {
-      const payload = matrixToAclPayload(rules);
-      await anwSaveSafe(KEY_ACCESS, payload);
-      try{
-        if(typeof window.anwSave === 'function') window.anwSave(KEY_ACCESS, payload);
-      }catch(_){}
-      byId('acMsg').textContent = 'Access rules saved. Pages and sub-tabs are now linked to the new role-based ACL.';
-    };
-
-    byId('btnAcPrint').onclick = () => {
-      document.body.classList.add('print-access-control');
-      window.print();
-      setTimeout(() => document.body.classList.remove('print-access-control'), 200);
-    };
-
-    byId('btnAcRefresh').onclick = loadAccessControl;
-  }
-
-  async function loadAccessControl(){
-    const saved = await anwLoadSafe(KEY_ACCESS, {});
-    ACCESS_RULES_CACHE = mapSavedAclToMatrix(saved);
-    renderAccessControlFromData(ACCESS_RULES_CACHE);
-  }
-
-
-
-  async function loadDiagnostics(){
-    const data = {
-      users: (await anwLoadSafe(KEY_USERS, [])).length,
-      notices: (await anwLoadSafe(window.getNoticesKey(), [])).length,
-      reports: (await anwLoadSafe(KEY_REPORTS, [])).length,
-      projects: (await anwLoadSafe(KEY_PROJECTS, [])).length
-    };
-    byId('diagOut').textContent = JSON.stringify(data, null, 2);
-  }
-
-  // ---------- Events ----------
-  document.addEventListener('click', ev => {
-    const btn = ev.target.closest('.admin-tab');
-    if(btn){ showAdminTab(btn.getAttribute('data-tab')); }
-
-    const rtab = ev.target.closest('.resident-tab');
-    if(rtab){ showResidentSubtab(rtab.getAttribute('data-subtab')); }
-
-    const etab = ev.target.closest('.elect-tab');
-    if(etab){ showElectionSubtab(etab.getAttribute('data-subtab')); }
+  byId('btnSaveResident')?.addEventListener('click', async () => {
+    await saveCurrentResident();
   });
-
-  byId('btnCloseResident')?.addEventListener('click', closeResidentModal);
-  byId('modalResident')?.addEventListener('click', (ev) => {
-    if(ev.target === byId('modalResident')) closeResidentModal();
-  });
-  byId('btnSaveResident')?.addEventListener('click', () => saveCurrentResident());
   byId('btnApprove')?.addEventListener('click', async () => {
     if(!CURRENT_RESIDENT) return;
-    if(!window.confirm(`Approve registration for ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'}?`)) return;
+    const ok = window.confirm(`Approve registration for ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'}?`);
+    if(!ok) return;
     const saved = await saveCurrentResident('approved');
     if(saved) closeResidentModal();
   });
   byId('btnReject')?.addEventListener('click', async () => {
     if(!CURRENT_RESIDENT) return;
-    if(!window.confirm(`Reject registration for ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'}?`)) return;
+    const ok = window.confirm(`Reject registration for ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'}?`);
+    if(!ok) return;
     const saved = await saveCurrentResident('rejected');
     if(saved) closeResidentModal();
   });
   byId('btnSuspendResident')?.addEventListener('click', async () => {
     if(!CURRENT_RESIDENT) return;
-    if(!window.confirm(`Suspend ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'}?`)) return;
+    const ok = window.confirm(`Suspend ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'}?`);
+    if(!ok) return;
     const saved = await saveCurrentResident('suspended');
     if(saved) closeResidentModal();
   });
   byId('btnRemoveResident')?.addEventListener('click', async () => {
     if(!CURRENT_RESIDENT) return;
-    if(!window.confirm(`Remove ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'} permanently? This cannot be undone.`)) return;
+    const ok = window.confirm(`Remove ${CURRENT_RESIDENT.name || CURRENT_RESIDENT.email || 'this resident'} permanently? This cannot be undone.`);
+    if(!ok) return;
     const users = await anwLoadSafe(KEY_USERS, []);
     const next = users.filter(u => String(u.email||'').toLowerCase() !== String(CURRENT_RESIDENT.email||'').toLowerCase());
     await anwSaveSafe(KEY_USERS, next);
     RESIDENTS_CACHE = next;
     closeResidentModal();
-    renderResidents($('.resident-tab.active')?.getAttribute('data-subtab') === 'subApproved' ? 'approved'
-      : $('.resident-tab.active')?.getAttribute('data-subtab') === 'subAll' ? 'all'
-      : 'pending');
+    const activeSubtab = $('.resident-tab.active')?.getAttribute('data-subtab');
+    renderResidents(
+      activeSubtab === 'subApproved' ? 'approved'
+      : activeSubtab === 'subAll' ? 'all'
+      : 'pending'
+    );
   });
 
   byId('btnNtPublish')?.addEventListener('click', publishNotice);
