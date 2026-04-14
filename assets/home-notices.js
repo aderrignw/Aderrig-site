@@ -804,56 +804,13 @@
   }
 
   function buildMisdeliveredMailBoard(items){
-    const me = getLoggedProfile();
-    if (!me || !me.email) return null;
+  injectMisdeliveredMailStyles();
 
-    injectMisdeliveredMailStyles();
+  const me = getLoggedProfile();
+  const safeItems = Array.isArray(items) ? items : [];
+  const hasItems = safeItems.length > 0;
 
-    const safeItems = Array.isArray(items) ? items : [];
-    const hasItems = safeItems.length > 0;
-
-    if (!hasItems) {
-      return {
-        id: 'misdelivered_mail_board',
-        createdAt: new Date().toISOString(),
-        _sortTs: Date.now() - 1,
-        _displayCustomHtml: `
-          <section class="mail-board-card" aria-label="Misdelivered mail">
-            <div class="mail-board-head">
-              <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
-              <button type="button" class="mail-board-add" data-mail-action="add">+ Add</button>
-            </div>
-            <p class="mail-board-sub">Report misdelivered mail received at your address.</p>
-            <div class="mail-board-grid">
-              <div class="mail-board-empty">No open misdelivered mail entries right now.</div>
-            </div>
-          </section>`
-      };
-    }
-
-    const rows = safeItems.map((it) => {
-      const type = formatMailType(getMailItemType(it));
-      const delivered = esc(it?.meta?.deliveredAddress || '');
-      const correct = esc(it?.meta?.intendedAddress || '');
-      const actions = [];
-      if (canManageMail(it)) {
-        actions.push(`<button type="button" class="mail-action-btn" data-mail-action="collected" data-mail-id="${esc(it.id || '')}">Collected</button>`);
-        actions.push(`<button type="button" class="mail-action-btn" data-mail-action="returned" data-mail-id="${esc(it.id || '')}">Returned</button>`);
-      }
-      if (hasOwnerAccess()) {
-        actions.push(`<button type="button" class="mail-action-btn mail-action-btn--owner" data-mail-action="remove" data-mail-id="${esc(it.id || '')}">Remove</button>`);
-      }
-
-      return `
-        <div class="mail-board-row">
-          <div class="mail-board-cell"><span class="mail-board-type"><span class="mail-board-type-icon" aria-hidden="true">${getMailIcon(type)}</span><span>${esc(type)}</span></span></div>
-          <div class="mail-board-cell">${delivered}</div>
-          <div class="mail-board-cell">${correct}</div>
-          <div class="mail-board-cell mail-board-status"><span class="mail-pill">Not collected</span></div>
-          <div class="mail-board-cell"><div class="mail-board-actions">${actions.join('')}</div></div>
-        </div>`;
-    }).join('');
-
+  if (!me || !me.email) {
     return {
       id: 'misdelivered_mail_board',
       createdAt: new Date().toISOString(),
@@ -866,18 +823,79 @@
           </div>
           <p class="mail-board-sub">Report misdelivered mail received at your address.</p>
           <div class="mail-board-grid">
-            <div class="mail-board-header">
-              <div>Type</div>
-              <div>Delivered at</div>
-              <div>Correct address</div>
-              <div>Status</div>
-              <div>Action</div>
-            </div>
-            ${rows}
+            <div class="mail-board-empty">Log in to view or post misdelivered mail entries.</div>
           </div>
         </section>`
     };
   }
+
+  if (!hasItems) {
+    return {
+      id: 'misdelivered_mail_board',
+      createdAt: new Date().toISOString(),
+      _sortTs: Date.now() - 1,
+      _displayCustomHtml: `
+        <section class="mail-board-card" aria-label="Misdelivered mail">
+          <div class="mail-board-head">
+            <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
+            <button type="button" class="mail-board-add" data-mail-action="add">+ Add</button>
+          </div>
+          <p class="mail-board-sub">Report misdelivered mail received at your address.</p>
+          <div class="mail-board-grid">
+            <div class="mail-board-empty">No open misdelivered mail entries right now.</div>
+          </div>
+        </section>`
+    };
+  }
+
+  const rows = safeItems.map((it) => {
+    const type = formatMailType(getMailItemType(it));
+    const delivered = esc(it?.meta?.deliveredAddress || '');
+    const correct = esc(it?.meta?.intendedAddress || '');
+    const actions = [];
+
+    if (canManageMail(it)) {
+      actions.push(`<button type="button" class="mail-action-btn" data-mail-action="collected" data-mail-id="${esc(it.id || '')}">Collected</button>`);
+      actions.push(`<button type="button" class="mail-action-btn" data-mail-action="returned" data-mail-id="${esc(it.id || '')}">Returned</button>`);
+    }
+    if (hasOwnerAccess()) {
+      actions.push(`<button type="button" class="mail-action-btn mail-action-btn--owner" data-mail-action="remove" data-mail-id="${esc(it.id || '')}">Remove</button>`);
+    }
+
+    return `
+      <div class="mail-board-row">
+        <div class="mail-board-cell"><span class="mail-board-type"><span class="mail-board-type-icon" aria-hidden="true">${getMailIcon(type)}</span><span>${esc(type)}</span></span></div>
+        <div class="mail-board-cell">${delivered}</div>
+        <div class="mail-board-cell">${correct}</div>
+        <div class="mail-board-cell mail-board-status"><span class="mail-pill">Not collected</span></div>
+        <div class="mail-board-cell"><div class="mail-board-actions">${actions.join('')}</div></div>
+      </div>`;
+  }).join('');
+
+  return {
+    id: 'misdelivered_mail_board',
+    createdAt: new Date().toISOString(),
+    _sortTs: Date.now() - 1,
+    _displayCustomHtml: `
+      <section class="mail-board-card" aria-label="Misdelivered mail">
+        <div class="mail-board-head">
+          <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
+          <button type="button" class="mail-board-add" data-mail-action="add">+ Add</button>
+        </div>
+        <p class="mail-board-sub">Report misdelivered mail received at your address.</p>
+        <div class="mail-board-grid">
+          <div class="mail-board-header">
+            <div>Type</div>
+            <div>Delivered at</div>
+            <div>Correct address</div>
+            <div>Status</div>
+            <div>Action</div>
+          </div>
+          ${rows}
+        </div>
+      </section>`
+  };
+}
 
   async function loadAllNoticesForEdit(){
     const token = await getIdentityToken();
