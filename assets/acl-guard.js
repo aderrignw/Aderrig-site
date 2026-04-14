@@ -214,7 +214,8 @@
 
     try {
       if (!isAdminPath() && typeof window.anwGetLoggedRole === "function") {
-        const role = normalizeRoleName(window.anwGetLoggedRole());
+        const rawRole = window.anwGetLoggedRole();
+        const role = normalizeRoleName(rawRole);
         if (role) return role;
       }
     } catch (_) {}
@@ -223,14 +224,13 @@
       if (!isAdminPath()) {
         const rawLogged = localStorage.getItem("anw_logged");
         const logged = rawLogged ? JSON.parse(rawLogged) : null;
-        const role = normalizeRoleName(
-          logged && (logged.role || logged.primaryRole || (Array.isArray(logged.roles) ? logged.roles[0] : ""))
-        );
+        const roleValue = logged && (logged.role || logged.primaryRole || (Array.isArray(logged.roles) ? logged.roles[0] : ""));
+        const role = normalizeRoleName(roleValue);
         if (role) return role;
       }
     } catch (_) {}
 
-    return "resident";
+    return "";
   }
 
   async function waitForAdminAuthReady(timeoutMs) {
