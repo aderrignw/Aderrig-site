@@ -9,26 +9,27 @@
   <style>
     html.anw-preauth-hide body{visibility:hidden}
     .hb-shell{display:grid;gap:18px}
-    .hb-hero,.hb-card{background:#fff;border:1px solid rgba(17,24,39,.08);border-radius:22px;box-shadow:var(--shadow)}
-    .hb-hero{padding:24px}
+    .hb-hero,.hb-card{background:#fff;border:1px solid rgba(17,24,39,.08);border-radius:24px;box-shadow:var(--shadow)}
+    .hb-hero{padding:28px}
     .hb-badge{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:#edf5ef;color:var(--brand);font-weight:800;font-size:.88rem}
-    .hb-hero h2{margin:14px 0 8px;color:#23344b;font-size:2rem}
-    .hb-hero p{margin:0;color:#6a7b90;max-width:920px;line-height:1.6}
-    .hb-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+    .hb-hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:start}
+    .hb-hero h2{margin:14px 0 10px;color:#23344b;font-size:2rem}
+    .hb-hero p{margin:0;color:#6a7b90;max-width:860px;line-height:1.65}
+    .hb-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .hb-link{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:14px;border:1px solid rgba(17,24,39,.08);background:#fff;color:#23344b;text-decoration:none;font-weight:800}
     .hb-card{padding:22px}
     .hb-card h3{margin:0 0 10px;color:#23344b}
     .hb-card p{margin:0;color:#6a7b90;line-height:1.6}
-    .hb-points{display:grid;gap:12px;margin-top:16px}
-    .hb-point{padding:14px 16px;border:1px solid rgba(17,24,39,.08);border-radius:16px;background:#f8fafc}
-    .hb-point strong{display:block;color:#23344b;margin-bottom:6px}
-    .hb-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
-    .hb-link{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:14px;border:1px solid rgba(17,24,39,.08);background:#fff;color:#23344b;text-decoration:none;font-weight:800}
-    .hb-role-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-    .hb-role-card{padding:16px;border:1px solid rgba(17,24,39,.08);border-radius:18px;background:#fff}
-    .hb-role-card h4{margin:0 0 8px;color:#23344b}
-    .hb-role-card p{margin:0;color:#6a7b90;line-height:1.55}
-    .hb-note{margin-top:12px;padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid rgba(17,24,39,.08);color:#55677c}
-    @media (max-width: 980px){.hb-grid,.hb-role-grid{grid-template-columns:1fr}}
+    .hb-stack{display:grid;gap:14px}
+    .hb-callout{padding:16px;border:1px solid rgba(17,24,39,.08);border-radius:18px;background:#f8fafc}
+    .hb-callout strong{display:block;color:#23344b;margin-bottom:6px}
+    .hb-lane-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .hb-lane{padding:16px;border:1px solid rgba(17,24,39,.08);border-radius:18px;background:#fff}
+    .hb-lane h4{margin:0 0 8px;color:#23344b}
+    .hb-lane p{margin:0;color:#6a7b90;line-height:1.55}
+    .hb-mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .hb-note{padding:14px 16px;border-radius:16px;background:#f8fafc;border:1px solid rgba(17,24,39,.08);color:#55677c}
+    @media (max-width: 980px){.hb-hero-grid,.hb-lane-grid,.hb-mini-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body class="page-handbook" data-acl-loading="true">
@@ -54,44 +55,57 @@
 <main class="container">
   <div class="hb-shell">
     <section class="hb-hero">
-      <span class="hb-badge">Handbook</span>
-      <h2>Handbook</h2>
-      <p>The Handbook stays separate from the Help Center. Use this area for organised platform guidance, governance context and role-aware orientation. Use the Help Center from the main menu when you want step-by-step practical help.</p>
-      <div class="hb-actions">
-        <a class="hb-link" href="help-center.html">Open Help Center</a>
-        <a class="hb-link" href="dashboard.html">Open Dashboard</a>
-        <a class="hb-link" href="admin.html">Open Admin</a>
+      <div class="hb-hero-grid">
+        <div>
+          <span class="hb-badge">Handbook</span>
+          <h2>Platform handbook</h2>
+          <p>The Handbook is the calm reference space for platform structure, governance context and role-aware orientation. Practical resident help belongs in the separate Help Center, so this page stays easy to read and easy to trust.</p>
+          <div class="hb-actions">
+            <a class="hb-link" href="help-center.html">Open Help Center</a>
+            <a class="hb-link" href="admin.html">Open Admin</a>
+          </div>
+        </div>
+        <div class="hb-card" style="padding:20px;">
+          <h3>What this page is for</h3>
+          <div class="hb-stack">
+            <div class="hb-callout"><strong>Orientation</strong>Explain where core areas live and how the platform is organised.</div>
+            <div class="hb-callout"><strong>Governance</strong>Keep role expectations and oversight context visible without turning the page into a control panel.</div>
+            <div class="hb-callout"><strong>Reference</strong>Point people to the right place quickly, especially the separate Help Center for resident tasks.</div>
+          </div>
+        </div>
       </div>
     </section>
-    <div class="hb-grid">
-      <section class="hb-card">
-        <h3>What belongs in the Handbook</h3>
-        <p>Keep this page clear and light. It should guide people without turning into a dense control panel.</p>
-        <div class="hb-points">
-          <div class="hb-point"><strong>Orientation</strong>Explain how the platform is structured and where key areas live.</div>
-          <div class="hb-point"><strong>Governance</strong>Keep role expectations, oversight notes and operating context easy to find.</div>
-          <div class="hb-point"><strong>Reference</strong>Point people to the right area without opening every control at once.</div>
-        </div>
-        <div class="hb-note">The Help Center is now its own main-menu page, so practical resident help no longer has to live inside the Handbook.</div>
-      </section>
-      <section class="hb-card">
-        <h3>How to use it</h3>
-        <div class="hb-role-grid">
-          <div class="hb-role-card">
-            <h4>Resident</h4>
-            <p>Use the Handbook for orientation and the Help Center for direct task help.</p>
-          </div>
-          <div class="hb-role-card">
-            <h4>Admin</h4>
-            <p>Use Admin &gt; Handbook to manage structure and Help Center content without cluttering this page.</p>
-          </div>
-          <div class="hb-role-card">
-            <h4>Owner</h4>
-            <p>Use this space for oversight and quality control, while keeping editing actions in Admin.</p>
-          </div>
-        </div>
-      </section>
-    </div>
+
+    <section class="hb-card">
+      <h3>How the spaces work together</h3>
+      <div class="hb-lane-grid">
+        <article class="hb-lane">
+          <h4>Handbook</h4>
+          <p>Use this space for the overall structure, guidance framework and governance context.</p>
+        </article>
+        <article class="hb-lane">
+          <h4>Help Center</h4>
+          <p>Use the Help Center for resident-friendly, practical guidance and simple step-by-step help.</p>
+        </article>
+        <article class="hb-lane">
+          <h4>Admin &gt; Handbook</h4>
+          <p>Use the admin workspace to manage the Owner Help Center package and content updates.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="hb-mini-grid">
+      <article class="hb-card">
+        <h3>For residents</h3>
+        <p>Residents should use this page mainly for orientation. When the goal is to complete a task, they should go straight to Help Center from the main menu.</p>
+      </article>
+      <article class="hb-card">
+        <h3>For governance</h3>
+        <p>Admin and Owner can use the Handbook as a clean public-facing reference while keeping editing tools inside Admin where they belong.</p>
+      </article>
+    </section>
+
+    <div class="hb-note">The Handbook stays separate from the Help Center on purpose. This keeps the resident experience simpler and keeps governance content more structured.</div>
   </div>
 </main>
 <footer class="site-footer">
