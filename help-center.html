@@ -7,85 +7,48 @@
   <title>Help Center — Aderrig NW</title>
   <link rel="stylesheet" href="assets/style.css" />
   <style>
-    html.anw-preauth-hide body { visibility:hidden; }
-    :root{
-      --hb-border: rgba(17,24,39,.08);
-      --hb-text:#23344b;
-      --hb-muted:#6a7b90;
-      --hb-soft:#f7f9fb;
-      --hb-card:#ffffff;
-    }
-    .hb-shell{display:grid;gap:18px}
-    .hb-hero,.hb-grid>section{
-      background:var(--hb-card);
-      border:1px solid var(--hb-border);
-      border-radius:22px;
-      box-shadow:var(--shadow);
-    }
-    .hb-hero{padding:24px}
-    .hb-badge{
-      display:inline-flex;align-items:center;min-height:34px;padding:0 14px;
-      border-radius:999px;background:#edf5ef;color:var(--brand);font-weight:800;font-size:.88rem
-    }
-    .hb-hero-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
-    .hb-hero h2{margin:14px 0 8px;color:var(--hb-text);font-size:2rem}
-    .hb-hero p{margin:0;color:var(--hb-muted);max-width:920px;line-height:1.55}
-    .hb-role-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
-    .hb-role-tab{
-      border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);
-      border-radius:999px;padding:10px 16px;font-weight:800;cursor:pointer
-    }
-    .hb-role-tab.active{background:#6d4ab5;color:#fff;border-color:#6d4ab5}
-    .hb-role-tab[hidden]{display:none!important}
-    .hb-manage-link{
-      display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;
-      border-radius:14px;border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);text-decoration:none;font-weight:800
-    }
-    .hb-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px}
-    .hb-panel{padding:20px}
-    .hb-panel h3{margin:0 0 10px;color:var(--hb-text)}
-    .hb-panel p{margin:0;color:var(--hb-muted);line-height:1.55}
-    .hb-section-list{display:grid;gap:12px;margin-top:18px}
-    .hb-section-btn{
-      width:100%;text-align:left;border:1px solid var(--hb-border);border-radius:18px;background:#fff;padding:16px;cursor:pointer
-    }
-    .hb-section-btn.active{background:#eef4f1;border-color:#d5e8dc}
-    .hb-section-title{font-size:1.15rem;font-weight:900;color:var(--hb-text)}
-    .hb-section-sub{margin-top:6px;color:var(--hb-muted);font-size:.92rem;line-height:1.4}
-    .hb-article-card{
-      border:1px solid var(--hb-border);border-radius:20px;background:#fff;padding:18px;display:grid;gap:14px
-    }
-    .hb-article-head h3{margin:0;color:var(--hb-text);font-size:1.35rem}
-    .hb-article-head p{margin:8px 0 0;color:var(--hb-muted)}
-    .hb-meta{display:flex;gap:10px;flex-wrap:wrap}
-    .hb-chip{
-      display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border-radius:999px;
-      background:var(--hb-soft);border:1px solid var(--hb-border);color:#55677c;font-weight:800
-    }
-    .hb-md{color:#324458;line-height:1.72;font-size:.98rem}
-    .hb-md p:first-child{margin-top:0}
-    .hb-md h3,.hb-md h4{color:#215b3f;margin:18px 0 8px}
-    .hb-md ul{margin:8px 0 8px 20px}
-    .hb-md li{margin:6px 0}
-    .hb-actions{display:flex;gap:10px;flex-wrap:wrap}
-    .hb-link{
-      display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;
-      border-radius:12px;border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);text-decoration:none;font-weight:800
-    }
-    .hb-empty{padding:18px;border:1px dashed var(--hb-border);border-radius:16px;color:var(--hb-muted);background:#fbfcfd}
-    @media (max-width: 980px){ .hb-grid{grid-template-columns:1fr} }
+    html.anw-preauth-hide body{visibility:hidden}
+    :root{--hc-border:rgba(17,24,39,.08);--hc-text:#23344b;--hc-muted:#6a7b90;--hc-soft:#f7f9fb}
+    .hc-shell{display:grid;gap:18px}
+    .hc-hero,.hc-panel{background:#fff;border:1px solid var(--hc-border);border-radius:24px;box-shadow:var(--shadow)}
+    .hc-hero{padding:28px}
+    .hc-badge{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:#edf5ef;color:var(--brand);font-weight:800;font-size:.88rem}
+    .hc-hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:start}
+    .hc-hero h2{margin:14px 0 10px;color:var(--hc-text);font-size:2rem}
+    .hc-hero p{margin:0;color:var(--hc-muted);line-height:1.6}
+    .hc-hero-points{display:grid;gap:12px}
+    .hc-hero-point{padding:14px 16px;border:1px solid var(--hc-border);border-radius:18px;background:var(--hc-soft);color:#44576c}
+    .hc-hero-point strong{display:block;color:var(--hc-text);margin-bottom:6px}
+    .hc-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px}
+    .hc-panel{padding:20px}
+    .hc-panel h3{margin:0 0 10px;color:var(--hc-text)}
+    .hc-panel p{margin:0;color:var(--hc-muted);line-height:1.55}
+    .hc-section-list{display:grid;gap:12px;margin-top:18px}
+    .hc-section-btn{width:100%;text-align:left;border:1px solid var(--hc-border);border-radius:18px;background:#fff;padding:16px;cursor:pointer}
+    .hc-section-btn.active{background:#eef4f1;border-color:#d5e8dc}
+    .hc-section-title{font-size:1.06rem;font-weight:900;color:var(--hc-text)}
+    .hc-section-sub{margin-top:6px;color:var(--hc-muted);font-size:.92rem;line-height:1.45}
+    .hc-article-card{border:1px solid var(--hc-border);border-radius:22px;background:#fff;padding:20px;display:grid;gap:16px}
+    .hc-article-head h3{margin:0;color:var(--hc-text);font-size:1.4rem}
+    .hc-article-head p{margin:8px 0 0;color:var(--hc-muted)}
+    .hc-meta{display:flex;gap:10px;flex-wrap:wrap}
+    .hc-chip{display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border-radius:999px;background:var(--hc-soft);border:1px solid var(--hc-border);color:#55677c;font-weight:800}
+    .hc-md{color:#324458;line-height:1.72;font-size:.98rem}
+    .hc-md p:first-child{margin-top:0}
+    .hc-md h3,.hc-md h4{color:#215b3f;margin:18px 0 8px}
+    .hc-md ul{margin:8px 0 8px 20px}
+    .hc-md li{margin:6px 0}
+    .hc-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .hc-link{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--hc-border);background:#fff;color:var(--hc-text);text-decoration:none;font-weight:800}
+    .hc-empty{padding:18px;border:1px dashed var(--hc-border);border-radius:16px;color:var(--hc-muted);background:#fbfcfd}
+    @media (max-width: 980px){.hc-hero-grid,.hc-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body class="page-help-center" data-acl-loading="true">
 <header class="site-header">
   <div class="brand">
-    <a class="site-logo" href="index.html">
-      <img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/>
-    </a>
-    <div class="brand-text">
-      <h1>Aderrig NW</h1>
-      <p class="muted">Adamstown</p>
-    </div>
+    <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
+    <div class="brand-text"><h1>Aderrig NW</h1><p class="muted">Adamstown</p></div>
   </div>
   <nav class="nav">
     <a href="index.html">Home</a>
@@ -101,46 +64,42 @@
     <a href="admin.html">Admin</a>
   </nav>
 </header>
-
 <main class="container">
-  <div class="hb-shell">
-    <section class="hb-hero">
-      <div class="hb-hero-top">
+  <div class="hc-shell">
+    <section class="hc-hero">
+      <div class="hc-hero-grid">
         <div>
-          <span class="hb-badge">Help Center</span>
-          <h2 id="hbHeroTitle">Help Center</h2>
-          <p id="hbHeroIntro">Practical, role-aware guidance lives here. Residents use Help Center directly from the main menu, while Admin and Owner can switch to their own guidance views when available.</p>
+          <span class="hc-badge">Resident Help Center</span>
+          <h2>Resident Help Center</h2>
+          <p>This space is organised only for residents. Open a section on the left to read clear, practical guidance without the extra Admin or Owner layers.</p>
         </div>
-        <a id="hbManageLink" class="hb-manage-link" href="admin.html">Open content management</a>
-      </div>
-      <div class="hb-role-tabs">
-        <button type="button" class="hb-role-tab active" data-role-tab="resident">Help Center</button>
-        <button type="button" class="hb-role-tab" data-role-tab="admin" hidden>Admin Guidance</button>
-        <button type="button" class="hb-role-tab" data-role-tab="owner" hidden>Owner Oversight</button>
+        <div class="hc-hero-points">
+          <div class="hc-hero-point"><strong>Simple</strong>Only resident-focused help appears here.</div>
+          <div class="hc-hero-point"><strong>Practical</strong>Use it when you want to complete a task or understand a resident workflow.</div>
+          <div class="hc-hero-point"><strong>Separate</strong>The general Handbook stays as the structured reference space.</div>
+        </div>
       </div>
     </section>
 
-    <div class="hb-grid">
-      <section class="hb-panel">
-        <h3>Sections</h3>
-        <p>Open the guidance in this section.</p>
-        <div id="hbSectionList" class="hb-section-list"></div>
+    <div class="hc-grid">
+      <section class="hc-panel">
+        <h3>Resident sections</h3>
+        <p>Select a section to open the resident help content.</p>
+        <div id="hcSectionList" class="hc-section-list"></div>
       </section>
 
-      <section class="hb-panel">
-        <div id="hbArticleWrap"></div>
+      <section class="hc-panel">
+        <div id="hcArticleWrap"></div>
       </section>
     </div>
   </div>
 </main>
-
 <footer class="site-footer">
   <div class="footer-row">
     <div class="footer-left"><span class="page-status">Private Page</span></div>
     <div class="footer-center">© 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a></div>
   </div>
 </footer>
-
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script src="assets/identity.js"></script>
 <script src="assets/app-core.js"></script>
@@ -150,27 +109,10 @@
   'use strict';
   document.documentElement.classList.add('anw-preauth-hide');
   const STORE_KEY = 'anw_help_center_seed_v2';
-  const $ = (s,root=document)=>root.querySelector(s);
-  const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
-  let handbookData = {views:{},sections:[],articles:[]};
-  let currentRoleView = 'resident';
+  let handbookData = { views:{}, sections:[], articles:[] };
   let currentSectionId = '';
+  const $ = (s, root=document) => root.querySelector(s);
 
-  function userRole(){
-    try{ if(typeof anwGetLoggedRole === 'function') return String(anwGetLoggedRole() || 'resident'); }catch(_){}
-    return 'resident';
-  }
-  function roleAccess(){
-    const role = userRole();
-    return {
-      resident:true,
-      admin:['admin','owner'].includes(role),
-      owner:role === 'owner'
-    };
-  }
-  function canOpenPage(){
-    return !!userRole();
-  }
   function esc(text){
     return String(text == null ? '' : text).replace(/[&<>"]/g, function(ch){
       return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[ch];
@@ -178,7 +120,7 @@
   }
   function markdownToHtml(md){
     let value = String(md || '').trim();
-    if(!value) return '<p>No help content has been added to this article yet.</p>'; 
+    if(!value) return '<p>No help content has been added to this article yet.</p>';
     const lines = value.replace(/\r/g,'').split('\n');
     let html = '';
     let inList = false;
@@ -207,98 +149,74 @@
       const live = await fetchStore(STORE_KEY);
       if(live && Array.isArray(live.sections) && Array.isArray(live.articles)) return live;
     }catch(_){}
-    return {views:{},sections:[],articles:[]};
+    return { views:{}, sections:[], articles:[] };
   }
-  function fmtDate(value){
-    if(!value) return 'Latest update';
-    try{
-      const d = new Date(value);
-      if(Number.isNaN(d.getTime())) return 'Latest update';
-      return d.toLocaleDateString('en-IE', { day:'2-digit', month:'short', year:'numeric' });
-    }catch(_){ return 'Latest update'; }
+  function visibleArticles(){
+    return (handbookData.articles || []).filter(function(a){ return String(a.role || '') === 'resident'; });
   }
-  function visibleArticles(){ return (handbookData.articles || []).filter(a => a.role === currentRoleView); }
-  function currentSections(){
-    const active = new Set(visibleArticles().map(a => a.sectionId));
-    return (handbookData.sections || []).filter(s => active.has(s.id));
+  function visibleSections(){
+    const ids = new Set(visibleArticles().map(function(a){ return a.sectionId; }));
+    return (handbookData.sections || []).filter(function(s){ return ids.has(s.id); });
   }
-  function sectionArticles(sectionId){ return visibleArticles().filter(a => a.sectionId === sectionId); }
-
-  function renderRoleTabs(){
-    const access = roleAccess();
-    const views = handbookData.views || {};
-    $$('[data-role-tab]').forEach(function(btn){
-      const role = btn.getAttribute('data-role-tab');
-      btn.hidden = !access[role];
-      btn.textContent = (views[role] && views[role].label) || btn.textContent;
-      btn.classList.toggle('active', role === currentRoleView);
-    });
-    if(!access[currentRoleView]) currentRoleView = 'resident';
-    $('#hbHeroTitle').textContent = (views[currentRoleView] && views[currentRoleView].label) || 'Handbook';
-    $('#hbHeroIntro').textContent = (views[currentRoleView] && views[currentRoleView].intro) || 'Guidance published inside the handbook.';
-    $('#hbManageLink').style.display = (access.admin || access.owner) ? 'inline-flex' : 'none';
-  }
-
   function renderSections(){
-    const sections = currentSections();
-    if(!currentSectionId || !sections.some(s => s.id === currentSectionId)) currentSectionId = sections[0] ? sections[0].id : '';
-    const wrap = $('#hbSectionList');
+    const wrap = $('#hcSectionList');
+    const sections = visibleSections();
+    if(!wrap) return;
     if(!sections.length){
-      wrap.innerHTML = '<div class="hb-empty">No published sections were found for this handbook view yet.</div>';
+      wrap.innerHTML = '<div class="hc-empty">No resident sections have been published yet.</div>';
       return;
     }
     wrap.innerHTML = sections.map(function(section){
-      const first = sectionArticles(section.id)[0];
-      return '<button type="button" class="hb-section-btn ' + (section.id === currentSectionId ? 'active' : '') + '" data-section-id="' + esc(section.id) + '">'
-        + '<div class="hb-section-title">' + esc(section.title) + '</div>'
-        + '<div class="hb-section-sub">' + esc(first ? first.title : 'Open guidance in this section') + '</div>'
+      const first = visibleArticles().find(function(article){ return article.sectionId === section.id; });
+      const active = section.id === currentSectionId;
+      return '<button type="button" class="hc-section-btn' + (active ? ' active' : '') + '" data-section-id="' + section.id + '">'
+        + '<div class="hc-section-title">' + esc(section.title) + '</div>'
+        + '<div class="hc-section-sub">' + esc((first && first.summary) || 'Resident guidance in this section.') + '</div>'
         + '</button>';
     }).join('');
   }
-  function renderArticles(){
-    const wrap = $('#hbArticleWrap');
-    const articles = currentSectionId ? sectionArticles(currentSectionId) : [];
+  function renderArticle(){
+    const wrap = $('#hcArticleWrap');
+    const articles = visibleArticles().filter(function(article){ return article.sectionId === currentSectionId; });
+    if(!wrap) return;
     if(!articles.length){
-      wrap.innerHTML = '<div class="hb-empty">No published articles were found in this section yet.</div>';
+      wrap.innerHTML = '<div class="hc-empty">Choose a resident section to view the guidance.</div>';
       return;
     }
     wrap.innerHTML = articles.map(function(article){
-      return '<article class="hb-article-card">'
-        + '<div class="hb-article-head"><h3>' + esc(article.title) + '</h3><p>' + esc(article.summary || '') + '</p></div>'
-        + '<div class="hb-meta"><span class="hb-chip">View: ' + esc(currentRoleView.charAt(0).toUpperCase() + currentRoleView.slice(1)) + '</span><span class="hb-chip">Updated: ' + esc(fmtDate(article.updatedAt)) + '</span></div>'
-        + '<div class="hb-md">' + markdownToHtml(article.contentMd) + '</div>'
-        + '<div class="hb-actions">' + (article.linkedPage ? '<a class="hb-link" href="' + esc(article.linkedPage) + '">Open page</a>' : '') + '</div>'
+      return '<article class="hc-article-card">'
+        + '<div class="hc-article-head"><h3>' + esc(article.title || 'Untitled article') + '</h3>'
+        + (article.summary ? '<p>' + esc(article.summary) + '</p>' : '')
+        + '</div>'
+        + '<div class="hc-meta">'
+        + '<span class="hc-chip">Resident</span>'
+        + (article.updatedAt ? '<span class="hc-chip">' + esc(article.updatedAt) + '</span>' : '')
+        + (article.linkedPage ? '<span class="hc-chip">' + esc(article.linkedPage) + '</span>' : '')
+        + '</div>'
+        + '<div class="hc-md">' + markdownToHtml(article.contentMd || article.content || '') + '</div>'
+        + (article.linkedPage ? '<div class="hc-actions"><a class="hc-link" href="' + esc(article.linkedPage) + '">Open linked page</a></div>' : '')
         + '</article>';
     }).join('');
   }
-  function rerender(){ renderRoleTabs(); renderSections(); renderArticles(); }
-
-  document.addEventListener('click', function(event){
-    const roleBtn = event.target.closest('[data-role-tab]');
-    if(roleBtn){
-      currentRoleView = roleBtn.getAttribute('data-role-tab');
-      currentSectionId = '';
-      rerender();
-      return;
-    }
-    const sectionBtn = event.target.closest('[data-section-id]');
-    if(sectionBtn){
-      currentSectionId = sectionBtn.getAttribute('data-section-id');
-      renderSections();
-      renderArticles();
-    }
-  });
-
-  document.addEventListener('DOMContentLoaded', async function(){
-    if(!canOpenPage()){
-      try{ window.location.replace('login.html'); }catch(_){ window.location.href = 'login.html'; }
-      return;
-    }
+  async function boot(){
     handbookData = await loadHandbook();
-    rerender();
+    const sections = visibleSections();
+    currentSectionId = sections[0] ? sections[0].id : '';
+    renderSections();
+    renderArticle();
+    const list = $('#hcSectionList');
+    if(list){
+      list.addEventListener('click', function(event){
+        const btn = event.target.closest('[data-section-id]');
+        if(!btn) return;
+        currentSectionId = btn.getAttribute('data-section-id') || '';
+        renderSections();
+        renderArticle();
+      });
+    }
     document.documentElement.classList.remove('anw-preauth-hide');
-    document.body.removeAttribute('data-acl-loading');
-  });
+  }
+  boot();
 })();
 </script>
 </body>
