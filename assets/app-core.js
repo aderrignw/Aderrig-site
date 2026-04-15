@@ -234,7 +234,7 @@ function anwGetLoggedRole() {
     if (normalized.includes("projects")) return "projects";
     return "resident";
   } catch (e) {
-    console.warn("Erro ao obter role do usuário:", e);
+    console.warn("Error retrieving user role:", e);
     return "resident";
   }
 }
