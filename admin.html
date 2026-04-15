@@ -1964,103 +1964,141 @@
 
 
   <!-- ================= HANDBOOK ================= -->
-  
   <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
     <h3>Handbook</h3>
-    <p class="tiny muted" style="margin-top:0;">Keep Handbook and Help Center separate. Use this area to manage both cleanly, without opening every control at once.</p>
+    <p class="tiny muted" style="margin-top:0;">Manage the Handbook workspace here. The resident Help Center stays separate in the main site menu.</p>
 
-    <div class="hb-admin-shell" style="display:grid;gap:16px;">
-      <details class="hb-admin-panel" open>
-        <summary style="cursor:pointer; list-style:none; font-weight:800; color:#23344b;">Handbook workspace overview</summary>
-        <div style="margin-top:14px; display:grid; gap:12px;">
-          <p class="tiny muted" style="margin:0;">The Handbook remains its own area for organised guidance and governance context. The Help Center is now separate in the main menu for practical resident help.</p>
-          <div class="hb-admin-support-grid">
-            <div class="hb-admin-items-card">
-              <div class="hb-admin-items-toolbar"><h4 style="margin:0;">Handbook purpose</h4></div>
-              <div class="tiny muted">Use Handbook for orientation, structure and oversight. Keep heavy content actions below so this tab stays tidy.</div>
+    <div class="hb-admin-shell">
+      <div class="hb-admin-panel">
+        <div class="hb-admin-panel-head">
+          <div>
+            <h4 style="margin:0;">Category setup</h4>
+            <p class="tiny muted" style="margin:6px 0 0;">Choose a ready category or use Other when you need a new one.</p>
+          </div>
+        </div>
+
+        <div class="hb-admin-top-grid">
+          <div class="field" style="margin:0;">
+            <label>Category</label>
+            <select id="hbSimpleCatPreset">
+              <option value="General">General</option>
+              <option value="Security">Security</option>
+              <option value="Parking">Parking</option>
+              <option value="Emergency">Emergency</option>
+              <option value="Volunteering">Volunteering</option>
+              <option value="Waste & Recycling">Waste & Recycling</option>
+              <option value="Community Services">Community Services</option>
+              <option value="Rules & Guidance">Rules & Guidance</option>
+              <option value="Other">Other</option>
+            </select>
+            <input id="hbSimpleCatTitle" type="text" maxlength="80" placeholder="Enter other category name" />
+          </div>
+          <div class="field" style="margin:0;">
+            <label>Auto icon</label>
+            <div id="hbSimpleCatIconPreview" class="hb-icon-chip" aria-label="Automatic category icon">📘</div>
+          </div>
+          <div class="field" style="margin:0;">
+            <label class="chk" style="display:flex; align-items:center; gap:10px; min-height:46px; margin-top:28px;">
+              <input id="hbSimpleCatActive" type="checkbox" checked>
+              <span>Active category</span>
+            </label>
+          </div>
+        </div>
+
+        <p id="hbSimpleCatMsg" class="tiny muted" style="margin-top:10px;"></p>
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
+          <button type="button" class="btn btn-line" id="btnHbSimpleCatClear">Clear</button>
+          <button type="button" class="btn" id="btnHbSimpleCatSave">Save category</button>
+        </div>
+
+        <div class="hb-admin-category-list" id="hbSimpleCatList" style="margin-top:18px;"></div>
+      </div>
+
+      <div class="hb-admin-panel">
+        <div class="hb-admin-panel-head">
+          <div>
+            <h4 style="margin:0;">Handbook item</h4>
+            <p class="tiny muted" style="margin:6px 0 0;">Choose the category, add the message details, and keep the image option when needed.</p>
+          </div>
+        </div>
+
+        <div class="hb-admin-item-top">
+          <div class="field" style="margin:0;">
+            <label>Title</label>
+            <input id="hbSimpleItemTitle" type="text" maxlength="120" placeholder="e.g., Visitor parking rules" />
+          </div>
+          <div class="field" style="margin:0;">
+            <label>Category</label>
+            <select id="hbSimpleItemCategory"></select>
+          </div>
+          <div class="field" style="margin:0;">
+            <label>Status</label>
+            <select id="hbSimpleItemStatus">
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:14px;">
+          <label>Short summary (optional)</label>
+          <input id="hbSimpleItemSummary" type="text" maxlength="160" placeholder="Short text shown in the resident list" />
+        </div>
+
+        <div class="field">
+          <label>Content</label>
+          <textarea id="hbSimpleItemContent" rows="9" placeholder="Write the handbook content here."></textarea>
+        </div>
+
+        <div class="hb-admin-support-grid">
+          <div>
+            <div class="field">
+              <label>Link text (optional)</label>
+              <input id="hbSimpleItemLinkLabel" type="text" maxlength="80" placeholder="e.g., Open map" />
             </div>
-            <div class="hb-admin-items-card">
-              <div class="hb-admin-items-toolbar"><h4 style="margin:0;">Quick links</h4></div>
-              <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:8px;">
-                <a class="btn btn-line" href="handbook.html">Open Handbook</a>
-                <a class="btn btn-line" href="help-center.html">Open Help Center</a>
+            <div class="field">
+              <label>Link URL (optional)</label>
+              <input id="hbSimpleItemLinkUrl" type="url" placeholder="https://..." />
+            </div>
+            <div class="hb-inline-note">Use a link only when needed.</div>
+          </div>
+
+          <div>
+            <div class="field">
+              <label>Image (1 per item)</label>
+              <input id="hbSimpleItemImage" type="file" accept="image/*" />
+              <div class="tiny muted" style="margin-top:6px;">The image is compressed automatically before saving.</div>
+              <div class="actions" style="justify-content:flex-start; margin-top:8px;">
+                <button type="button" class="btn btn-line small" id="btnHbRemoveImage">Remove image</button>
               </div>
             </div>
+            <div class="field" style="margin-bottom:0;">
+              <label>Image preview</label>
+              <div id="hbSimpleImagePreview" class="hb-admin-image-preview">No image selected</div>
+            </div>
           </div>
         </div>
-      </details>
 
-      <details class="hb-admin-panel" open>
-        <summary style="cursor:pointer; list-style:none; font-weight:800; color:#23344b;">Help Center import &amp; publish</summary>
-        <div style="margin-top:14px; display:grid; gap:14px;">
-          <p class="tiny muted" style="margin:0;">Choose the package file yourself, then import and publish. Nothing is auto-imported from a hidden source.</p>
-          <div class="field" style="margin:0;">
-            <label for="hbImportFile">Help Center package file</label>
-            <input id="hbImportFile" type="file" accept=".json,application/json" />
-            <div class="tiny muted" style="margin-top:6px;">Pick the local file named <strong>help-centre-seed.json</strong>, then click import.</div>
-          </div>
-          <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:0;">
-            <button type="button" class="btn" id="btnHbImportSelected">Import selected file</button>
-            <button type="button" class="btn btn-line" id="btnHbExportCurrent">Export current package</button>
-          </div>
-          <p id="hbImportMsg" class="tiny muted" style="margin:0;"></p>
-          <div class="hb-admin-items-card">
-            <div class="hb-admin-items-toolbar">
-              <h4 style="margin:0;">Published Help Center package</h4>
-              <span class="tiny muted" id="hbImportSummary">No package loaded yet.</span>
-            </div>
-            <div id="hbPackageList" class="hb-admin-items-list"></div>
-          </div>
+        <p id="hbSimpleItemMsg" class="tiny muted" style="margin-top:10px;"></p>
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
+          <button type="button" class="btn btn-line" id="btnHbSimpleItemDelete" style="display:none;">Delete item</button>
+          <button type="button" class="btn btn-line" id="btnHbSimpleItemClear">Clear</button>
+          <button type="button" class="btn" id="btnHbSimpleItemSave">Save item</button>
         </div>
-      </details>
 
-      <details class="hb-admin-panel">
-        <summary style="cursor:pointer; list-style:none; font-weight:800; color:#23344b;">Help Center articles</summary>
-        <div style="margin-top:14px; display:grid; gap:14px;">
-          <p class="tiny muted" style="margin:0;">Edit or remove published Help Center articles for Resident, Admin or Owner views.</p>
-          <div class="hb-admin-item-top">
-            <div class="field" style="margin:0;">
-              <label>View</label>
-              <select id="hbPkgRole">
-                <option value="resident">Resident Help</option>
-                <option value="admin">Admin Guidance</option>
-                <option value="owner">Owner Oversight</option>
-              </select>
-            </div>
-            <div class="field" style="margin:0;">
-              <label>Section</label>
-              <select id="hbPkgSection"></select>
-            </div>
-            <div class="field" style="margin:0;">
-              <label>Linked page</label>
-              <input id="hbPkgLinkedPage" type="text" placeholder="e.g., dashboard.html" />
-            </div>
+        <div class="hb-admin-items-card">
+          <div class="hb-admin-items-toolbar">
+            <h4 style="margin:0;">Registered items</h4>
+            <input id="hbSimpleItemSearch" type="text" placeholder="Search item title..." />
           </div>
-          <div class="field" style="margin-top:0;">
-            <label>Article title</label>
-            <input id="hbPkgTitle" type="text" maxlength="140" placeholder="Article title" />
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Summary</label>
-            <input id="hbPkgSummary" type="text" maxlength="220" placeholder="Short summary shown above the article" />
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Content</label>
-            <textarea id="hbPkgContent" rows="12" placeholder="Markdown or plain text content"></textarea>
-          </div>
-          <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:0;">
-            <button type="button" class="btn btn-line" id="btnHbPkgClear">Clear</button>
-            <button type="button" class="btn btn-line" id="btnHbPkgDelete" style="display:none;">Remove article</button>
-            <button type="button" class="btn" id="btnHbPkgSave">Save article</button>
-          </div>
-          <p id="hbPkgMsg" class="tiny muted" style="margin:0;"></p>
+          <div id="hbSimpleItemList" class="hb-admin-items-list"></div>
+          <p id="hbSimpleItemEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No handbook items yet.</p>
         </div>
-      </details>
+      </div>
     </div>
   </section>
 
   <!-- ================= PROJECTS ================= -->
-
   <section class="card admin-tab-content" id="tabProjects" style="display:none;">
     <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
       <div>
@@ -3360,7 +3398,6 @@
     { key:'projects:tab_builder', label:'Projects · Build project', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
     { key:'projects:tab_published', label:'Projects · Confirm sending', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
     { key:'page:handbook', label:'Handbook', group:'Site pages', indent:0, defaults:{ public:true } },
-    { key:'page:help_center', label:'Help Center', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:privacy', label:'Privacy Policy', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:login', label:'Login / Register', group:'Site pages', indent:0, defaults:{ public:true } },
 
@@ -4048,214 +4085,7 @@
   function parkingClearImport(){ const reg = parkingRegistryLoad(); reg.allocations = []; reg.importMeta = null; parkingRegistrySave(reg); parkingRenderAdmin(); }
   function parkingRemovePolicy(){ const reg = parkingRegistryLoad(); reg.policy = null; parkingRegistrySave(reg); try{ localStorage.removeItem(window.ANW_KEYS.PARKING_POLICY); }catch(_){} parkingRenderAdmin(); }
   function parkingExportCsv(){ const rows = parkingFilterRows(parkingBuildRows()); const head = ['Resident','Address','Eircode','Parking Space No.','Type','Status','Vehicles','Owner Check','Policy','Updated']; const lines = [head.join(',')].concat(rows.map(r=>[r.resident,r.address,r.eircode,r.space,r.type,r.status,r.vehicles,r.ownerCheck,r.policy,r.updated].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','))); downloadText('parking-registry.csv', lines.join('\n')); }
-  function parkingExportPdf(){ const rows = parkingFilterRows(parkingBuildRows()); const win = window.open('', '_blank'); if(!win) return; win.document.write('<html><head><title>Parking Registry</title><style>body{font-family:Arial,sans-serif;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}h1{font-size:20px}</style></head><body><h1>Parking & Vehicles Report</h1><table><thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.resident)}</td><td>${esc(r.address)}</td><td>${esc(r.eircode)}</td><td>${esc(r.space)}</td><td>${esc(r.type)}</td><td>${esc(r.status)}</td><td>${esc(r.vehicles)}</td><td>${esc(r.ownerCheck)}</td><td>${esc(r.updated)}</td></tr>`).join('')+'</tbody></table>
-<script>
-(function(){
-  'use strict';
-  const STORE_KEY = 'anw_help_center_seed_v2';
-  const $id = (id) => document.getElementById(id);
-  let handbookPackage = null;
-  let currentArticleId = '';
-
-  function msg(id, text, ok){
-    const el = $id(id);
-    if(!el) return;
-    el.textContent = text || '';
-    el.style.color = ok === true ? '#215b3f' : (ok === false ? '#9f3a38' : '');
-  }
-  async function loadStore(key, fallback){
-    try{
-      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
-      if(!res.ok) throw new Error('store load failed');
-      return await res.json();
-    }catch(_){ return fallback; }
-  }
-  async function saveStore(key, value){
-    const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify(value)
-    });
-    if(!res.ok) throw new Error('store save failed');
-  }
-  function slugify(value){
-    return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-  }
-  function validatePackage(pkg){
-    return !!(pkg && Array.isArray(pkg.sections) && Array.isArray(pkg.articles) && pkg.views);
-  }
-  function sectionTitle(sectionId){
-    const found = (handbookPackage.sections || []).find(function(s){ return s.id === sectionId; });
-    return found ? found.title : sectionId;
-  }
-  function ensureSectionOptions(){
-    const select = $id('hbPkgSection');
-    if(!select || !handbookPackage) return;
-    select.innerHTML = (handbookPackage.sections || []).map(function(section){
-      return '<option value="' + section.id + '">' + section.title + '</option>';
-    }).join('');
-  }
-  function clearEditor(){
-    currentArticleId = '';
-    if($id('hbPkgRole')) $id('hbPkgRole').value = 'resident';
-    if($id('hbPkgSection')) $id('hbPkgSection').selectedIndex = 0;
-    if($id('hbPkgTitle')) $id('hbPkgTitle').value = '';
-    if($id('hbPkgSummary')) $id('hbPkgSummary').value = '';
-    if($id('hbPkgContent')) $id('hbPkgContent').value = '';
-    if($id('hbPkgLinkedPage')) $id('hbPkgLinkedPage').value = '';
-    if($id('btnHbPkgDelete')) $id('btnHbPkgDelete').style.display = 'none';
-    msg('hbPkgMsg', '', null);
-  }
-  function fillEditor(articleId){
-    const article = (handbookPackage.articles || []).find(function(item){ return item.id === articleId; });
-    if(!article) return;
-    currentArticleId = article.id;
-    $id('hbPkgRole').value = article.role || 'resident';
-    $id('hbPkgSection').value = article.sectionId || '';
-    $id('hbPkgTitle').value = article.title || '';
-    $id('hbPkgSummary').value = article.summary || '';
-    $id('hbPkgContent').value = article.contentMd || '';
-    $id('hbPkgLinkedPage').value = article.linkedPage || '';
-    $id('btnHbPkgDelete').style.display = 'inline-flex';
-    msg('hbPkgMsg', 'Article loaded into the editor.', true);
-  }
-  function renderPackage(){
-    ensureSectionOptions();
-    const wrap = $id('hbPackageList');
-    const summary = $id('hbImportSummary');
-    if(!wrap || !summary) return;
-    if(!validatePackage(handbookPackage)){
-      wrap.innerHTML = '<div class="tiny muted">No package loaded yet.</div>';
-      summary.textContent = 'No package loaded yet.';
-      return;
-    }
-    const counts = (handbookPackage.articles || []).reduce(function(acc, item){
-      acc[item.role] = (acc[item.role] || 0) + 1;
-      return acc;
-    }, {});
-    summary.textContent = 'Resident: ' + (counts.resident || 0) + ' · Admin: ' + (counts.admin || 0) + ' · Owner: ' + (counts.owner || 0);
-    wrap.innerHTML = (handbookPackage.articles || []).map(function(article){
-      return '<div class="hb-admin-item-row">'
-        + '<div class="hb-admin-item-meta">'
-        + '<div class="hb-admin-item-title">' + article.title + '</div>'
-        + '<div class="hb-admin-item-sub">' + sectionTitle(article.sectionId) + ' · ' + article.role + '</div>'
-        + '</div>'
-        + '<div class="hb-admin-row-actions">'
-        + '<button type="button" class="btn btn-line small" data-hb-pkg-edit="' + article.id + '">Edit</button>'
-        + '<button type="button" class="btn btn-line small" data-hb-pkg-delete="' + article.id + '">Remove</button>'
-        + '</div>'
-        + '</div>';
-    }).join('');
-  }
-  async function importSelectedFile(){
-    const input = $id('hbImportFile');
-    const file = input && input.files && input.files[0];
-    if(!file){
-      msg('hbImportMsg', 'Choose the handbook package file first.', false);
-      return;
-    }
-    let parsed;
-    try{ parsed = JSON.parse(await file.text()); }catch(_){
-      msg('hbImportMsg', 'The selected file is not valid JSON.', false);
-      return;
-    }
-    if(!validatePackage(parsed)){
-      msg('hbImportMsg', 'The selected file is missing handbook sections, articles or views.', false);
-      return;
-    }
-    handbookPackage = parsed;
-    await saveStore(STORE_KEY, handbookPackage);
-    renderPackage();
-    clearEditor();
-    msg('hbImportMsg', 'Handbook package imported successfully from ' + file.name + '.', true);
-  }
-  function exportCurrentPackage(){
-    if(!validatePackage(handbookPackage)){
-      msg('hbImportMsg', 'There is no published Help Center package to export yet.', false);
-      return;
-    }
-    const blob = new Blob([JSON.stringify(handbookPackage, null, 2)], { type:'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'aderrig-handbook-export.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-  async function saveArticle(){
-    if(!validatePackage(handbookPackage)){
-      msg('hbPkgMsg', 'Import a handbook package first.', false);
-      return;
-    }
-    const role = String($id('hbPkgRole').value || 'resident');
-    const sectionId = String($id('hbPkgSection').value || '').trim();
-    const title = String($id('hbPkgTitle').value || '').trim();
-    const summary = String($id('hbPkgSummary').value || '').trim();
-    const contentMd = String($id('hbPkgContent').value || '').trim();
-    const linkedPage = String($id('hbPkgLinkedPage').value || '').trim();
-    if(!sectionId || !title || !contentMd){
-      msg('hbPkgMsg', 'Section, title and content are required.', false);
-      return;
-    }
-    const article = {
-      id: currentArticleId || [sectionId, slugify(title), role].join('-'),
-      role: role,
-      sectionId: sectionId,
-      title: title,
-      summary: summary,
-      contentMd: contentMd,
-      linkedPage: linkedPage,
-      updatedAt: new Date().toISOString().slice(0,10)
-    };
-    const list = Array.isArray(handbookPackage.articles) ? handbookPackage.articles.slice() : [];
-    const index = list.findIndex(function(item){ return item.id === article.id; });
-    if(index >= 0) list[index] = article; else list.push(article);
-    handbookPackage.articles = list;
-    await saveStore(STORE_KEY, handbookPackage);
-    renderPackage();
-    fillEditor(article.id);
-    msg('hbPkgMsg', 'Article saved to the published Help Center package.', true);
-  }
-  async function deleteArticle(articleId){
-    if(!validatePackage(handbookPackage)) return;
-    if(!window.confirm('Remove this handbook article from the published package?')) return;
-    handbookPackage.articles = (handbookPackage.articles || []).filter(function(item){ return item.id !== articleId; });
-    await saveStore(STORE_KEY, handbookPackage);
-    renderPackage();
-    clearEditor();
-    msg('hbPkgMsg', 'Article removed from the published Help Center package.', true);
-  }
-  async function bootHandbookImport(){
-    if(!$id('tabHandbook')) return;
-    handbookPackage = await loadStore(STORE_KEY, null);
-    if(!validatePackage(handbookPackage)){
-      handbookPackage = { version:'', views:{ resident:{label:'Resident Help'}, admin:{label:'Admin Guidance'}, owner:{label:'Owner Oversight'} }, sections:[], articles:[] };
-    }
-    renderPackage();
-    clearEditor();
-    $id('btnHbImportSelected')?.addEventListener('click', function(){ importSelectedFile().catch(function(){ msg('hbImportMsg', 'Unable to import the selected file.', false); }); });
-    $id('btnHbExportCurrent')?.addEventListener('click', exportCurrentPackage);
-    $id('btnHbPkgClear')?.addEventListener('click', clearEditor);
-    $id('btnHbPkgSave')?.addEventListener('click', function(){ saveArticle().catch(function(){ msg('hbPkgMsg', 'Unable to save the article.', false); }); });
-    $id('btnHbPkgDelete')?.addEventListener('click', function(){ if(currentArticleId) deleteArticle(currentArticleId).catch(function(){ msg('hbPkgMsg', 'Unable to remove the article.', false); }); });
-    $id('hbPackageList')?.addEventListener('click', function(event){
-      const editId = event.target && event.target.getAttribute('data-hb-pkg-edit');
-      const deleteId = event.target && event.target.getAttribute('data-hb-pkg-delete');
-      if(editId) fillEditor(editId);
-      if(deleteId) deleteArticle(deleteId).catch(function(){ msg('hbPkgMsg', 'Unable to remove the article.', false); });
-    });
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', bootHandbookImport, { once:true });
-  }else{
-    bootHandbookImport();
-  }
-})();
-</script>
-
-</body></html>'); win.document.close(); win.focus(); setTimeout(()=>win.print(), 300); }
+  function parkingExportPdf(){ const rows = parkingFilterRows(parkingBuildRows()); const win = window.open('', '_blank'); if(!win) return; win.document.write('<html><head><title>Parking Registry</title><style>body{font-family:Arial,sans-serif;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}h1{font-size:20px}</style></head><body><h1>Parking & Vehicles Report</h1><table><thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.resident)}</td><td>${esc(r.address)}</td><td>${esc(r.eircode)}</td><td>${esc(r.space)}</td><td>${esc(r.type)}</td><td>${esc(r.status)}</td><td>${esc(r.vehicles)}</td><td>${esc(r.ownerCheck)}</td><td>${esc(r.updated)}</td></tr>`).join('')+'</tbody></table></body></html>'); win.document.close(); win.focus(); setTimeout(()=>win.print(), 300); }
   async function parkingSendNotice(row){ if(!row) return; const message = prompt('Message to resident about Parking & Vehicles:', 'Your parking registration needs attention. Please review your Parking & Vehicles section and update the required details.'); if(!message) return; const notices = sanitizeNoticeCollection(await anwLoadSafe(KEY_NOTICES, [])); notices.push({ id:'parking-'+Date.now(), title:'Parking & Vehicles update required', message:String(message), createdAt:new Date().toISOString(), createdBy:'admin', targetEmails:[row.residentEmail].filter(Boolean), category:'parking' }); await anwSaveSafe(KEY_NOTICES, notices); await renderNoticesList(); alert('Notice created for the selected resident.'); }
   function parkingBindAdmin(){ byId('parkingImportInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandleImport(file); e.target.value=''; }); byId('parkingPolicyInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandlePolicy(file); e.target.value=''; }); byId('btnParkingClearImport')?.addEventListener('click', parkingClearImport); byId('btnParkingRemovePolicy')?.addEventListener('click', parkingRemovePolicy); byId('btnParkingTemplate')?.addEventListener('click', ()=>downloadText('parking-template.csv', `address,eircode,parking space no.,parking space no. 2,type,has parking
 12 Example Avenue,D15X9T2,101,102,Double,Yes
@@ -5183,213 +5013,6 @@
 })();
 </script>
 
-
-
-<script>
-(function(){
-  'use strict';
-  const STORE_KEY = 'anw_help_center_seed_v2';
-  const $id = (id) => document.getElementById(id);
-  let handbookPackage = null;
-  let currentArticleId = '';
-
-  function msg(id, text, ok){
-    const el = $id(id);
-    if(!el) return;
-    el.textContent = text || '';
-    el.style.color = ok === true ? '#215b3f' : (ok === false ? '#9f3a38' : '');
-  }
-  async function loadStore(key, fallback){
-    try{
-      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
-      if(!res.ok) throw new Error('store load failed');
-      return await res.json();
-    }catch(_){ return fallback; }
-  }
-  async function saveStore(key, value){
-    const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify(value)
-    });
-    if(!res.ok) throw new Error('store save failed');
-  }
-  function slugify(value){
-    return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-  }
-  function validatePackage(pkg){
-    return !!(pkg && Array.isArray(pkg.sections) && Array.isArray(pkg.articles) && pkg.views);
-  }
-  function sectionTitle(sectionId){
-    const found = (handbookPackage.sections || []).find(function(s){ return s.id === sectionId; });
-    return found ? found.title : sectionId;
-  }
-  function ensureSectionOptions(){
-    const select = $id('hbPkgSection');
-    if(!select || !handbookPackage) return;
-    select.innerHTML = (handbookPackage.sections || []).map(function(section){
-      return '<option value="' + section.id + '">' + section.title + '</option>';
-    }).join('');
-  }
-  function clearEditor(){
-    currentArticleId = '';
-    if($id('hbPkgRole')) $id('hbPkgRole').value = 'resident';
-    if($id('hbPkgSection')) $id('hbPkgSection').selectedIndex = 0;
-    if($id('hbPkgTitle')) $id('hbPkgTitle').value = '';
-    if($id('hbPkgSummary')) $id('hbPkgSummary').value = '';
-    if($id('hbPkgContent')) $id('hbPkgContent').value = '';
-    if($id('hbPkgLinkedPage')) $id('hbPkgLinkedPage').value = '';
-    if($id('btnHbPkgDelete')) $id('btnHbPkgDelete').style.display = 'none';
-    msg('hbPkgMsg', '', null);
-  }
-  function fillEditor(articleId){
-    const article = (handbookPackage.articles || []).find(function(item){ return item.id === articleId; });
-    if(!article) return;
-    currentArticleId = article.id;
-    $id('hbPkgRole').value = article.role || 'resident';
-    $id('hbPkgSection').value = article.sectionId || '';
-    $id('hbPkgTitle').value = article.title || '';
-    $id('hbPkgSummary').value = article.summary || '';
-    $id('hbPkgContent').value = article.contentMd || '';
-    $id('hbPkgLinkedPage').value = article.linkedPage || '';
-    $id('btnHbPkgDelete').style.display = 'inline-flex';
-    msg('hbPkgMsg', 'Article loaded into the editor.', true);
-  }
-  function renderPackage(){
-    ensureSectionOptions();
-    const wrap = $id('hbPackageList');
-    const summary = $id('hbImportSummary');
-    if(!wrap || !summary) return;
-    if(!validatePackage(handbookPackage)){
-      wrap.innerHTML = '<div class="tiny muted">No package loaded yet.</div>';
-      summary.textContent = 'No package loaded yet.';
-      return;
-    }
-    const counts = (handbookPackage.articles || []).reduce(function(acc, item){
-      acc[item.role] = (acc[item.role] || 0) + 1;
-      return acc;
-    }, {});
-    summary.textContent = 'Resident: ' + (counts.resident || 0) + ' · Admin: ' + (counts.admin || 0) + ' · Owner: ' + (counts.owner || 0);
-    wrap.innerHTML = (handbookPackage.articles || []).map(function(article){
-      return '<div class="hb-admin-item-row">'
-        + '<div class="hb-admin-item-meta">'
-        + '<div class="hb-admin-item-title">' + article.title + '</div>'
-        + '<div class="hb-admin-item-sub">' + sectionTitle(article.sectionId) + ' · ' + article.role + '</div>'
-        + '</div>'
-        + '<div class="hb-admin-row-actions">'
-        + '<button type="button" class="btn btn-line small" data-hb-pkg-edit="' + article.id + '">Edit</button>'
-        + '<button type="button" class="btn btn-line small" data-hb-pkg-delete="' + article.id + '">Remove</button>'
-        + '</div>'
-        + '</div>';
-    }).join('');
-  }
-  async function importSelectedFile(){
-    const input = $id('hbImportFile');
-    const file = input && input.files && input.files[0];
-    if(!file){
-      msg('hbImportMsg', 'Choose the handbook package file first.', false);
-      return;
-    }
-    let parsed;
-    try{ parsed = JSON.parse(await file.text()); }catch(_){
-      msg('hbImportMsg', 'The selected file is not valid JSON.', false);
-      return;
-    }
-    if(!validatePackage(parsed)){
-      msg('hbImportMsg', 'The selected file is missing handbook sections, articles or views.', false);
-      return;
-    }
-    handbookPackage = parsed;
-    await saveStore(STORE_KEY, handbookPackage);
-    renderPackage();
-    clearEditor();
-    msg('hbImportMsg', 'Handbook package imported successfully from ' + file.name + '.', true);
-  }
-  function exportCurrentPackage(){
-    if(!validatePackage(handbookPackage)){
-      msg('hbImportMsg', 'There is no published Help Center package to export yet.', false);
-      return;
-    }
-    const blob = new Blob([JSON.stringify(handbookPackage, null, 2)], { type:'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'aderrig-handbook-export.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-  async function saveArticle(){
-    if(!validatePackage(handbookPackage)){
-      msg('hbPkgMsg', 'Import a handbook package first.', false);
-      return;
-    }
-    const role = String($id('hbPkgRole').value || 'resident');
-    const sectionId = String($id('hbPkgSection').value || '').trim();
-    const title = String($id('hbPkgTitle').value || '').trim();
-    const summary = String($id('hbPkgSummary').value || '').trim();
-    const contentMd = String($id('hbPkgContent').value || '').trim();
-    const linkedPage = String($id('hbPkgLinkedPage').value || '').trim();
-    if(!sectionId || !title || !contentMd){
-      msg('hbPkgMsg', 'Section, title and content are required.', false);
-      return;
-    }
-    const article = {
-      id: currentArticleId || [sectionId, slugify(title), role].join('-'),
-      role: role,
-      sectionId: sectionId,
-      title: title,
-      summary: summary,
-      contentMd: contentMd,
-      linkedPage: linkedPage,
-      updatedAt: new Date().toISOString().slice(0,10)
-    };
-    const list = Array.isArray(handbookPackage.articles) ? handbookPackage.articles.slice() : [];
-    const index = list.findIndex(function(item){ return item.id === article.id; });
-    if(index >= 0) list[index] = article; else list.push(article);
-    handbookPackage.articles = list;
-    await saveStore(STORE_KEY, handbookPackage);
-    renderPackage();
-    fillEditor(article.id);
-    msg('hbPkgMsg', 'Article saved to the published Help Center package.', true);
-  }
-  async function deleteArticle(articleId){
-    if(!validatePackage(handbookPackage)) return;
-    if(!window.confirm('Remove this handbook article from the published package?')) return;
-    handbookPackage.articles = (handbookPackage.articles || []).filter(function(item){ return item.id !== articleId; });
-    await saveStore(STORE_KEY, handbookPackage);
-    renderPackage();
-    clearEditor();
-    msg('hbPkgMsg', 'Article removed from the published Help Center package.', true);
-  }
-  async function bootHandbookImport(){
-    if(!$id('tabHandbook')) return;
-    handbookPackage = await loadStore(STORE_KEY, null);
-    if(!validatePackage(handbookPackage)){
-      handbookPackage = { version:'', views:{ resident:{label:'Resident Help'}, admin:{label:'Admin Guidance'}, owner:{label:'Owner Oversight'} }, sections:[], articles:[] };
-    }
-    renderPackage();
-    clearEditor();
-    $id('btnHbImportSelected')?.addEventListener('click', function(){ importSelectedFile().catch(function(){ msg('hbImportMsg', 'Unable to import the selected file.', false); }); });
-    $id('btnHbExportCurrent')?.addEventListener('click', exportCurrentPackage);
-    $id('btnHbPkgClear')?.addEventListener('click', clearEditor);
-    $id('btnHbPkgSave')?.addEventListener('click', function(){ saveArticle().catch(function(){ msg('hbPkgMsg', 'Unable to save the article.', false); }); });
-    $id('btnHbPkgDelete')?.addEventListener('click', function(){ if(currentArticleId) deleteArticle(currentArticleId).catch(function(){ msg('hbPkgMsg', 'Unable to remove the article.', false); }); });
-    $id('hbPackageList')?.addEventListener('click', function(event){
-      const editId = event.target && event.target.getAttribute('data-hb-pkg-edit');
-      const deleteId = event.target && event.target.getAttribute('data-hb-pkg-delete');
-      if(editId) fillEditor(editId);
-      if(deleteId) deleteArticle(deleteId).catch(function(){ msg('hbPkgMsg', 'Unable to remove the article.', false); });
-    });
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', bootHandbookImport, { once:true });
-  }else{
-    bootHandbookImport();
-  }
-})();
-</script>
 
 </body>
 </html>
