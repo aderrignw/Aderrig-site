@@ -15,7 +15,7 @@
         try {
           var api = window.ANWIdentity || null;
           if (!api || typeof api.requireRole !== 'function') return false;
-          var allowed = api.requireRole(['resident', 'owner'], {
+          var allowed = api.requireRole(['resident', 'admin', 'owner'], {
             redirectTo: 'login.html',
             onAuthorized: allowPage
           });
@@ -36,141 +36,76 @@
       });
     })();
   </script>
-  <title>Handbook — Aderrig NW</title>
+  <title>Help Center — Aderrig NW</title>
   <link rel="stylesheet" href="assets/style.css" />
   <style>
-    html.anw-preauth-hide body { visibility: hidden; }
-
+    html.anw-preauth-hide body { visibility:hidden; }
     :root{
-      --hb-border: rgba(17,24,39,.08);
-      --hb-text:#23344b;
-      --hb-muted:#6a7b90;
-      --hb-soft:#f7f9fb;
+      --hc-border: rgba(17,24,39,.08);
+      --hc-border-strong: rgba(47,111,87,.18);
+      --hc-text:#23344b;
+      --hc-muted:#6a7b90;
+      --hc-soft:#f7f9fb;
+      --hc-accent:#2f6f57;
+      --hc-accent-dark:#275b49;
+      --hc-accent-soft:#eef5f1;
+      --hc-blue:#365c96;
+      --hc-blue-soft:#eef3fb;
+      --hc-purple:#6d4aa0;
+      --hc-purple-soft:#f3eefb;
     }
-
-    .hb-wrap{display:grid;gap:16px}
-    .hb-top{
-      border:1px solid var(--hb-border);
-      border-radius:18px;
-      background:#fff;
-      padding:18px;
-      box-shadow:var(--shadow);
-    }
-    .hb-top h2{margin:0;color:var(--hb-text);font-size:1.15rem}
-    .hb-top p{margin:6px 0 0;color:var(--hb-muted);font-size:.9rem;line-height:1.5}
-
-    .hb-list{
-      border:1px solid var(--hb-border);
-      border-radius:18px;
-      background:#fff;
-      overflow:hidden;
-      box-shadow:var(--shadow);
-    }
-    .hb-head,.hb-row-main{
-      display:grid;
-      grid-template-columns:minmax(180px,1.5fr) minmax(180px,1.6fr) 120px 120px 110px;
-      gap:12px;
-      align-items:center;
-    }
-    .hb-head{
-      padding:12px 16px;
-      background:var(--hb-soft);
-      border-bottom:1px solid var(--hb-border);
-      color:#627489;
-      font-size:.76rem;
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:.04em;
-    }
-    .hb-row{border-bottom:1px solid var(--hb-border);background:#fff}
-    .hb-row:last-child{border-bottom:0}
-    .hb-row-main{padding:14px 16px}
-    .hb-title{font-size:.94rem;font-weight:800;color:var(--hb-text);line-height:1.3}
-    .hb-summary{color:var(--hb-muted);font-size:.87rem;line-height:1.45}
-    .hb-date,.hb-category{color:#55677c;font-size:.85rem;font-weight:700}
-
-    .hb-btn{
-      display:inline-flex;align-items:center;justify-content:center;
-      min-height:30px;padding:0 10px;border-radius:9px;
-      border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);
-      text-decoration:none;font-size:.8rem;font-weight:800;cursor:pointer;
-    }
-    .hb-btn:hover{text-decoration:none;background:#f8fbf9}
-
-    .hb-details{display:none;padding:0 16px 16px 16px;background:#fcfdfd}
-    .hb-row.open .hb-details{display:block}
-    .hb-details-card{
-      border:1px solid var(--hb-border);
-      border-radius:14px;background:#fff;padding:14px;display:grid;gap:12px;
-    }
-    .hb-content{color:#324458;font-size:.9rem;line-height:1.65}
-    .hb-content p:first-child{margin-top:0}
-
-    .hb-gallery{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-      gap:10px;
-    }
-    .hb-image-card{
-      border:1px solid var(--hb-border);
-      border-radius:12px;
-      overflow:hidden;background:#fff;
-    }
-    .hb-image-card a{display:block;color:inherit;text-decoration:none}
-    .hb-image{
-      width:100%;aspect-ratio:4 / 3;object-fit:cover;display:block;background:#eef3f0;
-    }
-    .hb-image-note{
-      padding:8px 10px;display:flex;justify-content:space-between;gap:8px;
-      font-size:.78rem;color:var(--hb-muted);
-    }
-    .hb-links{display:flex;gap:8px;flex-wrap:wrap}
-    .hb-empty{padding:16px;color:var(--hb-muted);font-size:.9rem}
-
-    .hb-lightbox{
-      position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-      padding:20px;z-index:9999;background:rgba(10,16,24,.76);backdrop-filter:blur(4px);
-    }
-    .hb-lightbox.open{display:flex}
-    .hb-lightbox-card{max-width:min(1080px,100%);max-height:100%;display:grid;gap:10px}
-    .hb-lightbox-tools{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
-    .hb-lightbox img{
-      max-width:100%;max-height:calc(100vh - 120px);display:block;border-radius:14px;
-      background:#fff;box-shadow:0 24px 60px rgba(0,0,0,.35);
-    }
-
-    @media (max-width: 980px){
-      .hb-head{display:none}
-      .hb-row-main{grid-template-columns:1fr;gap:8px}
-      .hb-summary-col::before,
-      .hb-date-col::before,
-      .hb-category-col::before,
-      .hb-action-col::before{
-        display:block;color:#7b8899;font-size:.72rem;font-weight:900;
-        text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;
-      }
-      .hb-summary-col::before{content:"Summary"}
-      .hb-date-col::before{content:"Date"}
-      .hb-category-col::before{content:"Category"}
-      .hb-action-col::before{content:"Action"}
-    }
+    body.page-handbook .site-footer{width:min(var(--container,1100px),calc(100% - 32px));margin:18px auto 0;padding:18px 0 26px}
+    body.page-handbook .footer-row{width:100%;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+    @media (min-width:768px){body.page-handbook .footer-row{flex-direction:row;justify-content:space-between;align-items:center}}
+    .hc-wrap{display:grid;gap:18px}
+    .hc-hero,.hc-sidebar,.hc-content{border:1px solid var(--hc-border);border-radius:22px;background:#fff;box-shadow:var(--shadow)}
+    .hc-hero{padding:22px}
+    .hc-hero-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+    .hc-eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:var(--hc-accent-soft);color:var(--hc-accent-dark);font-weight:800;font-size:.78rem;letter-spacing:.02em}
+    .hc-hero h2{margin:12px 0 6px;color:var(--hc-text);font-size:1.45rem;line-height:1.15}
+    .hc-hero p{margin:0;color:var(--hc-muted);font-size:.95rem;line-height:1.6;max-width:760px}
+    .hc-role-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .hc-pill,.hc-action-link{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--hc-border);background:#fff;color:var(--hc-text);font-size:.82rem;font-weight:800;text-decoration:none;cursor:pointer}
+    .hc-pill.active.role-resident{background:var(--hc-accent);border-color:var(--hc-accent);color:#fff}
+    .hc-pill.active.role-admin{background:var(--hc-blue);border-color:var(--hc-blue);color:#fff}
+    .hc-pill.active.role-owner{background:var(--hc-purple);border-color:var(--hc-purple);color:#fff}
+    .hc-action-link{border-radius:10px}
+    .hc-shell{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px}
+    .hc-sidebar{padding:18px}
+    .hc-content{padding:22px}
+    .hc-side-title{margin:0;color:var(--hc-text);font-size:1rem}
+    .hc-side-sub{margin:6px 0 0;color:var(--hc-muted);font-size:.82rem;line-height:1.55}
+    .hc-cat-list,.hc-article-list{display:grid;gap:10px;margin-top:16px}
+    .hc-cat-btn,.hc-article-btn{width:100%;text-align:left;border:1px solid var(--hc-border);background:#fff;border-radius:14px;padding:12px 14px;cursor:pointer}
+    .hc-cat-btn.active{border-color:var(--hc-border-strong);background:var(--hc-accent-soft)}
+    .hc-article-btn.active{border-color:var(--hc-border-strong);background:#f8fbf9}
+    .hc-cat-title,.hc-article-title{display:block;color:var(--hc-text);font-weight:800}
+    .hc-cat-title{font-size:.9rem}.hc-article-title{font-size:.88rem;line-height:1.3}
+    .hc-cat-meta,.hc-article-sub{display:block;color:var(--hc-muted);font-size:.78rem;line-height:1.45;margin-top:5px}
+    .hc-content h1{margin:0;color:var(--hc-text);font-size:1.35rem;line-height:1.2}
+    .hc-summary{margin:8px 0 0;color:var(--hc-muted);font-size:.92rem;line-height:1.6;max-width:760px}
+    .hc-meta-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .hc-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:var(--hc-soft);border:1px solid var(--hc-border);color:#4b5d72;font-size:.77rem;font-weight:800}
+    .hc-guide{margin-top:18px;border:1px solid var(--hc-border);border-radius:18px;background:#fbfcfb;padding:18px}
+    .hc-guide .markdown p:first-child{margin-top:0}.hc-guide .markdown h2{margin:0 0 10px;color:var(--hc-text);font-size:1.1rem}.hc-guide .markdown h3{margin:18px 0 8px;color:var(--hc-accent-dark);font-size:.96rem}
+    .hc-guide .markdown ul,.hc-guide .markdown ol{margin:8px 0 8px 20px;padding:0;color:#314459}.hc-guide .markdown li{margin:5px 0;line-height:1.55}.hc-guide .markdown p{margin:10px 0;color:#314459;font-size:.92rem;line-height:1.7}
+    .hc-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    .hc-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px}
+    .hc-gallery img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:14px;border:1px solid var(--hc-border);background:#eef3f0}
+    .hc-empty{padding:30px 18px;border:1px dashed var(--hc-border);border-radius:18px;background:#fafbfc;color:var(--hc-muted);font-size:.92rem;line-height:1.65}
+    @media (max-width:980px){.hc-shell{grid-template-columns:1fr}.hc-sidebar{order:2}.hc-content{order:1}}
   </style>
 </head>
 <body data-acl-loading="true" class="page-handbook">
 <header class="site-header">
   <div class="brand">
-    <a class="site-logo" href="index.html">
-      <img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/>
-    </a>
-    <div class="brand-text">
-      <h1>Aderrig NW</h1>
-      <p class="muted">Adamstown</p>
-    </div>
+    <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
+    <div class="brand-text"><h1>Aderrig NW</h1><p class="muted">Adamstown</p></div>
   </div>
   <nav class="nav">
     <a href="index.html">Home</a>
     <a href="about.html">About</a>
-    <a class="active" href="handbook.html">Handbook</a>
+    <a class="active" href="handbook.html">Help Center</a>
     <a href="report.html">Report</a>
     <a href="alerts.html">Community Alerts</a>
     <a href="projects.html">Community Projects</a>
@@ -182,45 +117,40 @@
 </header>
 
 <main class="container">
-  <div class="hb-wrap">
-    <section class="hb-top">
-      <h2>Resident handbook</h2>
-      <p>Simple handbook listing with title, short summary, date, category and details.</p>
+  <div class="hc-wrap">
+    <section class="hc-hero">
+      <div class="hc-hero-top">
+        <div>
+          <span class="hc-eyebrow">Help Center</span>
+          <h2 id="hcHeroTitle">Clear guidance, written directly for you</h2>
+          <p id="hcHeroText">If you are unsure where to go next, this Help Center will guide you page by page in clear Irish English, using the same flow as the live platform.</p>
+          <div class="hc-role-pills" id="hcRolePills"></div>
+        </div>
+        <div id="hcTopActions"></div>
+      </div>
     </section>
 
-    <section class="hb-list">
-      <div class="hb-head">
-        <div>Title</div>
-        <div>Summary</div>
-        <div>Date</div>
-        <div>Category</div>
-        <div>Action</div>
-      </div>
-      <div id="hbRows"></div>
+    <section class="hc-shell">
+      <aside class="hc-sidebar">
+        <h3 class="hc-side-title">Sections</h3>
+        <p class="hc-side-sub" id="hcSidebarIntro">Choose a section first, then open the article you need.</p>
+        <div class="hc-cat-list" id="hcCategoryList"></div>
+        <div class="hc-article-list" id="hcArticleList"></div>
+      </aside>
+
+      <section class="hc-content">
+        <div id="hcArticleWrap"></div>
+      </section>
     </section>
   </div>
 </main>
 
 <footer class="site-footer">
   <div class="footer-row">
-    <div class="footer-left">
-      <span class="page-status">Private Page</span>
-    </div>
-    <div class="footer-center">
-      © 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a>
-    </div>
+    <div class="footer-left"><span class="page-status">Private Page</span></div>
+    <div class="footer-center">© 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a></div>
   </div>
 </footer>
-
-<div id="hbLightbox" class="hb-lightbox" aria-hidden="true">
-  <div class="hb-lightbox-card">
-    <div class="hb-lightbox-tools">
-      <a id="hbLightboxDownload" class="hb-btn" href="#" download>Download image</a>
-      <button id="hbLightboxClose" type="button" class="hb-btn">Close</button>
-    </div>
-    <img id="hbLightboxImage" alt="Handbook image" src="" />
-  </div>
-</div>
 
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script src="assets/identity.js"></script>
@@ -229,312 +159,159 @@
 <script>
 (function(){
   'use strict';
-
   const KEYS = window.ANW_KEYS || {};
   const KEY_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
   const KEY_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
-  const KEY_HANDBOOK_READ_RECEIPTS = KEYS.HANDBOOK_READ_RECEIPTS || 'anw_handbook_read_receipts';
-
-  const $id = (id) => document.getElementById(id);
+  const $id = id => document.getElementById(id);
   let categories = [];
   let items = [];
-  let handbookReadReceipts = {};
+  let currentRole = 'resident';
+  let currentView = 'resident';
+  let currentCategoryId = '';
+  let currentGroupKey = '';
 
   function esc(value){
     return String(value == null ? '' : value)
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'",'&#39;');
+      .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
   }
-
-  function slugify(value){
-    return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-  }
-
-  function formatDate(value){
-    if(!value) return 'Latest update';
-    try{
-      const d = new Date(value);
-      if(Number.isNaN(d.getTime())) return 'Latest update';
-      return d.toLocaleDateString('en-IE', { day:'2-digit', month:'short', year:'numeric' });
-    }catch(_){
-      return 'Latest update';
-    }
-  }
-
+  function slugify(value){ return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
   async function loadStore(key, fallback){
     try{
       const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
       if(!res.ok) throw new Error('store load failed');
       return await res.json();
     }catch(_){
-      try{
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      }catch(__){
-        return fallback;
-      }
+      try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }catch(__){ return fallback; }
     }
   }
-
-  async function saveStore(key, value){
-    try{
-      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify(value)
-      });
-      if(!res.ok) throw new Error('store save failed');
-    }catch(_){
-      try{
-        localStorage.setItem(key, JSON.stringify(value));
-      }catch(__){}
+  function markdownToHtml(value){
+    const text = String(value || '').trim();
+    if(!text) return '<div class="hc-empty">No guidance has been published for this article yet.</div>';
+    const lines = text.split(/\r?\n/);
+    let html = '', listType = '';
+    for(const lineRaw of lines){
+      const trimmed = lineRaw.trim();
+      if(!trimmed){ if(listType){ html += '</' + listType + '>'; listType = ''; } continue; }
+      if(/^###\s+/.test(trimmed)){ if(listType){ html += '</' + listType + '>'; listType=''; } html += '<h3>' + esc(trimmed.replace(/^###\s+/, '')) + '</h3>'; continue; }
+      if(/^##\s+/.test(trimmed)){ if(listType){ html += '</' + listType + '>'; listType=''; } html += '<h2>' + esc(trimmed.replace(/^##\s+/, '')) + '</h2>'; continue; }
+      if(/^\d+\.\s+/.test(trimmed)){ if(listType !== 'ol'){ if(listType) html += '</' + listType + '>'; html += '<ol>'; listType = 'ol'; } html += '<li>' + esc(trimmed.replace(/^\d+\.\s+/, '')) + '</li>'; continue; }
+      if(/^[-*]\s+/.test(trimmed)){ if(listType !== 'ul'){ if(listType) html += '</' + listType + '>'; html += '<ul>'; listType = 'ul'; } html += '<li>' + esc(trimmed.replace(/^[-*]\s+/, '')) + '</li>'; continue; }
+      if(listType){ html += '</' + listType + '>'; listType=''; }
+      html += '<p>' + esc(trimmed) + '</p>';
     }
+    if(listType) html += '</' + listType + '>';
+    return html;
   }
-
-  function getCurrentResidentReadKey(){
-    try{
-      const user = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function'
-        ? window.netlifyIdentity.currentUser()
-        : null;
-      if(!user) return '';
-      const meta = user.user_metadata || {};
-      const app = user.app_metadata || {};
-      return String(
-        meta.regId || meta.regNo || meta.eircode || meta.email ||
-        user.email || user.id ||
-        app.regId || app.regNo || ''
-      ).trim().toLowerCase();
-    }catch(_){
-      return '';
-    }
-  }
-
-  function normalizeReadReceipts(value){
-    return (value && typeof value === 'object' && !Array.isArray(value)) ? value : {};
-  }
-
-  async function markHandbookItemRead(itemId){
-    const key = getCurrentResidentReadKey();
-    if(!itemId || !key) return;
-    handbookReadReceipts = normalizeReadReceipts(handbookReadReceipts);
-    const bucket = handbookReadReceipts[itemId] && typeof handbookReadReceipts[itemId] === 'object' && !Array.isArray(handbookReadReceipts[itemId])
-      ? handbookReadReceipts[itemId]
-      : {};
-    if(bucket[key]) return;
-    bucket[key] = new Date().toISOString();
-    handbookReadReceipts[itemId] = bucket;
-    await saveStore(KEY_HANDBOOK_READ_RECEIPTS, handbookReadReceipts);
-  }
-
   function normalizeCategories(list){
     return (Array.isArray(list) ? list : []).map((cat, index) => {
       const title = String((cat && (cat.title || cat.name)) || '').trim();
       if(!title) return null;
-      return {
-        id: String(cat.id || slugify(title) || ('category-' + (index + 1))),
-        title,
-        icon: String(cat.icon || '📘').trim() || '📘',
-        order: Number(cat.order) || (index + 1),
-        active: cat.active !== false
-      };
+      return { id: String(cat.id || slugify(title) || ('category-' + (index + 1))), title, icon: String(cat.icon || '📘').trim() || '📘', order: Number(cat.order) || (index + 1), active: cat.active !== false };
     }).filter(Boolean).sort((a,b) => (a.order - b.order) || a.title.localeCompare(b.title));
   }
-
   function normalizeItems(list){
-    return (Array.isArray(list) ? list : []).map((item, index) => {
-      const attachments = Array.isArray(item.attachments) ? item.attachments.filter(Boolean) : [];
-      const heroUrl = String(item.imageData || (item.image && item.image.dataUrl) || item.heroUrl || '').trim();
-      return {
-        id: String(item.id || ('hb-item-' + (index + 1))),
-        categoryId: String(item.categoryId || item.category || '').trim(),
-        categoryTitle: String(item.categoryTitle || '').trim(),
-        title: String(item.title || '').trim(),
-        summary: String(item.summary || item.excerpt || '').trim(),
-        content: String(item.content || '').trim(),
-        status: String(item.status || 'published').toLowerCase(),
-        url: String(item.url || item.linkUrl || '').trim(),
-        linkLabel: String(item.linkLabel || '').trim(),
-        heroUrl,
-        attachments,
-        updatedAt: String(item.updatedAt || item.createdAt || '').trim(),
-        createdAt: String(item.createdAt || '').trim()
-      };
-    }).filter(item => item.title && item.status === 'published').sort((a,b) => {
-      return String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')) || a.title.localeCompare(b.title);
-    });
+    return (Array.isArray(list) ? list : []).map((item, index) => ({
+      id: String(item.id || ('hb-item-' + (index + 1))),
+      groupKey: String(item.groupKey || item.pageKey || item.id || ('group-' + (index + 1))).trim(),
+      roleView: ['resident','admin','owner'].includes(String(item.roleView || '').toLowerCase()) ? String(item.roleView).toLowerCase() : 'resident',
+      categoryId: String(item.categoryId || item.category || '').trim(),
+      categoryTitle: String(item.categoryTitle || '').trim(),
+      title: String(item.title || '').trim(),
+      summary: String(item.summary || '').trim(),
+      content: String(item.content || '').trim(),
+      status: String(item.status || 'published').toLowerCase(),
+      url: String(item.url || item.linkUrl || '').trim(),
+      linkLabel: String(item.linkLabel || '').trim(),
+      heroUrl: String(item.heroUrl || item.imageData || '').trim(),
+      attachments: Array.isArray(item.attachments) ? item.attachments.filter(Boolean) : [],
+      updatedAt: String(item.updatedAt || item.createdAt || '').trim()
+    })).filter(item => item.title && item.status === 'published');
   }
-
-  function ensureCategoriesFromItems(){
-    const known = new Set(categories.map(cat => cat.id));
-    items.forEach(item => {
-      if(item.categoryId && !known.has(item.categoryId)){
-        categories.push({
-          id: item.categoryId,
-          title: item.categoryTitle || item.categoryId.replace(/-/g,' ').replace(/\b\w/g, m => m.toUpperCase()),
-          icon: '📘',
-          order: categories.length + 1,
-          active: true
-        });
-        known.add(item.categoryId);
+  function getRole(){
+    try{
+      if(typeof window.anwGetLoggedRole === 'function'){
+        const role = String(window.anwGetLoggedRole() || 'resident').toLowerCase();
+        if(role === 'owner') return 'owner';
+        if(role === 'admin') return 'admin';
       }
-    });
-    categories = categories.filter(cat => cat.active !== false).sort((a,b) => (a.order - b.order) || a.title.localeCompare(b.title));
+    }catch(_){}
+    return 'resident';
   }
-
-  function contentToHtml(content){
-    const value = String(content || '').trim();
-    if(!value) return '<p class="muted">No extra details were added for this message.</p>';
-    const hasHtml = /<\/?[a-z][\s\S]*>/i.test(value);
-    if(hasHtml) return value;
-    return value.split(/\n{2,}/).map(part => '<p>' + esc(part).replace(/\n/g, '<br>') + '</p>').join('');
+  function allowedViewsForRole(role){ if(role === 'owner') return ['resident','admin','owner']; if(role === 'admin') return ['admin']; return ['resident']; }
+  function getVisibleItems(){ const allowed = new Set(allowedViewsForRole(currentRole)); return items.filter(item => allowed.has(item.roleView)); }
+  function getItemsForCurrentView(){ return getVisibleItems().filter(item => item.roleView === currentView); }
+  function getCategoriesForCurrentView(){ const ids = new Set(getItemsForCurrentView().map(item => item.categoryId)); return categories.filter(cat => cat.active !== false && ids.has(cat.id)); }
+  function getArticlesForCurrentCategory(){ return getItemsForCurrentView().filter(item => !currentCategoryId || item.categoryId === currentCategoryId).sort((a,b) => a.title.localeCompare(b.title)); }
+  function getCurrentItem(){ const list = getArticlesForCurrentCategory(); return list.find(item => item.groupKey === currentGroupKey) || list[0] || null; }
+  function renderRolePills(){
+    const wrap = $id('hcRolePills'); if(!wrap) return;
+    wrap.innerHTML = allowedViewsForRole(currentRole).map(view => '<button type="button" class="hc-pill role-' + esc(view) + (view === currentView ? ' active' : '') + '" data-role-view="' + esc(view) + '">' + esc(view.charAt(0).toUpperCase() + view.slice(1)) + '</button>').join('');
   }
-
-  function collectImages(item){
-    const images = [];
-    if(item.heroUrl) images.push({ url:item.heroUrl, label:'Main image' });
-    (Array.isArray(item.attachments) ? item.attachments : []).forEach((att, index) => {
-      const url = String(att && att.url || '').trim();
-      if(!url) return;
-      const looksLikeImage = /\.(png|jpe?g|gif|webp|svg|bmp|avif)(\?.*)?$/i.test(url) || /^data:image\//i.test(url);
-      if(looksLikeImage){
-        images.push({
-          url,
-          label:String(att.label || ('Image ' + (index + 1))).trim() || ('Image ' + (index + 1))
-        });
-      }
-    });
-    const seen = new Set();
-    return images.filter(img => {
-      if(seen.has(img.url)) return false;
-      seen.add(img.url);
-      return true;
-    });
+  function renderHero(){
+    const labels = {
+      resident: { title:'You are in the resident Help Center', text:'If you are unsure how to complete a page, choose the section you need and I will guide you directly, step by step.' },
+      admin: { title:'You are viewing the admin guidance', text:'This view is written for admin use. It explains the operational detail behind each page and helps you manage content and workflow correctly.' },
+      owner: { title:'You are viewing the owner guidance', text:'As owner, you can compare how the same topic appears to Resident, Admin and Owner roles, while keeping final oversight of quality and publishing.' }
+    };
+    const cfg = labels[currentRole] || labels.resident;
+    $id('hcHeroTitle').textContent = cfg.title;
+    $id('hcHeroText').textContent = cfg.text;
+    $id('hcSidebarIntro').textContent = currentRole === 'owner' ? 'Choose a role view first if you want to compare the wording across audiences.' : 'Choose a section first, then open the article you need.';
+    const top = $id('hcTopActions');
+    if(top) top.innerHTML = (currentRole === 'admin' || currentRole === 'owner') ? '<a class="hc-action-link" href="admin.html">Open Handbook management</a>' : '';
   }
-
+  function renderSidebar(){
+    const cats = getCategoriesForCurrentView();
+    if(!currentCategoryId || !cats.some(cat => cat.id === currentCategoryId)) currentCategoryId = cats[0] ? cats[0].id : '';
+    const articles = getArticlesForCurrentCategory();
+    if(!currentGroupKey || !articles.some(item => item.groupKey === currentGroupKey)) currentGroupKey = articles[0] ? articles[0].groupKey : '';
+    $id('hcCategoryList').innerHTML = cats.length ? cats.map(cat => '<button type="button" class="hc-cat-btn' + (cat.id === currentCategoryId ? ' active' : '') + '" data-category-id="' + esc(cat.id) + '"><span class="hc-cat-title">' + esc((cat.icon || '📘') + ' ' + cat.title) + '</span><span class="hc-cat-meta">Open the guidance in this section</span></button>').join('') : '<div class="hc-empty">No sections are available for this role yet.</div>';
+    $id('hcArticleList').innerHTML = articles.length ? articles.map(item => '<button type="button" class="hc-article-btn' + (item.groupKey === currentGroupKey ? ' active' : '') + '" data-group-key="' + esc(item.groupKey) + '"><span class="hc-article-title">' + esc(item.title) + '</span><span class="hc-article-sub">' + esc(item.summary || 'Open this article to read the full guidance.') + '</span></button>').join('') : '<div class="hc-empty">No published articles were found in this section.</div>';
+  }
   function collectLinks(item){
     const links = [];
-    if(item.url){
-      links.push({ url:item.url, label:item.linkLabel || item.url });
-    }
-    (Array.isArray(item.attachments) ? item.attachments : []).forEach((att, index) => {
+    if(item.url) links.push({ label:item.linkLabel || 'Open page', url:item.url });
+    (Array.isArray(item.attachments) ? item.attachments : []).forEach(att => {
       const url = String(att && att.url || '').trim();
-      if(!url) return;
-      const looksLikeImage = /\.(png|jpe?g|gif|webp|svg|bmp|avif)(\?.*)?$/i.test(url) || /^data:image\//i.test(url);
-      if(looksLikeImage) return;
-      links.push({
-        url,
-        label:String(att.label || ('Attachment ' + (index + 1))).trim()
-      });
+      if(!url || url === item.url) return;
+      links.push({ label:String(att && att.label || 'Open attachment').trim(), url });
     });
     return links;
   }
-
-  function renderRows(){
-    const wrap = $id('hbRows');
-    if(!wrap) return;
-
-    if(!items.length){
-      wrap.innerHTML = '<div class="hb-empty">No resident handbook messages were found right now.</div>';
-      return;
-    }
-
-    wrap.innerHTML = items.map(item => {
-      const category = categories.find(cat => cat.id === item.categoryId);
-      const images = collectImages(item);
-      const links = collectLinks(item);
-
-      return '<article class="hb-row" data-item-id="' + esc(item.id) + '">'
-        + '<div class="hb-row-main">'
-        +   '<div class="hb-title-col"><div class="hb-title">' + esc(item.title) + '</div></div>'
-        +   '<div class="hb-summary-col"><div class="hb-summary">' + esc(item.summary || 'Open this message to read more details.') + '</div></div>'
-        +   '<div class="hb-date-col"><div class="hb-date">' + esc(formatDate(item.updatedAt || item.createdAt)) + '</div></div>'
-        +   '<div class="hb-category-col"><div class="hb-category">' + esc(category ? category.title : (item.categoryTitle || 'General')) + '</div></div>'
-        +   '<div class="hb-action-col"><button type="button" class="hb-btn" data-toggle-details="' + esc(item.id) + '">View more</button></div>'
-        + '</div>'
-        + '<div class="hb-details">'
-        +   '<div class="hb-details-card">'
-        +     '<div class="hb-content">' + contentToHtml(item.content) + '</div>'
-        +     (images.length ? '<div class="hb-gallery">' + images.map(function(image){
-                return '<div class="hb-image-card"><a href="#" data-open-image="' + esc(item.id) + '" data-image-url="' + esc(image.url) + '" data-image-label="' + esc(image.label) + '"><img class="hb-image" src="' + esc(image.url) + '" alt="' + esc(image.label || item.title) + '"><div class="hb-image-note"><span>Open image</span><span>Download</span></div></a></div>';
-              }).join('') + '</div>' : '')
-        +     (links.length ? '<div class="hb-links">' + links.map(function(link){
-                return '<a class="hb-btn" href="' + esc(link.url) + '" target="_blank" rel="noopener">' + esc(link.label) + '</a>';
-              }).join('') + '</div>' : '')
-        +   '</div>'
-        + '</div>'
-        + '</article>';
-    }).join('');
+  function collectImages(item){
+    const images = [];
+    if(item.heroUrl) images.push(item.heroUrl);
+    (Array.isArray(item.attachments) ? item.attachments : []).forEach(att => {
+      const url = String(att && att.url || '').trim();
+      if(/^(data:image\/|.*\.(png|jpe?g|gif|webp|svg|bmp|avif)(\?.*)?$)/i.test(url)) images.push(url);
+    });
+    return [...new Set(images)];
   }
-
-  function toggleDetails(itemId){
-    const row = document.querySelector('[data-item-id="' + CSS.escape(itemId) + '"]');
-    if(!row) return;
-    row.classList.toggle('open');
-    if(row.classList.contains('open')) markHandbookItemRead(itemId).catch(function(){});
+  function renderArticle(){
+    const wrap = $id('hcArticleWrap'); if(!wrap) return;
+    const item = getCurrentItem();
+    if(!item){ wrap.innerHTML = '<div class="hc-empty">No article is available for this role right now.</div>'; return; }
+    const links = collectLinks(item), images = collectImages(item), roleLabel = currentView.charAt(0).toUpperCase() + currentView.slice(1);
+    let dateLabel = 'Latest';
+    try{ if(item.updatedAt) dateLabel = new Date(item.updatedAt).toLocaleDateString('en-IE', { day:'2-digit', month:'short', year:'numeric' }); }catch(_){}
+    wrap.innerHTML = '<div><h1>' + esc(item.title) + '</h1><p class="hc-summary">' + esc(item.summary || 'Open the guidance below to understand this page and how to use it correctly.') + '</p><div class="hc-meta-row"><span class="hc-chip">View: ' + esc(roleLabel) + '</span><span class="hc-chip">Updated: ' + esc(dateLabel) + '</span></div></div><div class="hc-guide"><div class="markdown">' + markdownToHtml(item.content) + '</div>' + (links.length ? '<div class="hc-links">' + links.map(link => '<a class="hc-action-link" href="' + esc(link.url) + '">' + esc(link.label) + '</a>').join('') + '</div>' : '') + (images.length ? '<div class="hc-gallery">' + images.map(url => '<img src="' + esc(url) + '" alt="' + esc(item.title) + '">').join('') + '</div>' : '') + '</div>';
   }
-
-  async function openLightbox(itemId, imageUrl, imageLabel){
-    if(!imageUrl) return;
-    await markHandbookItemRead(itemId);
-    $id('hbLightboxImage').src = imageUrl;
-    $id('hbLightboxImage').alt = imageLabel || 'Handbook image';
-    $id('hbLightboxDownload').href = imageUrl;
-    $id('hbLightboxDownload').setAttribute('download', (imageLabel || 'handbook-image').replace(/[^a-z0-9]+/gi,'-').toLowerCase() + '.jpg');
-    $id('hbLightbox').classList.add('open');
-    $id('hbLightbox').setAttribute('aria-hidden','false');
-  }
-
-  function closeLightbox(){
-    $id('hbLightbox').classList.remove('open');
-    $id('hbLightbox').setAttribute('aria-hidden','true');
-    $id('hbLightboxImage').src = '';
-    $id('hbLightboxDownload').href = '#';
-  }
-
   async function boot(){
+    currentRole = getRole();
+    currentView = currentRole === 'owner' ? 'owner' : currentRole;
     categories = normalizeCategories(await loadStore(KEY_CATEGORIES, []));
     items = normalizeItems(await loadStore(KEY_ITEMS, []));
-    handbookReadReceipts = normalizeReadReceipts(await loadStore(KEY_HANDBOOK_READ_RECEIPTS, {}));
-    ensureCategoriesFromItems();
-    renderRows();
-
+    renderHero(); renderRolePills(); renderSidebar(); renderArticle();
     document.addEventListener('click', function(event){
-      const toggle = event.target.closest('[data-toggle-details]');
-      if(toggle){
-        event.preventDefault();
-        toggleDetails(String(toggle.getAttribute('data-toggle-details') || ''));
-        return;
-      }
-      const image = event.target.closest('[data-open-image]');
-      if(image){
-        event.preventDefault();
-        openLightbox(
-          String(image.getAttribute('data-open-image') || ''),
-          String(image.getAttribute('data-image-url') || ''),
-          String(image.getAttribute('data-image-label') || '')
-        ).catch(function(){});
-        return;
-      }
-    });
-
-    $id('hbLightboxClose')?.addEventListener('click', closeLightbox);
-    $id('hbLightbox')?.addEventListener('click', function(event){
-      if(event.target === this) closeLightbox();
-    });
-    document.addEventListener('keydown', function(event){
-      if(event.key === 'Escape') closeLightbox();
+      const roleBtn = event.target.closest('[data-role-view]');
+      if(roleBtn){ currentView = String(roleBtn.getAttribute('data-role-view') || 'resident'); currentCategoryId=''; currentGroupKey=''; renderRolePills(); renderSidebar(); renderArticle(); return; }
+      const catBtn = event.target.closest('[data-category-id]');
+      if(catBtn){ currentCategoryId = String(catBtn.getAttribute('data-category-id') || ''); currentGroupKey=''; renderSidebar(); renderArticle(); return; }
+      const artBtn = event.target.closest('[data-group-key]');
+      if(artBtn){ currentGroupKey = String(artBtn.getAttribute('data-group-key') || ''); renderSidebar(); renderArticle(); }
     });
   }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    boot().catch(function(){
-      const wrap = $id('hbRows');
-      if(wrap) wrap.innerHTML = '<div class="hb-empty">Unable to load the resident handbook right now.</div>';
-    });
-  });
+  document.addEventListener('DOMContentLoaded', function(){ boot().catch(function(){ const wrap = $id('hcArticleWrap'); if(wrap) wrap.innerHTML = '<div class="hc-empty">Unable to load the Help Center right now. Please try again shortly.</div>'; }); });
 })();
 </script>
 </body>
