@@ -1165,6 +1165,7 @@
 <a href="report.html">Report</a>
 <a href="alerts.html">Community Alerts</a>
 <a href="projects.html">Community Projects</a>
+<a href="help-center.html">Help Center</a>
 <a class="nav-login" href="login.html">Login / Register</a>
 <a href="dashboard.html">Dashboard</a>
 <a href="household.html">Household</a>
@@ -1963,158 +1964,103 @@
 
 
   <!-- ================= HANDBOOK ================= -->
+  
   <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
     <h3>Handbook</h3>
-    <p class="tiny muted" style="margin-top:0;">Manage Help Center content for Resident, Admin and Owner views from one place.</p>
+    <p class="tiny muted" style="margin-top:0;">Keep Handbook and Help Center separate. Use this area to manage both cleanly, without opening every control at once.</p>
 
-    <div class="hb-admin-shell">
-      <div class="hb-admin-panel">
-        <div class="hb-admin-panel-head">
-          <div>
-            <h4 style="margin:0;">Help Center content management</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Import the packaged production seed, edit individual articles, and publish updates directly to the Netlify-backed store.</p>
-          </div>
-          <div class="actions" style="gap:8px; flex-wrap:wrap;">
-            <button type="button" class="btn btn-line small" id="btnHbImportSeed">Import production help</button>
-            <a class="btn btn-line small" href="handbook.html" target="_blank" rel="noopener">Open live preview</a>
-          </div>
-        </div>
-
-        <div class="hb-admin-top-grid">
-          <div class="field" style="margin:0;">
-            <label>Category</label>
-            <select id="hbSimpleCatPreset">
-              <option value="Getting Started">Getting Started</option>
-              <option value="Resident Essentials">Resident Essentials</option>
-              <option value="Safety & Reports">Safety & Reports</option>
-              <option value="Community & Projects">Community & Projects</option>
-              <option value="Administration">Administration</option>
-              <option value="Ownership & Governance">Ownership & Governance</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Other category name</label>
-            <input id="hbSimpleCatTitle" type="text" maxlength="80" placeholder="Enter other category name" style="display:none;" />
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Automatic icon</label>
-            <div id="hbSimpleCatIconPreview" class="hb-icon-chip" aria-label="Automatic category icon">📘</div>
-          </div>
-          <div class="field" style="margin:0;">
-            <label class="chk" style="display:flex; gap:10px; align-items:center; margin-top:30px;">
-              <input id="hbSimpleCatActive" type="checkbox" checked>
-              <span>Visible in Help Center</span>
-            </label>
-          </div>
-        </div>
-
-        <p id="hbSimpleCatMsg" class="tiny muted" style="margin-top:10px;"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
-          <button type="button" class="btn btn-line" id="btnHbSimpleCatClear">Clear</button>
-          <button type="button" class="btn" id="btnHbSimpleCatSave">Save category</button>
-        </div>
-
-        <div class="hb-admin-category-list" id="hbSimpleCatList" style="margin-top:18px;"></div>
-
-        <div class="hb-admin-panel-head" style="margin-top:18px;">
-          <div>
-            <h4 style="margin:0;">Article editor</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Each article belongs to a role view. Resident sees resident articles only, Admin sees admin articles only, and Owner can compare all views in the live Help Center.</p>
-          </div>
-        </div>
-
-        <div class="hb-admin-top-grid">
-          <div class="field" style="margin:0;">
-            <label>Title</label>
-            <input id="hbSimpleItemTitle" type="text" maxlength="120" placeholder="e.g., Parking & Vehicles" />
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Category</label>
-            <select id="hbSimpleItemCategory"></select>
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Role view</label>
-            <select id="hbSimpleItemRoleView">
-              <option value="resident">Resident</option>
-              <option value="admin">Admin</option>
-              <option value="owner">Owner</option>
-            </select>
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Status</label>
-            <select id="hbSimpleItemStatus">
-              <option value="published">Published</option>
-              <option value="draft">Draft</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="hb-admin-support-grid" style="margin-top:12px;">
-          <div class="field" style="margin:0;">
-            <label>Article group key</label>
-            <input id="hbSimpleItemGroupKey" type="text" maxlength="120" placeholder="e.g., parking-vehicles" />
-            <p class="tiny muted" style="margin:6px 0 0;">Use the same group key across Resident, Admin and Owner versions of the same topic.</p>
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Short summary</label>
-            <input id="hbSimpleItemSummary" type="text" maxlength="200" placeholder="Short text shown in the Help Center list" />
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Guidance content</label>
-          <textarea id="hbSimpleItemContent" rows="12" placeholder="Write the guidance here using direct user-focused language."></textarea>
-          <p class="tiny muted" style="margin:6px 0 0;">Use simple markdown such as headings with ## and ###, bullet points with -, and numbered steps.</p>
-        </div>
-
-        <div class="hb-admin-support-grid">
-          <div class="field" style="margin-bottom:0;">
-            <label>Button label (optional)</label>
-            <input id="hbSimpleItemLinkLabel" type="text" maxlength="80" placeholder="e.g., Open page" />
-          </div>
-          <div class="field" style="margin-bottom:0;">
-            <label>Button URL (optional)</label>
-            <input id="hbSimpleItemLinkUrl" type="url" placeholder="dashboard.html" />
-          </div>
-        </div>
-
-        <div class="hb-admin-support-grid" style="margin-top:12px;">
-          <div class="field" style="margin-bottom:0;">
-            <label>Cover image (optional)</label>
-            <input id="hbSimpleItemImage" type="file" accept="image/*" />
-            <div class="tiny muted" style="margin-top:6px;">The image is compressed automatically before saving.</div>
-            <div class="actions" style="justify-content:flex-start; margin-top:8px;">
-              <button type="button" class="btn btn-line small" id="btnHbRemoveImage">Remove image</button>
+    <div class="hb-admin-shell" style="display:grid;gap:16px;">
+      <details class="hb-admin-panel" open>
+        <summary style="cursor:pointer; list-style:none; font-weight:800; color:#23344b;">Handbook workspace overview</summary>
+        <div style="margin-top:14px; display:grid; gap:12px;">
+          <p class="tiny muted" style="margin:0;">The Handbook remains its own area for organised guidance and governance context. The Help Center is now separate in the main menu for practical resident help.</p>
+          <div class="hb-admin-support-grid">
+            <div class="hb-admin-items-card">
+              <div class="hb-admin-items-toolbar"><h4 style="margin:0;">Handbook purpose</h4></div>
+              <div class="tiny muted">Use Handbook for orientation, structure and oversight. Keep heavy content actions below so this tab stays tidy.</div>
+            </div>
+            <div class="hb-admin-items-card">
+              <div class="hb-admin-items-toolbar"><h4 style="margin:0;">Quick links</h4></div>
+              <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:8px;">
+                <a class="btn btn-line" href="handbook.html">Open Handbook</a>
+                <a class="btn btn-line" href="help-center.html">Open Help Center</a>
+              </div>
             </div>
           </div>
-          <div class="field" style="margin-bottom:0;">
-            <label>Image preview</label>
-            <div id="hbSimpleImagePreview" class="hb-admin-image-preview">No image selected</div>
+        </div>
+      </details>
+
+      <details class="hb-admin-panel" open>
+        <summary style="cursor:pointer; list-style:none; font-weight:800; color:#23344b;">Help Center import &amp; publish</summary>
+        <div style="margin-top:14px; display:grid; gap:14px;">
+          <p class="tiny muted" style="margin:0;">Choose the package file yourself, then import and publish. Nothing is auto-imported from a hidden source.</p>
+          <div class="field" style="margin:0;">
+            <label for="hbImportFile">Help Center package file</label>
+            <input id="hbImportFile" type="file" accept=".json,application/json" />
+            <div class="tiny muted" style="margin-top:6px;">Pick the local file named <strong>help-centre-seed.json</strong>, then click import.</div>
+          </div>
+          <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:0;">
+            <button type="button" class="btn" id="btnHbImportSelected">Import selected file</button>
+            <button type="button" class="btn btn-line" id="btnHbExportCurrent">Export current package</button>
+          </div>
+          <p id="hbImportMsg" class="tiny muted" style="margin:0;"></p>
+          <div class="hb-admin-items-card">
+            <div class="hb-admin-items-toolbar">
+              <h4 style="margin:0;">Published Help Center package</h4>
+              <span class="tiny muted" id="hbImportSummary">No package loaded yet.</span>
+            </div>
+            <div id="hbPackageList" class="hb-admin-items-list"></div>
           </div>
         </div>
+      </details>
 
-        <p id="hbSimpleItemMsg" class="tiny muted" style="margin-top:10px;"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
-          <button type="button" class="btn btn-line" id="btnHbSimpleItemDelete" style="display:none;">Delete article</button>
-          <button type="button" class="btn btn-line" id="btnHbSimpleItemClear">Clear</button>
-          <button type="button" class="btn" id="btnHbSimpleItemSave">Save article</button>
-        </div>
-
-        <div class="hb-admin-items-card">
-          <div class="hb-admin-items-toolbar">
-            <h4 style="margin:0;">Registered articles</h4>
-            <input id="hbSimpleItemSearch" type="text" placeholder="Search title, role or group key..." />
+      <details class="hb-admin-panel">
+        <summary style="cursor:pointer; list-style:none; font-weight:800; color:#23344b;">Help Center articles</summary>
+        <div style="margin-top:14px; display:grid; gap:14px;">
+          <p class="tiny muted" style="margin:0;">Edit or remove published Help Center articles for Resident, Admin or Owner views.</p>
+          <div class="hb-admin-item-top">
+            <div class="field" style="margin:0;">
+              <label>View</label>
+              <select id="hbPkgRole">
+                <option value="resident">Resident Help</option>
+                <option value="admin">Admin Guidance</option>
+                <option value="owner">Owner Oversight</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Section</label>
+              <select id="hbPkgSection"></select>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Linked page</label>
+              <input id="hbPkgLinkedPage" type="text" placeholder="e.g., dashboard.html" />
+            </div>
           </div>
-          <div id="hbSimpleItemList" class="hb-admin-items-list"></div>
-          <p id="hbSimpleItemEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No handbook articles yet.</p>
+          <div class="field" style="margin-top:0;">
+            <label>Article title</label>
+            <input id="hbPkgTitle" type="text" maxlength="140" placeholder="Article title" />
+          </div>
+          <div class="field" style="margin:0;">
+            <label>Summary</label>
+            <input id="hbPkgSummary" type="text" maxlength="220" placeholder="Short summary shown above the article" />
+          </div>
+          <div class="field" style="margin:0;">
+            <label>Content</label>
+            <textarea id="hbPkgContent" rows="12" placeholder="Markdown or plain text content"></textarea>
+          </div>
+          <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:0;">
+            <button type="button" class="btn btn-line" id="btnHbPkgClear">Clear</button>
+            <button type="button" class="btn btn-line" id="btnHbPkgDelete" style="display:none;">Remove article</button>
+            <button type="button" class="btn" id="btnHbPkgSave">Save article</button>
+          </div>
+          <p id="hbPkgMsg" class="tiny muted" style="margin:0;"></p>
         </div>
-      </div>
+      </details>
     </div>
   </section>
 
-
   <!-- ================= PROJECTS ================= -->
+
   <section class="card admin-tab-content" id="tabProjects" style="display:none;">
     <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
       <div>
@@ -3414,6 +3360,7 @@
     { key:'projects:tab_builder', label:'Projects · Build project', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
     { key:'projects:tab_published', label:'Projects · Confirm sending', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
     { key:'page:handbook', label:'Handbook', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:help_center', label:'Help Center', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:privacy', label:'Privacy Policy', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:login', label:'Login / Register', group:'Site pages', indent:0, defaults:{ public:true } },
 
@@ -4101,7 +4048,214 @@
   function parkingClearImport(){ const reg = parkingRegistryLoad(); reg.allocations = []; reg.importMeta = null; parkingRegistrySave(reg); parkingRenderAdmin(); }
   function parkingRemovePolicy(){ const reg = parkingRegistryLoad(); reg.policy = null; parkingRegistrySave(reg); try{ localStorage.removeItem(window.ANW_KEYS.PARKING_POLICY); }catch(_){} parkingRenderAdmin(); }
   function parkingExportCsv(){ const rows = parkingFilterRows(parkingBuildRows()); const head = ['Resident','Address','Eircode','Parking Space No.','Type','Status','Vehicles','Owner Check','Policy','Updated']; const lines = [head.join(',')].concat(rows.map(r=>[r.resident,r.address,r.eircode,r.space,r.type,r.status,r.vehicles,r.ownerCheck,r.policy,r.updated].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','))); downloadText('parking-registry.csv', lines.join('\n')); }
-  function parkingExportPdf(){ const rows = parkingFilterRows(parkingBuildRows()); const win = window.open('', '_blank'); if(!win) return; win.document.write('<html><head><title>Parking Registry</title><style>body{font-family:Arial,sans-serif;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}h1{font-size:20px}</style></head><body><h1>Parking & Vehicles Report</h1><table><thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.resident)}</td><td>${esc(r.address)}</td><td>${esc(r.eircode)}</td><td>${esc(r.space)}</td><td>${esc(r.type)}</td><td>${esc(r.status)}</td><td>${esc(r.vehicles)}</td><td>${esc(r.ownerCheck)}</td><td>${esc(r.updated)}</td></tr>`).join('')+'</tbody></table></body></html>'); win.document.close(); win.focus(); setTimeout(()=>win.print(), 300); }
+  function parkingExportPdf(){ const rows = parkingFilterRows(parkingBuildRows()); const win = window.open('', '_blank'); if(!win) return; win.document.write('<html><head><title>Parking Registry</title><style>body{font-family:Arial,sans-serif;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}h1{font-size:20px}</style></head><body><h1>Parking & Vehicles Report</h1><table><thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.resident)}</td><td>${esc(r.address)}</td><td>${esc(r.eircode)}</td><td>${esc(r.space)}</td><td>${esc(r.type)}</td><td>${esc(r.status)}</td><td>${esc(r.vehicles)}</td><td>${esc(r.ownerCheck)}</td><td>${esc(r.updated)}</td></tr>`).join('')+'</tbody></table>
+<script>
+(function(){
+  'use strict';
+  const STORE_KEY = 'anw_help_center_seed_v2';
+  const $id = (id) => document.getElementById(id);
+  let handbookPackage = null;
+  let currentArticleId = '';
+
+  function msg(id, text, ok){
+    const el = $id(id);
+    if(!el) return;
+    el.textContent = text || '';
+    el.style.color = ok === true ? '#215b3f' : (ok === false ? '#9f3a38' : '');
+  }
+  async function loadStore(key, fallback){
+    try{
+      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
+      return await res.json();
+    }catch(_){ return fallback; }
+  }
+  async function saveStore(key, value){
+    const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(value)
+    });
+    if(!res.ok) throw new Error('store save failed');
+  }
+  function slugify(value){
+    return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  }
+  function validatePackage(pkg){
+    return !!(pkg && Array.isArray(pkg.sections) && Array.isArray(pkg.articles) && pkg.views);
+  }
+  function sectionTitle(sectionId){
+    const found = (handbookPackage.sections || []).find(function(s){ return s.id === sectionId; });
+    return found ? found.title : sectionId;
+  }
+  function ensureSectionOptions(){
+    const select = $id('hbPkgSection');
+    if(!select || !handbookPackage) return;
+    select.innerHTML = (handbookPackage.sections || []).map(function(section){
+      return '<option value="' + section.id + '">' + section.title + '</option>';
+    }).join('');
+  }
+  function clearEditor(){
+    currentArticleId = '';
+    if($id('hbPkgRole')) $id('hbPkgRole').value = 'resident';
+    if($id('hbPkgSection')) $id('hbPkgSection').selectedIndex = 0;
+    if($id('hbPkgTitle')) $id('hbPkgTitle').value = '';
+    if($id('hbPkgSummary')) $id('hbPkgSummary').value = '';
+    if($id('hbPkgContent')) $id('hbPkgContent').value = '';
+    if($id('hbPkgLinkedPage')) $id('hbPkgLinkedPage').value = '';
+    if($id('btnHbPkgDelete')) $id('btnHbPkgDelete').style.display = 'none';
+    msg('hbPkgMsg', '', null);
+  }
+  function fillEditor(articleId){
+    const article = (handbookPackage.articles || []).find(function(item){ return item.id === articleId; });
+    if(!article) return;
+    currentArticleId = article.id;
+    $id('hbPkgRole').value = article.role || 'resident';
+    $id('hbPkgSection').value = article.sectionId || '';
+    $id('hbPkgTitle').value = article.title || '';
+    $id('hbPkgSummary').value = article.summary || '';
+    $id('hbPkgContent').value = article.contentMd || '';
+    $id('hbPkgLinkedPage').value = article.linkedPage || '';
+    $id('btnHbPkgDelete').style.display = 'inline-flex';
+    msg('hbPkgMsg', 'Article loaded into the editor.', true);
+  }
+  function renderPackage(){
+    ensureSectionOptions();
+    const wrap = $id('hbPackageList');
+    const summary = $id('hbImportSummary');
+    if(!wrap || !summary) return;
+    if(!validatePackage(handbookPackage)){
+      wrap.innerHTML = '<div class="tiny muted">No package loaded yet.</div>';
+      summary.textContent = 'No package loaded yet.';
+      return;
+    }
+    const counts = (handbookPackage.articles || []).reduce(function(acc, item){
+      acc[item.role] = (acc[item.role] || 0) + 1;
+      return acc;
+    }, {});
+    summary.textContent = 'Resident: ' + (counts.resident || 0) + ' · Admin: ' + (counts.admin || 0) + ' · Owner: ' + (counts.owner || 0);
+    wrap.innerHTML = (handbookPackage.articles || []).map(function(article){
+      return '<div class="hb-admin-item-row">'
+        + '<div class="hb-admin-item-meta">'
+        + '<div class="hb-admin-item-title">' + article.title + '</div>'
+        + '<div class="hb-admin-item-sub">' + sectionTitle(article.sectionId) + ' · ' + article.role + '</div>'
+        + '</div>'
+        + '<div class="hb-admin-row-actions">'
+        + '<button type="button" class="btn btn-line small" data-hb-pkg-edit="' + article.id + '">Edit</button>'
+        + '<button type="button" class="btn btn-line small" data-hb-pkg-delete="' + article.id + '">Remove</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+  async function importSelectedFile(){
+    const input = $id('hbImportFile');
+    const file = input && input.files && input.files[0];
+    if(!file){
+      msg('hbImportMsg', 'Choose the handbook package file first.', false);
+      return;
+    }
+    let parsed;
+    try{ parsed = JSON.parse(await file.text()); }catch(_){
+      msg('hbImportMsg', 'The selected file is not valid JSON.', false);
+      return;
+    }
+    if(!validatePackage(parsed)){
+      msg('hbImportMsg', 'The selected file is missing handbook sections, articles or views.', false);
+      return;
+    }
+    handbookPackage = parsed;
+    await saveStore(STORE_KEY, handbookPackage);
+    renderPackage();
+    clearEditor();
+    msg('hbImportMsg', 'Handbook package imported successfully from ' + file.name + '.', true);
+  }
+  function exportCurrentPackage(){
+    if(!validatePackage(handbookPackage)){
+      msg('hbImportMsg', 'There is no published Help Center package to export yet.', false);
+      return;
+    }
+    const blob = new Blob([JSON.stringify(handbookPackage, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'aderrig-handbook-export.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+  async function saveArticle(){
+    if(!validatePackage(handbookPackage)){
+      msg('hbPkgMsg', 'Import a handbook package first.', false);
+      return;
+    }
+    const role = String($id('hbPkgRole').value || 'resident');
+    const sectionId = String($id('hbPkgSection').value || '').trim();
+    const title = String($id('hbPkgTitle').value || '').trim();
+    const summary = String($id('hbPkgSummary').value || '').trim();
+    const contentMd = String($id('hbPkgContent').value || '').trim();
+    const linkedPage = String($id('hbPkgLinkedPage').value || '').trim();
+    if(!sectionId || !title || !contentMd){
+      msg('hbPkgMsg', 'Section, title and content are required.', false);
+      return;
+    }
+    const article = {
+      id: currentArticleId || [sectionId, slugify(title), role].join('-'),
+      role: role,
+      sectionId: sectionId,
+      title: title,
+      summary: summary,
+      contentMd: contentMd,
+      linkedPage: linkedPage,
+      updatedAt: new Date().toISOString().slice(0,10)
+    };
+    const list = Array.isArray(handbookPackage.articles) ? handbookPackage.articles.slice() : [];
+    const index = list.findIndex(function(item){ return item.id === article.id; });
+    if(index >= 0) list[index] = article; else list.push(article);
+    handbookPackage.articles = list;
+    await saveStore(STORE_KEY, handbookPackage);
+    renderPackage();
+    fillEditor(article.id);
+    msg('hbPkgMsg', 'Article saved to the published Help Center package.', true);
+  }
+  async function deleteArticle(articleId){
+    if(!validatePackage(handbookPackage)) return;
+    if(!window.confirm('Remove this handbook article from the published package?')) return;
+    handbookPackage.articles = (handbookPackage.articles || []).filter(function(item){ return item.id !== articleId; });
+    await saveStore(STORE_KEY, handbookPackage);
+    renderPackage();
+    clearEditor();
+    msg('hbPkgMsg', 'Article removed from the published Help Center package.', true);
+  }
+  async function bootHandbookImport(){
+    if(!$id('tabHandbook')) return;
+    handbookPackage = await loadStore(STORE_KEY, null);
+    if(!validatePackage(handbookPackage)){
+      handbookPackage = { version:'', views:{ resident:{label:'Resident Help'}, admin:{label:'Admin Guidance'}, owner:{label:'Owner Oversight'} }, sections:[], articles:[] };
+    }
+    renderPackage();
+    clearEditor();
+    $id('btnHbImportSelected')?.addEventListener('click', function(){ importSelectedFile().catch(function(){ msg('hbImportMsg', 'Unable to import the selected file.', false); }); });
+    $id('btnHbExportCurrent')?.addEventListener('click', exportCurrentPackage);
+    $id('btnHbPkgClear')?.addEventListener('click', clearEditor);
+    $id('btnHbPkgSave')?.addEventListener('click', function(){ saveArticle().catch(function(){ msg('hbPkgMsg', 'Unable to save the article.', false); }); });
+    $id('btnHbPkgDelete')?.addEventListener('click', function(){ if(currentArticleId) deleteArticle(currentArticleId).catch(function(){ msg('hbPkgMsg', 'Unable to remove the article.', false); }); });
+    $id('hbPackageList')?.addEventListener('click', function(event){
+      const editId = event.target && event.target.getAttribute('data-hb-pkg-edit');
+      const deleteId = event.target && event.target.getAttribute('data-hb-pkg-delete');
+      if(editId) fillEditor(editId);
+      if(deleteId) deleteArticle(deleteId).catch(function(){ msg('hbPkgMsg', 'Unable to remove the article.', false); });
+    });
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bootHandbookImport, { once:true });
+  }else{
+    bootHandbookImport();
+  }
+})();
+</script>
+
+</body></html>'); win.document.close(); win.focus(); setTimeout(()=>win.print(), 300); }
   async function parkingSendNotice(row){ if(!row) return; const message = prompt('Message to resident about Parking & Vehicles:', 'Your parking registration needs attention. Please review your Parking & Vehicles section and update the required details.'); if(!message) return; const notices = sanitizeNoticeCollection(await anwLoadSafe(KEY_NOTICES, [])); notices.push({ id:'parking-'+Date.now(), title:'Parking & Vehicles update required', message:String(message), createdAt:new Date().toISOString(), createdBy:'admin', targetEmails:[row.residentEmail].filter(Boolean), category:'parking' }); await anwSaveSafe(KEY_NOTICES, notices); await renderNoticesList(); alert('Notice created for the selected resident.'); }
   function parkingBindAdmin(){ byId('parkingImportInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandleImport(file); e.target.value=''; }); byId('parkingPolicyInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandlePolicy(file); e.target.value=''; }); byId('btnParkingClearImport')?.addEventListener('click', parkingClearImport); byId('btnParkingRemovePolicy')?.addEventListener('click', parkingRemovePolicy); byId('btnParkingTemplate')?.addEventListener('click', ()=>downloadText('parking-template.csv', `address,eircode,parking space no.,parking space no. 2,type,has parking
 12 Example Avenue,D15X9T2,101,102,Double,Yes
@@ -4473,216 +4627,767 @@
   const KEYS = window.ANW_KEYS || {};
   const KEY_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
   const KEY_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
-  const $id = id => document.getElementById(id);
+  const KEY_USERS = KEYS.USERS || 'anw_users';
+  const KEY_HANDBOOK_READ_RECEIPTS = KEYS.HANDBOOK_READ_RECEIPTS || 'anw_handbook_read_receipts';
+
+  const $id = (id) => document.getElementById(id);
+
   let categories = [];
   let items = [];
   let currentCategoryId = '';
   let currentItemId = '';
   let currentImageData = '';
+  let handbookReadReceipts = {};
+  let totalHandbookResidents = 0;
 
-  function slugify(value){ return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
-  function esc(value){ return String(value == null ? '' : value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
-  async function loadStore(key, fallback){
-    try{ const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' }); if(!res.ok) throw new Error('store load failed'); return await res.json(); }
-    catch(_){ try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }catch(__){ return fallback; } }
+  function slugify(value){
+    return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }
+
+  function esc(value){
+    return String(value == null ? '' : value)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#39;');
+  }
+
+  async function loadStore(key, fallback){
+    try{
+      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
+      return await res.json();
+    }catch(_){
+      try{
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      }catch(__){
+        return fallback;
+      }
+    }
+  }
+
   async function saveStore(key, value){
     try{
-      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(value) });
+      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(value)
+      });
       if(!res.ok) throw new Error('store save failed');
-    }catch(_){ localStorage.setItem(key, JSON.stringify(value)); }
+    }catch(_){
+      localStorage.setItem(key, JSON.stringify(value));
+    }
   }
+
   function suggestCategoryIcon(value){
     const title = String(value || '').toLowerCase();
-    if(title.includes('start')) return '✨';
-    if(title.includes('resident') || title.includes('household')) return '🏡';
-    if(title.includes('safety') || title.includes('report')) return '🚨';
-    if(title.includes('project') || title.includes('community')) return '🤝';
-    if(title.includes('admin')) return '🛠️';
-    if(title.includes('owner') || title.includes('governance')) return '📊';
+    if(!title) return '📘';
+    if(title.includes('security') || title.includes('gate') || title.includes('cctv') || title.includes('watch')) return '🛡️';
+    if(title.includes('parking') || title.includes('vehicle') || title.includes('traffic')) return '🚗';
+    if(title.includes('emergency') || title.includes('fire') || title.includes('medical')) return '🚨';
+    if(title.includes('waste') || title.includes('recycling') || title.includes('bin')) return '♻️';
+    if(title.includes('volunteer')) return '🤝';
+    if(title.includes('service')) return '🏢';
+    if(title.includes('rule') || title.includes('guidance') || title.includes('policy')) return '📋';
+    if(title.includes('community') || title.includes('event')) return '🏘️';
+    if(title.includes('pet') || title.includes('animal')) return '🐾';
     return '📘';
   }
+
   function normalizeCategories(list){
     return (Array.isArray(list) ? list : []).map((cat, index) => {
       const title = String((cat && (cat.title || cat.name)) || '').trim();
       if(!title) return null;
-      return { id: String(cat.id || slugify(title) || ('category-' + (index + 1))), title, icon: String(cat.icon || suggestCategoryIcon(title) || '📘').trim() || '📘', order: Number(cat.order) || (index + 1), active: cat.active !== false };
+      return {
+        id: String(cat.id || slugify(title) || ('category-' + (index + 1))),
+        title,
+        icon: String(cat.icon || suggestCategoryIcon(title) || '📘').trim() || '📘',
+        order: Number(cat.order) || (index + 1),
+        active: cat.active !== false
+      };
     }).filter(Boolean).sort((a,b) => (a.order - b.order) || a.title.localeCompare(b.title));
   }
+
   function normalizeItems(list){
     return (Array.isArray(list) ? list : []).map((item, index) => {
-      const roleView = ['resident','admin','owner'].includes(String(item.roleView || '').toLowerCase()) ? String(item.roleView).toLowerCase() : 'resident';
-      const hero = String(item.imageData || item.heroUrl || '').trim();
-      return { id:String(item.id || ('hb-item-' + (index + 1))), groupKey:String(item.groupKey || item.pageKey || slugify(item.title || item.id || ('group-' + (index + 1)))).trim(), roleView, categoryId:String(item.categoryId || item.category || '').trim(), categoryTitle:String(item.categoryTitle || '').trim(), title:String(item.title || '').trim(), summary:String(item.summary || '').trim(), content:String(item.content || '').trim(), status:String(item.status || 'published').toLowerCase() === 'draft' ? 'draft' : 'published', url:String(item.url || item.linkUrl || '').trim(), linkLabel:String(item.linkLabel || '').trim(), heroUrl:hero, imageData:hero, attachments:Array.isArray(item.attachments) ? item.attachments.filter(Boolean) : [], createdAt:item.createdAt || '', updatedAt:item.updatedAt || '' };
+      const hero = String(item.imageData || (item.image && item.image.dataUrl) || item.heroUrl || '').trim();
+      const attachments = Array.isArray(item.attachments) ? item.attachments.filter(Boolean) : [];
+      return {
+        id: String(item.id || item.slug || ('hb-item-' + (index + 1))),
+        categoryId: String(item.categoryId || item.category || '').trim(),
+        categoryTitle: String(item.categoryTitle || '').trim(),
+        title: String((item && (item.title || item.name)) || '').trim(),
+        summary: String(item.summary || item.excerpt || '').trim(),
+        content: String(item.content || '').trim(),
+        status: String(item.status || 'published').toLowerCase() === 'draft' ? 'draft' : 'published',
+        type: String(item.type || (item.url ? 'link' : 'page')).toLowerCase() === 'link' ? 'link' : 'page',
+        url: String(item.url || item.linkUrl || '').trim(),
+        linkLabel: String(item.linkLabel || (attachments[0] && attachments[0].label) || '').trim(),
+        heroUrl: hero,
+        imageData: hero,
+        imageName: String(item.imageName || '').trim(),
+        attachments,
+        createdAt: item.createdAt || '',
+        updatedAt: item.updatedAt || ''
+      };
     }).filter(item => item.title);
   }
+
+  function normalizeReadReceipts(value){
+    return (value && typeof value === 'object' && !Array.isArray(value)) ? value : {};
+  }
+
+  function countApprovedResidents(list){
+    return (Array.isArray(list) ? list : []).filter(user => {
+      const status = String((user && user.status) || '').toLowerCase();
+      return status === 'approved' || status === 'active';
+    }).length;
+  }
+
   function ensureCategoriesFromItems(){
     const known = new Set(categories.map(cat => cat.id));
     items.forEach(item => {
-      if(item.categoryId && !known.has(item.categoryId)){
-        categories.push({ id:item.categoryId, title:item.categoryTitle || item.categoryId.replace(/-/g,' ').replace(/\b\w/g, m => m.toUpperCase()), icon:suggestCategoryIcon(item.categoryTitle || item.categoryId), order:categories.length + 1, active:true });
-        known.add(item.categoryId);
+      const explicit = String(item.categoryId || item.category || '').trim();
+      if(explicit && !known.has(explicit)){
+        categories.push({
+          id: explicit,
+          title: String(item.categoryTitle || explicit).replace(/-/g,' ').replace(/\b\w/g, m => m.toUpperCase()),
+          icon: suggestCategoryIcon(item.categoryTitle || explicit),
+          order: categories.length + 1,
+          active: true
+        });
+        known.add(explicit);
       }
     });
     categories = normalizeCategories(categories);
   }
-  function setCategoryMessage(message){ const el = $id('hbSimpleCatMsg'); if(el) el.textContent = message || ''; }
-  function setItemMessage(message){ const el = $id('hbSimpleItemMsg'); if(el) el.textContent = message || ''; }
-  function getCategoryInputValue(){ const preset = $id('hbSimpleCatPreset'); const other = $id('hbSimpleCatTitle'); return (preset && preset.value && preset.value !== 'Other') ? String(preset.value).trim() : String((other && other.value) || '').trim(); }
+
+  function setCategoryMessage(message){
+    const el = $id('hbSimpleCatMsg');
+    if(el) el.textContent = message || '';
+  }
+
+  function setItemMessage(message){
+    const el = $id('hbSimpleItemMsg');
+    if(el) el.textContent = message || '';
+  }
+
+  function getCategoryInputValue(){
+    const preset = $id('hbSimpleCatPreset');
+    const other = $id('hbSimpleCatTitle');
+    const presetValue = String((preset && preset.value) || '').trim();
+    if(presetValue && presetValue !== 'Other') return presetValue;
+    return String((other && other.value) || '').trim();
+  }
+
   function syncCategoryInput(title){
-    const preset = $id('hbSimpleCatPreset'); const other = $id('hbSimpleCatTitle');
-    const presets = ['Getting Started','Resident Essentials','Safety & Reports','Community & Projects','Administration','Ownership & Governance'];
-    const match = presets.find(v => v.toLowerCase() === String(title || '').trim().toLowerCase());
-    if(preset) preset.value = match ? match : 'Other';
-    if(other){ other.style.display = match ? 'none' : 'block'; other.value = match ? '' : String(title || ''); }
-    if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(match || title || 'General');
+    const preset = $id('hbSimpleCatPreset');
+    const other = $id('hbSimpleCatTitle');
+    const normalized = String(title || '').trim();
+    const presetValues = ['General','Security','Parking','Emergency','Volunteering','Waste & Recycling','Community Services','Rules & Guidance'];
+    const matched = presetValues.find(value => value.toLowerCase() === normalized.toLowerCase());
+
+    if(preset) preset.value = matched ? matched : 'Other';
+    if(other){
+      other.style.display = matched ? 'none' : 'block';
+      other.value = matched ? '' : normalized;
+    }
+    if($id('hbSimpleCatIconPreview')){
+      $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(normalized || matched || 'General');
+    }
   }
+
   function renderCategorySelect(){
-    const select = $id('hbSimpleItemCategory'); if(!select) return;
+    const select = $id('hbSimpleItemCategory');
+    if(!select) return;
     const active = categories.filter(cat => cat.active !== false);
-    select.innerHTML = active.length ? active.map(cat => '<option value="' + esc(cat.id) + '">' + esc(cat.icon + ' ' + cat.title) + '</option>').join('') : '<option value="">Create a category first</option>';
-    if(currentCategoryId && active.some(cat => cat.id === currentCategoryId)) select.value = currentCategoryId;
-    else if(active.length){ currentCategoryId = active[0].id; select.value = currentCategoryId; }
+    select.innerHTML = active.length
+      ? active.map(cat => '<option value="' + esc(cat.id) + '">' + esc(cat.icon + ' ' + cat.title) + '</option>').join('')
+      : '<option value="">Create a category first</option>';
+    if(currentCategoryId && active.some(cat => cat.id === currentCategoryId)){
+      select.value = currentCategoryId;
+    }else if(active.length){
+      currentCategoryId = active[0].id;
+      select.value = currentCategoryId;
+    }
   }
+
   function renderCategoryList(){
-    const wrap = $id('hbSimpleCatList'); if(!wrap) return;
-    if(!categories.length){ wrap.innerHTML = '<p class="tiny muted" style="margin:0;">No categories yet.</p>'; return; }
-    wrap.innerHTML = categories.map(cat => '<div class="hb-admin-category-row"><div class="hb-admin-category-meta"><div class="hb-admin-category-title">' + esc(cat.icon + ' ' + cat.title) + '</div><div class="hb-admin-category-sub">' + esc(cat.id) + ' · ' + (cat.active ? 'Visible' : 'Hidden') + '</div></div><div class="hb-admin-row-actions"><button type="button" class="btn btn-line small" data-hb-cat-edit="' + esc(cat.id) + '">Edit</button><button type="button" class="btn btn-line small" data-hb-cat-delete="' + esc(cat.id) + '">Delete</button></div></div>').join('');
+    const wrap = $id('hbSimpleCatList');
+    if(!wrap) return;
+    if(!categories.length){
+      wrap.innerHTML = '<p class="tiny muted" style="margin:0;">No categories yet.</p>';
+      return;
+    }
+    wrap.innerHTML = categories.map(cat => {
+      return '<div class="hb-admin-category-row">'
+        + '<div class="hb-admin-category-meta">'
+        + '<div class="hb-admin-category-title">' + esc(cat.icon + ' ' + cat.title) + '</div>'
+        + '<div class="hb-admin-category-sub">' + esc(cat.id) + ' · ' + (cat.active ? 'Active' : 'Hidden') + '</div>'
+        + '</div>'
+        + '<div class="hb-admin-row-actions">'
+        + '<button type="button" class="btn btn-line small" data-hb-cat-edit="' + esc(cat.id) + '">Edit</button>'
+        + '<button type="button" class="btn btn-line small" data-hb-cat-delete="' + esc(cat.id) + '">Delete</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
   }
-  function renderPreview(){ const preview = $id('hbSimpleImagePreview'); if(preview) preview.innerHTML = currentImageData ? '<img src="' + currentImageData + '" alt="Preview" />' : 'No image selected'; }
+
+  function renderPreview(){
+    const preview = $id('hbSimpleImagePreview');
+    if(!preview) return;
+    if(currentImageData){
+      preview.innerHTML = '<img src="' + currentImageData + '" alt="Handbook preview" />';
+    }else{
+      preview.textContent = 'No image selected';
+    }
+  }
+
+  function getCategoryLabel(categoryId){
+    const found = categories.find(cat => cat.id === categoryId);
+    return found ? found.title : categoryId;
+  }
+
+  function getItemReadStats(itemId){
+    const bucket = handbookReadReceipts[itemId] && typeof handbookReadReceipts[itemId] === 'object'
+      ? handbookReadReceipts[itemId]
+      : {};
+    const read = Object.keys(bucket).length;
+    const pending = Math.max(0, Number(totalHandbookResidents || 0) - read);
+    return { read, pending };
+  }
+
   function renderItems(){
-    const wrap = $id('hbSimpleItemList'); const empty = $id('hbSimpleItemEmpty'); if(!wrap || !empty) return;
+    const wrap = $id('hbSimpleItemList');
+    const empty = $id('hbSimpleItemEmpty');
+    if(!wrap || !empty) return;
+
     const query = String(($id('hbSimpleItemSearch') && $id('hbSimpleItemSearch').value) || '').trim().toLowerCase();
-    const filtered = items.filter(item => [item.title, item.summary, item.groupKey, item.roleView, item.categoryTitle].join(' ').toLowerCase().includes(query)).sort((a,b) => a.groupKey.localeCompare(b.groupKey) || a.roleView.localeCompare(b.roleView));
+    const filtered = items.filter(item => {
+      if(!query) return true;
+      return [item.title, item.summary, item.content].join(' ').toLowerCase().includes(query);
+    });
+
     empty.style.display = filtered.length ? 'none' : 'block';
-    wrap.innerHTML = filtered.map(item => '<div class="hb-admin-item-row"><div class="hb-admin-item-meta"><div class="hb-admin-item-title">' + esc(item.title) + '</div><div class="hb-admin-item-sub">' + esc(item.groupKey) + ' · ' + esc(item.roleView) + ' · ' + esc(item.categoryTitle || item.categoryId || 'Uncategorised') + ' · ' + esc(item.status) + '</div></div><div class="hb-admin-row-actions"><button type="button" class="btn btn-line small" data-hb-item-edit="' + esc(item.id) + '">Edit</button><button type="button" class="btn btn-line small" data-hb-item-delete="' + esc(item.id) + '">Delete</button></div></div>').join('');
+    if(!filtered.length){
+      wrap.innerHTML = '';
+      return;
+    }
+
+    wrap.innerHTML = filtered
+      .sort((a,b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))
+      .map(item => {
+        const stats = getItemReadStats(item.id);
+        return '<div class="hb-admin-item-row">'
+          + '<div class="hb-admin-item-meta">'
+          + '<div class="hb-admin-item-title">' + esc(item.title) + '</div>'
+          + '<div class="hb-admin-item-sub">' + esc(item.summary || 'No summary added') + '</div>'
+          + '<div class="hb-admin-item-sub">' + esc(getCategoryLabel(item.categoryId)) + ' · ' + esc(item.heroUrl ? 'Image saved' : 'No image') + (item.url ? ' · Link added' : '') + '</div>'
+          + '</div>'
+          + '<div class="hb-admin-row-actions">'
+          + '<span class="hb-admin-read-metrics">'
+          + '<span class="hb-admin-read-chip">Read ' + esc(String(stats.read)) + '</span>'
+          + '<span class="hb-admin-read-chip pending">Unread ' + esc(String(stats.pending)) + '</span>'
+          + '</span>'
+          + '<span class="hb-status-pill ' + esc(item.status) + '">' + esc(item.status === 'published' ? 'Published' : 'Draft') + '</span>'
+          + '<button type="button" class="btn btn-line small" data-hb-item-edit="' + esc(item.id) + '">Edit</button>'
+          + '<button type="button" class="btn btn-line small" data-hb-item-delete="' + esc(item.id) + '">Delete</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
   }
+
   function clearCategoryForm(){
     currentCategoryId = '';
-    if($id('hbSimpleCatPreset')) $id('hbSimpleCatPreset').value = 'Getting Started';
-    if($id('hbSimpleCatTitle')){ $id('hbSimpleCatTitle').value = ''; $id('hbSimpleCatTitle').style.display = 'none'; }
-    if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon('Getting Started');
+    if($id('hbSimpleCatPreset')) $id('hbSimpleCatPreset').value = 'General';
+    if($id('hbSimpleCatTitle')){
+      $id('hbSimpleCatTitle').value = '';
+      $id('hbSimpleCatTitle').style.display = 'none';
+    }
+    if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon('General');
     if($id('hbSimpleCatActive')) $id('hbSimpleCatActive').checked = true;
     setCategoryMessage('');
   }
+
   function fillCategoryForm(categoryId){
-    const cat = categories.find(entry => entry.id === categoryId); if(!cat) return;
-    currentCategoryId = cat.id; syncCategoryInput(cat.title); if($id('hbSimpleCatActive')) $id('hbSimpleCatActive').checked = cat.active !== false; setCategoryMessage('Editing category.');
+    const cat = categories.find(entry => entry.id === categoryId);
+    if(!cat) return;
+    currentCategoryId = cat.id;
+    syncCategoryInput(cat.title);
+    if($id('hbSimpleCatActive')) $id('hbSimpleCatActive').checked = cat.active !== false;
+    setCategoryMessage('Editing category.');
   }
+
   function clearItemForm(){
-    currentItemId = ''; currentImageData = '';
+    currentItemId = '';
+    currentImageData = '';
     if($id('hbSimpleItemTitle')) $id('hbSimpleItemTitle').value = '';
     if($id('hbSimpleItemSummary')) $id('hbSimpleItemSummary').value = '';
     if($id('hbSimpleItemContent')) $id('hbSimpleItemContent').value = '';
-    if($id('hbSimpleItemRoleView')) $id('hbSimpleItemRoleView').value = 'resident';
     if($id('hbSimpleItemStatus')) $id('hbSimpleItemStatus').value = 'published';
-    if($id('hbSimpleItemGroupKey')) $id('hbSimpleItemGroupKey').value = '';
     if($id('hbSimpleItemLinkLabel')) $id('hbSimpleItemLinkLabel').value = '';
     if($id('hbSimpleItemLinkUrl')) $id('hbSimpleItemLinkUrl').value = '';
     if($id('hbSimpleItemImage')) $id('hbSimpleItemImage').value = '';
     if($id('btnHbSimpleItemDelete')) $id('btnHbSimpleItemDelete').style.display = 'none';
-    renderPreview(); setItemMessage('');
+    renderPreview();
+    setItemMessage('');
   }
+
   function fillItemForm(itemId){
-    const item = items.find(entry => entry.id === itemId); if(!item) return;
-    currentItemId = item.id; currentImageData = item.heroUrl || '';
+    const item = items.find(entry => entry.id === itemId);
+    if(!item) return;
+    currentItemId = item.id;
+    currentImageData = item.heroUrl || '';
     if($id('hbSimpleItemCategory')) $id('hbSimpleItemCategory').value = item.categoryId;
     if($id('hbSimpleItemTitle')) $id('hbSimpleItemTitle').value = item.title;
     if($id('hbSimpleItemSummary')) $id('hbSimpleItemSummary').value = item.summary || '';
     if($id('hbSimpleItemContent')) $id('hbSimpleItemContent').value = item.content || '';
     if($id('hbSimpleItemStatus')) $id('hbSimpleItemStatus').value = item.status || 'published';
-    if($id('hbSimpleItemRoleView')) $id('hbSimpleItemRoleView').value = item.roleView || 'resident';
-    if($id('hbSimpleItemGroupKey')) $id('hbSimpleItemGroupKey').value = item.groupKey || '';
     if($id('hbSimpleItemLinkLabel')) $id('hbSimpleItemLinkLabel').value = item.linkLabel || '';
     if($id('hbSimpleItemLinkUrl')) $id('hbSimpleItemLinkUrl').value = item.url || '';
     if($id('btnHbSimpleItemDelete')) $id('btnHbSimpleItemDelete').style.display = 'inline-flex';
-    renderPreview(); setItemMessage('Editing article.');
+    renderPreview();
+    setItemMessage('Editing item.');
   }
+
   async function saveCategory(){
-    const title = getCategoryInputValue(); const active = !!($id('hbSimpleCatActive') && $id('hbSimpleCatActive').checked);
-    if(!title){ setCategoryMessage('Please enter a category name.'); return; }
+    const title = getCategoryInputValue();
+    const active = !!($id('hbSimpleCatActive') && $id('hbSimpleCatActive').checked);
+
+    if(!title){
+      setCategoryMessage('Please enter a category.');
+      return;
+    }
+
     const existing = categories.find(cat => cat.title.toLowerCase() === title.toLowerCase() && cat.id !== currentCategoryId);
-    if(existing){ setCategoryMessage('This category already exists.'); return; }
+    if(existing){
+      setCategoryMessage('This category already exists.');
+      return;
+    }
+
     const base = categories.find(cat => cat.id === currentCategoryId) || {};
-    const category = { id:base.id || slugify(title) || ('hb-cat-' + Date.now()), title, icon:suggestCategoryIcon(title), order:base.order || (categories.length + 1), active };
-    categories = categories.filter(cat => cat.id !== category.id); categories.push(category); categories = normalizeCategories(categories);
-    await saveStore(KEY_CATEGORIES, categories); renderCategorySelect(); renderCategoryList(); renderItems(); currentCategoryId = category.id; if($id('hbSimpleItemCategory')) $id('hbSimpleItemCategory').value = category.id; setCategoryMessage('Category saved.'); clearCategoryForm();
+    const category = {
+      id: base.id || slugify(title) || ('hb-cat-' + Date.now()),
+      title: title,
+      icon: suggestCategoryIcon(title),
+      order: base.order || (categories.length + 1),
+      active: active
+    };
+
+    categories = categories.filter(cat => cat.id !== category.id);
+    categories.push(category);
+    categories = normalizeCategories(categories);
+    await saveStore(KEY_CATEGORIES, categories);
+    renderCategorySelect();
+    renderCategoryList();
+    renderItems();
+    currentCategoryId = category.id;
+    if($id('hbSimpleItemCategory')) $id('hbSimpleItemCategory').value = category.id;
+    setCategoryMessage('Category saved.');
+    clearCategoryForm();
   }
+
   async function deleteCategory(categoryId){
     const itemCount = items.filter(item => item.categoryId === categoryId).length;
-    if(itemCount){ setCategoryMessage('Move or delete the ' + itemCount + ' article(s) in this category first.'); return; }
-    categories = categories.filter(cat => cat.id !== categoryId); await saveStore(KEY_CATEGORIES, categories); renderCategorySelect(); renderCategoryList(); setCategoryMessage('Category removed.'); clearCategoryForm();
+    if(itemCount){
+      setCategoryMessage('Move or delete the ' + itemCount + ' item(s) in this category first.');
+      return;
+    }
+    categories = categories.filter(cat => cat.id !== categoryId);
+    await saveStore(KEY_CATEGORIES, categories);
+    renderCategorySelect();
+    renderCategoryList();
+    setCategoryMessage('Category removed.');
+    clearCategoryForm();
   }
+
   async function saveItem(){
     const categoryId = String(($id('hbSimpleItemCategory') && $id('hbSimpleItemCategory').value) || '').trim();
-    const roleView = String(($id('hbSimpleItemRoleView') && $id('hbSimpleItemRoleView').value) || 'resident').trim().toLowerCase();
-    const title = String(($id('hbSimpleItemTitle') && $id('hbSimpleItemTitle').value) || '').trim();
-    const groupKey = String(($id('hbSimpleItemGroupKey') && $id('hbSimpleItemGroupKey').value) || '').trim();
-    const summary = String(($id('hbSimpleItemSummary') && $id('hbSimpleItemSummary').value) || '').trim();
-    const content = String(($id('hbSimpleItemContent') && $id('hbSimpleItemContent').value) || '').trim();
-    const status = String(($id('hbSimpleItemStatus') && $id('hbSimpleItemStatus').value) || 'published');
-    const linkLabel = String(($id('hbSimpleItemLinkLabel') && $id('hbSimpleItemLinkLabel').value) || '').trim();
-    const linkUrl = String(($id('hbSimpleItemLinkUrl') && $id('hbSimpleItemLinkUrl').value) || '').trim();
-    if(!categoryId){ setItemMessage('Please choose a category.'); return; }
-    if(!title){ setItemMessage('Please enter a title.'); return; }
-    if(!groupKey){ setItemMessage('Please enter an article group key.'); return; }
-    if(!content && !linkUrl){ setItemMessage('Add guidance content or a button URL before saving.'); return; }
+    const title = String($id('hbSimpleItemTitle').value || '').trim();
+    const summary = String($id('hbSimpleItemSummary').value || '').trim();
+    const content = String($id('hbSimpleItemContent').value || '').trim();
+    const status = String($id('hbSimpleItemStatus').value || 'published');
+    const linkLabel = String($id('hbSimpleItemLinkLabel').value || '').trim();
+    const linkUrl = String($id('hbSimpleItemLinkUrl').value || '').trim();
+
+    if(!categoryId){
+      setItemMessage('Please choose a category.');
+      return;
+    }
+    if(!title){
+      setItemMessage('Please enter a title.');
+      return;
+    }
+    if(!content && !linkUrl){
+      setItemMessage('Add content or a link before saving.');
+      return;
+    }
+
     const now = new Date().toISOString();
     const previous = items.find(entry => entry.id === currentItemId) || {};
-    const next = { id: currentItemId || ('hb-' + Date.now()), groupKey, roleView, categoryId, category:categoryId, categoryTitle:(categories.find(cat => cat.id === categoryId) || {}).title || '', title, summary, content, status, type:linkUrl ? 'link' : 'page', url:linkUrl, linkLabel, heroUrl:currentImageData || '', imageData:currentImageData || '', attachments:linkUrl ? [{ label:linkLabel || 'Open page', url:linkUrl }] : [], createdAt:previous.createdAt || now, updatedAt:now };
-    items = items.filter(entry => entry.id !== next.id); items.push(next); await saveStore(KEY_ITEMS, items); renderItems(); fillItemForm(next.id); setItemMessage('Article saved.');
+    const next = {
+      id: currentItemId || ('hb-' + Date.now()),
+      categoryId,
+      category: categoryId,
+      categoryTitle: (categories.find(cat => cat.id === categoryId) || {}).title || '',
+      title,
+      summary,
+      content,
+      status,
+      type: linkUrl ? 'link' : 'page',
+      url: linkUrl,
+      linkLabel: linkLabel,
+      heroUrl: currentImageData || '',
+      imageData: currentImageData || '',
+      imageName: previous.imageName || '',
+      attachments: linkUrl ? [{ label: linkLabel || 'Open link', url: linkUrl }] : [],
+      createdAt: previous.createdAt || now,
+      updatedAt: now
+    };
+
+    items = items.filter(entry => entry.id !== next.id);
+    items.push(next);
+    await saveStore(KEY_ITEMS, items);
+    renderItems();
+    setItemMessage('Item saved.');
+    fillItemForm(next.id);
   }
-  async function deleteItem(itemId){ if(!window.confirm('Delete this article?')) return; items = items.filter(entry => entry.id !== itemId); await saveStore(KEY_ITEMS, items); if(currentItemId === itemId) clearItemForm(); renderItems(); setItemMessage('Article removed.'); }
+
+  async function deleteItem(itemId){
+    const item = items.find(entry => entry.id === itemId);
+    if(!item) return;
+    if(!window.confirm('Delete this handbook item? The image saved inside it will be deleted too.')) return;
+    items = items.filter(entry => entry.id !== itemId);
+    await saveStore(KEY_ITEMS, items);
+    if(currentItemId === itemId) clearItemForm();
+    renderItems();
+    setItemMessage('Item removed. Image space has been cleared together with the item.');
+  }
+
   async function compressImage(file){
-    if(!file) return ''; if(file.size > 8 * 1024 * 1024) throw new Error('Please choose an image smaller than 8 MB.');
-    const dataUrl = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || '')); reader.onerror = () => reject(new Error('Could not read the file.')); reader.readAsDataURL(file); });
-    const image = await new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error('Could not process the image.')); img.src = dataUrl; });
-    const maxWidth = 1400, scale = image.width > maxWidth ? (maxWidth / image.width) : 1, width = Math.round(image.width * scale), height = Math.round(image.height * scale);
-    const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,width,height); ctx.drawImage(image,0,0,width,height); return canvas.toDataURL('image/jpeg', 0.78);
+    if(!file) return '';
+    if(file.size > 8 * 1024 * 1024){
+      throw new Error('Please choose an image smaller than 8 MB.');
+    }
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Could not read the file.'));
+      reader.readAsDataURL(file);
+    });
+
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Could not process the image.'));
+      img.src = dataUrl;
+    });
+
+    const maxWidth = 1400;
+    const scale = image.width > maxWidth ? (maxWidth / image.width) : 1;
+    const width = Math.round(image.width * scale);
+    const height = Math.round(image.height * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(image, 0, 0, width, height);
+    return canvas.toDataURL('image/jpeg', 0.78);
   }
+
   async function handleImageUpload(event){
-    const file = event.target && event.target.files && event.target.files[0]; if(!file) return;
-    try{ currentImageData = await compressImage(file); renderPreview(); setItemMessage('Image ready. Save the article to publish it.'); }
-    catch(err){ currentImageData = ''; renderPreview(); setItemMessage(err && err.message ? err.message : 'Could not process the image.'); }
-  }
-  async function importBundledSeed(){
-    const btn = $id('btnHbImportSeed');
+    const file = event.target && event.target.files && event.target.files[0];
+    if(!file) return;
     try{
-      if(btn){ btn.disabled = true; btn.textContent = 'Importing…'; }
-      const res = await fetch('assets/help-centre-seed.json', { cache:'no-store' });
-      if(!res.ok) throw new Error('Could not load the packaged seed file.');
-      const payload = await res.json();
-      categories = normalizeCategories(payload.categories || []);
-      items = normalizeItems(payload.items || []);
-      await saveStore(KEY_CATEGORIES, categories);
-      await saveStore(KEY_ITEMS, items);
-      renderCategorySelect(); renderCategoryList(); renderPreview(); renderItems(); clearCategoryForm(); clearItemForm();
-      setItemMessage('Production Help Center content imported successfully.');
-    }catch(err){ setItemMessage(err && err.message ? err.message : 'Import failed.'); }
-    finally{ if(btn){ btn.disabled = false; btn.textContent = 'Import production help'; } }
+      currentImageData = await compressImage(file);
+      renderPreview();
+      setItemMessage('Image ready. It will be saved inside this handbook item.');
+    }catch(err){
+      currentImageData = '';
+      renderPreview();
+      setItemMessage(err && err.message ? err.message : 'Could not process the image.');
+    }
   }
+
   async function boot(){
     if(!$id('tabHandbook') || !$id('hbSimpleItemTitle')) return;
+
     categories = normalizeCategories(await loadStore(KEY_CATEGORIES, []));
     items = normalizeItems(await loadStore(KEY_ITEMS, []));
+    handbookReadReceipts = normalizeReadReceipts(await loadStore(KEY_HANDBOOK_READ_RECEIPTS, {}));
+    totalHandbookResidents = countApprovedResidents(await loadStore(KEY_USERS, []));
     ensureCategoriesFromItems();
-    renderCategorySelect(); renderCategoryList(); renderPreview(); renderItems(); clearCategoryForm(); syncCategoryInput('Getting Started'); clearItemForm();
-    $id('hbSimpleCatPreset')?.addEventListener('change', function(){ syncCategoryInput(this.value); });
-    $id('hbSimpleCatTitle')?.addEventListener('input', function(){ if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(this.value); });
+
+    if(categories.length){
+      await saveStore(KEY_CATEGORIES, categories);
+    }
+
+    renderCategorySelect();
+    renderCategoryList();
+    renderPreview();
+    renderItems();
+    clearCategoryForm();
+    syncCategoryInput('General');
+    clearItemForm();
+
+    $id('hbSimpleCatPreset')?.addEventListener('change', function(){
+      syncCategoryInput(this.value);
+    });
+    $id('hbSimpleCatTitle')?.addEventListener('input', function(){
+      if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(this.value);
+    });
     $id('btnHbSimpleCatClear')?.addEventListener('click', clearCategoryForm);
     $id('btnHbSimpleCatSave')?.addEventListener('click', saveCategory);
     $id('btnHbSimpleItemClear')?.addEventListener('click', clearItemForm);
     $id('btnHbSimpleItemSave')?.addEventListener('click', saveItem);
-    $id('btnHbSimpleItemDelete')?.addEventListener('click', function(){ if(currentItemId) deleteItem(currentItemId); });
-    $id('btnHbRemoveImage')?.addEventListener('click', function(){ currentImageData = ''; if($id('hbSimpleItemImage')) $id('hbSimpleItemImage').value = ''; renderPreview(); setItemMessage('Image removed from this draft. Save the article to apply the change.'); });
+    $id('btnHbSimpleItemDelete')?.addEventListener('click', function(){
+      if(currentItemId) deleteItem(currentItemId);
+    });
+    $id('btnHbRemoveImage')?.addEventListener('click', function(){
+      currentImageData = '';
+      if($id('hbSimpleItemImage')) $id('hbSimpleItemImage').value = '';
+      renderPreview();
+      setItemMessage('Image removed from this item draft. Save to apply.');
+    });
     $id('hbSimpleItemImage')?.addEventListener('change', handleImageUpload);
     $id('hbSimpleItemSearch')?.addEventListener('input', renderItems);
-    $id('hbSimpleItemCategory')?.addEventListener('change', function(){ currentCategoryId = this.value; });
-    $id('btnHbImportSeed')?.addEventListener('click', importBundledSeed);
-    $id('hbSimpleCatList')?.addEventListener('click', function(event){ const editId = event.target && event.target.getAttribute('data-hb-cat-edit'); const deleteId = event.target && event.target.getAttribute('data-hb-cat-delete'); if(editId) fillCategoryForm(editId); if(deleteId) deleteCategory(deleteId); });
-    $id('hbSimpleItemList')?.addEventListener('click', function(event){ const editId = event.target && event.target.getAttribute('data-hb-item-edit'); const deleteId = event.target && event.target.getAttribute('data-hb-item-delete'); if(editId) fillItemForm(editId); if(deleteId) deleteItem(deleteId); });
+    $id('hbSimpleItemCategory')?.addEventListener('change', function(){
+      currentCategoryId = this.value;
+    });
+
+    $id('hbSimpleCatList')?.addEventListener('click', function(event){
+      const editId = event.target && event.target.getAttribute('data-hb-cat-edit');
+      const deleteId = event.target && event.target.getAttribute('data-hb-cat-delete');
+      if(editId) fillCategoryForm(editId);
+      if(deleteId) deleteCategory(deleteId);
+    });
+
+    $id('hbSimpleItemList')?.addEventListener('click', function(event){
+      const editId = event.target && event.target.getAttribute('data-hb-item-edit');
+      const deleteId = event.target && event.target.getAttribute('data-hb-item-delete');
+      if(editId) fillItemForm(editId);
+      if(deleteId) deleteItem(deleteId);
+    });
   }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once:true }); else boot();
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot, { once:true });
+  }else{
+    boot();
+  }
+})();
+</script>
+
+
+
+<script>
+(function(){
+  'use strict';
+  const STORE_KEY = 'anw_help_center_seed_v2';
+  const $id = (id) => document.getElementById(id);
+  let handbookPackage = null;
+  let currentArticleId = '';
+
+  function msg(id, text, ok){
+    const el = $id(id);
+    if(!el) return;
+    el.textContent = text || '';
+    el.style.color = ok === true ? '#215b3f' : (ok === false ? '#9f3a38' : '');
+  }
+  async function loadStore(key, fallback){
+    try{
+      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
+      return await res.json();
+    }catch(_){ return fallback; }
+  }
+  async function saveStore(key, value){
+    const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(value)
+    });
+    if(!res.ok) throw new Error('store save failed');
+  }
+  function slugify(value){
+    return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  }
+  function validatePackage(pkg){
+    return !!(pkg && Array.isArray(pkg.sections) && Array.isArray(pkg.articles) && pkg.views);
+  }
+  function sectionTitle(sectionId){
+    const found = (handbookPackage.sections || []).find(function(s){ return s.id === sectionId; });
+    return found ? found.title : sectionId;
+  }
+  function ensureSectionOptions(){
+    const select = $id('hbPkgSection');
+    if(!select || !handbookPackage) return;
+    select.innerHTML = (handbookPackage.sections || []).map(function(section){
+      return '<option value="' + section.id + '">' + section.title + '</option>';
+    }).join('');
+  }
+  function clearEditor(){
+    currentArticleId = '';
+    if($id('hbPkgRole')) $id('hbPkgRole').value = 'resident';
+    if($id('hbPkgSection')) $id('hbPkgSection').selectedIndex = 0;
+    if($id('hbPkgTitle')) $id('hbPkgTitle').value = '';
+    if($id('hbPkgSummary')) $id('hbPkgSummary').value = '';
+    if($id('hbPkgContent')) $id('hbPkgContent').value = '';
+    if($id('hbPkgLinkedPage')) $id('hbPkgLinkedPage').value = '';
+    if($id('btnHbPkgDelete')) $id('btnHbPkgDelete').style.display = 'none';
+    msg('hbPkgMsg', '', null);
+  }
+  function fillEditor(articleId){
+    const article = (handbookPackage.articles || []).find(function(item){ return item.id === articleId; });
+    if(!article) return;
+    currentArticleId = article.id;
+    $id('hbPkgRole').value = article.role || 'resident';
+    $id('hbPkgSection').value = article.sectionId || '';
+    $id('hbPkgTitle').value = article.title || '';
+    $id('hbPkgSummary').value = article.summary || '';
+    $id('hbPkgContent').value = article.contentMd || '';
+    $id('hbPkgLinkedPage').value = article.linkedPage || '';
+    $id('btnHbPkgDelete').style.display = 'inline-flex';
+    msg('hbPkgMsg', 'Article loaded into the editor.', true);
+  }
+  function renderPackage(){
+    ensureSectionOptions();
+    const wrap = $id('hbPackageList');
+    const summary = $id('hbImportSummary');
+    if(!wrap || !summary) return;
+    if(!validatePackage(handbookPackage)){
+      wrap.innerHTML = '<div class="tiny muted">No package loaded yet.</div>';
+      summary.textContent = 'No package loaded yet.';
+      return;
+    }
+    const counts = (handbookPackage.articles || []).reduce(function(acc, item){
+      acc[item.role] = (acc[item.role] || 0) + 1;
+      return acc;
+    }, {});
+    summary.textContent = 'Resident: ' + (counts.resident || 0) + ' · Admin: ' + (counts.admin || 0) + ' · Owner: ' + (counts.owner || 0);
+    wrap.innerHTML = (handbookPackage.articles || []).map(function(article){
+      return '<div class="hb-admin-item-row">'
+        + '<div class="hb-admin-item-meta">'
+        + '<div class="hb-admin-item-title">' + article.title + '</div>'
+        + '<div class="hb-admin-item-sub">' + sectionTitle(article.sectionId) + ' · ' + article.role + '</div>'
+        + '</div>'
+        + '<div class="hb-admin-row-actions">'
+        + '<button type="button" class="btn btn-line small" data-hb-pkg-edit="' + article.id + '">Edit</button>'
+        + '<button type="button" class="btn btn-line small" data-hb-pkg-delete="' + article.id + '">Remove</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+  async function importSelectedFile(){
+    const input = $id('hbImportFile');
+    const file = input && input.files && input.files[0];
+    if(!file){
+      msg('hbImportMsg', 'Choose the handbook package file first.', false);
+      return;
+    }
+    let parsed;
+    try{ parsed = JSON.parse(await file.text()); }catch(_){
+      msg('hbImportMsg', 'The selected file is not valid JSON.', false);
+      return;
+    }
+    if(!validatePackage(parsed)){
+      msg('hbImportMsg', 'The selected file is missing handbook sections, articles or views.', false);
+      return;
+    }
+    handbookPackage = parsed;
+    await saveStore(STORE_KEY, handbookPackage);
+    renderPackage();
+    clearEditor();
+    msg('hbImportMsg', 'Handbook package imported successfully from ' + file.name + '.', true);
+  }
+  function exportCurrentPackage(){
+    if(!validatePackage(handbookPackage)){
+      msg('hbImportMsg', 'There is no published Help Center package to export yet.', false);
+      return;
+    }
+    const blob = new Blob([JSON.stringify(handbookPackage, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'aderrig-handbook-export.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+  async function saveArticle(){
+    if(!validatePackage(handbookPackage)){
+      msg('hbPkgMsg', 'Import a handbook package first.', false);
+      return;
+    }
+    const role = String($id('hbPkgRole').value || 'resident');
+    const sectionId = String($id('hbPkgSection').value || '').trim();
+    const title = String($id('hbPkgTitle').value || '').trim();
+    const summary = String($id('hbPkgSummary').value || '').trim();
+    const contentMd = String($id('hbPkgContent').value || '').trim();
+    const linkedPage = String($id('hbPkgLinkedPage').value || '').trim();
+    if(!sectionId || !title || !contentMd){
+      msg('hbPkgMsg', 'Section, title and content are required.', false);
+      return;
+    }
+    const article = {
+      id: currentArticleId || [sectionId, slugify(title), role].join('-'),
+      role: role,
+      sectionId: sectionId,
+      title: title,
+      summary: summary,
+      contentMd: contentMd,
+      linkedPage: linkedPage,
+      updatedAt: new Date().toISOString().slice(0,10)
+    };
+    const list = Array.isArray(handbookPackage.articles) ? handbookPackage.articles.slice() : [];
+    const index = list.findIndex(function(item){ return item.id === article.id; });
+    if(index >= 0) list[index] = article; else list.push(article);
+    handbookPackage.articles = list;
+    await saveStore(STORE_KEY, handbookPackage);
+    renderPackage();
+    fillEditor(article.id);
+    msg('hbPkgMsg', 'Article saved to the published Help Center package.', true);
+  }
+  async function deleteArticle(articleId){
+    if(!validatePackage(handbookPackage)) return;
+    if(!window.confirm('Remove this handbook article from the published package?')) return;
+    handbookPackage.articles = (handbookPackage.articles || []).filter(function(item){ return item.id !== articleId; });
+    await saveStore(STORE_KEY, handbookPackage);
+    renderPackage();
+    clearEditor();
+    msg('hbPkgMsg', 'Article removed from the published Help Center package.', true);
+  }
+  async function bootHandbookImport(){
+    if(!$id('tabHandbook')) return;
+    handbookPackage = await loadStore(STORE_KEY, null);
+    if(!validatePackage(handbookPackage)){
+      handbookPackage = { version:'', views:{ resident:{label:'Resident Help'}, admin:{label:'Admin Guidance'}, owner:{label:'Owner Oversight'} }, sections:[], articles:[] };
+    }
+    renderPackage();
+    clearEditor();
+    $id('btnHbImportSelected')?.addEventListener('click', function(){ importSelectedFile().catch(function(){ msg('hbImportMsg', 'Unable to import the selected file.', false); }); });
+    $id('btnHbExportCurrent')?.addEventListener('click', exportCurrentPackage);
+    $id('btnHbPkgClear')?.addEventListener('click', clearEditor);
+    $id('btnHbPkgSave')?.addEventListener('click', function(){ saveArticle().catch(function(){ msg('hbPkgMsg', 'Unable to save the article.', false); }); });
+    $id('btnHbPkgDelete')?.addEventListener('click', function(){ if(currentArticleId) deleteArticle(currentArticleId).catch(function(){ msg('hbPkgMsg', 'Unable to remove the article.', false); }); });
+    $id('hbPackageList')?.addEventListener('click', function(event){
+      const editId = event.target && event.target.getAttribute('data-hb-pkg-edit');
+      const deleteId = event.target && event.target.getAttribute('data-hb-pkg-delete');
+      if(editId) fillEditor(editId);
+      if(deleteId) deleteArticle(deleteId).catch(function(){ msg('hbPkgMsg', 'Unable to remove the article.', false); });
+    });
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bootHandbookImport, { once:true });
+  }else{
+    bootHandbookImport();
+  }
 })();
 </script>
 
