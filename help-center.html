@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="page:help_center" name="anw-acl-key"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Help Center — Aderrig NW</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    html.anw-preauth-hide body { visibility:hidden; }
+    :root{
+      --hb-border: rgba(17,24,39,.08);
+      --hb-text:#23344b;
+      --hb-muted:#6a7b90;
+      --hb-soft:#f7f9fb;
+      --hb-card:#ffffff;
+    }
+    .hb-shell{display:grid;gap:18px}
+    .hb-hero,.hb-grid>section{
+      background:var(--hb-card);
+      border:1px solid var(--hb-border);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+    }
+    .hb-hero{padding:24px}
+    .hb-badge{
+      display:inline-flex;align-items:center;min-height:34px;padding:0 14px;
+      border-radius:999px;background:#edf5ef;color:var(--brand);font-weight:800;font-size:.88rem
+    }
+    .hb-hero-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+    .hb-hero h2{margin:14px 0 8px;color:var(--hb-text);font-size:2rem}
+    .hb-hero p{margin:0;color:var(--hb-muted);max-width:920px;line-height:1.55}
+    .hb-role-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .hb-role-tab{
+      border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);
+      border-radius:999px;padding:10px 16px;font-weight:800;cursor:pointer
+    }
+    .hb-role-tab.active{background:#6d4ab5;color:#fff;border-color:#6d4ab5}
+    .hb-role-tab[hidden]{display:none!important}
+    .hb-manage-link{
+      display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;
+      border-radius:14px;border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);text-decoration:none;font-weight:800
+    }
+    .hb-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px}
+    .hb-panel{padding:20px}
+    .hb-panel h3{margin:0 0 10px;color:var(--hb-text)}
+    .hb-panel p{margin:0;color:var(--hb-muted);line-height:1.55}
+    .hb-section-list{display:grid;gap:12px;margin-top:18px}
+    .hb-section-btn{
+      width:100%;text-align:left;border:1px solid var(--hb-border);border-radius:18px;background:#fff;padding:16px;cursor:pointer
+    }
+    .hb-section-btn.active{background:#eef4f1;border-color:#d5e8dc}
+    .hb-section-title{font-size:1.15rem;font-weight:900;color:var(--hb-text)}
+    .hb-section-sub{margin-top:6px;color:var(--hb-muted);font-size:.92rem;line-height:1.4}
+    .hb-article-card{
+      border:1px solid var(--hb-border);border-radius:20px;background:#fff;padding:18px;display:grid;gap:14px
+    }
+    .hb-article-head h3{margin:0;color:var(--hb-text);font-size:1.35rem}
+    .hb-article-head p{margin:8px 0 0;color:var(--hb-muted)}
+    .hb-meta{display:flex;gap:10px;flex-wrap:wrap}
+    .hb-chip{
+      display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border-radius:999px;
+      background:var(--hb-soft);border:1px solid var(--hb-border);color:#55677c;font-weight:800
+    }
+    .hb-md{color:#324458;line-height:1.72;font-size:.98rem}
+    .hb-md p:first-child{margin-top:0}
+    .hb-md h3,.hb-md h4{color:#215b3f;margin:18px 0 8px}
+    .hb-md ul{margin:8px 0 8px 20px}
+    .hb-md li{margin:6px 0}
+    .hb-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .hb-link{
+      display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;
+      border-radius:12px;border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);text-decoration:none;font-weight:800
+    }
+    .hb-empty{padding:18px;border:1px dashed var(--hb-border);border-radius:16px;color:var(--hb-muted);background:#fbfcfd}
+    @media (max-width: 980px){ .hb-grid{grid-template-columns:1fr} }
+  </style>
+</head>
+<body class="page-help-center" data-acl-loading="true">
+<header class="site-header">
+  <div class="brand">
+    <a class="site-logo" href="index.html">
+      <img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/>
+    </a>
+    <div class="brand-text">
+      <h1>Aderrig NW</h1>
+      <p class="muted">Adamstown</p>
+    </div>
+  </div>
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="handbook.html">Handbook</a>
+    <a href="report.html">Report</a>
+    <a href="alerts.html">Community Alerts</a>
+    <a href="projects.html">Community Projects</a>
+    <a class="active" href="help-center.html">Help Center</a>
+    <a class="nav-login" href="login.html">Login / Register</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="household.html">Household</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+</header>
+
+<main class="container">
+  <div class="hb-shell">
+    <section class="hb-hero">
+      <div class="hb-hero-top">
+        <div>
+          <span class="hb-badge">Help Center</span>
+          <h2 id="hbHeroTitle">Help Center</h2>
+          <p id="hbHeroIntro">Practical, role-aware guidance lives here. Residents use Help Center directly from the main menu, while Admin and Owner can switch to their own guidance views when available.</p>
+        </div>
+        <a id="hbManageLink" class="hb-manage-link" href="admin.html">Open content management</a>
+      </div>
+      <div class="hb-role-tabs">
+        <button type="button" class="hb-role-tab active" data-role-tab="resident">Help Center</button>
+        <button type="button" class="hb-role-tab" data-role-tab="admin" hidden>Admin Guidance</button>
+        <button type="button" class="hb-role-tab" data-role-tab="owner" hidden>Owner Oversight</button>
+      </div>
+    </section>
+
+    <div class="hb-grid">
+      <section class="hb-panel">
+        <h3>Sections</h3>
+        <p>Open the guidance in this section.</p>
+        <div id="hbSectionList" class="hb-section-list"></div>
+      </section>
+
+      <section class="hb-panel">
+        <div id="hbArticleWrap"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-row">
+    <div class="footer-left"><span class="page-status">Private Page</span></div>
+    <div class="footer-center">© 2025 Aderrig NW · <a href="privacy.html">Privacy Policy</a></div>
+  </div>
+</footer>
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="assets/identity.js"></script>
+<script src="assets/app-core.js"></script>
+<script src="assets/acl-guard.js"></script>
+<script>
+(function(){
+  'use strict';
+  document.documentElement.classList.add('anw-preauth-hide');
+  const STORE_KEY = 'anw_help_center_seed_v2';
+  const $ = (s,root=document)=>root.querySelector(s);
+  const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
+  let handbookData = {views:{},sections:[],articles:[]};
+  let currentRoleView = 'resident';
+  let currentSectionId = '';
+
+  function userRole(){
+    try{ if(typeof anwGetLoggedRole === 'function') return String(anwGetLoggedRole() || 'resident'); }catch(_){}
+    return 'resident';
+  }
+  function roleAccess(){
+    const role = userRole();
+    return {
+      resident:true,
+      admin:['admin','owner'].includes(role),
+      owner:role === 'owner'
+    };
+  }
+  function canOpenPage(){
+    return !!userRole();
+  }
+  function esc(text){
+    return String(text == null ? '' : text).replace(/[&<>"]/g, function(ch){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[ch];
+    });
+  }
+  function markdownToHtml(md){
+    let value = String(md || '').trim();
+    if(!value) return '<p>No help content has been added to this article yet.</p>'; 
+    const lines = value.replace(/\r/g,'').split('\n');
+    let html = '';
+    let inList = false;
+    lines.forEach(function(line){
+      const t = line.trim();
+      if(!t){
+        if(inList){ html += '</ul>'; inList = false; }
+        return;
+      }
+      if(/^###\s+/.test(t)){ if(inList){ html += '</ul>'; inList = false; } html += '<h3>' + esc(t.replace(/^###\s+/,'')) + '</h3>'; return; }
+      if(/^####\s+/.test(t)){ if(inList){ html += '</ul>'; inList = false; } html += '<h4>' + esc(t.replace(/^####\s+/,'')) + '</h4>'; return; }
+      if(/^-\s+/.test(t)){ if(!inList){ html += '<ul>'; inList = true; } html += '<li>' + esc(t.replace(/^-\s+/,'')) + '</li>'; return; }
+      if(inList){ html += '</ul>'; inList = false; }
+      html += '<p>' + esc(t).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>') + '</p>';
+    });
+    if(inList) html += '</ul>';
+    return html;
+  }
+  async function fetchStore(key){
+    const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
+    if(!res.ok) throw new Error('Store request failed');
+    return await res.json();
+  }
+  async function loadHandbook(){
+    try{
+      const live = await fetchStore(STORE_KEY);
+      if(live && Array.isArray(live.sections) && Array.isArray(live.articles)) return live;
+    }catch(_){}
+    return {views:{},sections:[],articles:[]};
+  }
+  function fmtDate(value){
+    if(!value) return 'Latest update';
+    try{
+      const d = new Date(value);
+      if(Number.isNaN(d.getTime())) return 'Latest update';
+      return d.toLocaleDateString('en-IE', { day:'2-digit', month:'short', year:'numeric' });
+    }catch(_){ return 'Latest update'; }
+  }
+  function visibleArticles(){ return (handbookData.articles || []).filter(a => a.role === currentRoleView); }
+  function currentSections(){
+    const active = new Set(visibleArticles().map(a => a.sectionId));
+    return (handbookData.sections || []).filter(s => active.has(s.id));
+  }
+  function sectionArticles(sectionId){ return visibleArticles().filter(a => a.sectionId === sectionId); }
+
+  function renderRoleTabs(){
+    const access = roleAccess();
+    const views = handbookData.views || {};
+    $$('[data-role-tab]').forEach(function(btn){
+      const role = btn.getAttribute('data-role-tab');
+      btn.hidden = !access[role];
+      btn.textContent = (views[role] && views[role].label) || btn.textContent;
+      btn.classList.toggle('active', role === currentRoleView);
+    });
+    if(!access[currentRoleView]) currentRoleView = 'resident';
+    $('#hbHeroTitle').textContent = (views[currentRoleView] && views[currentRoleView].label) || 'Handbook';
+    $('#hbHeroIntro').textContent = (views[currentRoleView] && views[currentRoleView].intro) || 'Guidance published inside the handbook.';
+    $('#hbManageLink').style.display = (access.admin || access.owner) ? 'inline-flex' : 'none';
+  }
+
+  function renderSections(){
+    const sections = currentSections();
+    if(!currentSectionId || !sections.some(s => s.id === currentSectionId)) currentSectionId = sections[0] ? sections[0].id : '';
+    const wrap = $('#hbSectionList');
+    if(!sections.length){
+      wrap.innerHTML = '<div class="hb-empty">No published sections were found for this handbook view yet.</div>';
+      return;
+    }
+    wrap.innerHTML = sections.map(function(section){
+      const first = sectionArticles(section.id)[0];
+      return '<button type="button" class="hb-section-btn ' + (section.id === currentSectionId ? 'active' : '') + '" data-section-id="' + esc(section.id) + '">'
+        + '<div class="hb-section-title">' + esc(section.title) + '</div>'
+        + '<div class="hb-section-sub">' + esc(first ? first.title : 'Open guidance in this section') + '</div>'
+        + '</button>';
+    }).join('');
+  }
+  function renderArticles(){
+    const wrap = $('#hbArticleWrap');
+    const articles = currentSectionId ? sectionArticles(currentSectionId) : [];
+    if(!articles.length){
+      wrap.innerHTML = '<div class="hb-empty">No published articles were found in this section yet.</div>';
+      return;
+    }
+    wrap.innerHTML = articles.map(function(article){
+      return '<article class="hb-article-card">'
+        + '<div class="hb-article-head"><h3>' + esc(article.title) + '</h3><p>' + esc(article.summary || '') + '</p></div>'
+        + '<div class="hb-meta"><span class="hb-chip">View: ' + esc(currentRoleView.charAt(0).toUpperCase() + currentRoleView.slice(1)) + '</span><span class="hb-chip">Updated: ' + esc(fmtDate(article.updatedAt)) + '</span></div>'
+        + '<div class="hb-md">' + markdownToHtml(article.contentMd) + '</div>'
+        + '<div class="hb-actions">' + (article.linkedPage ? '<a class="hb-link" href="' + esc(article.linkedPage) + '">Open page</a>' : '') + '</div>'
+        + '</article>';
+    }).join('');
+  }
+  function rerender(){ renderRoleTabs(); renderSections(); renderArticles(); }
+
+  document.addEventListener('click', function(event){
+    const roleBtn = event.target.closest('[data-role-tab]');
+    if(roleBtn){
+      currentRoleView = roleBtn.getAttribute('data-role-tab');
+      currentSectionId = '';
+      rerender();
+      return;
+    }
+    const sectionBtn = event.target.closest('[data-section-id]');
+    if(sectionBtn){
+      currentSectionId = sectionBtn.getAttribute('data-section-id');
+      renderSections();
+      renderArticles();
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', async function(){
+    if(!canOpenPage()){
+      try{ window.location.replace('login.html'); }catch(_){ window.location.href = 'login.html'; }
+      return;
+    }
+    handbookData = await loadHandbook();
+    rerender();
+    document.documentElement.classList.remove('anw-preauth-hide');
+    document.body.removeAttribute('data-acl-loading');
+  });
+})();
+</script>
+</body>
+</html>
