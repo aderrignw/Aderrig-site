@@ -942,207 +942,61 @@
 </script>
 
 
+
 <style id="handbook-admin-simplified-style">
-  #tabHandbook .hb-admin-shell{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:18px;
-    align-items:start;
-  }
-  #tabHandbook .hb-admin-panel{
+  #tabHandbook .hb-owner-tabs{display:flex;gap:10px;flex-wrap:wrap}
+  #tabHandbook .hb-owner-tab.active{background:#6d4ab5;border-color:#6d4ab5;color:#fff}
+  #tabHandbook .hb-owner-overview-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
+  #tabHandbook .hb-owner-workspace{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  #tabHandbook .hb-owner-card{
     border:1px solid rgba(17,24,39,.10);
-    border-radius:22px;
-    background:linear-gradient(180deg, rgba(250,252,251,.98), rgba(255,255,255,1));
-    padding:20px;
-    min-width:0;
+    border-radius:24px;
+    background:linear-gradient(180deg, rgba(251,252,251,.98), rgba(255,255,255,1));
     box-shadow:0 10px 24px rgba(15,23,42,.05);
-  }
-  #tabHandbook .hb-admin-panel-head{
-    margin-bottom:16px;
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    gap:12px;
-    flex-wrap:wrap;
-  }
-  #tabHandbook .hb-admin-top-grid{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 120px 130px;
-    gap:12px;
-    align-items:end;
-  }
-  #tabHandbook .hb-admin-item-top{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 220px 180px;
-    gap:12px;
-    align-items:end;
-  }
-  #tabHandbook .hb-admin-support-grid{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) 320px;
-    gap:16px;
-    align-items:start;
-  }
-  #tabHandbook .hb-admin-category-list,
-  #tabHandbook .hb-admin-items-list{
-    display:grid;
-    gap:12px;
-  }
-  #tabHandbook .hb-admin-category-row,
-  #tabHandbook .hb-admin-item-row{
-    border:1px solid rgba(17,24,39,.08);
-    border-radius:18px;
-    background:#fff;
-    padding:14px 16px;
-    display:flex;
-    justify-content:space-between;
-    gap:14px;
-    align-items:flex-start;
-  }
-  #tabHandbook .hb-admin-category-meta,
-  #tabHandbook .hb-admin-item-meta{
+    padding:22px;
     min-width:0;
   }
-  #tabHandbook .hb-admin-category-title,
-  #tabHandbook .hb-admin-item-title{
-    font-weight:800;
-    color:#1f2b3d;
-    line-height:1.35;
+  #tabHandbook .hb-owner-card-head{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px;
   }
-  #tabHandbook .hb-admin-item-sub,
-  #tabHandbook .hb-admin-category-sub{
-    color:#6a7b90;
-    margin-top:4px;
-    line-height:1.45;
+  #tabHandbook .hb-owner-eyebrow{
+    display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;
+    background:#eef4f1;color:#2f6d50;font-size:.76rem;font-weight:900;letter-spacing:.02em;text-transform:uppercase;
   }
-  #tabHandbook .hb-admin-row-actions{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    justify-content:flex-end;
-    align-items:center;
+  #tabHandbook .hb-owner-card h4{margin:8px 0 0;color:#23344b;font-size:1.15rem}
+  #tabHandbook .hb-owner-card p{color:#6a7b90;line-height:1.6}
+  #tabHandbook .hb-owner-list{margin:14px 0 0 18px;color:#324458;display:grid;gap:8px}
+  #tabHandbook .hb-owner-status{
+    display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border-radius:999px;
+    border:1px solid rgba(17,24,39,.10);background:#fff;font-weight:800;color:#23344b;
   }
-  #tabHandbook .hb-admin-read-metrics{
-    display:inline-flex;
-    gap:8px;
-    flex-wrap:wrap;
-    align-items:center;
+  #tabHandbook .hb-owner-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+  #tabHandbook .hb-owner-metric{
+    border:1px solid rgba(17,24,39,.08);border-radius:18px;background:#fff;padding:16px;text-align:left;
   }
-  #tabHandbook .hb-admin-read-chip{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-height:30px;
-    padding:0 10px;
-    border-radius:999px;
-    border:1px solid rgba(17,24,39,.10);
-    background:#eef7f1;
-    color:#2f6d50;
-    font-size:.78rem;
-    font-weight:800;
-    white-space:nowrap;
+  #tabHandbook .hb-owner-metric-label{display:block;font-size:.8rem;color:#6a7b90;font-weight:700;margin-bottom:6px}
+  #tabHandbook .hb-owner-metric strong{font-size:1.6rem;color:#23344b}
+  #tabHandbook .hb-owner-import-grid,
+  #tabHandbook .hb-owner-editor-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+  #tabHandbook .hb-owner-current{margin-top:18px;padding-top:18px;border-top:1px solid rgba(17,24,39,.08)}
+  #tabHandbook .hb-owner-article-list{display:grid;gap:12px}
+  #tabHandbook .hb-owner-article-row{
+    border:1px solid rgba(17,24,39,.08);border-radius:18px;background:#fff;padding:14px 16px;
+    display:flex;justify-content:space-between;gap:14px;align-items:flex-start;
   }
-  #tabHandbook .hb-admin-read-chip.pending{
-    background:#fff7e8;
-    color:#8b6b22;
-    border-color:rgba(139,107,34,.18);
-  }
-  #tabHandbook .hb-admin-image-preview{
-    min-height:220px;
-    border:1px dashed rgba(17,24,39,.16);
-    border-radius:18px;
-    background:#f7faf8;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#6a7b90;
-    text-align:center;
-    padding:12px;
-    overflow:hidden;
-  }
-  #tabHandbook .hb-admin-image-preview img{
-    width:100%;
-    max-height:280px;
-    object-fit:cover;
-    border-radius:14px;
-    display:block;
-  }
-  #tabHandbook .hb-admin-items-card{
-    border-top:1px solid rgba(17,24,39,.08);
-    padding-top:18px;
-    margin-top:18px;
-  }
-  #tabHandbook .hb-admin-items-toolbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    flex-wrap:wrap;
-    margin-bottom:12px;
-  }
-  #tabHandbook .hb-admin-items-toolbar input{
-    max-width:320px;
-    width:100%;
-  }
-  #tabHandbook .hb-status-pill{
-    display:inline-flex;
-    align-items:center;
-    padding:7px 12px;
-    border-radius:999px;
-    font-size:.84rem;
-    font-weight:800;
-    border:1px solid rgba(17,24,39,.10);
-    background:#fff;
-    text-transform:none;
-  }
-  #tabHandbook .hb-status-pill.published{
-    color:#2f6d50;
-    background:#eef7f1;
-    border-color:rgba(52,92,73,.18);
-  }
-  #tabHandbook .hb-status-pill.draft{
-    color:#8b6b22;
-    background:#fff7e8;
-    border-color:rgba(139,107,34,.18);
-  }
-  #tabHandbook .hb-icon-chip{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:52px;
-    height:52px;
-    border-radius:16px;
-    border:1px solid rgba(17,24,39,.08);
-    background:#fff;
-    font-size:1.4rem;
-  }
-  #tabHandbook .hb-inline-note{
-    padding:12px 14px;
-    border:1px solid rgba(17,24,39,.08);
-    border-radius:16px;
-    background:#fbfcfb;
-    color:#6a7b90;
-    line-height:1.5;
-  }
-  #tabHandbook #hbSimpleCatTitle{
-    display:none;
-    margin-top:10px;
-  }
+  #tabHandbook .hb-owner-article-meta{min-width:0}
+  #tabHandbook .hb-owner-article-title{font-weight:800;color:#23344b;line-height:1.35}
+  #tabHandbook .hb-owner-article-sub{margin-top:6px;color:#6a7b90;line-height:1.45}
+  #tabHandbook .hb-owner-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   @media (max-width: 980px){
-    #tabHandbook .hb-admin-top-grid,
-    #tabHandbook .hb-admin-item-top,
-    #tabHandbook .hb-admin-support-grid{
-      grid-template-columns:1fr;
-    }
-    #tabHandbook .hb-admin-category-row,
-    #tabHandbook .hb-admin-item-row{
-      flex-direction:column;
-    }
-    #tabHandbook .hb-admin-row-actions{
-      justify-content:flex-start;
-    }
+    #tabHandbook .hb-owner-overview-grid,
+    #tabHandbook .hb-owner-workspace,
+    #tabHandbook .hb-owner-import-grid,
+    #tabHandbook .hb-owner-editor-grid{grid-template-columns:1fr}
+    #tabHandbook .hb-owner-article-row{flex-direction:column}
   }
 </style>
+
 
 </head>
 
@@ -1964,141 +1818,149 @@
 
 
   <!-- ================= HANDBOOK ================= -->
+  
+  
   <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
     <h3>Handbook</h3>
-    <p class="tiny muted" style="margin-top:0;">Manage the Handbook workspace here. The resident Help Center stays separate in the main site menu.</p>
+    <p class="tiny muted" style="margin-top:0;">Keep the general Handbook separate from the resident Help Center. Use the sub-areas below to manage only the complete Owner Help Center content and keep this workspace tidy.</p>
 
-    <div class="hb-admin-shell">
-      <div class="hb-admin-panel">
-        <div class="hb-admin-panel-head">
-          <div>
-            <h4 style="margin:0;">Category setup</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Choose a ready category or use Other when you need a new one.</p>
-          </div>
-        </div>
-
-        <div class="hb-admin-top-grid">
-          <div class="field" style="margin:0;">
-            <label>Category</label>
-            <select id="hbSimpleCatPreset">
-              <option value="General">General</option>
-              <option value="Security">Security</option>
-              <option value="Parking">Parking</option>
-              <option value="Emergency">Emergency</option>
-              <option value="Volunteering">Volunteering</option>
-              <option value="Waste & Recycling">Waste & Recycling</option>
-              <option value="Community Services">Community Services</option>
-              <option value="Rules & Guidance">Rules & Guidance</option>
-              <option value="Other">Other</option>
-            </select>
-            <input id="hbSimpleCatTitle" type="text" maxlength="80" placeholder="Enter other category name" />
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Auto icon</label>
-            <div id="hbSimpleCatIconPreview" class="hb-icon-chip" aria-label="Automatic category icon">📘</div>
-          </div>
-          <div class="field" style="margin:0;">
-            <label class="chk" style="display:flex; align-items:center; gap:10px; min-height:46px; margin-top:28px;">
-              <input id="hbSimpleCatActive" type="checkbox" checked>
-              <span>Active category</span>
-            </label>
-          </div>
-        </div>
-
-        <p id="hbSimpleCatMsg" class="tiny muted" style="margin-top:10px;"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
-          <button type="button" class="btn btn-line" id="btnHbSimpleCatClear">Clear</button>
-          <button type="button" class="btn" id="btnHbSimpleCatSave">Save category</button>
-        </div>
-
-        <div class="hb-admin-category-list" id="hbSimpleCatList" style="margin-top:18px;"></div>
-      </div>
-
-      <div class="hb-admin-panel">
-        <div class="hb-admin-panel-head">
-          <div>
-            <h4 style="margin:0;">Handbook item</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Choose the category, add the message details, and keep the image option when needed.</p>
-          </div>
-        </div>
-
-        <div class="hb-admin-item-top">
-          <div class="field" style="margin:0;">
-            <label>Title</label>
-            <input id="hbSimpleItemTitle" type="text" maxlength="120" placeholder="e.g., Visitor parking rules" />
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Category</label>
-            <select id="hbSimpleItemCategory"></select>
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Status</label>
-            <select id="hbSimpleItemStatus">
-              <option value="published">Published</option>
-              <option value="draft">Draft</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field" style="margin-top:14px;">
-          <label>Short summary (optional)</label>
-          <input id="hbSimpleItemSummary" type="text" maxlength="160" placeholder="Short text shown in the resident list" />
-        </div>
-
-        <div class="field">
-          <label>Content</label>
-          <textarea id="hbSimpleItemContent" rows="9" placeholder="Write the handbook content here."></textarea>
-        </div>
-
-        <div class="hb-admin-support-grid">
-          <div>
-            <div class="field">
-              <label>Link text (optional)</label>
-              <input id="hbSimpleItemLinkLabel" type="text" maxlength="80" placeholder="e.g., Open map" />
-            </div>
-            <div class="field">
-              <label>Link URL (optional)</label>
-              <input id="hbSimpleItemLinkUrl" type="url" placeholder="https://..." />
-            </div>
-            <div class="hb-inline-note">Use a link only when needed.</div>
-          </div>
-
-          <div>
-            <div class="field">
-              <label>Image (1 per item)</label>
-              <input id="hbSimpleItemImage" type="file" accept="image/*" />
-              <div class="tiny muted" style="margin-top:6px;">The image is compressed automatically before saving.</div>
-              <div class="actions" style="justify-content:flex-start; margin-top:8px;">
-                <button type="button" class="btn btn-line small" id="btnHbRemoveImage">Remove image</button>
-              </div>
-            </div>
-            <div class="field" style="margin-bottom:0;">
-              <label>Image preview</label>
-              <div id="hbSimpleImagePreview" class="hb-admin-image-preview">No image selected</div>
-            </div>
-          </div>
-        </div>
-
-        <p id="hbSimpleItemMsg" class="tiny muted" style="margin-top:10px;"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
-          <button type="button" class="btn btn-line" id="btnHbSimpleItemDelete" style="display:none;">Delete item</button>
-          <button type="button" class="btn btn-line" id="btnHbSimpleItemClear">Clear</button>
-          <button type="button" class="btn" id="btnHbSimpleItemSave">Save item</button>
-        </div>
-
-        <div class="hb-admin-items-card">
-          <div class="hb-admin-items-toolbar">
-            <h4 style="margin:0;">Registered items</h4>
-            <input id="hbSimpleItemSearch" type="text" placeholder="Search item title..." />
-          </div>
-          <div id="hbSimpleItemList" class="hb-admin-items-list"></div>
-          <p id="hbSimpleItemEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No handbook items yet.</p>
-        </div>
-      </div>
+    <div class="hb-owner-tabs" role="tablist" aria-label="Handbook management sections">
+      <button type="button" class="btn small hb-owner-tab active" data-hb-owner-tab="hbOwnerOverview">Overview</button>
+      <button type="button" class="btn small hb-owner-tab" data-hb-owner-tab="hbOwnerHelpCenter">Owner Help Center</button>
     </div>
+
+    <section class="hb-owner-pane" id="hbOwnerOverview" style="margin-top:16px;">
+      <div class="hb-owner-overview-grid">
+        <article class="hb-owner-card">
+          <div class="hb-owner-card-head">
+            <div>
+              <span class="hb-owner-eyebrow">Handbook</span>
+              <h4>General Handbook space</h4>
+            </div>
+          </div>
+          <p>The public Handbook should stay calm, polished and easy to read. It is for orientation, structure and governance context — not for dense editing controls.</p>
+          <ul class="hb-owner-list">
+            <li>Use the Handbook page for clean guidance and layout.</li>
+            <li>Keep resident task help in the separate Help Center page.</li>
+            <li>Keep editing actions here in Admin only.</li>
+          </ul>
+          <div class="actions" style="justify-content:flex-start; gap:.5rem; flex-wrap:wrap; margin-top:14px;">
+            <a class="btn btn-line" href="handbook.html">Open Handbook page</a>
+            <a class="btn btn-line" href="help-center.html">Open Resident Help Center</a>
+          </div>
+        </article>
+
+        <article class="hb-owner-card">
+          <div class="hb-owner-card-head">
+            <div>
+              <span class="hb-owner-eyebrow">Published package</span>
+              <h4>Owner Help Center status</h4>
+            </div>
+            <span class="hb-owner-status" id="hbOwnerSummaryBadge">Owner package not loaded</span>
+          </div>
+          <p id="hbOwnerSummaryText" class="tiny muted" style="margin:0;">No Owner articles are loaded yet.</p>
+          <div class="hb-owner-metrics">
+            <div class="hb-owner-metric">
+              <span class="hb-owner-metric-label">Sections</span>
+              <strong id="hbOwnerMetricSections">0</strong>
+            </div>
+            <div class="hb-owner-metric">
+              <span class="hb-owner-metric-label">Owner articles</span>
+              <strong id="hbOwnerMetricArticles">0</strong>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="hb-owner-pane" id="hbOwnerHelpCenter" style="display:none; margin-top:16px;">
+      <div class="hb-owner-workspace">
+        <article class="hb-owner-card">
+          <div class="hb-owner-card-head">
+            <div>
+              <span class="hb-owner-eyebrow">Sub tab</span>
+              <h4>Owner Help Center package</h4>
+            </div>
+          </div>
+          <p class="tiny muted" style="margin-top:0;">Import your package file, then maintain the full Owner Help Center only. Resident and Admin article editing is intentionally kept out of this workspace.</p>
+
+          <div class="hb-owner-import-grid">
+            <div class="field" style="margin:0;">
+              <label for="hbImportFile">Package file</label>
+              <input id="hbImportFile" type="file" accept=".json,application/json" />
+              <div class="tiny muted" style="margin-top:6px;">Choose the local file <strong>help-centre-seed.json</strong> to import the content package.</div>
+            </div>
+            <div class="actions" style="justify-content:flex-start; gap:.5rem; flex-wrap:wrap; margin-top:22px;">
+              <button type="button" class="btn" id="btnHbImportSelected">Import selected file</button>
+              <button type="button" class="btn btn-line" id="btnHbExportCurrent">Export current package</button>
+            </div>
+          </div>
+
+          <p id="hbImportMsg" class="tiny muted" style="margin:10px 0 0;"></p>
+
+          <div class="hb-owner-current">
+            <div class="hb-owner-card-head" style="margin-bottom:10px;">
+              <div>
+                <span class="hb-owner-eyebrow">Published now</span>
+                <h4 style="margin-bottom:0;">Owner articles list</h4>
+              </div>
+              <span class="tiny muted" id="hbImportSummary">No package loaded yet.</span>
+            </div>
+            <div id="hbPackageList" class="hb-owner-article-list"></div>
+          </div>
+        </article>
+
+        <article class="hb-owner-card">
+          <div class="hb-owner-card-head">
+            <div>
+              <span class="hb-owner-eyebrow">Editor</span>
+              <h4>Owner article editor</h4>
+            </div>
+          </div>
+          <p class="tiny muted" style="margin-top:0;">Use this editor to maintain the complete Owner Help Center content and linked page references.</p>
+
+          <div class="hb-owner-editor-grid">
+            <div class="field" style="margin:0;">
+              <label>Section</label>
+              <select id="hbPkgSection"></select>
+            </div>
+            <div class="field" style="margin:0;">
+              <label>Linked page</label>
+              <input id="hbPkgLinkedPage" type="text" placeholder="e.g., admin.html" />
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:14px;">
+            <label>Owner article title</label>
+            <input id="hbPkgTitle" type="text" maxlength="140" placeholder="Owner article title" />
+          </div>
+
+          <div class="field" style="margin:14px 0 0;">
+            <label>Summary</label>
+            <input id="hbPkgSummary" type="text" maxlength="220" placeholder="Short summary shown above the article" />
+          </div>
+
+          <div class="field" style="margin:14px 0 0;">
+            <label>Content</label>
+            <textarea id="hbPkgContent" rows="14" placeholder="Full Owner Help Center content"></textarea>
+          </div>
+
+          <input id="hbPkgRole" type="hidden" value="owner" />
+
+          <div class="actions" style="justify-content:flex-end; gap:.5rem; flex-wrap:wrap; margin-top:14px;">
+            <button type="button" class="btn btn-line" id="btnHbPkgClear">Clear</button>
+            <button type="button" class="btn btn-line" id="btnHbPkgDelete" style="display:none;">Remove article</button>
+            <button type="button" class="btn" id="btnHbPkgSave">Save Owner article</button>
+          </div>
+          <p id="hbPkgMsg" class="tiny muted" style="margin-top:10px;"></p>
+        </article>
+      </div>
+    </section>
   </section>
 
+
   <!-- ================= PROJECTS ================= -->
+
   <section class="card admin-tab-content" id="tabProjects" style="display:none;">
     <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
       <div>
@@ -3398,6 +3260,7 @@
     { key:'projects:tab_builder', label:'Projects · Build project', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
     { key:'projects:tab_published', label:'Projects · Confirm sending', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
     { key:'page:handbook', label:'Handbook', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:help_center', label:'Help Center', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:privacy', label:'Privacy Policy', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:login', label:'Login / Register', group:'Site pages', indent:0, defaults:{ public:true } },
 
@@ -4085,7 +3948,214 @@
   function parkingClearImport(){ const reg = parkingRegistryLoad(); reg.allocations = []; reg.importMeta = null; parkingRegistrySave(reg); parkingRenderAdmin(); }
   function parkingRemovePolicy(){ const reg = parkingRegistryLoad(); reg.policy = null; parkingRegistrySave(reg); try{ localStorage.removeItem(window.ANW_KEYS.PARKING_POLICY); }catch(_){} parkingRenderAdmin(); }
   function parkingExportCsv(){ const rows = parkingFilterRows(parkingBuildRows()); const head = ['Resident','Address','Eircode','Parking Space No.','Type','Status','Vehicles','Owner Check','Policy','Updated']; const lines = [head.join(',')].concat(rows.map(r=>[r.resident,r.address,r.eircode,r.space,r.type,r.status,r.vehicles,r.ownerCheck,r.policy,r.updated].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','))); downloadText('parking-registry.csv', lines.join('\n')); }
-  function parkingExportPdf(){ const rows = parkingFilterRows(parkingBuildRows()); const win = window.open('', '_blank'); if(!win) return; win.document.write('<html><head><title>Parking Registry</title><style>body{font-family:Arial,sans-serif;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}h1{font-size:20px}</style></head><body><h1>Parking & Vehicles Report</h1><table><thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.resident)}</td><td>${esc(r.address)}</td><td>${esc(r.eircode)}</td><td>${esc(r.space)}</td><td>${esc(r.type)}</td><td>${esc(r.status)}</td><td>${esc(r.vehicles)}</td><td>${esc(r.ownerCheck)}</td><td>${esc(r.updated)}</td></tr>`).join('')+'</tbody></table></body></html>'); win.document.close(); win.focus(); setTimeout(()=>win.print(), 300); }
+  function parkingExportPdf(){ const rows = parkingFilterRows(parkingBuildRows()); const win = window.open('', '_blank'); if(!win) return; win.document.write('<html><head><title>Parking Registry</title><style>body{font-family:Arial,sans-serif;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}h1{font-size:20px}</style></head><body><h1>Parking & Vehicles Report</h1><table><thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.resident)}</td><td>${esc(r.address)}</td><td>${esc(r.eircode)}</td><td>${esc(r.space)}</td><td>${esc(r.type)}</td><td>${esc(r.status)}</td><td>${esc(r.vehicles)}</td><td>${esc(r.ownerCheck)}</td><td>${esc(r.updated)}</td></tr>`).join('')+'</tbody></table>
+<script>
+(function(){
+  'use strict';
+  const STORE_KEY = 'anw_help_center_seed_v2';
+  const $id = (id) => document.getElementById(id);
+  let handbookPackage = null;
+  let currentArticleId = '';
+
+  function msg(id, text, ok){
+    const el = $id(id);
+    if(!el) return;
+    el.textContent = text || '';
+    el.style.color = ok === true ? '#215b3f' : (ok === false ? '#9f3a38' : '');
+  }
+  async function loadStore(key, fallback){
+    try{
+      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
+      return await res.json();
+    }catch(_){ return fallback; }
+  }
+  async function saveStore(key, value){
+    const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(value)
+    });
+    if(!res.ok) throw new Error('store save failed');
+  }
+  function slugify(value){
+    return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  }
+  function validatePackage(pkg){
+    return !!(pkg && Array.isArray(pkg.sections) && Array.isArray(pkg.articles) && pkg.views);
+  }
+  function sectionTitle(sectionId){
+    const found = (handbookPackage.sections || []).find(function(s){ return s.id === sectionId; });
+    return found ? found.title : sectionId;
+  }
+  function ensureSectionOptions(){
+    const select = $id('hbPkgSection');
+    if(!select || !handbookPackage) return;
+    select.innerHTML = (handbookPackage.sections || []).map(function(section){
+      return '<option value="' + section.id + '">' + section.title + '</option>';
+    }).join('');
+  }
+  function clearEditor(){
+    currentArticleId = '';
+    if($id('hbPkgRole')) $id('hbPkgRole').value = 'resident';
+    if($id('hbPkgSection')) $id('hbPkgSection').selectedIndex = 0;
+    if($id('hbPkgTitle')) $id('hbPkgTitle').value = '';
+    if($id('hbPkgSummary')) $id('hbPkgSummary').value = '';
+    if($id('hbPkgContent')) $id('hbPkgContent').value = '';
+    if($id('hbPkgLinkedPage')) $id('hbPkgLinkedPage').value = '';
+    if($id('btnHbPkgDelete')) $id('btnHbPkgDelete').style.display = 'none';
+    msg('hbPkgMsg', '', null);
+  }
+  function fillEditor(articleId){
+    const article = (handbookPackage.articles || []).find(function(item){ return item.id === articleId; });
+    if(!article) return;
+    currentArticleId = article.id;
+    $id('hbPkgRole').value = article.role || 'resident';
+    $id('hbPkgSection').value = article.sectionId || '';
+    $id('hbPkgTitle').value = article.title || '';
+    $id('hbPkgSummary').value = article.summary || '';
+    $id('hbPkgContent').value = article.contentMd || '';
+    $id('hbPkgLinkedPage').value = article.linkedPage || '';
+    $id('btnHbPkgDelete').style.display = 'inline-flex';
+    msg('hbPkgMsg', 'Article loaded into the editor.', true);
+  }
+  function renderPackage(){
+    ensureSectionOptions();
+    const wrap = $id('hbPackageList');
+    const summary = $id('hbImportSummary');
+    if(!wrap || !summary) return;
+    if(!validatePackage(handbookPackage)){
+      wrap.innerHTML = '<div class="tiny muted">No package loaded yet.</div>';
+      summary.textContent = 'No package loaded yet.';
+      return;
+    }
+    const counts = (handbookPackage.articles || []).reduce(function(acc, item){
+      acc[item.role] = (acc[item.role] || 0) + 1;
+      return acc;
+    }, {});
+    summary.textContent = 'Resident: ' + (counts.resident || 0) + ' · Admin: ' + (counts.admin || 0) + ' · Owner: ' + (counts.owner || 0);
+    wrap.innerHTML = (handbookPackage.articles || []).map(function(article){
+      return '<div class="hb-admin-item-row">'
+        + '<div class="hb-admin-item-meta">'
+        + '<div class="hb-admin-item-title">' + article.title + '</div>'
+        + '<div class="hb-admin-item-sub">' + sectionTitle(article.sectionId) + ' · ' + article.role + '</div>'
+        + '</div>'
+        + '<div class="hb-admin-row-actions">'
+        + '<button type="button" class="btn btn-line small" data-hb-pkg-edit="' + article.id + '">Edit</button>'
+        + '<button type="button" class="btn btn-line small" data-hb-pkg-delete="' + article.id + '">Remove</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+  async function importSelectedFile(){
+    const input = $id('hbImportFile');
+    const file = input && input.files && input.files[0];
+    if(!file){
+      msg('hbImportMsg', 'Choose the handbook package file first.', false);
+      return;
+    }
+    let parsed;
+    try{ parsed = JSON.parse(await file.text()); }catch(_){
+      msg('hbImportMsg', 'The selected file is not valid JSON.', false);
+      return;
+    }
+    if(!validatePackage(parsed)){
+      msg('hbImportMsg', 'The selected file is missing handbook sections, articles or views.', false);
+      return;
+    }
+    handbookPackage = parsed;
+    await saveStore(STORE_KEY, handbookPackage);
+    renderPackage();
+    clearEditor();
+    msg('hbImportMsg', 'Handbook package imported successfully from ' + file.name + '.', true);
+  }
+  function exportCurrentPackage(){
+    if(!validatePackage(handbookPackage)){
+      msg('hbImportMsg', 'There is no published Help Center package to export yet.', false);
+      return;
+    }
+    const blob = new Blob([JSON.stringify(handbookPackage, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'aderrig-handbook-export.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+  async function saveArticle(){
+    if(!validatePackage(handbookPackage)){
+      msg('hbPkgMsg', 'Import a handbook package first.', false);
+      return;
+    }
+    const role = String($id('hbPkgRole').value || 'resident');
+    const sectionId = String($id('hbPkgSection').value || '').trim();
+    const title = String($id('hbPkgTitle').value || '').trim();
+    const summary = String($id('hbPkgSummary').value || '').trim();
+    const contentMd = String($id('hbPkgContent').value || '').trim();
+    const linkedPage = String($id('hbPkgLinkedPage').value || '').trim();
+    if(!sectionId || !title || !contentMd){
+      msg('hbPkgMsg', 'Section, title and content are required.', false);
+      return;
+    }
+    const article = {
+      id: currentArticleId || [sectionId, slugify(title), role].join('-'),
+      role: role,
+      sectionId: sectionId,
+      title: title,
+      summary: summary,
+      contentMd: contentMd,
+      linkedPage: linkedPage,
+      updatedAt: new Date().toISOString().slice(0,10)
+    };
+    const list = Array.isArray(handbookPackage.articles) ? handbookPackage.articles.slice() : [];
+    const index = list.findIndex(function(item){ return item.id === article.id; });
+    if(index >= 0) list[index] = article; else list.push(article);
+    handbookPackage.articles = list;
+    await saveStore(STORE_KEY, handbookPackage);
+    renderPackage();
+    fillEditor(article.id);
+    msg('hbPkgMsg', 'Article saved to the published Help Center package.', true);
+  }
+  async function deleteArticle(articleId){
+    if(!validatePackage(handbookPackage)) return;
+    if(!window.confirm('Remove this handbook article from the published package?')) return;
+    handbookPackage.articles = (handbookPackage.articles || []).filter(function(item){ return item.id !== articleId; });
+    await saveStore(STORE_KEY, handbookPackage);
+    renderPackage();
+    clearEditor();
+    msg('hbPkgMsg', 'Article removed from the published Help Center package.', true);
+  }
+  async function bootHandbookImport(){
+    if(!$id('tabHandbook')) return;
+    handbookPackage = await loadStore(STORE_KEY, null);
+    if(!validatePackage(handbookPackage)){
+      handbookPackage = { version:'', views:{ resident:{label:'Resident Help'}, admin:{label:'Admin Guidance'}, owner:{label:'Owner Oversight'} }, sections:[], articles:[] };
+    }
+    renderPackage();
+    clearEditor();
+    $id('btnHbImportSelected')?.addEventListener('click', function(){ importSelectedFile().catch(function(){ msg('hbImportMsg', 'Unable to import the selected file.', false); }); });
+    $id('btnHbExportCurrent')?.addEventListener('click', exportCurrentPackage);
+    $id('btnHbPkgClear')?.addEventListener('click', clearEditor);
+    $id('btnHbPkgSave')?.addEventListener('click', function(){ saveArticle().catch(function(){ msg('hbPkgMsg', 'Unable to save the article.', false); }); });
+    $id('btnHbPkgDelete')?.addEventListener('click', function(){ if(currentArticleId) deleteArticle(currentArticleId).catch(function(){ msg('hbPkgMsg', 'Unable to remove the article.', false); }); });
+    $id('hbPackageList')?.addEventListener('click', function(event){
+      const editId = event.target && event.target.getAttribute('data-hb-pkg-edit');
+      const deleteId = event.target && event.target.getAttribute('data-hb-pkg-delete');
+      if(editId) fillEditor(editId);
+      if(deleteId) deleteArticle(deleteId).catch(function(){ msg('hbPkgMsg', 'Unable to remove the article.', false); });
+    });
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bootHandbookImport, { once:true });
+  }else{
+    bootHandbookImport();
+  }
+})();
+</script>
+
+</body></html>'); win.document.close(); win.focus(); setTimeout(()=>win.print(), 300); }
   async function parkingSendNotice(row){ if(!row) return; const message = prompt('Message to resident about Parking & Vehicles:', 'Your parking registration needs attention. Please review your Parking & Vehicles section and update the required details.'); if(!message) return; const notices = sanitizeNoticeCollection(await anwLoadSafe(KEY_NOTICES, [])); notices.push({ id:'parking-'+Date.now(), title:'Parking & Vehicles update required', message:String(message), createdAt:new Date().toISOString(), createdBy:'admin', targetEmails:[row.residentEmail].filter(Boolean), category:'parking' }); await anwSaveSafe(KEY_NOTICES, notices); await renderNoticesList(); alert('Notice created for the selected resident.'); }
   function parkingBindAdmin(){ byId('parkingImportInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandleImport(file); e.target.value=''; }); byId('parkingPolicyInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandlePolicy(file); e.target.value=''; }); byId('btnParkingClearImport')?.addEventListener('click', parkingClearImport); byId('btnParkingRemovePolicy')?.addEventListener('click', parkingRemovePolicy); byId('btnParkingTemplate')?.addEventListener('click', ()=>downloadText('parking-template.csv', `address,eircode,parking space no.,parking space no. 2,type,has parking
 12 Example Avenue,D15X9T2,101,102,Double,Yes
@@ -5013,6 +5083,213 @@
 })();
 </script>
 
+
+
+<script>
+(function(){
+  'use strict';
+  const STORE_KEY = 'anw_help_center_seed_v2';
+  const $id = (id) => document.getElementById(id);
+  let handbookPackage = null;
+  let currentArticleId = '';
+
+  function msg(id, text, ok){
+    const el = $id(id);
+    if(!el) return;
+    el.textContent = text || '';
+    el.style.color = ok === true ? '#215b3f' : (ok === false ? '#9f3a38' : '');
+  }
+  async function loadStore(key, fallback){
+    try{
+      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
+      return await res.json();
+    }catch(_){ return fallback; }
+  }
+  async function saveStore(key, value){
+    const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(value)
+    });
+    if(!res.ok) throw new Error('store save failed');
+  }
+  function slugify(value){
+    return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  }
+  function validatePackage(pkg){
+    return !!(pkg && Array.isArray(pkg.sections) && Array.isArray(pkg.articles) && pkg.views);
+  }
+  function sectionTitle(sectionId){
+    const found = (handbookPackage.sections || []).find(function(s){ return s.id === sectionId; });
+    return found ? found.title : sectionId;
+  }
+  function ensureSectionOptions(){
+    const select = $id('hbPkgSection');
+    if(!select || !handbookPackage) return;
+    select.innerHTML = (handbookPackage.sections || []).map(function(section){
+      return '<option value="' + section.id + '">' + section.title + '</option>';
+    }).join('');
+  }
+  function clearEditor(){
+    currentArticleId = '';
+    if($id('hbPkgRole')) $id('hbPkgRole').value = 'resident';
+    if($id('hbPkgSection')) $id('hbPkgSection').selectedIndex = 0;
+    if($id('hbPkgTitle')) $id('hbPkgTitle').value = '';
+    if($id('hbPkgSummary')) $id('hbPkgSummary').value = '';
+    if($id('hbPkgContent')) $id('hbPkgContent').value = '';
+    if($id('hbPkgLinkedPage')) $id('hbPkgLinkedPage').value = '';
+    if($id('btnHbPkgDelete')) $id('btnHbPkgDelete').style.display = 'none';
+    msg('hbPkgMsg', '', null);
+  }
+  function fillEditor(articleId){
+    const article = (handbookPackage.articles || []).find(function(item){ return item.id === articleId; });
+    if(!article) return;
+    currentArticleId = article.id;
+    $id('hbPkgRole').value = article.role || 'resident';
+    $id('hbPkgSection').value = article.sectionId || '';
+    $id('hbPkgTitle').value = article.title || '';
+    $id('hbPkgSummary').value = article.summary || '';
+    $id('hbPkgContent').value = article.contentMd || '';
+    $id('hbPkgLinkedPage').value = article.linkedPage || '';
+    $id('btnHbPkgDelete').style.display = 'inline-flex';
+    msg('hbPkgMsg', 'Article loaded into the editor.', true);
+  }
+  function renderPackage(){
+    ensureSectionOptions();
+    const wrap = $id('hbPackageList');
+    const summary = $id('hbImportSummary');
+    if(!wrap || !summary) return;
+    if(!validatePackage(handbookPackage)){
+      wrap.innerHTML = '<div class="tiny muted">No package loaded yet.</div>';
+      summary.textContent = 'No package loaded yet.';
+      return;
+    }
+    const counts = (handbookPackage.articles || []).reduce(function(acc, item){
+      acc[item.role] = (acc[item.role] || 0) + 1;
+      return acc;
+    }, {});
+    summary.textContent = 'Resident: ' + (counts.resident || 0) + ' · Admin: ' + (counts.admin || 0) + ' · Owner: ' + (counts.owner || 0);
+    wrap.innerHTML = (handbookPackage.articles || []).map(function(article){
+      return '<div class="hb-admin-item-row">'
+        + '<div class="hb-admin-item-meta">'
+        + '<div class="hb-admin-item-title">' + article.title + '</div>'
+        + '<div class="hb-admin-item-sub">' + sectionTitle(article.sectionId) + ' · ' + article.role + '</div>'
+        + '</div>'
+        + '<div class="hb-admin-row-actions">'
+        + '<button type="button" class="btn btn-line small" data-hb-pkg-edit="' + article.id + '">Edit</button>'
+        + '<button type="button" class="btn btn-line small" data-hb-pkg-delete="' + article.id + '">Remove</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+  async function importSelectedFile(){
+    const input = $id('hbImportFile');
+    const file = input && input.files && input.files[0];
+    if(!file){
+      msg('hbImportMsg', 'Choose the handbook package file first.', false);
+      return;
+    }
+    let parsed;
+    try{ parsed = JSON.parse(await file.text()); }catch(_){
+      msg('hbImportMsg', 'The selected file is not valid JSON.', false);
+      return;
+    }
+    if(!validatePackage(parsed)){
+      msg('hbImportMsg', 'The selected file is missing handbook sections, articles or views.', false);
+      return;
+    }
+    handbookPackage = parsed;
+    await saveStore(STORE_KEY, handbookPackage);
+    renderPackage();
+    clearEditor();
+    msg('hbImportMsg', 'Handbook package imported successfully from ' + file.name + '.', true);
+  }
+  function exportCurrentPackage(){
+    if(!validatePackage(handbookPackage)){
+      msg('hbImportMsg', 'There is no published Help Center package to export yet.', false);
+      return;
+    }
+    const blob = new Blob([JSON.stringify(handbookPackage, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'aderrig-handbook-export.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+  async function saveArticle(){
+    if(!validatePackage(handbookPackage)){
+      msg('hbPkgMsg', 'Import a handbook package first.', false);
+      return;
+    }
+    const role = String($id('hbPkgRole').value || 'resident');
+    const sectionId = String($id('hbPkgSection').value || '').trim();
+    const title = String($id('hbPkgTitle').value || '').trim();
+    const summary = String($id('hbPkgSummary').value || '').trim();
+    const contentMd = String($id('hbPkgContent').value || '').trim();
+    const linkedPage = String($id('hbPkgLinkedPage').value || '').trim();
+    if(!sectionId || !title || !contentMd){
+      msg('hbPkgMsg', 'Section, title and content are required.', false);
+      return;
+    }
+    const article = {
+      id: currentArticleId || [sectionId, slugify(title), role].join('-'),
+      role: role,
+      sectionId: sectionId,
+      title: title,
+      summary: summary,
+      contentMd: contentMd,
+      linkedPage: linkedPage,
+      updatedAt: new Date().toISOString().slice(0,10)
+    };
+    const list = Array.isArray(handbookPackage.articles) ? handbookPackage.articles.slice() : [];
+    const index = list.findIndex(function(item){ return item.id === article.id; });
+    if(index >= 0) list[index] = article; else list.push(article);
+    handbookPackage.articles = list;
+    await saveStore(STORE_KEY, handbookPackage);
+    renderPackage();
+    fillEditor(article.id);
+    msg('hbPkgMsg', 'Article saved to the published Help Center package.', true);
+  }
+  async function deleteArticle(articleId){
+    if(!validatePackage(handbookPackage)) return;
+    if(!window.confirm('Remove this handbook article from the published package?')) return;
+    handbookPackage.articles = (handbookPackage.articles || []).filter(function(item){ return item.id !== articleId; });
+    await saveStore(STORE_KEY, handbookPackage);
+    renderPackage();
+    clearEditor();
+    msg('hbPkgMsg', 'Article removed from the published Help Center package.', true);
+  }
+  async function bootHandbookImport(){
+    if(!$id('tabHandbook')) return;
+    handbookPackage = await loadStore(STORE_KEY, null);
+    if(!validatePackage(handbookPackage)){
+      handbookPackage = { version:'', views:{ resident:{label:'Resident Help'}, admin:{label:'Admin Guidance'}, owner:{label:'Owner Oversight'} }, sections:[], articles:[] };
+    }
+    renderPackage();
+    clearEditor();
+    $id('btnHbImportSelected')?.addEventListener('click', function(){ importSelectedFile().catch(function(){ msg('hbImportMsg', 'Unable to import the selected file.', false); }); });
+    $id('btnHbExportCurrent')?.addEventListener('click', exportCurrentPackage);
+    $id('btnHbPkgClear')?.addEventListener('click', clearEditor);
+    $id('btnHbPkgSave')?.addEventListener('click', function(){ saveArticle().catch(function(){ msg('hbPkgMsg', 'Unable to save the article.', false); }); });
+    $id('btnHbPkgDelete')?.addEventListener('click', function(){ if(currentArticleId) deleteArticle(currentArticleId).catch(function(){ msg('hbPkgMsg', 'Unable to remove the article.', false); }); });
+    $id('hbPackageList')?.addEventListener('click', function(event){
+      const editId = event.target && event.target.getAttribute('data-hb-pkg-edit');
+      const deleteId = event.target && event.target.getAttribute('data-hb-pkg-delete');
+      if(editId) fillEditor(editId);
+      if(deleteId) deleteArticle(deleteId).catch(function(){ msg('hbPkgMsg', 'Unable to remove the article.', false); });
+    });
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bootHandbookImport, { once:true });
+  }else{
+    bootHandbookImport();
+  }
+})();
+</script>
 
 </body>
 </html>
