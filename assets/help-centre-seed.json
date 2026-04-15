@@ -1,0 +1,821 @@
+{
+  "meta": {
+    "name": "Aderrig Help Centre Premium Seed",
+    "version": "2026-04-15",
+    "locale": "en-IE"
+  },
+  "categories": [
+    {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "icon": "✨",
+      "order": 1,
+      "active": true
+    },
+    {
+      "id": "resident-daily-use",
+      "title": "Resident Essentials",
+      "icon": "🏡",
+      "order": 2,
+      "active": true
+    },
+    {
+      "id": "safety-reports",
+      "title": "Safety & Reports",
+      "icon": "🚨",
+      "order": 3,
+      "active": true
+    },
+    {
+      "id": "community-projects",
+      "title": "Community & Projects",
+      "icon": "🤝",
+      "order": 4,
+      "active": true
+    },
+    {
+      "id": "admin-operations",
+      "title": "Administration",
+      "icon": "🛠️",
+      "order": 5,
+      "active": true
+    },
+    {
+      "id": "governance",
+      "title": "Ownership & Governance",
+      "icon": "📊",
+      "order": 6,
+      "active": true
+    }
+  ],
+  "items": [
+    {
+      "id": "dashboard-overview__resident",
+      "groupKey": "dashboard-overview",
+      "roleView": "resident",
+      "categoryId": "getting-started",
+      "categoryTitle": "Getting Started",
+      "title": "Dashboard Overview",
+      "summary": "A quick guide to the main resident dashboard and the tabs you use most often.",
+      "content": "## Dashboard Overview\nIf you are not sure where to begin, start here. This area is your main resident dashboard, and it brings together the sections you will use most often.\n### What you can do here\n- Review your profile details\n- Manage parking and vehicle information\n- Submit interest for elections when available\n- Read notices and Garda / safety updates\n### How to use it\nOpen the tab you need, read the short instructions on screen, and complete the requested fields before saving.\n### What to watch out for\n- Always save your changes before leaving a tab\n- If a section is read-only, it means the information is controlled by the system or by admin",
+      "status": "published",
+      "type": "link",
+      "url": "dashboard.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "dashboard.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "dashboard-overview__admin",
+      "groupKey": "dashboard-overview",
+      "roleView": "admin",
+      "categoryId": "admin-operations",
+      "categoryTitle": "Administration",
+      "title": "Dashboard Overview",
+      "summary": "A full operational guide to the resident dashboard, including what residents can change and what stays controlled.",
+      "content": "## Dashboard Overview\nIf you are reviewing the resident dashboard as an admin, this guide shows you what the resident sees and what the system expects from each section.\n### What this page controls\n- Resident self-service profile updates\n- Parking and vehicle declarations\n- Election interest submissions\n- Resident notices and safety information\n### What you should verify\n- Whether instructions are clear for residents\n- Whether locked fields remain protected\n- Whether the tab order still matches the actual workflow\n### Operational note\nWhen residents report confusion, this is usually the first page to check because it is their main entry point into the private area.",
+      "status": "published",
+      "type": "link",
+      "url": "dashboard.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "dashboard.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "dashboard-overview__owner",
+      "groupKey": "dashboard-overview",
+      "roleView": "owner",
+      "categoryId": "governance",
+      "categoryTitle": "Ownership & Governance",
+      "title": "Dashboard Overview",
+      "summary": "Use this view to compare the resident and admin guidance and confirm that the dashboard journey stays consistent.",
+      "content": "## Dashboard Overview\nIf you want to validate the quality of the dashboard guidance across the platform, this owner view gives you the wider picture.\n### What you should review\n- Whether the resident wording is clear and welcoming\n- Whether the admin guidance includes the operational detail required\n- Whether the page order still supports a smooth user journey\n### Quality control tip\nUse the role tabs on this page to compare how the same area is described for Resident, Admin and Owner access.",
+      "status": "published",
+      "type": "link",
+      "url": "dashboard.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "dashboard.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "parking-vehicles__resident",
+      "groupKey": "parking-vehicles",
+      "roleView": "resident",
+      "categoryId": "resident-daily-use",
+      "categoryTitle": "Resident Essentials",
+      "title": "Parking & Vehicles",
+      "summary": "Step-by-step help for adding a vehicle and checking your parking details.",
+      "content": "## Parking & Vehicles\nIf you need to register a vehicle or check your parking details, you are in the right place. I will guide you through it clearly so you can finish it without mistakes.\n### What you can do here\n- Add a new vehicle\n- Review the vehicles already linked to your household\n- Confirm whether the parking space is currently empty\n### What you need before you start\n- Your licence plate exactly as registered\n- The vehicle type\n- Basic vehicle details such as brand, model, colour and fuel type, if requested\n### How to complete it\n1. Open **Parking & Vehicles**\n2. Read the parking policy first\n3. Tick the confirmation boxes\n4. Click **Add Vehicle**\n5. Complete the form carefully\n6. Save the registration\n### What to watch out for\n- Do not register visitor vehicles here\n- Make sure the licence plate is correct before you save\n- If you do not currently have a vehicle, use the empty-space declaration instead",
+      "status": "published",
+      "type": "link",
+      "url": "dashboard.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "dashboard.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "parking-vehicles__admin",
+      "groupKey": "parking-vehicles",
+      "roleView": "admin",
+      "categoryId": "admin-operations",
+      "categoryTitle": "Administration",
+      "title": "Parking & Vehicles",
+      "summary": "Full operational guidance for parking records, validation and resident declarations.",
+      "content": "## Parking & Vehicles\nIf you are managing parking records, this guide helps you understand both the resident workflow and the checks that protect the integrity of the data.\n### What this area covers\n- Parking space details linked to the residence\n- Vehicle registrations submitted by residents\n- Empty-space declarations\n- Policy acceptance and owner confirmation\n### What you should verify\n- The resident has a valid parking allocation where required\n- Visitor vehicles are not being entered in the owner / resident register\n- Duplicate or incorrect registrations are corrected quickly\n### Operational checks\n- Confirm the parking policy link is current\n- Confirm declarations match the property record\n- Check that any warning notes shown on screen still reflect the active parking rules",
+      "status": "published",
+      "type": "link",
+      "url": "dashboard.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "dashboard.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "parking-vehicles__owner",
+      "groupKey": "parking-vehicles",
+      "roleView": "owner",
+      "categoryId": "governance",
+      "categoryTitle": "Ownership & Governance",
+      "title": "Parking & Vehicles",
+      "summary": "Owner oversight for parking policy quality, enforcement and consistency across records.",
+      "content": "## Parking & Vehicles\nIf you need to review how parking is controlled across the platform, this owner view helps you check both resident clarity and administrative rigour.\n### What you should monitor\n- Whether residents are given clear instructions before they submit a registration\n- Whether admin guidance properly covers validation and misuse prevention\n- Whether the parking policy and declarations remain aligned with the live rules\n### Governance note\nThis section is especially important because parking decisions can create disputes. Clear wording and strong validation reduce avoidable conflict.",
+      "status": "published",
+      "type": "link",
+      "url": "dashboard.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "dashboard.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "household__resident",
+      "groupKey": "household",
+      "roleView": "resident",
+      "categoryId": "resident-daily-use",
+      "categoryTitle": "Resident Essentials",
+      "title": "Household",
+      "summary": "A clear guide to checking household information and understanding what can be updated.",
+      "content": "## Household\nIf you need to review who belongs to your household or check the details linked to your address, this page will help you understand what is shown and what you can change.\n### What you can do here\n- Review household details\n- Check linked members and core information\n- Confirm whether anything needs to be corrected by admin\n### What to watch out for\n- If something important is wrong and cannot be edited by you, contact admin\n- Household details affect other areas such as parking and access",
+      "status": "published",
+      "type": "link",
+      "url": "household.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "household.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "household__admin",
+      "groupKey": "household",
+      "roleView": "admin",
+      "categoryId": "admin-operations",
+      "categoryTitle": "Administration",
+      "title": "Household Management",
+      "summary": "Operational guidance for maintaining accurate household records and cross-module consistency.",
+      "content": "## Household Management\nIf you are responsible for household data, this section helps you keep the core resident record accurate and aligned with the rest of the platform.\n### Why it matters\n- Household data influences parking allocation\n- It can affect resident validation and access\n- It supports accurate communication and issue resolution\n### What you should check\n- Member names and core details\n- Address and Eircode consistency\n- Links between the household record and related modules",
+      "status": "published",
+      "type": "link",
+      "url": "household.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "household.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "household__owner",
+      "groupKey": "household",
+      "roleView": "owner",
+      "categoryId": "governance",
+      "categoryTitle": "Ownership & Governance",
+      "title": "Household Governance",
+      "summary": "Owner guidance for reviewing household data quality and downstream impact.",
+      "content": "## Household Governance\nIf you want to keep the platform reliable, household accuracy must stay high. This owner view helps you see the wider importance of that data.\n### What you should review\n- Whether admin guidance is sufficient to keep records clean\n- Whether resident-facing instructions avoid confusion\n- Whether downstream modules are relying on stable household data",
+      "status": "published",
+      "type": "link",
+      "url": "household.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "household.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "report-incident__resident",
+      "groupKey": "report-incident",
+      "roleView": "resident",
+      "categoryId": "safety-reports",
+      "categoryTitle": "Safety & Reports",
+      "title": "Report an Incident",
+      "summary": "Direct guidance to help you submit a clear incident report with the right details.",
+      "content": "## Report an Incident\nIf something has happened in your area and you need to report it, I will help you send a report that is clear, useful and easier to action.\n### What you should include\n- What happened\n- Where it happened\n- When it happened\n- Any useful supporting detail\n### How to complete it\n1. Open the incident form\n2. Fill in each required field carefully\n3. Use clear, specific wording\n4. Submit the report\n### What to watch out for\n- Avoid vague descriptions\n- Do not leave out the location or timing if you know them\n- Check your report before sending it",
+      "status": "published",
+      "type": "link",
+      "url": "report.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "report.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "report-incident__admin",
+      "groupKey": "report-incident",
+      "roleView": "admin",
+      "categoryId": "admin-operations",
+      "categoryTitle": "Administration",
+      "title": "Incident Reports",
+      "summary": "Operational guidance for reviewing, triaging and progressing resident reports.",
+      "content": "## Incident Reports\nIf you are reviewing incident submissions, this guide will help you keep the workflow organised and make sure no important report is overlooked.\n### What you are managing\n- Incoming resident reports\n- Report status updates\n- Follow-up and internal actions\n### What you should check\n- Whether the report contains enough detail to act on\n- Whether the location and time are clear\n- Whether the case needs escalation or monitoring\n### Workflow reminder\nGood status management matters. Residents should be able to understand whether their report is new, in progress or resolved.",
+      "status": "published",
+      "type": "link",
+      "url": "report.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "report.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "report-incident__owner",
+      "groupKey": "report-incident",
+      "roleView": "owner",
+      "categoryId": "governance",
+      "categoryTitle": "Ownership & Governance",
+      "title": "Incident Oversight",
+      "summary": "Owner guidance for monitoring trends, quality of response and community impact.",
+      "content": "## Incident Oversight\nIf you want to review how incident handling is performing across the platform, this owner guide shows you what to look for.\n### What you should monitor\n- Recurring issue types\n- Response delays\n- Gaps between resident expectations and admin action\n### Governance note\nIncident data is one of the clearest indicators of community confidence. A consistent workflow and clear help content directly improve trust.",
+      "status": "published",
+      "type": "link",
+      "url": "report.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "report.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "community-projects__resident",
+      "groupKey": "community-projects",
+      "roleView": "resident",
+      "categoryId": "community-projects",
+      "categoryTitle": "Community & Projects",
+      "title": "Community Projects",
+      "summary": "A practical guide to browsing active projects and understanding what each project page shows.",
+      "content": "## Community Projects\nIf you want to follow community work, this page helps you understand what each project is about and how to read its status.\n### What you can do here\n- Review active and planned projects\n- Read the project purpose and latest updates\n- Understand what stage a project has reached\n### What to watch out for\n- Some projects are informational only\n- Timelines may change as the work develops",
+      "status": "published",
+      "type": "link",
+      "url": "projects.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "projects.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "community-projects__admin",
+      "groupKey": "community-projects",
+      "roleView": "admin",
+      "categoryId": "admin-operations",
+      "categoryTitle": "Administration",
+      "title": "Projects Monitoring",
+      "summary": "Operational guidance for managing project records, progress updates and recipient tracking.",
+      "content": "## Projects Monitoring\nIf you are maintaining project records, this area helps you keep updates organised and useful for both internal review and resident communication.\n### What you are managing\n- Project status\n- Ownership and accountability\n- Update history\n- Recipient tracking where relevant\n### What you should check\n- The status reflects the actual project stage\n- Key dates and responsibilities are current\n- Public-facing updates remain clear and accurate",
+      "status": "published",
+      "type": "link",
+      "url": "admin.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "admin.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "community-projects__owner",
+      "groupKey": "community-projects",
+      "roleView": "owner",
+      "categoryId": "governance",
+      "categoryTitle": "Ownership & Governance",
+      "title": "Projects Oversight",
+      "summary": "Owner guidance for checking strategic alignment, delivery visibility and reporting quality.",
+      "content": "## Projects Oversight\nIf you need a higher-level view of community work, this owner guide helps you review project health and communication quality.\n### What you should review\n- Whether projects are progressing as expected\n- Whether updates are transparent and useful\n- Whether monitoring data supports sound decisions",
+      "status": "published",
+      "type": "link",
+      "url": "admin.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "admin.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "community-alerts__resident",
+      "groupKey": "community-alerts",
+      "roleView": "resident",
+      "categoryId": "safety-reports",
+      "categoryTitle": "Safety & Reports",
+      "title": "Community Alerts",
+      "summary": "A straightforward guide to reading alerts and understanding what needs your attention.",
+      "content": "## Community Alerts\nIf you have received an alert or want to check recent notices, this section helps you understand what is urgent, what is informational and what action you may need to take.\n### What you can do here\n- Read current alerts\n- Check timing and relevance\n- Follow any instructions provided\n### What to watch out for\n- Read the full message before acting\n- Check whether the alert is public, private or targeted to a specific audience",
+      "status": "published",
+      "type": "link",
+      "url": "alerts.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "alerts.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "community-alerts__admin",
+      "groupKey": "community-alerts",
+      "roleView": "admin",
+      "categoryId": "admin-operations",
+      "categoryTitle": "Administration",
+      "title": "Notices & Alerts",
+      "summary": "Operational guidance for publishing notices, targeting audiences and keeping messages clear.",
+      "content": "## Notices & Alerts\nIf you are creating or managing alerts, this guide helps you publish the right message to the right audience without causing confusion.\n### What you are controlling\n- Notice content\n- Audience targeting\n- Expiry dates\n- Home page visibility\n### What you should check\n- The title is clear\n- The message explains exactly what people need to know\n- Expiry dates are correct\n- Audience filters are appropriate",
+      "status": "published",
+      "type": "link",
+      "url": "admin.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "admin.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "community-alerts__owner",
+      "groupKey": "community-alerts",
+      "roleView": "owner",
+      "categoryId": "governance",
+      "categoryTitle": "Ownership & Governance",
+      "title": "Alerts Governance",
+      "summary": "Owner guidance for reviewing communication quality and audience control.",
+      "content": "## Alerts Governance\nIf you want to keep communications trustworthy, this section helps you review whether notices are accurate, timely and properly targeted.\n### What you should monitor\n- Clarity of wording\n- Overuse of alerts\n- Whether visibility rules are being applied correctly",
+      "status": "published",
+      "type": "link",
+      "url": "admin.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "admin.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "profile-management__resident",
+      "groupKey": "profile-management",
+      "roleView": "resident",
+      "categoryId": "resident-daily-use",
+      "categoryTitle": "Resident Essentials",
+      "title": "Profile Management",
+      "summary": "Help for checking your details, saving updates and understanding which fields are protected.",
+      "content": "## Profile Management\nIf you need to update your profile, this guide will help you understand which details you can change yourself and which fields are fixed for security or data integrity reasons.\n### What you can do here\n- Update your phone number\n- Review your email\n- Check your resident type\n- Manage volunteer role information where available\n- Upload a profile image if the page allows it\n### What to watch out for\n- Your email is protected and cannot be edited here\n- Save your changes before moving to another tab",
+      "status": "published",
+      "type": "link",
+      "url": "dashboard.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "dashboard.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "elections-interest__resident",
+      "groupKey": "elections-interest",
+      "roleView": "resident",
+      "categoryId": "resident-daily-use",
+      "categoryTitle": "Resident Essentials",
+      "title": "Elections & Expression of Interest",
+      "summary": "A simple guide for submitting your interest when an election is open.",
+      "content": "## Elections & Expression of Interest\nIf you want to put your name forward for an open role, this guide will help you complete the form properly.\n### What you need\n- The role you want to apply for\n- A clear motivation or experience statement\n### How it works\nYour submission is reviewed first. After approval, your name can be shown to residents for voting where applicable.\n### What to watch out for\n- Write clearly and professionally\n- Keep your statement relevant to the role",
+      "status": "published",
+      "type": "link",
+      "url": "dashboard.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "dashboard.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "notices-garda__resident",
+      "groupKey": "notices-garda",
+      "roleView": "resident",
+      "categoryId": "safety-reports",
+      "categoryTitle": "Safety & Reports",
+      "title": "Notices, Garda & Safety",
+      "summary": "Help for reading notices and understanding the safety information shared with residents.",
+      "content": "## Notices, Garda & Safety\nIf you are checking messages from the community or reading Garda-related information, this guide will help you understand where to look and how to use that information.\n### What you will find\n- Resident notices\n- Safety messages\n- Garda-related information where available\n### Tip\nCheck these sections regularly so you do not miss anything time-sensitive.",
+      "status": "published",
+      "type": "link",
+      "url": "dashboard.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "dashboard.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "reports-status__resident",
+      "groupKey": "reports-status",
+      "roleView": "resident",
+      "categoryId": "safety-reports",
+      "categoryTitle": "Safety & Reports",
+      "title": "My Reports Status",
+      "summary": "A quick guide to checking what happened after you submitted a report.",
+      "content": "## My Reports Status\nIf you have already submitted a report and want to know what happened next, this area helps you track its progress.\n### What you can check\n- Whether the report was received\n- Whether it is being reviewed\n- Whether it has been resolved\n### Tip\nIf the status has not changed for some time, review the original details you submitted and contact admin if needed.",
+      "status": "published",
+      "type": "link",
+      "url": "report.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "report.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "about-team__resident",
+      "groupKey": "about-team",
+      "roleView": "resident",
+      "categoryId": "getting-started",
+      "categoryTitle": "Getting Started",
+      "title": "About & Team",
+      "summary": "Help for understanding the purpose of the platform, roles and community structure.",
+      "content": "## About & Team\nIf you want to understand how the community structure works, this page explains the key roles and the purpose of the platform.\n### What you will find\n- Community background\n- Team and role information\n- General context for how the site supports residents",
+      "status": "published",
+      "type": "link",
+      "url": "about.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "about.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "residents-management__admin",
+      "groupKey": "residents-management",
+      "roleView": "admin",
+      "categoryId": "admin-operations",
+      "categoryTitle": "Administration",
+      "title": "Residents Management",
+      "summary": "Complete guidance for reviewing resident registrations, approval workflow and record quality.",
+      "content": "## Residents Management\nIf you are reviewing resident registrations, this is one of the most important admin areas. It is where you confirm who has access and keep the resident register clean.\n### What you can do here\n- Review pending registrations\n- Approve or reject residents\n- Correct key resident details\n- Maintain volunteer and coordination roles\n### What you should check before approval\n- The record is complete\n- The address and Eircode are valid\n- The person belongs to the correct household or property\n### Why this matters\nResident approval affects access to private areas and can also influence notices, household data and role-based permissions.",
+      "status": "published",
+      "type": "link",
+      "url": "admin.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "admin.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "tasks-management__admin",
+      "groupKey": "tasks-management",
+      "roleView": "admin",
+      "categoryId": "admin-operations",
+      "categoryTitle": "Administration",
+      "title": "Tasks Management",
+      "summary": "Operational guidance for assigning tasks, tracking progress and keeping follow-up clear.",
+      "content": "## Tasks Management\nIf you are using tasks to organise follow-up work, this section helps you keep responsibilities visible and progress easy to track.\n### What you should do\n- Create tasks with clear titles\n- Assign ownership where needed\n- Keep status updates current\n- Close tasks only when the work is truly complete",
+      "status": "published",
+      "type": "link",
+      "url": "admin.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "admin.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "elections-administration__admin",
+      "groupKey": "elections-administration",
+      "roleView": "admin",
+      "categoryId": "admin-operations",
+      "categoryTitle": "Administration",
+      "title": "Elections Administration",
+      "summary": "Guidance for interest review, candidate handling and voting workflow checks.",
+      "content": "## Elections Administration\nIf you are managing election-related activity, this guide helps you handle submissions, approvals and voting-related records carefully.\n### What you should review\n- Whether an election is currently open\n- Whether the interest statement is suitable to publish\n- Whether candidate visibility is controlled correctly\n### Why it matters\nElection content must remain consistent and fair. Residents should clearly understand who is standing and how the process works.",
+      "status": "published",
+      "type": "link",
+      "url": "admin.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "admin.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "handbook-management__admin",
+      "groupKey": "handbook-management",
+      "roleView": "admin",
+      "categoryId": "admin-operations",
+      "categoryTitle": "Administration",
+      "title": "Handbook Management",
+      "summary": "Guidance for importing, editing and publishing Help Center content from the admin side.",
+      "content": "## Handbook Management\nIf you are updating the Help Center, this is the area you will use. It is the back-office for the content that residents read in the Help Center.\n### What you can do here\n- Import the packaged help content\n- Edit articles\n- Adjust categories\n- Publish updates\n### Important rule\nResidents do not manage content here. They only read what has already been published.\n### Good practice\nWhen you update wording, keep the resident language direct, clear and friendly.",
+      "status": "published",
+      "type": "link",
+      "url": "admin.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "admin.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "access-control__admin",
+      "groupKey": "access-control",
+      "roleView": "admin",
+      "categoryId": "admin-operations",
+      "categoryTitle": "Administration",
+      "title": "Access Control",
+      "summary": "Guidance for controlling which roles can open each page, tab or feature.",
+      "content": "## Access Control\nIf you are controlling permissions, use this section carefully. It decides who can see what across the site.\n### What you should verify\n- Public vs private access\n- Role hierarchy\n- Whether sub-tabs and features match the intended audience\n### Caution\nA small permission change can affect multiple user journeys, so review the impact before saving.",
+      "status": "published",
+      "type": "link",
+      "url": "admin.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "admin.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "tools-maintenance__admin",
+      "groupKey": "tools-maintenance",
+      "roleView": "admin",
+      "categoryId": "admin-operations",
+      "categoryTitle": "Administration",
+      "title": "Tools & Maintenance",
+      "summary": "Operational help for backups, exports, restore actions and diagnostics.",
+      "content": "## Tools & Maintenance\nIf you are using maintenance tools, this guide helps you avoid unnecessary risk.\n### What you can do here\n- Run backups\n- Review restore options\n- Export operational data\n- Use diagnostics and maintenance utilities\n### What to watch out for\n- Always confirm what will be affected before a restore\n- Keep export files secure because they may contain sensitive information",
+      "status": "published",
+      "type": "link",
+      "url": "admin.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "admin.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "platform-governance__owner",
+      "groupKey": "platform-governance",
+      "roleView": "owner",
+      "categoryId": "governance",
+      "categoryTitle": "Ownership & Governance",
+      "title": "Platform Governance",
+      "summary": "Owner guidance for reviewing content quality, platform consistency and publishing standards.",
+      "content": "## Platform Governance\nIf you are reviewing the platform at owner level, this guide helps you keep both the experience and the governance standards high.\n### What you should oversee\n- Clarity of resident-facing guidance\n- Completeness of admin operating guidance\n- Consistency between published help and real system behaviour\n### Recommendation\nUse the role switcher in the Help Center to compare how the same topic appears to different audiences.",
+      "status": "published",
+      "type": "link",
+      "url": "admin.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "admin.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "permissions-governance__owner",
+      "groupKey": "permissions-governance",
+      "roleView": "owner",
+      "categoryId": "governance",
+      "categoryTitle": "Ownership & Governance",
+      "title": "Permissions & Publishing Control",
+      "summary": "Owner guidance for access governance, publication checks and change control.",
+      "content": "## Permissions & Publishing Control\nIf you are responsible for final oversight, this section helps you control who can access key areas and how Help Center content is published.\n### What you should review\n- Access rules for critical pages\n- Who is allowed to edit help content\n- Whether changes are being published in a controlled way",
+      "status": "published",
+      "type": "link",
+      "url": "admin.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "admin.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    },
+    {
+      "id": "quality-assurance__owner",
+      "groupKey": "quality-assurance",
+      "roleView": "owner",
+      "categoryId": "governance",
+      "categoryTitle": "Ownership & Governance",
+      "title": "Quality Assurance Across Roles",
+      "summary": "Owner guidance for checking how the same topic appears to Resident, Admin and Owner audiences.",
+      "content": "## Quality Assurance Across Roles\nIf you want to compare how a topic is written for each role, this owner guide explains exactly what to look for.\n### What you should compare\n- Resident wording: clear, warm and easy to follow\n- Admin wording: complete, operational and precise\n- Owner wording: strategic, controlled and governance-focused\n### Review tip\nIf the three views do not align, update the Handbook before it causes confusion in production.",
+      "status": "published",
+      "type": "link",
+      "url": "admin.html",
+      "linkLabel": "Open page",
+      "heroUrl": "",
+      "imageData": "",
+      "attachments": [
+        {
+          "label": "Open page",
+          "url": "admin.html"
+        }
+      ],
+      "createdAt": "2026-04-15T12:00:00Z",
+      "updatedAt": "2026-04-15T12:00:00Z"
+    }
+  ]
+}
