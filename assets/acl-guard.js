@@ -503,9 +503,11 @@
         return html + '<a href="#" id="navLogout">Logout</a>' + '<a' + (pageKey === 'page:help_center' ? ' class="active"' : '') + ' href="help-center.html">Help</a>';
       }
 
-      const shouldShowResidentShort = loggedIn && role === "resident" && !isMasterOwnerEmail(email);
+      const adminLike = !!(email && (isMasterOwnerEmail(email) || hasAllowedAdminRole(getAdminRolesForEmail(email))));
+      const shouldShowFullMenu = !loggedIn || adminLike || role !== "resident";
+      const shouldShowResidentShort = loggedIn && !adminLike && role === "resident";
 
-      nav.innerHTML = shouldShowResidentShort ? residentMenuHtml() : fullMenuHtml();
+      nav.innerHTML = shouldShowFullMenu ? fullMenuHtml() : residentMenuHtml();
 
       const logoutLink = nav.querySelector("#navLogout");
       if (!logoutLink) return;
