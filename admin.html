@@ -933,11 +933,11 @@
 </script>
 
 <style id="admin-guard-style">
-  html.admin-guard-pending main.wrap{ visibility:hidden; }
+  html.admin-guard-pending main.wrap{ visibility:visible; }
 </style>
 <script>
   (function(){
-    try { document.documentElement.classList.add('admin-guard-pending'); } catch (_) {}
+    try { document.documentElement.classList.remove('admin-guard-pending'); } catch (_) {}
   })();
 </script>
 
@@ -1141,54 +1141,6 @@
     #tabHandbook .hb-admin-row-actions{
       justify-content:flex-start;
     }
-  }
-</style>
-
-
-<style id="help-center-admin-style">
-  .help-admin-subtabs{display:flex; gap:10px; flex-wrap:wrap;}
-  .help-admin-subtab-content{display:block;}
-  #tabHelpCenterAdmin .hc-admin-shell{display:grid; grid-template-columns:1fr; gap:18px;}
-  #tabHelpCenterAdmin .hc-admin-panel{
-    border:1px solid rgba(17,24,39,.10);
-    border-radius:22px;
-    background:linear-gradient(180deg, rgba(250,252,251,.98), rgba(255,255,255,1));
-    padding:20px;
-    box-shadow:0 10px 24px rgba(15,23,42,.05);
-  }
-  #tabHelpCenterAdmin .hc-admin-panel-head{
-    display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:flex-start; margin-bottom:16px;
-  }
-  #tabHelpCenterAdmin .hc-admin-mini-actions{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
-  #tabHelpCenterAdmin .hc-admin-grid-top{
-    display:grid; grid-template-columns:minmax(0,1fr) 110px 160px; gap:12px; align-items:end;
-  }
-  #tabHelpCenterAdmin .hc-admin-grid-links{
-    display:grid; grid-template-columns:1fr 1fr; gap:12px;
-  }
-  #tabHelpCenterAdmin .hc-admin-list{display:grid; gap:12px;}
-  #tabHelpCenterAdmin details.hc-item{
-    border:1px solid rgba(17,24,39,.08); border-radius:18px; background:#fff; overflow:hidden;
-  }
-  #tabHelpCenterAdmin details.hc-item summary{
-    list-style:none; cursor:pointer; padding:16px 18px; display:flex; justify-content:space-between; gap:12px; align-items:flex-start;
-  }
-  #tabHelpCenterAdmin details.hc-item summary::-webkit-details-marker{display:none;}
-  #tabHelpCenterAdmin .hc-item-title{font-weight:800; color:#1f2b3d; line-height:1.35;}
-  #tabHelpCenterAdmin .hc-item-sub{color:#6a7b90; margin-top:4px; line-height:1.45;}
-  #tabHelpCenterAdmin .hc-item-actions{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
-  #tabHelpCenterAdmin .hc-item-body{
-    border-top:1px solid rgba(17,24,39,.08); padding:16px 18px; background:#fbfcfb;
-  }
-  #tabHelpCenterAdmin .hc-pill{
-    display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px; border:1px solid rgba(17,24,39,.10);
-    background:#eef7f1; color:#2f6d50; font-size:.78rem; font-weight:800; white-space:nowrap;
-  }
-  #tabHelpCenterAdmin .hc-pill.draft{background:#fff7e8; color:#8b6b22; border-color:rgba(139,107,34,.18);}
-  #tabHelpCenterAdmin .hc-inline-grid{display:grid; gap:8px;}
-  @media (max-width: 980px){
-    #tabHelpCenterAdmin .hc-admin-grid-top,
-    #tabHelpCenterAdmin .hc-admin-grid-links{grid-template-columns:1fr;}
   }
 </style>
 
@@ -2015,7 +1967,7 @@
   <!-- ================= HANDBOOK ================= -->
   <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
     <h3>Handbook</h3>
-    <p class="tiny muted" style="margin-top:0;">Manage the Handbook workspace here. Use this area for the Handbook items only. The Help Center is managed in its own admin tab.</p>
+    <p class="tiny muted" style="margin-top:0;">Manage handbook categories and resident messages in one simple place.</p>
 
     <div class="hb-admin-shell">
       <div class="hb-admin-panel">
@@ -2148,138 +2100,115 @@
   </section>
 
 
+  <!-- ================= HELP CENTER ================= -->
   <section class="card admin-tab-content" id="tabHelpCenterAdmin" style="display:none;">
     <h3>Help Center</h3>
-    <p class="tiny muted" style="margin-top:0;">Manage the owner-only Help Center content here. Everything stays organised in closed sections so you can open only what you want to edit.</p>
+    <p class="tiny muted" style="margin-top:0;">Manage Help Center packages, topics and owner guidance. The Handbook stays separate.</p>
 
-    <div class="actions help-admin-subtabs" style="margin-top:0.5rem;">
-      <button type="button" class="btn small help-admin-subtab active" data-subtab="hcSubTopics">Topics</button>
-      <button type="button" class="btn small help-admin-subtab" data-subtab="hcSubArticles">Owner articles</button>
-    </div>
-
-    <div id="hcSubTopics" class="help-admin-subtab-content" style="margin-top:0.85rem;">
-      <div class="hc-admin-shell">
-        <div class="hc-admin-panel">
-          <div class="hc-admin-panel-head">
-            <div>
-              <h4 style="margin:0;">Topic setup</h4>
-              <p class="tiny muted" style="margin:6px 0 0;">Create the Help Center topics you want to show in the owner view.</p>
-            </div>
-            <div class="hc-admin-mini-actions">
-              <button type="button" class="btn btn-line small" id="btnHcTopicClear">Clear</button>
-              <button type="button" class="btn small" id="btnHcTopicSave">Save topic</button>
-            </div>
-          </div>
-
-          <div class="hc-admin-grid-top">
-            <div class="field" style="margin:0;">
-              <label>Topic title</label>
-              <input id="hcTopicTitle" type="text" maxlength="90" placeholder="e.g., Governance & Oversight" />
-            </div>
-            <div class="field" style="margin:0;">
-              <label>Icon</label>
-              <input id="hcTopicIcon" type="text" maxlength="4" placeholder="📘" />
-            </div>
-            <div class="field" style="margin:0;">
-              <label class="chk" style="display:flex; align-items:center; gap:10px; min-height:46px; margin-top:28px;">
-                <input id="hcTopicActive" type="checkbox" checked>
-                <span>Active topic</span>
-              </label>
-            </div>
-          </div>
-
-          <div class="field" style="margin-top:14px;">
-            <label>Short description</label>
-            <input id="hcTopicSummary" type="text" maxlength="160" placeholder="Short line shown in the owner Help Center topic list." />
-          </div>
-
-          <p id="hcTopicMsg" class="tiny muted" style="margin-top:10px;"></p>
-        </div>
-
-        <div class="hc-admin-panel">
-          <div class="hc-admin-panel-head">
-            <div>
-              <h4 style="margin:0;">Saved topics</h4>
-              <p class="tiny muted" style="margin:6px 0 0;">Closed cards keep the page tidy. Open only the topic you want to check.</p>
-            </div>
-          </div>
-          <div id="hcTopicList" class="hc-admin-list"></div>
-          <p id="hcTopicEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No Help Center topics yet.</p>
-        </div>
+    <div class="hc-wrap">
+      <div class="actions hc-subtabs">
+        <button type="button" class="btn small hc-subtab active" data-hc-subtab="hcImport">Import &amp; Package</button>
+        <button type="button" class="btn small hc-subtab" data-hc-subtab="hcTopics">Topics</button>
+        <button type="button" class="btn small hc-subtab" data-hc-subtab="hcOwner">Owner articles</button>
       </div>
-    </div>
 
-    <div id="hcSubArticles" class="help-admin-subtab-content" style="display:none; margin-top:0.85rem;">
-      <div class="hc-admin-shell">
-        <div class="hc-admin-panel">
-          <div class="hc-admin-panel-head">
+      <section class="hc-subsection active" id="hcImport">
+        <div class="hc-card">
+          <div class="hc-toolbar">
             <div>
-              <h4 style="margin:0;">Owner article editor</h4>
-              <p class="tiny muted" style="margin:6px 0 0;">Add a new owner article or update an existing one. These controls are only for the owner Help Center content.</p>
+              <h4 style="margin:0;">Import &amp; Package</h4>
+              <p class="tiny muted" style="margin:6px 0 0;">Use the approved package file to publish Help Center content.</p>
             </div>
-            <div class="hc-admin-mini-actions">
-              <button type="button" class="btn btn-line small" id="btnHcArticleClear">Clear</button>
-              <button type="button" class="btn btn-line small" id="btnHcArticleDelete" style="display:none;">Delete</button>
-              <button type="button" class="btn small" id="btnHcArticleSave">Save article</button>
+            <span class="hc-pill">Expected file: help-centre-seed.json</span>
+          </div>
+
+          <div class="hc-grid" style="margin-top:14px;">
+            <div class="hc-field">
+              <label for="hcImportFile">Select package file</label>
+              <input id="hcImportFile" type="file" accept=".json,application/json">
+            </div>
+            <div class="hc-note">
+              Import the approved JSON package. You can also export the current package or clear it before re-importing.
             </div>
           </div>
 
-          <div class="hc-admin-grid-top">
-            <div class="field" style="margin:0;">
-              <label>Article title</label>
-              <input id="hcArticleTitle" type="text" maxlength="120" placeholder="e.g., Permissions and publishing control" />
-            </div>
-            <div class="field" style="margin:0;">
-              <label>Topic</label>
-              <select id="hcArticleTopic"></select>
-            </div>
-            <div class="field" style="margin:0;">
-              <label>Status</label>
-              <select id="hcArticleStatus">
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-              </select>
-            </div>
+          <div class="hc-actions">
+            <button type="button" class="btn small" id="btnHcImport">Import selected file</button>
+            <button type="button" class="btn-line small" id="btnHcExport">Export current package</button>
+            <button type="button" class="btn-line small" id="btnHcClear">Clear current package</button>
           </div>
-
-          <div class="field" style="margin-top:14px;">
-            <label>Short summary</label>
-            <input id="hcArticleSummary" type="text" maxlength="180" placeholder="Short sentence shown in the closed card." />
-          </div>
-
-          <div class="field">
-            <label>Owner content</label>
-            <textarea id="hcArticleContent" rows="10" placeholder="Write the owner-only Help Center guidance here."></textarea>
-          </div>
-
-          <div class="hc-admin-grid-links">
-            <div class="field" style="margin:0;">
-              <label>Button label (optional)</label>
-              <input id="hcArticleLinkLabel" type="text" maxlength="70" placeholder="e.g., Open policy" />
-            </div>
-            <div class="field" style="margin:0;">
-              <label>Button URL (optional)</label>
-              <input id="hcArticleLinkUrl" type="url" placeholder="https://..." />
-            </div>
-          </div>
-
-          <p id="hcArticleMsg" class="tiny muted" style="margin-top:10px;"></p>
+          <p class="tiny muted" id="hcImportMsg" style="margin-top:10px;"></p>
         </div>
+      </section>
 
-        <div class="hc-admin-panel">
-          <div class="hc-admin-panel-head">
+      <section class="hc-subsection" id="hcTopics">
+        <div class="hc-card">
+          <div class="hc-toolbar">
             <div>
-              <h4 style="margin:0;">Owner Help Center articles</h4>
-              <p class="tiny muted" style="margin:6px 0 0;">Each article stays closed until you open it. Use Edit or Delete inside each card.</p>
+              <h4 style="margin:0;">Topics</h4>
+              <p class="tiny muted" style="margin:6px 0 0;">Create and maintain the Help Center topic list.</p>
             </div>
-            <div class="hc-admin-mini-actions">
-              <input id="hcArticleSearch" type="text" placeholder="Search article title..." />
+            <button type="button" class="btn small" id="btnHcTopicNew">+ Add Topic</button>
+          </div>
+
+          <div class="hc-grid" style="margin-top:14px;">
+            <div class="hc-field">
+              <label for="hcTopicTitle">Topic title</label>
+              <input id="hcTopicTitle" type="text" placeholder="e.g. Parking &amp; Vehicles">
+            </div>
+            <div class="hc-field">
+              <label for="hcTopicSlug">Topic key</label>
+              <input id="hcTopicSlug" type="text" placeholder="parking-vehicles">
             </div>
           </div>
-          <div id="hcArticleList" class="hc-admin-list"></div>
-          <p id="hcArticleEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No owner articles yet.</p>
+
+          <div class="hc-actions">
+            <button type="button" class="btn small" id="btnHcTopicSave">Save topic</button>
+            <button type="button" class="btn-line small" id="btnHcTopicClear">Clear</button>
+          </div>
+          <p class="tiny muted" id="hcTopicMsg" style="margin-top:10px;"></p>
+          <div class="hc-list" id="hcTopicList"></div>
         </div>
-      </div>
+      </section>
+
+      <section class="hc-subsection" id="hcOwner">
+        <div class="hc-card">
+          <div class="hc-toolbar">
+            <div>
+              <h4 style="margin:0;">Owner articles</h4>
+              <p class="tiny muted" style="margin:6px 0 0;">Manage the complete owner guidance shown in the Help Center content set.</p>
+            </div>
+            <button type="button" class="btn small" id="btnHcOwnerNew">+ Add Owner Article</button>
+          </div>
+
+          <div class="hc-grid" style="margin-top:14px;">
+            <div class="hc-field">
+              <label for="hcOwnerTitle">Article title</label>
+              <input id="hcOwnerTitle" type="text" placeholder="e.g. Permissions &amp; Publishing Control">
+            </div>
+            <div class="hc-field">
+              <label for="hcOwnerTopic">Topic</label>
+              <select id="hcOwnerTopic"></select>
+            </div>
+          </div>
+
+          <div class="hc-field" style="margin-top:14px;">
+            <label for="hcOwnerSummary">Owner summary</label>
+            <textarea id="hcOwnerSummary" rows="3" placeholder="Short owner-level summary"></textarea>
+          </div>
+          <div class="hc-field" style="margin-top:14px;">
+            <label for="hcOwnerBody">Owner guidance</label>
+            <textarea id="hcOwnerBody" rows="8" placeholder="Governance and owner guidance"></textarea>
+          </div>
+
+          <div class="hc-actions">
+            <button type="button" class="btn small" id="btnHcOwnerSave">Save owner article</button>
+            <button type="button" class="btn-line small" id="btnHcOwnerClear">Clear</button>
+          </div>
+          <p class="tiny muted" id="hcOwnerMsg" style="margin-top:10px;"></p>
+          <div class="hc-list" id="hcOwnerList"></div>
+        </div>
+      </section>
     </div>
   </section>
 
@@ -4270,10 +4199,55 @@
   function parkingClearImport(){ const reg = parkingRegistryLoad(); reg.allocations = []; reg.importMeta = null; parkingRegistrySave(reg); parkingRenderAdmin(); }
   function parkingRemovePolicy(){ const reg = parkingRegistryLoad(); reg.policy = null; parkingRegistrySave(reg); try{ localStorage.removeItem(window.ANW_KEYS.PARKING_POLICY); }catch(_){} parkingRenderAdmin(); }
   function parkingExportCsv(){ const rows = parkingFilterRows(parkingBuildRows()); const head = ['Resident','Address','Eircode','Parking Space No.','Type','Status','Vehicles','Owner Check','Policy','Updated']; const lines = [head.join(',')].concat(rows.map(r=>[r.resident,r.address,r.eircode,r.space,r.type,r.status,r.vehicles,r.ownerCheck,r.policy,r.updated].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','))); downloadText('parking-registry.csv', lines.join('\n')); }
-  function parkingExportPdf(){ const rows = parkingFilterRows(parkingBuildRows()); const win = window.open('', '_blank'); if(!win) return; win.document.write('<html><head><title>Parking Registry</title><style>body{font-family:Arial,sans-serif;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}h1{font-size:20px}</style></head><body><h1>Parking & Vehicles Report</h1><table><thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.resident)}</td><td>${esc(r.address)}</td><td>${esc(r.eircode)}</td><td>${esc(r.space)}</td><td>${esc(r.type)}</td><td>${esc(r.status)}</td><td>${esc(r.vehicles)}</td><td>${esc(r.ownerCheck)}</td><td>${esc(r.updated)}</td></tr>`).join('')+'</tbody></table>
-+'</tbody></table></body></html>'); win.document.close(); win.focus(); setTimeout(()=>win.print(), 300); }
+  function parkingExportPdf(){ const rows = parkingFilterRows(parkingBuildRows()); const win = window.open('', '_blank'); if(!win) return; win.document.write('<html><head><title>Parking Registry</title><style>body{font-family:Arial,sans-serif;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}h1{font-size:20px}</style>
+<style id="help-center-admin-style">
+  #tabHelpCenterAdmin .hc-wrap{display:grid;gap:18px;align-items:start}
+  #tabHelpCenterAdmin .hc-subtabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  #tabHelpCenterAdmin .hc-subtab{min-height:40px}
+  #tabHelpCenterAdmin .hc-subsection{display:none}
+  #tabHelpCenterAdmin .hc-subsection.active{display:block}
+  #tabHelpCenterAdmin .hc-card{
+    border:1px solid rgba(17,24,39,.10);
+    border-radius:20px;
+    background:#fff;
+    padding:18px;
+    box-shadow:0 8px 18px rgba(15,23,42,.04)
+  }
+  #tabHelpCenterAdmin .hc-toolbar{
+    display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center
+  }
+  #tabHelpCenterAdmin .hc-list{display:grid;gap:12px;margin-top:14px}
+  #tabHelpCenterAdmin details.hc-item{
+    border:1px solid rgba(17,24,39,.08);
+    border-radius:16px;
+    background:#fbfcfb;
+    padding:12px 14px
+  }
+  #tabHelpCenterAdmin details.hc-item summary{
+    cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;
+    font-weight:800;list-style:none
+  }
+  #tabHelpCenterAdmin details.hc-item summary::-webkit-details-marker{display:none}
+  #tabHelpCenterAdmin .hc-meta{color:#6a7b90;font-size:.92rem;margin-top:6px;line-height:1.5}
+  #tabHelpCenterAdmin .hc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  #tabHelpCenterAdmin .hc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  #tabHelpCenterAdmin .hc-field{display:grid;gap:6px}
+  #tabHelpCenterAdmin .hc-field input,
+  #tabHelpCenterAdmin .hc-field select,
+  #tabHelpCenterAdmin .hc-field textarea{width:100%}
+  #tabHelpCenterAdmin .hc-note{
+    padding:12px 14px;border:1px solid rgba(17,24,39,.08);border-radius:14px;background:#f8faf9;color:#6a7b90
+  }
+  #tabHelpCenterAdmin .hc-pill{
+    display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;
+    background:#eef7f1;border:1px solid rgba(52,92,73,.18);color:#2f6d50;font-size:.82rem;font-weight:800
+  }
+  @media (max-width:900px){
+    #tabHelpCenterAdmin .hc-grid{grid-template-columns:1fr}
+  }
+</style>
 
-</body></html>'); win.document.close(); win.focus(); setTimeout(()=>win.print(), 300); }
+</head><body><h1>Parking & Vehicles Report</h1><table><thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.resident)}</td><td>${esc(r.address)}</td><td>${esc(r.eircode)}</td><td>${esc(r.space)}</td><td>${esc(r.type)}</td><td>${esc(r.status)}</td><td>${esc(r.vehicles)}</td><td>${esc(r.ownerCheck)}</td><td>${esc(r.updated)}</td></tr>`).join('')+'</tbody></table></body></html>'); win.document.close(); win.focus(); setTimeout(()=>win.print(), 300); }
   async function parkingSendNotice(row){ if(!row) return; const message = prompt('Message to resident about Parking & Vehicles:', 'Your parking registration needs attention. Please review your Parking & Vehicles section and update the required details.'); if(!message) return; const notices = sanitizeNoticeCollection(await anwLoadSafe(KEY_NOTICES, [])); notices.push({ id:'parking-'+Date.now(), title:'Parking & Vehicles update required', message:String(message), createdAt:new Date().toISOString(), createdBy:'admin', targetEmails:[row.residentEmail].filter(Boolean), category:'parking' }); await anwSaveSafe(KEY_NOTICES, notices); await renderNoticesList(); alert('Notice created for the selected resident.'); }
   function parkingBindAdmin(){ byId('parkingImportInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandleImport(file); e.target.value=''; }); byId('parkingPolicyInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandlePolicy(file); e.target.value=''; }); byId('btnParkingClearImport')?.addEventListener('click', parkingClearImport); byId('btnParkingRemovePolicy')?.addEventListener('click', parkingRemovePolicy); byId('btnParkingTemplate')?.addEventListener('click', ()=>downloadText('parking-template.csv', `address,eircode,parking space no.,parking space no. 2,type,has parking
 12 Example Avenue,D15X9T2,101,102,Double,Yes
@@ -5205,293 +5179,299 @@
 
 <script id="help-center-admin-script">
 (function(){
-  const KEY_TOPICS = ((window.ANW_KEYS||{}).HELP_CENTER_OWNER_TOPICS) || 'anw_help_center_owner_topics';
-  const KEY_ARTICLES = ((window.ANW_KEYS||{}).HELP_CENTER_OWNER_ARTICLES) || 'anw_help_center_owner_articles';
-  const $id = id => document.getElementById(id);
-  let topics = [];
-  let articles = [];
+  const HC_KEY = 'anw_help_center_admin';
+  let state = { topics: [], ownerArticles: [], importedPackage: null };
   let currentTopicId = '';
-  let currentArticleId = '';
+  let currentOwnerId = '';
 
-  function esc(s){
-    return String(s == null ? '' : s)
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
-      .replaceAll('"','&quot;')
-      .replaceAll("'",'&#39;');
+  function byId(id){ return document.getElementById(id); }
+  function esc(v){
+    return String(v == null ? '' : v)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
   }
-  function slugify(v){
-    return String(v||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-  }
-  async function loadStore(key, fallback){
+  function slugify(v){ return String(v || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+  function hcId(prefix){ return prefix + '-' + Math.random().toString(36).slice(2, 10); }
+
+  async function hcLoad(){
     try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {cache:'no-store'});
-      if(!res.ok) throw new Error('load failed');
-      return await res.json();
-    }catch(_){
-      try{
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      }catch(__){
-        return fallback;
+      if(typeof window.anwLoadSafe === 'function'){
+        const data = await window.anwLoadSafe(HC_KEY, null);
+        if(data && typeof data === 'object'){
+          return Object.assign({ topics: [], ownerArticles: [], importedPackage: null }, data);
+        }
       }
-    }
-  }
-  async function saveStore(key, value){
+    }catch(_){}
     try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(value)
-      });
-      if(!res.ok) throw new Error('save failed');
-    }catch(_){
-      localStorage.setItem(key, JSON.stringify(value));
-    }
+      const raw = localStorage.getItem(HC_KEY);
+      if(raw){
+        return Object.assign({ topics: [], ownerArticles: [], importedPackage: null }, JSON.parse(raw));
+      }
+    }catch(_){}
+    return { topics: [], ownerArticles: [], importedPackage: null };
   }
-  function setTopicMsg(msg){ if($id('hcTopicMsg')) $id('hcTopicMsg').textContent = msg || ''; }
-  function setArticleMsg(msg){ if($id('hcArticleMsg')) $id('hcArticleMsg').textContent = msg || ''; }
-  function normalizeTopics(list){
-    return (Array.isArray(list)?list:[]).map((t,i)=>({
-      id: t.id || ('hc-topic-'+Date.now()+'-'+i),
-      title: String(t.title||'').trim(),
-      summary: String(t.summary||'').trim(),
-      icon: String(t.icon||'📘').trim() || '📘',
-      active: t.active !== false,
-      order: Number(t.order || i+1) || (i+1)
-    })).filter(t=>t.title).sort((a,b)=>a.order-b.order);
+
+  async function hcSave(next){
+    state = Object.assign({ topics: [], ownerArticles: [], importedPackage: null }, next || {});
+    try{
+      if(typeof window.anwSaveSafe === 'function'){
+        await window.anwSaveSafe(HC_KEY, state);
+        return;
+      }
+    }catch(_){}
+    try{ localStorage.setItem(HC_KEY, JSON.stringify(state)); }catch(_){}
   }
-  function normalizeArticles(list){
-    return (Array.isArray(list)?list:[]).map((a,i)=>({
-      id: a.id || ('hc-article-'+Date.now()+'-'+i),
-      topicId: String(a.topicId||'').trim(),
-      title: String(a.title||'').trim(),
-      summary: String(a.summary||'').trim(),
-      content: String(a.content||'').trim(),
-      status: String(a.status||'published'),
-      linkLabel: String(a.linkLabel||'').trim(),
-      linkUrl: String(a.linkUrl||'').trim(),
-      updatedAt: a.updatedAt || new Date().toISOString()
-    })).filter(a=>a.title);
+
+  function showMsg(id, msg){
+    const el = byId(id);
+    if(el) el.textContent = msg || '';
   }
+
+  function showHcSubtab(id){
+    document.querySelectorAll('.hc-subtab').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-hc-subtab') === id);
+    });
+    document.querySelectorAll('.hc-subsection').forEach(p => {
+      p.classList.toggle('active', p.id === id);
+    });
+  }
+
+  function renderTopicOptions(){
+    const select = byId('hcOwnerTopic');
+    if(!select) return;
+    select.innerHTML = '<option value="">Select topic…</option>' +
+      state.topics.map(t => `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('');
+  }
+
   function clearTopicForm(){
     currentTopicId = '';
-    if($id('hcTopicTitle')) $id('hcTopicTitle').value = '';
-    if($id('hcTopicSummary')) $id('hcTopicSummary').value = '';
-    if($id('hcTopicIcon')) $id('hcTopicIcon').value = '📘';
-    if($id('hcTopicActive')) $id('hcTopicActive').checked = true;
-    setTopicMsg('');
+    byId('hcTopicTitle').value = '';
+    byId('hcTopicSlug').value = '';
   }
-  function clearArticleForm(){
-    currentArticleId = '';
-    if($id('hcArticleTitle')) $id('hcArticleTitle').value = '';
-    if($id('hcArticleSummary')) $id('hcArticleSummary').value = '';
-    if($id('hcArticleContent')) $id('hcArticleContent').value = '';
-    if($id('hcArticleStatus')) $id('hcArticleStatus').value = 'published';
-    if($id('hcArticleLinkLabel')) $id('hcArticleLinkLabel').value = '';
-    if($id('hcArticleLinkUrl')) $id('hcArticleLinkUrl').value = '';
-    if($id('btnHcArticleDelete')) $id('btnHcArticleDelete').style.display = 'none';
-    setArticleMsg('');
+
+  function fillTopicForm(id){
+    const item = state.topics.find(t => t.id === id);
+    if(!item) return;
+    currentTopicId = item.id;
+    byId('hcTopicTitle').value = item.title || '';
+    byId('hcTopicSlug').value = item.slug || '';
   }
-  function renderTopicSelect(){
-    const sel = $id('hcArticleTopic');
-    if(!sel) return;
-    const activeTopics = topics.filter(t=>t.active);
-    sel.innerHTML = activeTopics.length
-      ? activeTopics.map(t=>`<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('')
-      : '<option value="">No topics yet</option>';
-  }
-  function renderTopicList(){
-    const root = $id('hcTopicList');
-    const empty = $id('hcTopicEmpty');
-    if(!root) return;
-    if(!topics.length){
-      root.innerHTML = '';
-      if(empty) empty.style.display = 'block';
-      return;
-    }
-    if(empty) empty.style.display = 'none';
-    root.innerHTML = topics.map(topic => `
+
+  function renderTopics(){
+    const wrap = byId('hcTopicList');
+    if(!wrap) return;
+    wrap.innerHTML = state.topics.length ? state.topics.map(item => `
       <details class="hc-item">
-        <summary>
-          <div>
-            <div class="hc-item-title">${esc(topic.icon || '📘')} ${esc(topic.title)}</div>
-            <div class="hc-item-sub">${esc(topic.summary || 'No description yet.')} · ${topic.active ? 'Active' : 'Inactive'}</div>
-          </div>
-          <div class="hc-item-actions">
-            <button type="button" class="btn btn-line small" data-hc-topic-edit="${esc(topic.id)}">Edit</button>
-            <button type="button" class="btn btn-line small" data-hc-topic-delete="${esc(topic.id)}">Delete</button>
-          </div>
-        </summary>
-        <div class="hc-item-body">
-          <div class="hc-inline-grid">
-            <div><strong>Topic key:</strong> ${esc(slugify(topic.title))}</div>
-            <div><strong>Status:</strong> ${topic.active ? 'Active' : 'Inactive'}</div>
-          </div>
+        <summary><span>${esc(item.title || 'Untitled topic')}</span><span class="tiny muted">${esc(item.slug || '')}</span></summary>
+        <div class="hc-meta">Topic key: ${esc(item.slug || '')}</div>
+        <div class="hc-actions">
+          <button type="button" class="btn-line small" data-hc-topic-edit="${esc(item.id)}">Edit</button>
+          <button type="button" class="btn-line small" data-hc-topic-delete="${esc(item.id)}">Delete</button>
         </div>
       </details>
-    `).join('');
+    `).join('') : '<p class="tiny muted">No topics yet.</p>';
+
+    wrap.querySelectorAll('[data-hc-topic-edit]').forEach(btn => {
+      btn.addEventListener('click', () => fillTopicForm(btn.getAttribute('data-hc-topic-edit')));
+    });
+    wrap.querySelectorAll('[data-hc-topic-delete]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-hc-topic-delete');
+        state.topics = state.topics.filter(t => t.id !== id);
+        state.ownerArticles = state.ownerArticles.filter(a => a.topicId !== id);
+        await hcSave(state);
+        renderAll();
+        showMsg('hcTopicMsg', 'Topic deleted.');
+      });
+    });
   }
-  function renderArticleList(){
-    const root = $id('hcArticleList');
-    const empty = $id('hcArticleEmpty');
-    if(!root) return;
-    const term = String(($id('hcArticleSearch') && $id('hcArticleSearch').value) || '').trim().toLowerCase();
-    const filtered = articles.filter(a => !term || a.title.toLowerCase().includes(term));
-    if(!filtered.length){
-      root.innerHTML = '';
-      if(empty) empty.style.display = 'block';
-      return;
-    }
-    if(empty) empty.style.display = 'none';
-    root.innerHTML = filtered.map(article => {
-      const topic = topics.find(t => t.id === article.topicId);
+
+  function clearOwnerForm(){
+    currentOwnerId = '';
+    byId('hcOwnerTitle').value = '';
+    byId('hcOwnerTopic').value = '';
+    byId('hcOwnerSummary').value = '';
+    byId('hcOwnerBody').value = '';
+  }
+
+  function fillOwnerForm(id){
+    const item = state.ownerArticles.find(a => a.id === id);
+    if(!item) return;
+    currentOwnerId = item.id;
+    byId('hcOwnerTitle').value = item.title || '';
+    byId('hcOwnerTopic').value = item.topicId || '';
+    byId('hcOwnerSummary').value = item.summary || '';
+    byId('hcOwnerBody').value = item.body || '';
+  }
+
+  function renderOwnerArticles(){
+    const wrap = byId('hcOwnerList');
+    if(!wrap) return;
+    wrap.innerHTML = state.ownerArticles.length ? state.ownerArticles.map(item => {
+      const topic = state.topics.find(t => t.id === item.topicId);
       return `
       <details class="hc-item">
-        <summary>
-          <div>
-            <div class="hc-item-title">${esc(article.title)}</div>
-            <div class="hc-item-sub">${esc(article.summary || 'No summary yet.')} · ${esc((topic && topic.title) || 'No topic')}</div>
-          </div>
-          <div class="hc-item-actions">
-            <span class="hc-pill ${article.status === 'draft' ? 'draft' : ''}">${esc(article.status)}</span>
-            <button type="button" class="btn btn-line small" data-hc-article-edit="${esc(article.id)}">Edit</button>
-            <button type="button" class="btn btn-line small" data-hc-article-delete="${esc(article.id)}">Delete</button>
-          </div>
-        </summary>
-        <div class="hc-item-body">
-          <div style="white-space:pre-wrap; line-height:1.6;">${esc(article.content || '')}</div>
-          ${article.linkUrl ? `<div style="margin-top:12px;"><a href="${esc(article.linkUrl)}" target="_blank" rel="noopener">${esc(article.linkLabel || 'Open link')}</a></div>` : ''}
-          <div class="hc-item-sub" style="margin-top:12px;">Updated ${esc(new Date(article.updatedAt || Date.now()).toLocaleString())}</div>
+        <summary><span>${esc(item.title || 'Untitled owner article')}</span><span class="tiny muted">${esc(topic ? topic.title : 'No topic')}</span></summary>
+        <div class="hc-meta">${esc(item.summary || '')}</div>
+        <div class="hc-actions">
+          <button type="button" class="btn-line small" data-hc-owner-edit="${esc(item.id)}">Edit</button>
+          <button type="button" class="btn-line small" data-hc-owner-delete="${esc(item.id)}">Delete</button>
         </div>
       </details>`;
-    }).join('');
+    }).join('') : '<p class="tiny muted">No owner articles yet.</p>';
+
+    wrap.querySelectorAll('[data-hc-owner-edit]').forEach(btn => {
+      btn.addEventListener('click', () => fillOwnerForm(btn.getAttribute('data-hc-owner-edit')));
+    });
+    wrap.querySelectorAll('[data-hc-owner-delete]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-hc-owner-delete');
+        state.ownerArticles = state.ownerArticles.filter(a => a.id !== id);
+        await hcSave(state);
+        renderAll();
+        showMsg('hcOwnerMsg', 'Owner article deleted.');
+      });
+    });
   }
-  function fillTopic(id){
-    const topic = topics.find(t=>t.id===id);
-    if(!topic) return;
-    currentTopicId = id;
-    if($id('hcTopicTitle')) $id('hcTopicTitle').value = topic.title || '';
-    if($id('hcTopicSummary')) $id('hcTopicSummary').value = topic.summary || '';
-    if($id('hcTopicIcon')) $id('hcTopicIcon').value = topic.icon || '📘';
-    if($id('hcTopicActive')) $id('hcTopicActive').checked = topic.active !== false;
-    setTopicMsg('Editing topic.');
+
+  function renderAll(){
+    renderTopicOptions();
+    renderTopics();
+    renderOwnerArticles();
   }
-  function fillArticle(id){
-    const article = articles.find(a=>a.id===id);
-    if(!article) return;
-    currentArticleId = id;
-    if($id('hcArticleTitle')) $id('hcArticleTitle').value = article.title || '';
-    if($id('hcArticleSummary')) $id('hcArticleSummary').value = article.summary || '';
-    if($id('hcArticleContent')) $id('hcArticleContent').value = article.content || '';
-    if($id('hcArticleStatus')) $id('hcArticleStatus').value = article.status || 'published';
-    if($id('hcArticleTopic')) $id('hcArticleTopic').value = article.topicId || '';
-    if($id('hcArticleLinkLabel')) $id('hcArticleLinkLabel').value = article.linkLabel || '';
-    if($id('hcArticleLinkUrl')) $id('hcArticleLinkUrl').value = article.linkUrl || '';
-    if($id('btnHcArticleDelete')) $id('btnHcArticleDelete').style.display = 'inline-flex';
-    setArticleMsg('Editing article.');
-    showHelpAdminSubtab('hcSubArticles');
-  }
-  async function saveTopic(){
-    const title = String(($id('hcTopicTitle') && $id('hcTopicTitle').value) || '').trim();
-    const summary = String(($id('hcTopicSummary') && $id('hcTopicSummary').value) || '').trim();
-    const icon = String(($id('hcTopicIcon') && $id('hcTopicIcon').value) || '📘').trim() || '📘';
-    const active = !!($id('hcTopicActive') && $id('hcTopicActive').checked);
-    if(!title){ setTopicMsg('Please enter a topic title.'); return; }
-    const duplicate = topics.find(t => t.title.toLowerCase() === title.toLowerCase() && t.id !== currentTopicId);
-    if(duplicate){ setTopicMsg('This topic already exists.'); return; }
-    const base = topics.find(t=>t.id===currentTopicId) || {};
-    const topic = {
-      id: base.id || ('hc-topic-'+Date.now()),
-      title, summary, icon, active,
-      order: base.order || (topics.length + 1)
-    };
-    topics = topics.filter(t=>t.id !== topic.id).concat(topic).sort((a,b)=>a.order-b.order);
-    await saveStore(KEY_TOPICS, topics);
-    renderTopicSelect(); renderTopicList(); setTopicMsg('Topic saved.'); clearTopicForm();
-  }
-  async function deleteTopic(id){
-    const inUse = articles.some(a => a.topicId === id);
-    if(inUse){ setTopicMsg('Delete or move the articles inside this topic first.'); return; }
-    if(!window.confirm('Delete this Help Center topic?')) return;
-    topics = topics.filter(t=>t.id !== id);
-    await saveStore(KEY_TOPICS, topics);
-    renderTopicSelect(); renderTopicList(); clearTopicForm(); setTopicMsg('Topic deleted.');
-  }
-  async function saveArticle(){
-    const topicId = String(($id('hcArticleTopic') && $id('hcArticleTopic').value) || '').trim();
-    const title = String(($id('hcArticleTitle') && $id('hcArticleTitle').value) || '').trim();
-    const summary = String(($id('hcArticleSummary') && $id('hcArticleSummary').value) || '').trim();
-    const content = String(($id('hcArticleContent') && $id('hcArticleContent').value) || '').trim();
-    const status = String(($id('hcArticleStatus') && $id('hcArticleStatus').value) || 'published');
-    const linkLabel = String(($id('hcArticleLinkLabel') && $id('hcArticleLinkLabel').value) || '').trim();
-    const linkUrl = String(($id('hcArticleLinkUrl') && $id('hcArticleLinkUrl').value) || '').trim();
-    if(!topicId){ setArticleMsg('Please choose a topic first.'); return; }
-    if(!title){ setArticleMsg('Please enter an article title.'); return; }
-    if(!content && !linkUrl){ setArticleMsg('Add content or a button link before saving.'); return; }
-    const previous = articles.find(a=>a.id===currentArticleId) || {};
-    const article = {
-      id: previous.id || ('hc-article-'+Date.now()),
-      topicId, title, summary, content, status, linkLabel, linkUrl,
-      updatedAt: new Date().toISOString()
-    };
-    articles = articles.filter(a=>a.id !== article.id).concat(article);
-    await saveStore(KEY_ARTICLES, articles);
-    renderArticleList();
-    fillArticle(article.id);
-    setArticleMsg('Owner article saved.');
-  }
-  async function deleteArticle(id){
-    if(!window.confirm('Delete this owner Help Center article?')) return;
-    articles = articles.filter(a=>a.id !== id);
-    await saveStore(KEY_ARTICLES, articles);
-    if(currentArticleId === id) clearArticleForm();
-    renderArticleList();
-    setArticleMsg('Article deleted.');
-  }
-  function showHelpAdminSubtab(id){
-    document.querySelectorAll('.help-admin-subtab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-subtab') === id));
-    document.querySelectorAll('.help-admin-subtab-content').forEach(p => p.style.display = (p.id === id ? 'block' : 'none'));
-  }
-  async function bootHelpCenterAdmin(){
-    if(!$id('tabHelpCenterAdmin')) return;
-    topics = normalizeTopics(await loadStore(KEY_TOPICS, []));
-    if(!topics.length){
-      topics = normalizeTopics([
-        {id:'governance-oversight', title:'Governance & Oversight', summary:'Owner-level guidance, governance checks and final controls.', icon:'🧭', active:true, order:1},
-        {id:'quality-publishing', title:'Quality & Publishing', summary:'Owner review steps before publishing or changing content.', icon:'✅', active:true, order:2}
-      ]);
-      await saveStore(KEY_TOPICS, topics);
+
+  async function importFile(file){
+    const raw = await file.text();
+    const json = JSON.parse(raw);
+    state.importedPackage = json;
+    if(Array.isArray(json.topics)){
+      state.topics = json.topics.map(t => ({
+        id: t.id || hcId('topic'),
+        title: t.title || '',
+        slug: t.slug || slugify(t.title || '')
+      }));
     }
-    articles = normalizeArticles(await loadStore(KEY_ARTICLES, []));
-    renderTopicSelect(); renderTopicList(); renderArticleList(); clearTopicForm(); clearArticleForm();
+    if(Array.isArray(json.ownerArticles)){
+      state.ownerArticles = json.ownerArticles.map(a => ({
+        id: a.id || hcId('owner'),
+        title: a.title || '',
+        topicId: a.topicId || '',
+        summary: a.summary || '',
+        body: a.body || ''
+      }));
+    }
+    await hcSave(state);
+    renderAll();
+  }
 
-    document.querySelectorAll('.help-admin-subtab').forEach(btn => {
-      btn.addEventListener('click', () => showHelpAdminSubtab(btn.getAttribute('data-subtab')));
-    });
-    $id('btnHcTopicClear')?.addEventListener('click', clearTopicForm);
-    $id('btnHcTopicSave')?.addEventListener('click', saveTopic);
-    $id('btnHcArticleClear')?.addEventListener('click', clearArticleForm);
-    $id('btnHcArticleSave')?.addEventListener('click', saveArticle);
-    $id('btnHcArticleDelete')?.addEventListener('click', () => { if(currentArticleId) deleteArticle(currentArticleId); });
-    $id('hcArticleSearch')?.addEventListener('input', renderArticleList);
+  async function bootHelpCenterAdmin(){
+    state = await hcLoad();
+    renderAll();
 
-    $id('hcTopicList')?.addEventListener('click', (event) => {
-      const editId = event.target && event.target.getAttribute('data-hc-topic-edit');
-      const deleteId = event.target && event.target.getAttribute('data-hc-topic-delete');
-      if(editId){ event.preventDefault(); fillTopic(editId); }
-      if(deleteId){ event.preventDefault(); deleteTopic(deleteId); }
+    document.querySelectorAll('.hc-subtab').forEach(btn => {
+      btn.addEventListener('click', () => showHcSubtab(btn.getAttribute('data-hc-subtab')));
     });
-    $id('hcArticleList')?.addEventListener('click', (event) => {
-      const editId = event.target && event.target.getAttribute('data-hc-article-edit');
-      const deleteId = event.target && event.target.getAttribute('data-hc-article-delete');
-      if(editId){ event.preventDefault(); fillArticle(editId); }
-      if(deleteId){ event.preventDefault(); deleteArticle(deleteId); }
+
+    byId('btnHcImport')?.addEventListener('click', async () => {
+      const file = byId('hcImportFile')?.files?.[0];
+      if(!file){
+        showMsg('hcImportMsg', 'Select help-centre-seed.json first.');
+        return;
+      }
+      try{
+        await importFile(file);
+        showMsg('hcImportMsg', 'Help Center package imported successfully.');
+      }catch(err){
+        console.error(err);
+        showMsg('hcImportMsg', 'Import failed. Check the JSON package.');
+      }
+    });
+
+    byId('btnHcExport')?.addEventListener('click', () => {
+      try{
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'help-centre-seed.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 200);
+        showMsg('hcImportMsg', 'Current package exported.');
+      }catch(err){
+        console.error(err);
+        showMsg('hcImportMsg', 'Export failed.');
+      }
+    });
+
+    byId('btnHcClear')?.addEventListener('click', async () => {
+      state = { topics: [], ownerArticles: [], importedPackage: null };
+      await hcSave(state);
+      clearTopicForm();
+      clearOwnerForm();
+      renderAll();
+      showMsg('hcImportMsg', 'Current package cleared.');
+    });
+
+    byId('btnHcTopicNew')?.addEventListener('click', clearTopicForm);
+    byId('btnHcTopicClear')?.addEventListener('click', clearTopicForm);
+    byId('btnHcTopicSave')?.addEventListener('click', async () => {
+      const title = byId('hcTopicTitle')?.value.trim() || '';
+      const slug = slugify(byId('hcTopicSlug')?.value || title);
+      if(!title){
+        showMsg('hcTopicMsg', 'Enter a topic title.');
+        return;
+      }
+      if(currentTopicId){
+        const item = state.topics.find(t => t.id === currentTopicId);
+        if(item){
+          item.title = title;
+          item.slug = slug;
+        }
+      }else{
+        state.topics.push({ id: hcId('topic'), title, slug });
+      }
+      await hcSave(state);
+      renderAll();
+      clearTopicForm();
+      showMsg('hcTopicMsg', 'Topic saved.');
+    });
+
+    byId('btnHcOwnerNew')?.addEventListener('click', clearOwnerForm);
+    byId('btnHcOwnerClear')?.addEventListener('click', clearOwnerForm);
+    byId('btnHcOwnerSave')?.addEventListener('click', async () => {
+      const title = byId('hcOwnerTitle')?.value.trim() || '';
+      const topicId = byId('hcOwnerTopic')?.value || '';
+      const summary = byId('hcOwnerSummary')?.value.trim() || '';
+      const body = byId('hcOwnerBody')?.value.trim() || '';
+      if(!title){
+        showMsg('hcOwnerMsg', 'Enter an article title.');
+        return;
+      }
+      if(currentOwnerId){
+        const item = state.ownerArticles.find(a => a.id === currentOwnerId);
+        if(item){
+          item.title = title;
+          item.topicId = topicId;
+          item.summary = summary;
+          item.body = body;
+        }
+      }else{
+        state.ownerArticles.push({ id: hcId('owner'), title, topicId, summary, body });
+      }
+      await hcSave(state);
+      renderAll();
+      clearOwnerForm();
+      showMsg('hcOwnerMsg', 'Owner article saved.');
     });
   }
+
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', bootHelpCenterAdmin, {once:true});
+    document.addEventListener('DOMContentLoaded', bootHelpCenterAdmin, { once:true });
   }else{
     bootHelpCenterAdmin();
   }
