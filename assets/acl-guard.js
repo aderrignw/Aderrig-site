@@ -284,6 +284,7 @@
     "page:home": "Public",
     "page:about": "Public",
     "page:handbook": "Public",
+    "page:help_center": "Public",
     "page:login": "Public",
     "page:privacy": "Public",
     "page:dashboard": "Public",
@@ -468,11 +469,11 @@
           navLink("report.html", "Report", "page:report"),
           navLink("alerts.html", "Community Alerts", "page:alerts"),
           navLink("projects.html", "Community Projects", "page:projects"),
-          navLink("help-center.html", "Help Center", "page:help_center"),
           navLink("login.html", loggedIn ? "My Account" : "Login / Register", "page:login", "nav-login"),
           navLink("dashboard.html", "Dashboard", "page:dashboard"),
           navLink("household.html", "Household", "page:household"),
-          navLink("admin.html", "Admin", "page:admin")
+          navLink("admin.html", "Admin", "page:admin"),
+          navLink("help-center.html", "Help", "page:help_center")
         ].join("");
       }
 
@@ -499,7 +500,7 @@
           })
           .join("");
 
-        return html + '<a href="#" id="navLogout">Logout</a>';
+        return html + '<a href="#" id="navLogout">Logout</a>' + '<a' + (pageKey === 'page:help_center' ? ' class="active"' : '') + ' href="help-center.html">Help</a>';
       }
 
       const shouldShowResidentShort = loggedIn && role === "resident" && !isMasterOwnerEmail(email);
