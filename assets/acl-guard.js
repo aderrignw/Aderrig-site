@@ -319,6 +319,7 @@
       if (file === "household" || file === "household.html") return "page:household";
       if (file === "alerts" || file === "alerts.html") return "page:alerts";
       if (file === "projects" || file === "projects.html") return "page:projects";
+      if (file === "help-center" || file === "help-center.html") return "page:help_center";
       if (file === "admin" || file === "admin.html") return "page:admin";
     } catch (_) {}
 
@@ -444,41 +445,66 @@
     try {
       if (isAdminPath()) return;
 
-      const loggedIn = isLoggedIn();
-      if (!loggedIn) return;
-
-      const email = getLoggedEmail();
-      if (role !== "resident" || isMasterOwnerEmail(email)) return;
-
       const nav = document.querySelector("header.site-header nav.nav");
       if (!nav) return;
 
+      const loggedIn = isLoggedIn();
+      const email = getLoggedEmail();
       const pageKey = getPageKey();
-      const items = [
-        { key: "page:home", href: "index.html", label: "Home" },
-        { key: "page:about", href: "about.html", label: "About" },
-        { key: "page:handbook", href: "handbook.html", label: "Handbook" },
-        { key: "page:report", href: "report.html", label: "Report" },
-        { key: "page:dashboard", href: "dashboard.html", label: "Dashboard" },
-        { key: "page:household", href: "household.html", label: "Household" }
-      ];
 
-      const html = items
-        .filter(function (item) {
-          const rule = resolveAclRule(acl, item.key);
-          return ruleAllows(rule, role);
-        })
-        .map(function (item) {
-          const classes = [];
-          if (pageKey === item.key) classes.push("active");
-          const classAttr = classes.length ? ' class="' + classes.join(" ") + '"' : "";
-          return '<a' + classAttr + ' href="' + item.href + '">' + item.label + '</a>';
-        })
-        .join("");
+      function navLink(href, label, key, extraClass) {
+        const classes = [];
+        if (extraClass) classes.push(extraClass);
+        if (pageKey === key) classes.push("active");
+        const classAttr = classes.length ? ' class="' + classes.join(" ") + '"' : "";
+        return '<a' + classAttr + ' href="' + href + '">' + label + '</a>';
+      }
 
-      if (!html) return;
+      function fullMenuHtml() {
+        return [
+          navLink("index.html", "Home", "page:home"),
+          navLink("about.html", "About", "page:about"),
+          navLink("handbook.html", "Handbook", "page:handbook"),
+          navLink("report.html", "Report", "page:report"),
+          navLink("alerts.html", "Community Alerts", "page:alerts"),
+          navLink("projects.html", "Community Projects", "page:projects"),
+          navLink("help-center.html", "Help Center", "page:help_center"),
+          navLink("login.html", loggedIn ? "My Account" : "Login / Register", "page:login", "nav-login"),
+          navLink("dashboard.html", "Dashboard", "page:dashboard"),
+          navLink("household.html", "Household", "page:household"),
+          navLink("admin.html", "Admin", "page:admin")
+        ].join("");
+      }
 
-      nav.innerHTML = html + '<a href="#" id="navLogout">Logout</a>';
+      function residentMenuHtml() {
+        const items = [
+          { key: "page:home", href: "index.html", label: "Home" },
+          { key: "page:about", href: "about.html", label: "About" },
+          { key: "page:handbook", href: "handbook.html", label: "Handbook" },
+          { key: "page:report", href: "report.html", label: "Report" },
+          { key: "page:dashboard", href: "dashboard.html", label: "Dashboard" },
+          { key: "page:household", href: "household.html", label: "Household" }
+        ];
+
+        const html = items
+          .filter(function (item) {
+            const rule = resolveAclRule(acl, item.key);
+            return ruleAllows(rule, role);
+          })
+          .map(function (item) {
+            const classes = [];
+            if (pageKey === item.key) classes.push("active");
+            const classAttr = classes.length ? ' class="' + classes.join(" ") + '"' : "";
+            return '<a' + classAttr + ' href="' + item.href + '">' + item.label + '</a>';
+          })
+          .join("");
+
+        return html + '<a href="#" id="navLogout">Logout</a>';
+      }
+
+      const shouldShowResidentShort = loggedIn && role === "resident" && !isMasterOwnerEmail(email);
+
+      nav.innerHTML = shouldShowResidentShort ? residentMenuHtml() : fullMenuHtml();
 
       const logoutLink = nav.querySelector("#navLogout");
       if (!logoutLink) return;
@@ -493,10 +519,6 @@
           ) {
             window.netlifyIdentity.logout();
           }
-        } catch (_) {}
-
-        try {
-          localStorage.removeItem("anw_logged");
         } catch (_) {}
 
         try {
