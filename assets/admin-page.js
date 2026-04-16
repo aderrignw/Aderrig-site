@@ -1092,6 +1092,7 @@
     { key:'projects:tab_builder', label:'Projects · Build project', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
     { key:'projects:tab_published', label:'Projects · Confirm sending', group:'Projects', indent:1, defaults:{ projects:true, area_coordinator:true, owner:true } },
     { key:'page:handbook', label:'Handbook', group:'Site pages', indent:0, defaults:{ public:true } },
+    { key:'page:help_center', label:'Help', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:privacy', label:'Privacy Policy', group:'Site pages', indent:0, defaults:{ public:true } },
     { key:'page:login', label:'Login / Register', group:'Site pages', indent:0, defaults:{ public:true } },
 
@@ -1780,6 +1781,7 @@
   function parkingRemovePolicy(){ const reg = parkingRegistryLoad(); reg.policy = null; parkingRegistrySave(reg); try{ localStorage.removeItem(window.ANW_KEYS.PARKING_POLICY); }catch(_){} parkingRenderAdmin(); }
   function parkingExportCsv(){ const rows = parkingFilterRows(parkingBuildRows()); const head = ['Resident','Address','Eircode','Parking Space No.','Type','Status','Vehicles','Owner Check','Policy','Updated']; const lines = [head.join(',')].concat(rows.map(r=>[r.resident,r.address,r.eircode,r.space,r.type,r.status,r.vehicles,r.ownerCheck,r.policy,r.updated].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','))); downloadText('parking-registry.csv', lines.join('\n')); }
   function parkingExportPdf(){ const rows = parkingFilterRows(parkingBuildRows()); const win = window.open('', '_blank'); if(!win) return; win.document.write('<html><head><title>Parking Registry</title><style>body{font-family:Arial,sans-serif;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}h1{font-size:20px}</style></head><body><h1>Parking & Vehicles Report</h1><table><thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.resident)}</td><td>${esc(r.address)}</td><td>${esc(r.eircode)}</td><td>${esc(r.space)}</td><td>${esc(r.type)}</td><td>${esc(r.status)}</td><td>${esc(r.vehicles)}</td><td>${esc(r.ownerCheck)}</td><td>${esc(r.updated)}</td></tr>`).join('')+'</tbody></table></body></html>'); win.document.close(); win.focus(); setTimeout(()=>win.print(), 300); }
+
   async function parkingSendNotice(row){ if(!row) return; const message = prompt('Message to resident about Parking & Vehicles:', 'Your parking registration needs attention. Please review your Parking & Vehicles section and update the required details.'); if(!message) return; const notices = sanitizeNoticeCollection(await anwLoadSafe(KEY_NOTICES, [])); notices.push({ id:'parking-'+Date.now(), title:'Parking & Vehicles update required', message:String(message), createdAt:new Date().toISOString(), createdBy:'admin', targetEmails:[row.residentEmail].filter(Boolean), category:'parking' }); await anwSaveSafe(KEY_NOTICES, notices); await renderNoticesList(); alert('Notice created for the selected resident.'); }
   function parkingBindAdmin(){ byId('parkingImportInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandleImport(file); e.target.value=''; }); byId('parkingPolicyInput')?.addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(file) await parkingHandlePolicy(file); e.target.value=''; }); byId('btnParkingClearImport')?.addEventListener('click', parkingClearImport); byId('btnParkingRemovePolicy')?.addEventListener('click', parkingRemovePolicy); byId('btnParkingTemplate')?.addEventListener('click', ()=>downloadText('parking-template.csv', `address,eircode,parking space no.,parking space no. 2,type,has parking
 12 Example Avenue,D15X9T2,101,102,Double,Yes
@@ -1833,4 +1835,1019 @@
       adminMarkReady();
     }
   });
+})();
+
+(function(){
+  const INACTIVITY_LIMIT_MS = 10 * 60 * 1000;
+  let logoutTimer = null;
+
+  async function doLogout(){
+    try{ if(window.netlifyIdentity && typeof window.netlifyIdentity.logout === 'function'){ await window.netlifyIdentity.logout(); } }catch(_){}
+    window.location.href = 'login.html';
+  }
+
+  function resetInactivity(){
+    if(logoutTimer) clearTimeout(logoutTimer);
+    logoutTimer = setTimeout(doLogout, INACTIVITY_LIMIT_MS);
+  }
+
+  function initAdminSessionUi(){
+    document.getElementById('btnLogoutAdmin')?.addEventListener('click', doLogout);
+    ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach((evt)=>{
+      window.addEventListener(evt, resetInactivity, { passive:true });
+    });
+    resetInactivity();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initAdminSessionUi, { once:true });
+  }else{
+    initAdminSessionUi();
+  }
+})();
+
+(function(){
+  'use strict';
+
+  const byId = (id) => document.getElementById(id);
+  const TASK_KEY = (window.ANW_KEYS && window.ANW_KEYS.TASKS) || 'anw_tasks';
+  const TASK_SEQ_KEY = 'anw_task_sequence_global';
+  let currentTaskId = null;
+  let taskCache = [];
+
+  async function loadStore(key, fallback){
+    try{
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
+      const data = await res.json();
+      try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){}
+      return data;
+    }catch(_){
+      try{
+        if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback);
+      }catch(__){}
+      try{
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      }catch(__){
+        return fallback;
+      }
+    }
+  }
+
+  async function saveStore(key, value){
+    try{
+      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(value)
+      });
+      if(!res.ok) throw new Error('store save failed');
+    }catch(_){}
+    try{ if(typeof window.anwSave === 'function') window.anwSave(key, value); }catch(__){}
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(__){}
+  }
+
+  function normList(v){
+    if(Array.isArray(v)) return v.filter(Boolean);
+    return String(v || '').split(/[;,|]/).map(s => s.trim()).filter(Boolean);
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  function formatDateShort(v){
+    if(!v) return '—';
+    const d = new Date(String(v).length <= 10 ? (v + 'T12:00:00') : v);
+    if(Number.isNaN(d.getTime())) return String(v);
+    return d.toLocaleDateString();
+  }
+
+  function formatDateTime(v){
+    if(!v) return '—';
+    const d = new Date(v);
+    if(Number.isNaN(d.getTime())) return String(v);
+    return d.toLocaleString();
+  }
+
+  function taskTargetLabel(task){
+    const eircodes = normList(task.eircodes);
+    const streets = normList(task.streets);
+    if(task.type === 'eircode' && eircodes.length) return 'Eircode: ' + eircodes.join(', ');
+    if(task.type === 'street' && streets.length) return 'Street: ' + streets.join(', ');
+    return 'General';
+  }
+
+  function zeroPad(num, size){
+    return String(num).padStart(size, '0');
+  }
+
+  async function nextTaskCode(){
+    let seq = Number(await loadStore(TASK_SEQ_KEY, 0)) || 0;
+    seq += 1;
+    await saveStore(TASK_SEQ_KEY, seq);
+    return `Task-${zeroPad(seq, 3)}`;
+  }
+
+  function taskFormIds(){
+    return ['admTaskCode','admTaskTitle','admTaskDesc','admTaskType','admTaskDue','admTaskEircodes','admTaskStreets','admTaskRoles','admTaskStatus'];
+  }
+
+  function clearTaskMessage(){
+    const el = byId('admTaskMsg');
+    if(el) el.textContent = '';
+  }
+
+  function setTaskMessage(msg){
+    const el = byId('admTaskMsg');
+    if(el) el.textContent = msg || '';
+  }
+
+  function fillTaskForm(task){
+    currentTaskId = task && task.id ? task.id : null;
+    byId('admTaskCode').value = task && task.code ? task.code : '';
+    byId('admTaskTitle').value = task && task.title ? task.title : '';
+    byId('admTaskDesc').value = task && task.description ? task.description : '';
+    byId('admTaskType').value = task && task.type ? task.type : 'general';
+    byId('admTaskDue').value = task && task.dueDate ? task.dueDate : '';
+    byId('admTaskEircodes').value = task && Array.isArray(task.eircodes) ? task.eircodes.join('; ') : '';
+    byId('admTaskStreets').value = task && Array.isArray(task.streets) ? task.streets.join('; ') : '';
+    byId('admTaskRoles').value = task && Array.isArray(task.roles) ? task.roles.join('; ') : '';
+    byId('admTaskStatus').value = task && task.status ? task.status : 'open';
+    const delBtn = byId('btnTaskDelete');
+    if(delBtn) delBtn.style.display = currentTaskId ? 'inline-flex' : 'none';
+    clearTaskMessage();
+  }
+
+  function collectTaskForm(){
+    return {
+      title: byId('admTaskTitle').value.trim(),
+      description: byId('admTaskDesc').value.trim(),
+      type: byId('admTaskType').value || 'general',
+      dueDate: byId('admTaskDue').value || '',
+      eircodes: normList(byId('admTaskEircodes').value),
+      streets: normList(byId('admTaskStreets').value),
+      roles: normList(byId('admTaskRoles').value),
+      status: byId('admTaskStatus').value || 'open'
+    };
+  }
+
+  async function loadTasks(){
+    const raw = await loadStore(TASK_KEY, []);
+    taskCache = Array.isArray(raw) ? raw : [];
+    renderTasks();
+  }
+
+  function filteredTasks(){
+    const statusFilter = (byId('admTasksFilter') && byId('admTasksFilter').value) || 'all';
+    const q = ((byId('admTasksSearch') && byId('admTasksSearch').value) || '').trim().toLowerCase();
+    return taskCache.filter(task => {
+      if(statusFilter !== 'all' && String(task.status || '').toLowerCase() !== statusFilter) return false;
+      if(!q) return true;
+      const hay = [
+        task.code, task.title, task.description, task.assignedTo,
+        ...(Array.isArray(task.eircodes) ? task.eircodes : []),
+        ...(Array.isArray(task.streets) ? task.streets : []),
+        ...(Array.isArray(task.roles) ? task.roles : [])
+      ].join(' ').toLowerCase();
+      return hay.includes(q);
+    }).sort((a,b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+  }
+
+  function renderTasks(){
+    const body = byId('admTasksTbody');
+    const empty = byId('admTasksEmpty');
+    const summary = byId('admTasksSummary');
+    if(!body) return;
+    const rows = filteredTasks();
+    body.innerHTML = rows.map(task => `
+      <tr>
+        <td><strong>${esc(task.code || '—')}</strong></td>
+        <td>${esc(task.title || '—')}</td>
+        <td>${esc(taskTargetLabel(task))}</td>
+        <td>${esc(formatDateShort(task.dueDate))}</td>
+        <td>${esc(task.status || 'open')}</td>
+        <td>${esc(task.assignedTo || '—')}</td>
+        <td>${esc(formatDateTime(task.updatedAt || task.createdAt))}</td>
+        <td>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn-line small" data-task-edit="${esc(task.id)}">Edit</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    if(summary) summary.textContent = `${rows.length} task(s) shown`;
+    if(empty) empty.style.display = rows.length ? 'none' : 'block';
+
+    body.querySelectorAll('[data-task-edit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const task = taskCache.find(t => String(t.id) === String(btn.getAttribute('data-task-edit')));
+        fillTaskForm(task || null);
+        const panel = byId('tabTasks');
+        if(panel) panel.scrollIntoView({ behavior:'smooth', block:'start' });
+      });
+    });
+  }
+
+  async function saveTask(){
+    const form = collectTaskForm();
+    if(!form.title){
+      setTaskMessage('Title is required.');
+      return;
+    }
+    if(form.type === 'eircode' && !form.eircodes.length){
+      setTaskMessage('Add at least one Eircode for this targeting mode.');
+      return;
+    }
+    if(form.type === 'street' && !form.streets.length){
+      setTaskMessage('Add at least one street for this targeting mode.');
+      return;
+    }
+
+    let code = byId('admTaskCode').value.trim();
+    const now = new Date().toISOString();
+    if(!currentTaskId){
+      code = await nextTaskCode();
+    }
+
+    const task = {
+      id: currentTaskId || ('task_' + Date.now() + '_' + Math.random().toString(36).slice(2,8)),
+      code,
+      title: form.title,
+      description: form.description,
+      type: form.type,
+      dueDate: form.dueDate,
+      eircodes: form.eircodes,
+      streets: form.streets,
+      roles: form.roles,
+      status: form.status,
+      assignedTo: '',
+      createdAt: currentTaskId ? (taskCache.find(t => t.id === currentTaskId)?.createdAt || now) : now,
+      updatedAt: now
+    };
+
+    const next = taskCache.filter(t => t.id !== task.id);
+    next.unshift(task);
+    taskCache = next;
+    await saveStore(TASK_KEY, taskCache);
+    fillTaskForm(task);
+    setTaskMessage(currentTaskId ? 'Task updated.' : 'Task created.');
+    renderTasks();
+  }
+
+  async function deleteTask(){
+    if(!currentTaskId) return;
+    taskCache = taskCache.filter(t => t.id !== currentTaskId);
+    await saveStore(TASK_KEY, taskCache);
+    fillTaskForm(null);
+    setTaskMessage('Task removed.');
+    renderTasks();
+  }
+
+  function bindTaskEvents(){
+    byId('btnTaskNew')?.addEventListener('click', () => fillTaskForm(null));
+    byId('btnTaskClear')?.addEventListener('click', () => fillTaskForm(null));
+    byId('btnTaskRefresh')?.addEventListener('click', loadTasks);
+    byId('btnTaskSave')?.addEventListener('click', saveTask);
+    byId('btnTaskDelete')?.addEventListener('click', deleteTask);
+    byId('admTasksFilter')?.addEventListener('change', renderTasks);
+    byId('admTasksSearch')?.addEventListener('input', renderTasks);
+  }
+
+  function init(){
+    if(!byId('tabTasks') || !byId('admTaskCode')) return;
+    const codeInput = byId('admTaskCode');
+    codeInput.setAttribute('readonly', 'readonly');
+    codeInput.setAttribute('disabled', 'disabled');
+    fillTaskForm(null);
+    bindTaskEvents();
+    loadTasks();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init, { once:true });
+  }else{
+    init();
+  }
+})();
+
+(function(){
+  'use strict';
+  const KEYS = window.ANW_KEYS || {};
+  const KEY_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
+  const KEY_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
+  const KEY_USERS = KEYS.USERS || 'anw_users';
+  const KEY_HANDBOOK_READ_RECEIPTS = KEYS.HANDBOOK_READ_RECEIPTS || 'anw_handbook_read_receipts';
+
+  const $id = (id) => document.getElementById(id);
+
+  let categories = [];
+  let items = [];
+  let currentCategoryId = '';
+  let currentItemId = '';
+  let currentImageData = '';
+  let handbookReadReceipts = {};
+  let totalHandbookResidents = 0;
+
+  function slugify(value){
+    return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+
+  function esc(value){
+    return String(value == null ? '' : value)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#39;');
+  }
+
+  async function loadStore(key, fallback){
+    try{
+      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
+      return await res.json();
+    }catch(_){
+      try{
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      }catch(__){
+        return fallback;
+      }
+    }
+  }
+
+  async function saveStore(key, value){
+    try{
+      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(value)
+      });
+      if(!res.ok) throw new Error('store save failed');
+    }catch(_){
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+  }
+
+  function suggestCategoryIcon(value){
+    const title = String(value || '').toLowerCase();
+    if(!title) return '📘';
+    if(title.includes('security') || title.includes('gate') || title.includes('cctv') || title.includes('watch')) return '🛡️';
+    if(title.includes('parking') || title.includes('vehicle') || title.includes('traffic')) return '🚗';
+    if(title.includes('emergency') || title.includes('fire') || title.includes('medical')) return '🚨';
+    if(title.includes('waste') || title.includes('recycling') || title.includes('bin')) return '♻️';
+    if(title.includes('volunteer')) return '🤝';
+    if(title.includes('service')) return '🏢';
+    if(title.includes('rule') || title.includes('guidance') || title.includes('policy')) return '📋';
+    if(title.includes('community') || title.includes('event')) return '🏘️';
+    if(title.includes('pet') || title.includes('animal')) return '🐾';
+    return '📘';
+  }
+
+  function normalizeCategories(list){
+    return (Array.isArray(list) ? list : []).map((cat, index) => {
+      const title = String((cat && (cat.title || cat.name)) || '').trim();
+      if(!title) return null;
+      return {
+        id: String(cat.id || slugify(title) || ('category-' + (index + 1))),
+        title,
+        icon: String(cat.icon || suggestCategoryIcon(title) || '📘').trim() || '📘',
+        order: Number(cat.order) || (index + 1),
+        active: cat.active !== false
+      };
+    }).filter(Boolean).sort((a,b) => (a.order - b.order) || a.title.localeCompare(b.title));
+  }
+
+  function normalizeItems(list){
+    return (Array.isArray(list) ? list : []).map((item, index) => {
+      const hero = String(item.imageData || (item.image && item.image.dataUrl) || item.heroUrl || '').trim();
+      const attachments = Array.isArray(item.attachments) ? item.attachments.filter(Boolean) : [];
+      return {
+        id: String(item.id || item.slug || ('hb-item-' + (index + 1))),
+        categoryId: String(item.categoryId || item.category || '').trim(),
+        categoryTitle: String(item.categoryTitle || '').trim(),
+        title: String((item && (item.title || item.name)) || '').trim(),
+        summary: String(item.summary || item.excerpt || '').trim(),
+        content: String(item.content || '').trim(),
+        status: String(item.status || 'published').toLowerCase() === 'draft' ? 'draft' : 'published',
+        type: String(item.type || (item.url ? 'link' : 'page')).toLowerCase() === 'link' ? 'link' : 'page',
+        url: String(item.url || item.linkUrl || '').trim(),
+        linkLabel: String(item.linkLabel || (attachments[0] && attachments[0].label) || '').trim(),
+        heroUrl: hero,
+        imageData: hero,
+        imageName: String(item.imageName || '').trim(),
+        attachments,
+        createdAt: item.createdAt || '',
+        updatedAt: item.updatedAt || ''
+      };
+    }).filter(item => item.title);
+  }
+
+  function normalizeReadReceipts(value){
+    return (value && typeof value === 'object' && !Array.isArray(value)) ? value : {};
+  }
+
+  function countApprovedResidents(list){
+    return (Array.isArray(list) ? list : []).filter(user => {
+      const status = String((user && user.status) || '').toLowerCase();
+      return status === 'approved' || status === 'active';
+    }).length;
+  }
+
+  function ensureCategoriesFromItems(){
+    const known = new Set(categories.map(cat => cat.id));
+    items.forEach(item => {
+      const explicit = String(item.categoryId || item.category || '').trim();
+      if(explicit && !known.has(explicit)){
+        categories.push({
+          id: explicit,
+          title: String(item.categoryTitle || explicit).replace(/-/g,' ').replace(/\b\w/g, m => m.toUpperCase()),
+          icon: suggestCategoryIcon(item.categoryTitle || explicit),
+          order: categories.length + 1,
+          active: true
+        });
+        known.add(explicit);
+      }
+    });
+    categories = normalizeCategories(categories);
+  }
+
+  function setCategoryMessage(message){
+    const el = $id('hbSimpleCatMsg');
+    if(el) el.textContent = message || '';
+  }
+
+  function setItemMessage(message){
+    const el = $id('hbSimpleItemMsg');
+    if(el) el.textContent = message || '';
+  }
+
+  function getCategoryInputValue(){
+    const preset = $id('hbSimpleCatPreset');
+    const other = $id('hbSimpleCatTitle');
+    const presetValue = String((preset && preset.value) || '').trim();
+    if(presetValue && presetValue !== 'Other') return presetValue;
+    return String((other && other.value) || '').trim();
+  }
+
+  function syncCategoryInput(title){
+    const preset = $id('hbSimpleCatPreset');
+    const other = $id('hbSimpleCatTitle');
+    const normalized = String(title || '').trim();
+    const presetValues = ['General','Security','Parking','Emergency','Volunteering','Waste & Recycling','Community Services','Rules & Guidance'];
+    const matched = presetValues.find(value => value.toLowerCase() === normalized.toLowerCase());
+
+    if(preset) preset.value = matched ? matched : 'Other';
+    if(other){
+      other.style.display = matched ? 'none' : 'block';
+      other.value = matched ? '' : normalized;
+    }
+    if($id('hbSimpleCatIconPreview')){
+      $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(normalized || matched || 'General');
+    }
+  }
+
+  function renderCategorySelect(){
+    const select = $id('hbSimpleItemCategory');
+    if(!select) return;
+    const active = categories.filter(cat => cat.active !== false);
+    select.innerHTML = active.length
+      ? active.map(cat => '<option value="' + esc(cat.id) + '">' + esc(cat.icon + ' ' + cat.title) + '</option>').join('')
+      : '<option value="">Create a category first</option>';
+    if(currentCategoryId && active.some(cat => cat.id === currentCategoryId)){
+      select.value = currentCategoryId;
+    }else if(active.length){
+      currentCategoryId = active[0].id;
+      select.value = currentCategoryId;
+    }
+  }
+
+  function renderCategoryList(){
+    const wrap = $id('hbSimpleCatList');
+    if(!wrap) return;
+    if(!categories.length){
+      wrap.innerHTML = '<p class="tiny muted" style="margin:0;">No categories yet.</p>';
+      return;
+    }
+    wrap.innerHTML = categories.map(cat => {
+      return '<div class="hb-admin-category-row">'
+        + '<div class="hb-admin-category-meta">'
+        + '<div class="hb-admin-category-title">' + esc(cat.icon + ' ' + cat.title) + '</div>'
+        + '<div class="hb-admin-category-sub">' + esc(cat.id) + ' · ' + (cat.active ? 'Active' : 'Hidden') + '</div>'
+        + '</div>'
+        + '<div class="hb-admin-row-actions">'
+        + '<button type="button" class="btn btn-line small" data-hb-cat-edit="' + esc(cat.id) + '">Edit</button>'
+        + '<button type="button" class="btn btn-line small" data-hb-cat-delete="' + esc(cat.id) + '">Delete</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function renderPreview(){
+    const preview = $id('hbSimpleImagePreview');
+    if(!preview) return;
+    if(currentImageData){
+      preview.innerHTML = '<img src="' + currentImageData + '" alt="Handbook preview" />';
+    }else{
+      preview.textContent = 'No image selected';
+    }
+  }
+
+  function getCategoryLabel(categoryId){
+    const found = categories.find(cat => cat.id === categoryId);
+    return found ? found.title : categoryId;
+  }
+
+  function getItemReadStats(itemId){
+    const bucket = handbookReadReceipts[itemId] && typeof handbookReadReceipts[itemId] === 'object'
+      ? handbookReadReceipts[itemId]
+      : {};
+    const read = Object.keys(bucket).length;
+    const pending = Math.max(0, Number(totalHandbookResidents || 0) - read);
+    return { read, pending };
+  }
+
+  function renderItems(){
+    const wrap = $id('hbSimpleItemList');
+    const empty = $id('hbSimpleItemEmpty');
+    if(!wrap || !empty) return;
+
+    const query = String(($id('hbSimpleItemSearch') && $id('hbSimpleItemSearch').value) || '').trim().toLowerCase();
+    const filtered = items.filter(item => {
+      if(!query) return true;
+      return [item.title, item.summary, item.content].join(' ').toLowerCase().includes(query);
+    });
+
+    empty.style.display = filtered.length ? 'none' : 'block';
+    if(!filtered.length){
+      wrap.innerHTML = '';
+      return;
+    }
+
+    wrap.innerHTML = filtered
+      .sort((a,b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))
+      .map(item => {
+        const stats = getItemReadStats(item.id);
+        return '<div class="hb-admin-item-row">'
+          + '<div class="hb-admin-item-meta">'
+          + '<div class="hb-admin-item-title">' + esc(item.title) + '</div>'
+          + '<div class="hb-admin-item-sub">' + esc(item.summary || 'No summary added') + '</div>'
+          + '<div class="hb-admin-item-sub">' + esc(getCategoryLabel(item.categoryId)) + ' · ' + esc(item.heroUrl ? 'Image saved' : 'No image') + (item.url ? ' · Link added' : '') + '</div>'
+          + '</div>'
+          + '<div class="hb-admin-row-actions">'
+          + '<span class="hb-admin-read-metrics">'
+          + '<span class="hb-admin-read-chip">Read ' + esc(String(stats.read)) + '</span>'
+          + '<span class="hb-admin-read-chip pending">Unread ' + esc(String(stats.pending)) + '</span>'
+          + '</span>'
+          + '<span class="hb-status-pill ' + esc(item.status) + '">' + esc(item.status === 'published' ? 'Published' : 'Draft') + '</span>'
+          + '<button type="button" class="btn btn-line small" data-hb-item-edit="' + esc(item.id) + '">Edit</button>'
+          + '<button type="button" class="btn btn-line small" data-hb-item-delete="' + esc(item.id) + '">Delete</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+  }
+
+  function clearCategoryForm(){
+    currentCategoryId = '';
+    if($id('hbSimpleCatPreset')) $id('hbSimpleCatPreset').value = 'General';
+    if($id('hbSimpleCatTitle')){
+      $id('hbSimpleCatTitle').value = '';
+      $id('hbSimpleCatTitle').style.display = 'none';
+    }
+    if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon('General');
+    if($id('hbSimpleCatActive')) $id('hbSimpleCatActive').checked = true;
+    setCategoryMessage('');
+  }
+
+  function fillCategoryForm(categoryId){
+    const cat = categories.find(entry => entry.id === categoryId);
+    if(!cat) return;
+    currentCategoryId = cat.id;
+    syncCategoryInput(cat.title);
+    if($id('hbSimpleCatActive')) $id('hbSimpleCatActive').checked = cat.active !== false;
+    setCategoryMessage('Editing category.');
+  }
+
+  function clearItemForm(){
+    currentItemId = '';
+    currentImageData = '';
+    if($id('hbSimpleItemTitle')) $id('hbSimpleItemTitle').value = '';
+    if($id('hbSimpleItemSummary')) $id('hbSimpleItemSummary').value = '';
+    if($id('hbSimpleItemContent')) $id('hbSimpleItemContent').value = '';
+    if($id('hbSimpleItemStatus')) $id('hbSimpleItemStatus').value = 'published';
+    if($id('hbSimpleItemLinkLabel')) $id('hbSimpleItemLinkLabel').value = '';
+    if($id('hbSimpleItemLinkUrl')) $id('hbSimpleItemLinkUrl').value = '';
+    if($id('hbSimpleItemImage')) $id('hbSimpleItemImage').value = '';
+    if($id('btnHbSimpleItemDelete')) $id('btnHbSimpleItemDelete').style.display = 'none';
+    renderPreview();
+    setItemMessage('');
+  }
+
+  function fillItemForm(itemId){
+    const item = items.find(entry => entry.id === itemId);
+    if(!item) return;
+    currentItemId = item.id;
+    currentImageData = item.heroUrl || '';
+    if($id('hbSimpleItemCategory')) $id('hbSimpleItemCategory').value = item.categoryId;
+    if($id('hbSimpleItemTitle')) $id('hbSimpleItemTitle').value = item.title;
+    if($id('hbSimpleItemSummary')) $id('hbSimpleItemSummary').value = item.summary || '';
+    if($id('hbSimpleItemContent')) $id('hbSimpleItemContent').value = item.content || '';
+    if($id('hbSimpleItemStatus')) $id('hbSimpleItemStatus').value = item.status || 'published';
+    if($id('hbSimpleItemLinkLabel')) $id('hbSimpleItemLinkLabel').value = item.linkLabel || '';
+    if($id('hbSimpleItemLinkUrl')) $id('hbSimpleItemLinkUrl').value = item.url || '';
+    if($id('btnHbSimpleItemDelete')) $id('btnHbSimpleItemDelete').style.display = 'inline-flex';
+    renderPreview();
+    setItemMessage('Editing item.');
+  }
+
+  async function saveCategory(){
+    const title = getCategoryInputValue();
+    const active = !!($id('hbSimpleCatActive') && $id('hbSimpleCatActive').checked);
+
+    if(!title){
+      setCategoryMessage('Please enter a category.');
+      return;
+    }
+
+    const existing = categories.find(cat => cat.title.toLowerCase() === title.toLowerCase() && cat.id !== currentCategoryId);
+    if(existing){
+      setCategoryMessage('This category already exists.');
+      return;
+    }
+
+    const base = categories.find(cat => cat.id === currentCategoryId) || {};
+    const category = {
+      id: base.id || slugify(title) || ('hb-cat-' + Date.now()),
+      title: title,
+      icon: suggestCategoryIcon(title),
+      order: base.order || (categories.length + 1),
+      active: active
+    };
+
+    categories = categories.filter(cat => cat.id !== category.id);
+    categories.push(category);
+    categories = normalizeCategories(categories);
+    await saveStore(KEY_CATEGORIES, categories);
+    renderCategorySelect();
+    renderCategoryList();
+    renderItems();
+    currentCategoryId = category.id;
+    if($id('hbSimpleItemCategory')) $id('hbSimpleItemCategory').value = category.id;
+    setCategoryMessage('Category saved.');
+    clearCategoryForm();
+  }
+
+  async function deleteCategory(categoryId){
+    const itemCount = items.filter(item => item.categoryId === categoryId).length;
+    if(itemCount){
+      setCategoryMessage('Move or delete the ' + itemCount + ' item(s) in this category first.');
+      return;
+    }
+    categories = categories.filter(cat => cat.id !== categoryId);
+    await saveStore(KEY_CATEGORIES, categories);
+    renderCategorySelect();
+    renderCategoryList();
+    setCategoryMessage('Category removed.');
+    clearCategoryForm();
+  }
+
+  async function saveItem(){
+    const categoryId = String(($id('hbSimpleItemCategory') && $id('hbSimpleItemCategory').value) || '').trim();
+    const title = String($id('hbSimpleItemTitle').value || '').trim();
+    const summary = String($id('hbSimpleItemSummary').value || '').trim();
+    const content = String($id('hbSimpleItemContent').value || '').trim();
+    const status = String($id('hbSimpleItemStatus').value || 'published');
+    const linkLabel = String($id('hbSimpleItemLinkLabel').value || '').trim();
+    const linkUrl = String($id('hbSimpleItemLinkUrl').value || '').trim();
+
+    if(!categoryId){
+      setItemMessage('Please choose a category.');
+      return;
+    }
+    if(!title){
+      setItemMessage('Please enter a title.');
+      return;
+    }
+    if(!content && !linkUrl){
+      setItemMessage('Add content or a link before saving.');
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const previous = items.find(entry => entry.id === currentItemId) || {};
+    const next = {
+      id: currentItemId || ('hb-' + Date.now()),
+      categoryId,
+      category: categoryId,
+      categoryTitle: (categories.find(cat => cat.id === categoryId) || {}).title || '',
+      title,
+      summary,
+      content,
+      status,
+      type: linkUrl ? 'link' : 'page',
+      url: linkUrl,
+      linkLabel: linkLabel,
+      heroUrl: currentImageData || '',
+      imageData: currentImageData || '',
+      imageName: previous.imageName || '',
+      attachments: linkUrl ? [{ label: linkLabel || 'Open link', url: linkUrl }] : [],
+      createdAt: previous.createdAt || now,
+      updatedAt: now
+    };
+
+    items = items.filter(entry => entry.id !== next.id);
+    items.push(next);
+    await saveStore(KEY_ITEMS, items);
+    renderItems();
+    setItemMessage('Item saved.');
+    fillItemForm(next.id);
+  }
+
+  async function deleteItem(itemId){
+    const item = items.find(entry => entry.id === itemId);
+    if(!item) return;
+    if(!window.confirm('Delete this handbook item? The image saved inside it will be deleted too.')) return;
+    items = items.filter(entry => entry.id !== itemId);
+    await saveStore(KEY_ITEMS, items);
+    if(currentItemId === itemId) clearItemForm();
+    renderItems();
+    setItemMessage('Item removed. Image space has been cleared together with the item.');
+  }
+
+  async function compressImage(file){
+    if(!file) return '';
+    if(file.size > 8 * 1024 * 1024){
+      throw new Error('Please choose an image smaller than 8 MB.');
+    }
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Could not read the file.'));
+      reader.readAsDataURL(file);
+    });
+
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Could not process the image.'));
+      img.src = dataUrl;
+    });
+
+    const maxWidth = 1400;
+    const scale = image.width > maxWidth ? (maxWidth / image.width) : 1;
+    const width = Math.round(image.width * scale);
+    const height = Math.round(image.height * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(image, 0, 0, width, height);
+    return canvas.toDataURL('image/jpeg', 0.78);
+  }
+
+  async function handleImageUpload(event){
+    const file = event.target && event.target.files && event.target.files[0];
+    if(!file) return;
+    try{
+      currentImageData = await compressImage(file);
+      renderPreview();
+      setItemMessage('Image ready. It will be saved inside this handbook item.');
+    }catch(err){
+      currentImageData = '';
+      renderPreview();
+      setItemMessage(err && err.message ? err.message : 'Could not process the image.');
+    }
+  }
+
+  async function boot(){
+    if(!$id('tabHandbook') || !$id('hbSimpleItemTitle')) return;
+
+    categories = normalizeCategories(await loadStore(KEY_CATEGORIES, []));
+    items = normalizeItems(await loadStore(KEY_ITEMS, []));
+    handbookReadReceipts = normalizeReadReceipts(await loadStore(KEY_HANDBOOK_READ_RECEIPTS, {}));
+    totalHandbookResidents = countApprovedResidents(await loadStore(KEY_USERS, []));
+    ensureCategoriesFromItems();
+
+    if(categories.length){
+      await saveStore(KEY_CATEGORIES, categories);
+    }
+
+    renderCategorySelect();
+    renderCategoryList();
+    renderPreview();
+    renderItems();
+    clearCategoryForm();
+    syncCategoryInput('General');
+    clearItemForm();
+
+    $id('hbSimpleCatPreset')?.addEventListener('change', function(){
+      syncCategoryInput(this.value);
+    });
+    $id('hbSimpleCatTitle')?.addEventListener('input', function(){
+      if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(this.value);
+    });
+    $id('btnHbSimpleCatClear')?.addEventListener('click', clearCategoryForm);
+    $id('btnHbSimpleCatSave')?.addEventListener('click', saveCategory);
+    $id('btnHbSimpleItemClear')?.addEventListener('click', clearItemForm);
+    $id('btnHbSimpleItemSave')?.addEventListener('click', saveItem);
+    $id('btnHbSimpleItemDelete')?.addEventListener('click', function(){
+      if(currentItemId) deleteItem(currentItemId);
+    });
+    $id('btnHbRemoveImage')?.addEventListener('click', function(){
+      currentImageData = '';
+      if($id('hbSimpleItemImage')) $id('hbSimpleItemImage').value = '';
+      renderPreview();
+      setItemMessage('Image removed from this item draft. Save to apply.');
+    });
+    $id('hbSimpleItemImage')?.addEventListener('change', handleImageUpload);
+    $id('hbSimpleItemSearch')?.addEventListener('input', renderItems);
+    $id('hbSimpleItemCategory')?.addEventListener('change', function(){
+      currentCategoryId = this.value;
+    });
+
+    $id('hbSimpleCatList')?.addEventListener('click', function(event){
+      const editId = event.target && event.target.getAttribute('data-hb-cat-edit');
+      const deleteId = event.target && event.target.getAttribute('data-hb-cat-delete');
+      if(editId) fillCategoryForm(editId);
+      if(deleteId) deleteCategory(deleteId);
+    });
+
+    $id('hbSimpleItemList')?.addEventListener('click', function(event){
+      const editId = event.target && event.target.getAttribute('data-hb-item-edit');
+      const deleteId = event.target && event.target.getAttribute('data-hb-item-delete');
+      if(editId) fillItemForm(editId);
+      if(deleteId) deleteItem(deleteId);
+    });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot, { once:true });
+  }else{
+    boot();
+  }
+})();
+
+(function(){
+  const HC_KEY = 'anw_help_center_admin';
+  let state = { topics: [], ownerArticles: [], importedPackage: null };
+  let currentTopicId = '';
+  let currentOwnerId = '';
+
+  function byId(id){ return document.getElementById(id); }
+  function esc(v){
+    return String(v == null ? '' : v)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function slugify(v){ return String(v || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+  function hcId(prefix){ return prefix + '-' + Math.random().toString(36).slice(2, 10); }
+
+  async function hcLoad(){
+    try{
+      if(typeof window.anwLoadSafe === 'function'){
+        const data = await window.anwLoadSafe(HC_KEY, null);
+        if(data && typeof data === 'object') return Object.assign({ topics: [], ownerArticles: [], importedPackage: null }, data);
+      }
+    }catch(_){}
+    try{
+      const raw = localStorage.getItem(HC_KEY);
+      if(raw) return Object.assign({ topics: [], ownerArticles: [], importedPackage: null }, JSON.parse(raw));
+    }catch(_){}
+    return { topics: [], ownerArticles: [], importedPackage: null };
+  }
+
+  async function hcSave(next){
+    state = Object.assign({ topics: [], ownerArticles: [], importedPackage: null }, next || {});
+    try{
+      if(typeof window.anwSaveSafe === 'function'){ await window.anwSaveSafe(HC_KEY, state); return; }
+    }catch(_){}
+    try{ localStorage.setItem(HC_KEY, JSON.stringify(state)); }catch(_){}
+  }
+
+  function showMsg(id, msg){ const el = byId(id); if(el) el.textContent = msg || ''; }
+
+  function showHcSubtab(id){
+    document.querySelectorAll('.hc-subtab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-hc-subtab') === id));
+    document.querySelectorAll('.hc-subsection').forEach(p => p.classList.toggle('active', p.id === id));
+  }
+
+  function renderTopicOptions(){
+    const select = byId('hcOwnerTopic'); if(!select) return;
+    select.innerHTML = '<option value="">Select topic…</option>' + state.topics.map(t => '<option value="'+esc(t.id)+'">'+esc(t.title)+'</option>').join('');
+  }
+
+  function clearTopicForm(){ currentTopicId=''; byId('hcTopicTitle').value=''; byId('hcTopicSlug').value=''; }
+  function fillTopicForm(id){ const item = state.topics.find(t => t.id === id); if(!item) return; currentTopicId=item.id; byId('hcTopicTitle').value=item.title||''; byId('hcTopicSlug').value=item.slug||''; }
+
+  function renderTopics(){
+    const wrap = byId('hcTopicList'); if(!wrap) return;
+    wrap.innerHTML = state.topics.length ? state.topics.map(item => '<details class="hc-item"><summary><span>'+esc(item.title||'Untitled topic')+'</span><span class="tiny muted">'+esc(item.slug||'')+'</span></summary><div class="hc-meta">Topic key: '+esc(item.slug||'')+'</div><div class="hc-actions"><button type="button" class="btn-line small" data-hc-topic-edit="'+esc(item.id)+'">Edit</button><button type="button" class="btn-line small" data-hc-topic-delete="'+esc(item.id)+'">Delete</button></div></details>').join('') : '<p class="tiny muted">No topics yet.</p>';
+    wrap.querySelectorAll('[data-hc-topic-edit]').forEach(btn => btn.addEventListener('click', () => fillTopicForm(btn.getAttribute('data-hc-topic-edit'))));
+    wrap.querySelectorAll('[data-hc-topic-delete]').forEach(btn => btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-hc-topic-delete');
+      state.topics = state.topics.filter(t => t.id !== id);
+      state.ownerArticles = state.ownerArticles.filter(a => a.topicId !== id);
+      await hcSave(state); renderAll(); showMsg('hcTopicMsg','Topic deleted.');
+    }));
+  }
+
+  function clearOwnerForm(){ currentOwnerId=''; byId('hcOwnerTitle').value=''; byId('hcOwnerTopic').value=''; byId('hcOwnerSummary').value=''; byId('hcOwnerBody').value=''; }
+  function fillOwnerForm(id){ const item = state.ownerArticles.find(a => a.id === id); if(!item) return; currentOwnerId=item.id; byId('hcOwnerTitle').value=item.title||''; byId('hcOwnerTopic').value=item.topicId||''; byId('hcOwnerSummary').value=item.summary||''; byId('hcOwnerBody').value=item.body||''; }
+
+  function renderOwnerArticles(){
+    const wrap = byId('hcOwnerList'); if(!wrap) return;
+    wrap.innerHTML = state.ownerArticles.length ? state.ownerArticles.map(item => {
+      const topic = state.topics.find(t => t.id === item.topicId);
+      return '<details class="hc-item"><summary><span>'+esc(item.title||'Untitled owner article')+'</span><span class="tiny muted">'+esc(topic ? topic.title : 'No topic')+'</span></summary><div class="hc-meta">'+esc(item.summary||'')+'</div><div class="hc-actions"><button type="button" class="btn-line small" data-hc-owner-edit="'+esc(item.id)+'">Edit</button><button type="button" class="btn-line small" data-hc-owner-delete="'+esc(item.id)+'">Delete</button></div></details>';
+    }).join('') : '<p class="tiny muted">No owner articles yet.</p>';
+    wrap.querySelectorAll('[data-hc-owner-edit]').forEach(btn => btn.addEventListener('click', () => fillOwnerForm(btn.getAttribute('data-hc-owner-edit'))));
+    wrap.querySelectorAll('[data-hc-owner-delete]').forEach(btn => btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-hc-owner-delete');
+      state.ownerArticles = state.ownerArticles.filter(a => a.id !== id);
+      await hcSave(state); renderAll(); showMsg('hcOwnerMsg','Owner article deleted.');
+    }));
+  }
+
+  function renderAll(){ renderTopicOptions(); renderTopics(); renderOwnerArticles(); }
+
+  async function importFile(file){
+    const raw = await file.text();
+    const json = JSON.parse(raw);
+    state.importedPackage = json;
+    if(Array.isArray(json.topics)) state.topics = json.topics.map(t => ({ id: t.id || hcId('topic'), title: t.title || '', slug: t.slug || slugify(t.title || '') }));
+    if(Array.isArray(json.ownerArticles)) state.ownerArticles = json.ownerArticles.map(a => ({ id: a.id || hcId('owner'), title: a.title || '', topicId: a.topicId || '', summary: a.summary || '', body: a.body || '' }));
+    await hcSave(state); renderAll();
+  }
+
+  async function bootHelpCenterAdmin(){
+    state = await hcLoad();
+    renderAll();
+    document.querySelectorAll('.hc-subtab').forEach(btn => btn.addEventListener('click', () => showHcSubtab(btn.getAttribute('data-hc-subtab'))));
+
+    byId('btnHcImport')?.addEventListener('click', async () => {
+      const file = byId('hcImportFile')?.files?.[0];
+      if(!file){ showMsg('hcImportMsg','Select help-centre-seed.json first.'); return; }
+      try{ await importFile(file); showMsg('hcImportMsg','Help Center package imported successfully.'); }catch(err){ console.error(err); showMsg('hcImportMsg','Import failed. Check the JSON package.'); }
+    });
+
+    byId('btnHcExport')?.addEventListener('click', () => {
+      try{
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href=url; a.download='help-centre-seed.json'; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 200);
+        showMsg('hcImportMsg','Current package exported.');
+      }catch(err){ console.error(err); showMsg('hcImportMsg','Export failed.'); }
+    });
+
+    byId('btnHcClear')?.addEventListener('click', async () => {
+      state = { topics: [], ownerArticles: [], importedPackage: null };
+      await hcSave(state); clearTopicForm(); clearOwnerForm(); renderAll(); showMsg('hcImportMsg','Current package cleared.');
+    });
+
+    byId('btnHcTopicNew')?.addEventListener('click', clearTopicForm);
+    byId('btnHcTopicClear')?.addEventListener('click', clearTopicForm);
+    byId('btnHcTopicSave')?.addEventListener('click', async () => {
+      const title = byId('hcTopicTitle')?.value.trim() || '';
+      const slug = slugify(byId('hcTopicSlug')?.value || title);
+      if(!title){ showMsg('hcTopicMsg','Enter a topic title.'); return; }
+      if(currentTopicId){
+        const item = state.topics.find(t => t.id === currentTopicId);
+        if(item){ item.title=title; item.slug=slug; }
+      } else {
+        state.topics.push({ id: hcId('topic'), title, slug });
+      }
+      await hcSave(state); renderAll(); clearTopicForm(); showMsg('hcTopicMsg','Topic saved.');
+    });
+
+    byId('btnHcOwnerNew')?.addEventListener('click', clearOwnerForm);
+    byId('btnHcOwnerClear')?.addEventListener('click', clearOwnerForm);
+    byId('btnHcOwnerSave')?.addEventListener('click', async () => {
+      const title = byId('hcOwnerTitle')?.value.trim() || '';
+      const topicId = byId('hcOwnerTopic')?.value || '';
+      const summary = byId('hcOwnerSummary')?.value.trim() || '';
+      const body = byId('hcOwnerBody')?.value.trim() || '';
+      if(!title){ showMsg('hcOwnerMsg','Enter an article title.'); return; }
+      if(currentOwnerId){
+        const item = state.ownerArticles.find(a => a.id === currentOwnerId);
+        if(item){ item.title=title; item.topicId=topicId; item.summary=summary; item.body=body; }
+      } else {
+        state.ownerArticles.push({ id: hcId('owner'), title, topicId, summary, body });
+      }
+      await hcSave(state); renderAll(); clearOwnerForm(); showMsg('hcOwnerMsg','Owner article saved.');
+    });
+  }
+
+  if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', bootHelpCenterAdmin, { once:true }); }
+  else { bootHelpCenterAdmin(); }
 })();
