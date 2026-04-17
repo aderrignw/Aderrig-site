@@ -16,9 +16,6 @@
     .hc-hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:start}
     .hc-hero h2{margin:14px 0 10px;color:var(--hc-text);font-size:2rem}
     .hc-hero p,.hc-panel p,.hc-card p{margin:0;color:var(--hc-muted);line-height:1.6}
-    .hc-hero-points{display:grid;gap:12px}
-    .hc-hero-point{padding:14px 16px;border:1px solid var(--hc-border);border-radius:18px;background:var(--hc-soft);color:#44576c}
-    .hc-hero-point strong{display:block;color:var(--hc-text);margin-bottom:6px}
     .hc-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px}
     .hc-panel{padding:20px}
     .hc-section-list{display:grid;gap:12px;margin-top:18px}
@@ -29,15 +26,12 @@
     .hc-article-card{border:1px solid var(--hc-border);border-radius:22px;background:#fff;padding:20px;display:grid;gap:16px}
     .hc-article-head h3{margin:0;color:var(--hc-text);font-size:1.4rem}
     .hc-article-head p{margin:8px 0 0;color:var(--hc-muted)}
-    .hc-meta{display:flex;gap:10px;flex-wrap:wrap}
-    .hc-chip{display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border-radius:999px;background:var(--hc-soft);border:1px solid var(--hc-border);color:#55677c;font-weight:800}
     .hc-md{color:#324458;line-height:1.72;font-size:.98rem}
     .hc-md p:first-child{margin-top:0}
     .hc-md h3,.hc-md h4{color:#215b3f;margin:18px 0 8px}
     .hc-md ul{margin:8px 0 8px 20px}
     .hc-md li{margin:6px 0}
     .hc-actions{display:flex;gap:10px;flex-wrap:wrap}
-
     .hc-quick-topics{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px}
     .hc-quick-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:14px;border:1px solid var(--hc-border);background:#fff;color:#23344b;font-weight:800;cursor:pointer}
     .hc-quick-btn.active{background:#eef4f1;border-color:#d5e8dc;color:#215b3f}
@@ -75,7 +69,6 @@
           <h2 id="hcTitle">Help Center</h2>
           <p id="hcSubtitle">Practical guidance organised by section and adapted to the signed-in role.</p>
         </div>
-        
       </div>
     </section>
     <div class="hc-grid">
@@ -252,6 +245,10 @@
   let currentSectionId = '';
   let currentArticleId = '';
 
+  function articlesForCurrentSection(){
+    return helpData.articles.filter(article => article.sectionId === currentSectionId);
+  }
+
   function renderSections(){
     const wrap = byId('hcSectionList');
     if(!wrap) return;
@@ -266,15 +263,15 @@
     }).join('');
   }
 
-
   function renderQuickTopics(){
     const wrap = byId('hcQuickTopics');
     if(!wrap) return;
-    if(!helpData.articles.length){
+    const sectionArticles = articlesForCurrentSection();
+    if(!sectionArticles.length){
       wrap.innerHTML = '';
       return;
     }
-    wrap.innerHTML = helpData.articles.map(article => {
+    wrap.innerHTML = sectionArticles.map(article => {
       const active = article.id === currentArticleId;
       return '<button type="button" class="hc-quick-btn' + (active ? ' active' : '') + '" data-article-id="' + esc(article.id) + '">' + esc(article.title || 'Untitled topic') + '</button>';
     }).join('');
@@ -283,14 +280,15 @@
   function renderArticle(){
     const wrap = byId('hcArticleWrap');
     if(!wrap) return;
-    const article = helpData.articles.find(item => item.id === currentArticleId) || helpData.articles.find(item => item.sectionId === currentSectionId) || null;
+    const sectionArticles = articlesForCurrentSection();
+    const article = sectionArticles.find(item => item.id === currentArticleId) || sectionArticles[0] || null;
     if(!article){
       wrap.innerHTML = '<div class="hc-empty">Choose a topic to view the guidance.</div>';
       return;
     }
     currentSectionId = article.sectionId || currentSectionId;
     currentArticleId = article.id || currentArticleId;
-    wrap.innerHTML = '<article class="hc-article-card"><div class="hc-article-head"><h3>' + esc(article.title || 'Untitled article') + '</h3>' + (article.summary ? '<p>' + esc(article.summary) + '</p>' : '') + '</div><div class="hc-meta"><span class="hc-chip">' + esc(currentAudience() === 'full' ? (article.roleView || 'published') : 'resident') + '</span>' + (article.updatedAt ? '<span class="hc-chip">' + esc(article.updatedAt) + '</span>' : '') + (article.linkedPage ? '<span class="hc-chip">' + esc(article.linkedPage) + '</span>' : '') + '</div><div class="hc-md">' + markdownToHtml(article.contentMd || '') + '</div>' + (article.linkedPage ? '<div class="hc-actions"><a class="hc-link" href="' + esc(article.linkedPage) + '">Open linked page</a></div>' : '') + '</article>';
+    wrap.innerHTML = '<article class="hc-article-card"><div class="hc-article-head"><h3>' + esc(article.title || 'Untitled article') + '</h3>' + (article.summary ? '<p>' + esc(article.summary) + '</p>' : '') + '</div><div class="hc-md">' + markdownToHtml(article.contentMd || '') + '</div>' + (article.linkedPage ? '<div class="hc-actions"><a class="hc-link" href="' + esc(article.linkedPage) + '">Open linked page</a></div>' : '') + '</article>';
   }
 
   async function bootHelp(){
@@ -298,38 +296,40 @@
     const pkg = await loadPackage();
     helpData = packageToHelpData(pkg);
     currentSectionId = helpData.sections[0] ? helpData.sections[0].id : '';
-    currentArticleId = helpData.articles[0] ? helpData.articles[0].id : '';
+    const firstArticle = articlesForCurrentSection()[0];
+    currentArticleId = firstArticle ? firstArticle.id : '';
     renderSections();
     renderQuickTopics();
     renderArticle();
+
     const list = byId('hcSectionList');
     if(list){
       list.addEventListener('click', function(event){
         const btn = event.target.closest('[data-section-id]');
         if(!btn) return;
         currentSectionId = btn.getAttribute('data-section-id') || '';
-        const firstArticle = helpData.articles.find(article => article.sectionId === currentSectionId);
-        currentArticleId = firstArticle ? firstArticle.id : '';
+        const first = articlesForCurrentSection()[0];
+        currentArticleId = first ? first.id : '';
         renderSections();
         renderQuickTopics();
         renderArticle();
       });
     }
+
     const quick = byId('hcQuickTopics');
     if(quick){
       quick.addEventListener('click', function(event){
         const btn = event.target.closest('[data-article-id]');
         if(!btn) return;
         const articleId = btn.getAttribute('data-article-id') || '';
-        const article = helpData.articles.find(item => item.id === articleId);
+        const article = articlesForCurrentSection().find(item => item.id === articleId);
         if(!article) return;
         currentArticleId = article.id;
-        currentSectionId = article.sectionId || currentSectionId;
-        renderSections();
         renderQuickTopics();
         renderArticle();
       });
     }
+
     document.documentElement.classList.remove('anw-preauth-hide');
   }
 
