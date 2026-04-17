@@ -202,6 +202,10 @@
 .parking-admin-pill.pending{background:#fff4d8;color:#8b6b22}
 .parking-admin-pill.noparking{background:#fde9e7;color:#9a4a3f}
 .parking-admin-pill.novehicle{background:#e7eef8;color:#4b6487}
+.hb-admin-optional{margin-top:14px;border:1px solid rgba(17,24,39,.08);border-radius:18px;background:#fbfcfd;padding:12px 14px}
+.hb-admin-optional summary{cursor:pointer;font-weight:800;color:#23344b;list-style:none}
+.hb-admin-optional summary::-webkit-details-marker{display:none}
+.hb-admin-optional[open] summary{margin-bottom:10px}
 .parking-space-chip{display:inline-flex;padding:8px 12px;border-radius:14px;border:1px solid var(--line);background:#fff;font-weight:700}
 .parking-admin-note{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;margin-top:12px;line-height:1.45}
 .parking-admin-table-wrap{overflow:auto}
@@ -1994,14 +1998,14 @@
   <!-- ================= HANDBOOK ================= -->
   <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
     <h3>Handbook</h3>
-    <p class="tiny muted" style="margin-top:0;">Manage Handbook categories and items here. Help stays separate.</p>
+    <p class="tiny muted" style="margin-top:0;">Create categories and items for the Handbook here. Keep it simple and direct. Help stays separate.</p>
 
     <div class="hb-admin-shell">
       <div class="hb-admin-panel">
         <div class="hb-admin-panel-head">
           <div>
             <h4 style="margin:0;">1. Category</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Choose a category name, save it, then use it in the item form.</p>
+            <p class="tiny muted" style="margin:6px 0 0;">Choose a category, save it, and then add items to it.</p>
           </div>
         </div>
 
@@ -2078,34 +2082,38 @@
           <textarea id="hbSimpleItemContent" rows="9" placeholder="Write the handbook text here."></textarea>
         </div>
 
-        <div class="hb-admin-support-grid">
-          <div>
-            <div class="field">
-              <label>Link text</label>
-              <input id="hbSimpleItemLinkLabel" type="text" maxlength="80" placeholder="e.g., Open map" />
+        
+        <details class="hb-admin-optional">
+          <summary>Optional link and image</summary>
+          <div class="hb-admin-support-grid" style="margin-top:14px;">
+            <div>
+              <div class="field">
+                <label>Link text</label>
+                <input id="hbSimpleItemLinkLabel" type="text" maxlength="80" placeholder="e.g., Open map" />
+              </div>
+              <div class="field">
+                <label>Link URL</label>
+                <input id="hbSimpleItemLinkUrl" type="url" placeholder="https://..." />
+              </div>
+              <div class="hb-inline-note">Add a link only if this item should open another page or site.</div>
             </div>
-            <div class="field">
-              <label>Link URL</label>
-              <input id="hbSimpleItemLinkUrl" type="url" placeholder="https://..." />
-            </div>
-            <div class="hb-inline-note">Add a link only if this item should open another page or site.</div>
-          </div>
 
-          <div>
-            <div class="field">
-              <label>Image</label>
-              <input id="hbSimpleItemImage" type="file" accept="image/*" />
-              <div class="tiny muted" style="margin-top:6px;">The image is compressed before saving.</div>
-              <div class="actions" style="justify-content:flex-start; margin-top:8px;">
-                <button type="button" class="btn btn-line small" id="btnHbRemoveImage">Remove image</button>
+            <div>
+              <div class="field">
+                <label>Image</label>
+                <input id="hbSimpleItemImage" type="file" accept="image/*" />
+                <div class="tiny muted" style="margin-top:6px;">The image is compressed before saving.</div>
+                <div class="actions" style="justify-content:flex-start; margin-top:8px;">
+                  <button type="button" class="btn btn-line small" id="btnHbRemoveImage">Remove image</button>
+                </div>
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label>Image preview</label>
+                <div id="hbSimpleImagePreview" class="hb-admin-image-preview">No image selected</div>
               </div>
             </div>
-            <div class="field" style="margin-bottom:0;">
-              <label>Image preview</label>
-              <div id="hbSimpleImagePreview" class="hb-admin-image-preview">No image selected</div>
-            </div>
           </div>
-        </div>
+        </details>
 
         <p id="hbSimpleItemMsg" class="tiny muted" style="margin-top:10px;"></p>
         <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
