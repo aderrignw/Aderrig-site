@@ -938,59 +938,55 @@
 <style id="handbook-admin-simplified-style">
   #tabHandbook .hb-admin-shell{
     display:grid;
-    grid-template-columns:1fr;
-    gap:18px;
-    align-items:start;
+    gap:14px;
   }
   #tabHandbook .hb-admin-panel{
-    border:1px solid rgba(17,24,39,.10);
-    border-radius:22px;
-    background:linear-gradient(180deg, rgba(250,252,251,.98), rgba(255,255,255,1));
-    padding:20px;
-    min-width:0;
-    box-shadow:0 10px 24px rgba(15,23,42,.05);
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#fbfcf8;
+    padding:16px;
   }
   #tabHandbook .hb-admin-panel-head{
-    margin-bottom:16px;
     display:flex;
     justify-content:space-between;
-    align-items:flex-start;
-    gap:12px;
-    flex-wrap:wrap;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
   }
-  #tabHandbook .hb-admin-top-grid{
+  #tabHandbook .hb-admin-single-row{
     display:grid;
-    grid-template-columns:minmax(0,1fr) 120px 130px;
-    gap:12px;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:10px;
     align-items:end;
   }
   #tabHandbook .hb-admin-item-top{
     display:grid;
-    grid-template-columns:minmax(0,1fr) 220px 180px;
-    gap:12px;
+    grid-template-columns:minmax(0,1fr) 160px;
+    gap:10px;
     align-items:end;
   }
-  #tabHandbook .hb-admin-support-grid{
+  #tabHandbook .hb-admin-media-grid{
     display:grid;
-    grid-template-columns:minmax(0,1fr) 320px;
-    gap:16px;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
     align-items:start;
   }
   #tabHandbook .hb-admin-category-list,
   #tabHandbook .hb-admin-items-list{
     display:grid;
-    gap:12px;
+    gap:8px;
+    margin-top:14px;
   }
   #tabHandbook .hb-admin-category-row,
   #tabHandbook .hb-admin-item-row{
-    border:1px solid rgba(17,24,39,.08);
-    border-radius:18px;
+    border:1px solid var(--line);
+    border-radius:14px;
     background:#fff;
-    padding:14px 16px;
-    display:flex;
-    justify-content:space-between;
-    gap:14px;
-    align-items:flex-start;
+    padding:12px 14px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:10px;
+    align-items:start;
   }
   #tabHandbook .hb-admin-category-meta,
   #tabHandbook .hb-admin-item-meta{
@@ -999,79 +995,60 @@
   #tabHandbook .hb-admin-category-title,
   #tabHandbook .hb-admin-item-title{
     font-weight:800;
-    color:#1f2b3d;
-    line-height:1.35;
+    color:var(--text);
+    font-size:1rem;
   }
   #tabHandbook .hb-admin-item-sub,
   #tabHandbook .hb-admin-category-sub{
-    color:#6a7b90;
-    margin-top:4px;
+    color:var(--muted);
+    font-size:.92rem;
     line-height:1.45;
+    margin-top:4px;
   }
   #tabHandbook .hb-admin-row-actions{
     display:flex;
     gap:8px;
     flex-wrap:wrap;
     justify-content:flex-end;
-    align-items:center;
   }
-  #tabHandbook .hb-admin-read-metrics{
-    display:inline-flex;
-    gap:8px;
-    flex-wrap:wrap;
-    align-items:center;
-  }
-  #tabHandbook .hb-admin-read-chip{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-height:30px;
-    padding:0 10px;
-    border-radius:999px;
-    border:1px solid rgba(17,24,39,.10);
-    background:#eef7f1;
-    color:#2f6d50;
-    font-size:.78rem;
-    font-weight:800;
-    white-space:nowrap;
-  }
-  #tabHandbook .hb-admin-read-chip.pending{
-    background:#fff7e8;
-    color:#8b6b22;
-    border-color:rgba(139,107,34,.18);
-  }
-  #tabHandbook .hb-admin-image-preview{
-    min-height:220px;
-    border:1px dashed rgba(17,24,39,.16);
-    border-radius:18px;
-    background:#f7faf8;
+  #tabHandbook .hb-admin-image-preview,
+  #tabHandbook .hb-admin-attach-preview{
+    min-height:86px;
+    border:1px dashed var(--line);
+    border-radius:14px;
+    background:#fff;
     display:flex;
     align-items:center;
     justify-content:center;
-    color:#6a7b90;
-    text-align:center;
-    padding:12px;
+    color:var(--muted);
     overflow:hidden;
+    padding:10px;
   }
   #tabHandbook .hb-admin-image-preview img{
     width:100%;
-    max-height:280px;
-    object-fit:cover;
-    border-radius:14px;
+    max-height:190px;
+    object-fit:contain;
     display:block;
   }
+  #tabHandbook .hb-admin-attach-preview{
+    display:block;
+  }
+  #tabHandbook .hb-admin-attach-preview ul{
+    margin:0;
+    padding-left:18px;
+  }
   #tabHandbook .hb-admin-items-card{
-    border-top:1px solid rgba(17,24,39,.08);
-    padding-top:18px;
-    margin-top:18px;
+    border-top:1px solid var(--line);
+    margin-top:14px;
+    padding-top:14px;
   }
   #tabHandbook .hb-admin-items-toolbar{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    gap:12px;
+    gap:10px;
     flex-wrap:wrap;
-    margin-bottom:12px;
+    margin-bottom:8px;
   }
   #tabHandbook .hb-admin-items-toolbar input{
     max-width:320px;
@@ -1080,61 +1057,69 @@
   #tabHandbook .hb-status-pill{
     display:inline-flex;
     align-items:center;
-    padding:7px 12px;
+    min-height:28px;
+    padding:0 10px;
     border-radius:999px;
-    font-size:.84rem;
+    font-size:.78rem;
     font-weight:800;
-    border:1px solid rgba(17,24,39,.10);
+    border:1px solid var(--line);
     background:#fff;
-    text-transform:none;
   }
   #tabHandbook .hb-status-pill.published{
-    color:#2f6d50;
-    background:#eef7f1;
-    border-color:rgba(52,92,73,.18);
+    background:rgba(47,125,91,.10);
+    border-color:rgba(47,125,91,.24);
+    color:var(--brand);
   }
   #tabHandbook .hb-status-pill.draft{
-    color:#8b6b22;
-    background:#fff7e8;
-    border-color:rgba(139,107,34,.18);
+    background:#f6f8fa;
+    color:#55677c;
   }
-  #tabHandbook .hb-icon-chip{
+  #tabHandbook .hb-icon-chip,
+  #tabHandbook .hb-current-category{
+    min-height:40px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:#fff;
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    width:52px;
-    height:52px;
-    border-radius:16px;
-    border:1px solid rgba(17,24,39,.08);
-    background:#fff;
-    font-size:1.4rem;
+    padding:0 12px;
+    font-weight:700;
   }
-  #tabHandbook .hb-inline-note{
-    padding:12px 14px;
-    border:1px solid rgba(17,24,39,.08);
-    border-radius:16px;
-    background:#fbfcfb;
-    color:#6a7b90;
-    line-height:1.5;
+  #tabHandbook .hb-current-category{
+    justify-content:flex-start;
+    width:100%;
+    color:var(--text);
   }
   #tabHandbook #hbSimpleCatTitle{
     display:none;
+  }
+  #tabHandbook details.hb-optional-box{
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:10px 12px;
+    background:#fff;
     margin-top:10px;
   }
-  @media (max-width: 980px){
-    #tabHandbook .hb-admin-top-grid,
+  #tabHandbook details.hb-optional-box summary{
+    cursor:pointer;
+    font-weight:700;
+    list-style:none;
+  }
+  #tabHandbook details.hb-optional-box summary::-webkit-details-marker{display:none;}
+  @media (max-width: 860px){
+    #tabHandbook .hb-admin-single-row,
     #tabHandbook .hb-admin-item-top,
-    #tabHandbook .hb-admin-support-grid{
-      grid-template-columns:1fr;
-    }
+    #tabHandbook .hb-admin-media-grid,
     #tabHandbook .hb-admin-category-row,
     #tabHandbook .hb-admin-item-row{
-      flex-direction:column;
+      grid-template-columns:1fr;
     }
     #tabHandbook .hb-admin-row-actions{
       justify-content:flex-start;
     }
   }
+
 </style>
 
 <style id="help-center-admin-style">
@@ -1991,73 +1976,54 @@
     </div>
   </section>
 
+  
   <!-- ================= HANDBOOK ================= -->
   <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
     <h3>Handbook</h3>
-    <p class="tiny muted" style="margin-top:0;">Keep the Handbook simple. Add the category, add the item, and publish. Help stays separate.</p>
+    <p class="tiny muted" style="margin-top:0;">Manage the resident Handbook here. Keep it simple and direct. Help stays separate.</p>
 
     <div class="hb-admin-shell">
       <div class="hb-admin-panel">
         <div class="hb-admin-panel-head">
           <div>
-            <h4 style="margin:0;">1. Category</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Choose a category, save it, then add items to it.</p>
+            <h4 style="margin:0;">Category</h4>
           </div>
         </div>
 
-        <div class="hb-admin-top-grid">
+        <div class="hb-admin-single-row">
           <div class="field" style="margin:0;">
-            <label>Category</label>
-            <select id="hbSimpleCatPreset">
-              <option value="General">General</option>
-              <option value="Security">Security</option>
-              <option value="Parking">Parking</option>
-              <option value="Emergency">Emergency</option>
-              <option value="Volunteering">Volunteering</option>
-              <option value="Waste & Recycling">Waste & Recycling</option>
-              <option value="Community Services">Community Services</option>
-              <option value="Rules & Guidance">Rules & Guidance</option>
-              <option value="Other">Other</option>
-            </select>
-            <input id="hbSimpleCatTitle" type="text" maxlength="80" placeholder="Enter other category name" />
+            <label>Category title</label>
+            <div style="display:grid; grid-template-columns:minmax(0,1fr) 72px; gap:10px; align-items:center;">
+              <input id="hbSimpleCatTitle" type="text" maxlength="80" placeholder="e.g., Community Services" style="display:block;" />
+              <div id="hbSimpleCatIconPreview" class="hb-icon-chip" aria-label="Automatic category icon">📘</div>
+            </div>
           </div>
-          <div class="field" style="margin:0;">
-            <label>Icon</label>
-            <div id="hbSimpleCatIconPreview" class="hb-icon-chip" aria-label="Automatic category icon">📘</div>
-          </div>
-          <div class="field" style="margin:0;">
-            <label class="chk" style="display:flex; align-items:center; gap:10px; min-height:46px; margin-top:28px;">
-              <input id="hbSimpleCatActive" type="checkbox" checked>
-              <span>Show category</span>
-            </label>
+          <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin:0;">
+            <button type="button" class="btn btn-line" id="btnHbSimpleCatClear">Clear</button>
+            <button type="button" class="btn" id="btnHbSimpleCatSave">Save category</button>
           </div>
         </div>
 
-        <p id="hbSimpleCatMsg" class="tiny muted" style="margin-top:8px;"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
-          <button type="button" class="btn btn-line" id="btnHbSimpleCatClear">Clear</button>
-          <button type="button" class="btn" id="btnHbSimpleCatSave">Save category</button>
-        </div>
-
+        <p id="hbSimpleCatMsg" class="tiny muted" style="margin-top:10px;"></p>
         <div class="hb-admin-category-list" id="hbSimpleCatList"></div>
       </div>
 
       <div class="hb-admin-panel">
         <div class="hb-admin-panel-head">
           <div>
-            <h4 style="margin:0;">2. Item</h4>
-            <p class="tiny muted" style="margin:6px 0 0;">Fill the main fields first. Open optional fields only when needed.</p>
+            <h4 style="margin:0;">Item</h4>
           </div>
+        </div>
+
+        <div class="field" style="margin:0 0 10px;">
+          <label>Current category</label>
+          <div id="hbSimpleCurrentCategory" class="hb-current-category">Choose or save a category first</div>
         </div>
 
         <div class="hb-admin-item-top">
           <div class="field" style="margin:0;">
             <label>Title</label>
-            <input id="hbSimpleItemTitle" type="text" maxlength="120" placeholder="e.g., Visitor parking rules" />
-          </div>
-          <div class="field" style="margin:0;">
-            <label>Category</label>
-            <select id="hbSimpleItemCategory"></select>
+            <input id="hbSimpleItemTitle" type="text" maxlength="120" placeholder="e.g., Aderrig Green Map" />
           </div>
           <div class="field" style="margin:0;">
             <label>Status</label>
@@ -2068,49 +2034,50 @@
           </div>
         </div>
 
-        <div class="field">
+        <div class="field" style="margin-top:10px;">
           <label>Short summary</label>
-          <input id="hbSimpleItemSummary" type="text" maxlength="160" placeholder="Short text shown in the list" />
+          <input id="hbSimpleItemSummary" type="text" maxlength="160" placeholder="Short text shown in the resident list" />
         </div>
 
-        <div class="field" style="margin-bottom:0;">
+        <div class="field">
           <label>Content</label>
-          <textarea id="hbSimpleItemContent" rows="7" placeholder="Write the handbook text here."></textarea>
+          <textarea id="hbSimpleItemContent" rows="8" placeholder="Write the handbook content here."></textarea>
         </div>
 
-        <details class="hb-admin-optional">
-          <summary>Optional link and image</summary>
-          <div class="hb-admin-support-grid">
-            <div>
-              <div class="field">
-                <label>Link text</label>
-                <input id="hbSimpleItemLinkLabel" type="text" maxlength="80" placeholder="e.g., Open map" />
-              </div>
-              <div class="field" style="margin-bottom:0;">
-                <label>Link URL</label>
-                <input id="hbSimpleItemLinkUrl" type="url" placeholder="https://..." />
-              </div>
-              <div class="hb-inline-note">Use a link only if this item should open another page or site.</div>
+        <div class="hb-admin-media-grid" style="margin-top:10px;">
+          <div class="field" style="margin:0;">
+            <label>Image</label>
+            <input id="hbSimpleItemImage" type="file" accept="image/*" />
+            <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:8px;">
+              <button type="button" class="btn btn-line small" id="btnHbRemoveImage">Remove image</button>
             </div>
+            <div id="hbSimpleImagePreview" class="hb-admin-image-preview" style="margin-top:8px;">No image selected</div>
+          </div>
 
-            <div>
-              <div class="field">
-                <label>Image</label>
-                <input id="hbSimpleItemImage" type="file" accept="image/*" />
-                <div class="actions" style="justify-content:flex-start; margin-top:8px;">
-                  <button type="button" class="btn btn-line small" id="btnHbRemoveImage">Remove image</button>
-                </div>
-              </div>
-              <div class="field" style="margin-bottom:0;">
-                <label>Preview</label>
-                <div id="hbSimpleImagePreview" class="hb-admin-image-preview">No image selected</div>
-              </div>
+          <div class="field" style="margin:0;">
+            <label>Attachments</label>
+            <input id="hbSimpleItemAttachments" type="file" multiple />
+            <div class="actions" style="justify-content:flex-start; gap:0.5rem; flex-wrap:wrap; margin-top:8px;">
+              <button type="button" class="btn btn-line small" id="btnHbRemoveAttachments">Remove attachments</button>
             </div>
+            <div id="hbSimpleAttachPreview" class="hb-admin-attach-preview" style="margin-top:8px;">No attachments selected</div>
+          </div>
+        </div>
+
+        <details class="hb-optional-box">
+          <summary>Optional link</summary>
+          <div class="field" style="margin-top:10px;">
+            <label>Link text</label>
+            <input id="hbSimpleItemLinkLabel" type="text" maxlength="80" placeholder="e.g., Open map" />
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Link URL</label>
+            <input id="hbSimpleItemLinkUrl" type="url" placeholder="https://..." />
           </div>
         </details>
 
-        <p id="hbSimpleItemMsg" class="tiny muted" style="margin-top:8px;"></p>
-        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
+        <p id="hbSimpleItemMsg" class="tiny muted" style="margin-top:10px;"></p>
+        <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; margin-top:10px;">
           <button type="button" class="btn btn-line" id="btnHbSimpleItemDelete" style="display:none;">Delete item</button>
           <button type="button" class="btn btn-line" id="btnHbSimpleItemClear">Clear</button>
           <button type="button" class="btn" id="btnHbSimpleItemSave">Save item</button>
@@ -2127,6 +2094,7 @@
       </div>
     </div>
   </section>
+
 
   <!-- ================= HELP CENTER ================= -->
   <section class="card admin-tab-content" id="tabHelpCenterAdmin" style="display:none;">
