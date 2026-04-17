@@ -2387,7 +2387,7 @@
       return '<div class="hb-admin-category-row">'
         + '<div class="hb-admin-category-meta">'
         + '<div class="hb-admin-category-title">' + esc(cat.icon + ' ' + cat.title) + '</div>'
-        + '<div class="hb-admin-category-sub">' + esc(cat.id) + ' · ' + (cat.active ? 'Active' : 'Hidden') + '</div>'
+        + '<div class="hb-admin-category-sub">' + (cat.active ? 'Visible' : 'Hidden') + '</div>'
         + '</div>'
         + '<div class="hb-admin-row-actions">'
         + '<button type="button" class="btn btn-line small" data-hb-cat-edit="' + esc(cat.id) + '">Edit</button>'
@@ -2441,18 +2441,13 @@
     wrap.innerHTML = filtered
       .sort((a,b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))
       .map(item => {
-        const stats = getItemReadStats(item.id);
         return '<div class="hb-admin-item-row">'
           + '<div class="hb-admin-item-meta">'
           + '<div class="hb-admin-item-title">' + esc(item.title) + '</div>'
           + '<div class="hb-admin-item-sub">' + esc(item.summary || 'No summary added') + '</div>'
-          + '<div class="hb-admin-item-sub">' + esc(getCategoryLabel(item.categoryId)) + ' · ' + esc(item.heroUrl ? 'Image saved' : 'No image') + (item.url ? ' · Link added' : '') + '</div>'
+          + '<div class="hb-admin-item-sub">' + esc(getCategoryLabel(item.categoryId)) + '</div>'
           + '</div>'
           + '<div class="hb-admin-row-actions">'
-          + '<span class="hb-admin-read-metrics">'
-          + '<span class="hb-admin-read-chip">Read ' + esc(String(stats.read)) + '</span>'
-          + '<span class="hb-admin-read-chip pending">Unread ' + esc(String(stats.pending)) + '</span>'
-          + '</span>'
           + '<span class="hb-status-pill ' + esc(item.status) + '">' + esc(item.status === 'published' ? 'Published' : 'Draft') + '</span>'
           + '<button type="button" class="btn btn-line small" data-hb-item-edit="' + esc(item.id) + '">Edit</button>'
           + '<button type="button" class="btn btn-line small" data-hb-item-delete="' + esc(item.id) + '">Delete</button>'
@@ -2704,6 +2699,7 @@
       await saveStore(KEY_CATEGORIES, categories);
     }
 
+    await publishCombinedHandbook();
     renderCategorySelect();
     renderCategoryList();
     renderPreview();
