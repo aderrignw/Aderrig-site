@@ -2698,7 +2698,10 @@
 })();
 
 (function(){
-  const HC_KEY = 'anw_help_center_admin';
+  
+const HC_KEY = 'anw_help_center_admin';
+  const HC_PUBLIC_KEY = 'anw_help_center_public';
+  const HC_COMPAT_KEY = 'anw_handbook_help_content';
   let state = { topics: [], ownerArticles: [], importedPackage: null };
   let currentTopicId = '';
   let currentOwnerId = '';
@@ -2712,26 +2715,99 @@
   function slugify(v){ return String(v || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
   function hcId(prefix){ return prefix + '-' + Math.random().toString(36).slice(2, 10); }
 
+  async function saveKeySafe(key, value){
+    try{
+      if(typeof window.anwSaveSafe === 'function'){ await window.anwSaveSafe(key, value); return; }
+    }catch(_){}
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(_){}
+  }
+
+  function deriveStateFromPackage(pkg){
+    const next = { topics: [], ownerArticles: [], importedPackage: pkg || null };
+    if(pkg && Array.isArray(pkg.categories)){
+      next.topics = pkg.categories.map(cat => ({
+        id: String(cat.id || hcId('topic')),
+        title: cat.title || '',
+        slug: slugify(cat.id || cat.slug || cat.title || ''),
+        active: Object.prototype.hasOwnProperty.call(cat, 'active') ? !!cat.active : true
+      }));
+    }else if(pkg && Array.isArray(pkg.topics)){
+      next.topics = pkg.topics.map(t => ({
+        id: String(t.id || hcId('topic')),
+        title: t.title || '',
+        slug: slugify(t.slug || t.title || ''),
+        active: Object.prototype.hasOwnProperty.call(t, 'active') ? !!t.active : true
+      }));
+    }
+    if(pkg && Array.isArray(pkg.items)){
+      next.ownerArticles = pkg.items
+        .filter(item => String(item.roleView || item.audience || 'resident').toLowerCase() !== 'resident')
+        .map(item => ({
+          id: String(item.id || hcId('item')),
+          title: item.title || '',
+          topicId: String(item.categoryId || item.category || item.sectionId || ''),
+          summary: item.summary || '',
+          body: item.content || item.contentMd || item.body || '',
+          roleView: String(item.roleView || item.audience || 'admin').toLowerCase(),
+          active: Object.prototype.hasOwnProperty.call(item, 'active') ? !!item.active : true,
+          status: item.status || 'published'
+        }));
+    }else if(pkg && Array.isArray(pkg.ownerArticles)){
+      next.ownerArticles = pkg.ownerArticles.map(a => ({
+        id: String(a.id || hcId('owner')),
+        title: a.title || '',
+        topicId: String(a.topicId || ''),
+        summary: a.summary || '',
+        body: a.body || '',
+        roleView: String(a.roleView || 'owner').toLowerCase(),
+        active: Object.prototype.hasOwnProperty.call(a, 'active') ? !!a.active : true,
+        status: a.status || 'published'
+      }));
+    }
+    return next;
+  }
+
+  function ensurePackage(){
+    if(state.importedPackage && typeof state.importedPackage === 'object') return state.importedPackage;
+    return {
+      meta: { name: 'Aderrig Help Centre Package', version: new Date().toISOString().slice(0,10), locale: 'en-IE' },
+      categories: [],
+      items: []
+    };
+  }
+
+  async function publishPackage(){
+    const pkg = ensurePackage();
+    await saveKeySafe(HC_KEY, Object.assign({}, state, { importedPackage: pkg }));
+    await saveKeySafe(HC_PUBLIC_KEY, pkg);
+    await saveKeySafe(HC_COMPAT_KEY, pkg);
+  }
+
   async function hcLoad(){
+    const defaults = { topics: [], ownerArticles: [], importedPackage: null };
     try{
       if(typeof window.anwLoadSafe === 'function'){
         const data = await window.anwLoadSafe(HC_KEY, null);
-        if(data && typeof data === 'object') return Object.assign({ topics: [], ownerArticles: [], importedPackage: null }, data);
+        if(data && typeof data === 'object') return Object.assign(defaults, data);
       }
     }catch(_){}
     try{
       const raw = localStorage.getItem(HC_KEY);
-      if(raw) return Object.assign({ topics: [], ownerArticles: [], importedPackage: null }, JSON.parse(raw));
+      if(raw) return Object.assign(defaults, JSON.parse(raw));
     }catch(_){}
-    return { topics: [], ownerArticles: [], importedPackage: null };
+    try{
+      const raw = localStorage.getItem(HC_PUBLIC_KEY);
+      if(raw){
+        const pkg = JSON.parse(raw);
+        return Object.assign(defaults, deriveStateFromPackage(pkg));
+      }
+    }catch(_){}
+    return defaults;
   }
 
   async function hcSave(next){
     state = Object.assign({ topics: [], ownerArticles: [], importedPackage: null }, next || {});
-    try{
-      if(typeof window.anwSaveSafe === 'function'){ await window.anwSaveSafe(HC_KEY, state); return; }
-    }catch(_){}
-    try{ localStorage.setItem(HC_KEY, JSON.stringify(state)); }catch(_){}
+    await publishPackage();
   }
 
   function showMsg(id, msg){ const el = byId(id); if(el) el.textContent = msg || ''; }
@@ -2743,38 +2819,85 @@
 
   function renderTopicOptions(){
     const select = byId('hcOwnerTopic'); if(!select) return;
-    select.innerHTML = '<option value="">Select topic…</option>' + state.topics.map(t => '<option value="'+esc(t.id)+'">'+esc(t.title)+'</option>').join('');
+    select.innerHTML = '<option value="">Select section…</option>' + state.topics.map(t => '<option value="'+esc(t.id)+'">'+esc(t.title)+'</option>').join('');
   }
 
-  function clearTopicForm(){ currentTopicId=''; byId('hcTopicTitle').value=''; byId('hcTopicSlug').value=''; }
-  function fillTopicForm(id){ const item = state.topics.find(t => t.id === id); if(!item) return; currentTopicId=item.id; byId('hcTopicTitle').value=item.title||''; byId('hcTopicSlug').value=item.slug||''; }
+  function clearTopicForm(){ currentTopicId=''; if(byId('hcTopicTitle')) byId('hcTopicTitle').value=''; if(byId('hcTopicSlug')) byId('hcTopicSlug').value=''; }
+  function fillTopicForm(id){
+    const item = state.topics.find(t => t.id === id); if(!item) return;
+    currentTopicId=item.id;
+    if(byId('hcTopicTitle')) byId('hcTopicTitle').value=item.title||'';
+    if(byId('hcTopicSlug')) byId('hcTopicSlug').value=item.slug||'';
+  }
 
   function renderTopics(){
     const wrap = byId('hcTopicList'); if(!wrap) return;
-    wrap.innerHTML = state.topics.length ? state.topics.map(item => '<details class="hc-item"><summary><span>'+esc(item.title||'Untitled topic')+'</span><span class="tiny muted">'+esc(item.slug||'')+'</span></summary><div class="hc-meta">Topic key: '+esc(item.slug||'')+'</div><div class="hc-actions"><button type="button" class="btn-line small" data-hc-topic-edit="'+esc(item.id)+'">Edit</button><button type="button" class="btn-line small" data-hc-topic-delete="'+esc(item.id)+'">Delete</button></div></details>').join('') : '<p class="tiny muted">No topics yet.</p>';
+    wrap.innerHTML = state.topics.length ? state.topics.map(item =>
+      '<details class="hc-item"><summary><span>'+esc(item.title||'Untitled section')+'</span><span class="tiny muted">'+esc((item.active===false ? 'Suspended' : 'Active'))+'</span></summary><div class="hc-meta">Section key: '+esc(item.slug||'')+'</div><div class="hc-actions"><button type="button" class="btn-line small" data-hc-topic-edit="'+esc(item.id)+'">Edit</button><button type="button" class="btn-line small" data-hc-topic-toggle="'+esc(item.id)+'">'+(item.active===false?'Activate':'Suspend')+'</button><button type="button" class="btn-line small" data-hc-topic-delete="'+esc(item.id)+'">Delete</button></div></details>'
+    ).join('') : '<p class="tiny muted">No sections yet.</p>';
+
     wrap.querySelectorAll('[data-hc-topic-edit]').forEach(btn => btn.addEventListener('click', () => fillTopicForm(btn.getAttribute('data-hc-topic-edit'))));
+    wrap.querySelectorAll('[data-hc-topic-toggle]').forEach(btn => btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-hc-topic-toggle');
+      const item = state.topics.find(t => t.id === id);
+      if(item){
+        item.active = item.active === false ? true : false;
+        const pkg = ensurePackage();
+        if(Array.isArray(pkg.categories)){
+          const cat = pkg.categories.find(c => String(c.id || '') === String(id));
+          if(cat) cat.active = item.active;
+        }
+        await hcSave(state); renderAll(); showMsg('hcTopicMsg', item.active === false ? 'Section suspended.' : 'Section activated.');
+      }
+    }));
     wrap.querySelectorAll('[data-hc-topic-delete]').forEach(btn => btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-hc-topic-delete');
       state.topics = state.topics.filter(t => t.id !== id);
       state.ownerArticles = state.ownerArticles.filter(a => a.topicId !== id);
-      await hcSave(state); renderAll(); showMsg('hcTopicMsg','Topic deleted.');
+      const pkg = ensurePackage();
+      if(Array.isArray(pkg.categories)) pkg.categories = pkg.categories.filter(c => String(c.id || '') !== String(id));
+      if(Array.isArray(pkg.items)) pkg.items = pkg.items.filter(it => String(it.categoryId || it.category || it.sectionId || '') !== String(id));
+      await hcSave(state); renderAll(); showMsg('hcTopicMsg','Section deleted.');
     }));
   }
 
-  function clearOwnerForm(){ currentOwnerId=''; byId('hcOwnerTitle').value=''; byId('hcOwnerTopic').value=''; byId('hcOwnerSummary').value=''; byId('hcOwnerBody').value=''; }
-  function fillOwnerForm(id){ const item = state.ownerArticles.find(a => a.id === id); if(!item) return; currentOwnerId=item.id; byId('hcOwnerTitle').value=item.title||''; byId('hcOwnerTopic').value=item.topicId||''; byId('hcOwnerSummary').value=item.summary||''; byId('hcOwnerBody').value=item.body||''; }
+  function clearOwnerForm(){ currentOwnerId=''; ['hcOwnerTitle','hcOwnerTopic','hcOwnerSummary','hcOwnerBody'].forEach(id => { if(byId(id)) byId(id).value=''; }); }
+  function fillOwnerForm(id){
+    const item = state.ownerArticles.find(a => a.id === id); if(!item) return;
+    currentOwnerId=item.id;
+    if(byId('hcOwnerTitle')) byId('hcOwnerTitle').value=item.title||'';
+    if(byId('hcOwnerTopic')) byId('hcOwnerTopic').value=item.topicId||'';
+    if(byId('hcOwnerSummary')) byId('hcOwnerSummary').value=item.summary||'';
+    if(byId('hcOwnerBody')) byId('hcOwnerBody').value=item.body||'';
+  }
 
   function renderOwnerArticles(){
     const wrap = byId('hcOwnerList'); if(!wrap) return;
     wrap.innerHTML = state.ownerArticles.length ? state.ownerArticles.map(item => {
       const topic = state.topics.find(t => t.id === item.topicId);
-      return '<details class="hc-item"><summary><span>'+esc(item.title||'Untitled owner article')+'</span><span class="tiny muted">'+esc(topic ? topic.title : 'No topic')+'</span></summary><div class="hc-meta">'+esc(item.summary||'')+'</div><div class="hc-actions"><button type="button" class="btn-line small" data-hc-owner-edit="'+esc(item.id)+'">Edit</button><button type="button" class="btn-line small" data-hc-owner-delete="'+esc(item.id)+'">Delete</button></div></details>';
-    }).join('') : '<p class="tiny muted">No owner articles yet.</p>';
+      return '<details class="hc-item"><summary><span>'+esc(item.title||'Untitled article')+'</span><span class="tiny muted">'+esc((item.roleView || 'admin') + ' · ' + (item.active===false ? 'Suspended' : 'Active'))+'</span></summary><div class="hc-meta">'+esc(item.summary||'')+'</div><div class="hc-actions"><button type="button" class="btn-line small" data-hc-owner-edit="'+esc(item.id)+'">Edit</button><button type="button" class="btn-line small" data-hc-owner-toggle="'+esc(item.id)+'">'+(item.active===false?'Activate':'Suspend')+'</button><button type="button" class="btn-line small" data-hc-owner-delete="'+esc(item.id)+'">Delete</button></div></details>';
+    }).join('') : '<p class="tiny muted">No admin/owner articles yet.</p>';
+
     wrap.querySelectorAll('[data-hc-owner-edit]').forEach(btn => btn.addEventListener('click', () => fillOwnerForm(btn.getAttribute('data-hc-owner-edit'))));
+    wrap.querySelectorAll('[data-hc-owner-toggle]').forEach(btn => btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-hc-owner-toggle');
+      const item = state.ownerArticles.find(a => a.id === id);
+      if(item){
+        item.active = item.active === false ? true : false;
+        const pkg = ensurePackage();
+        if(Array.isArray(pkg.items)){
+          const row = pkg.items.find(it => String(it.id || '') === String(id));
+          if(row) row.active = item.active;
+        }
+        await hcSave(state); renderAll(); showMsg('hcOwnerMsg', item.active === false ? 'Article suspended.' : 'Article activated.');
+      }
+    }));
     wrap.querySelectorAll('[data-hc-owner-delete]').forEach(btn => btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-hc-owner-delete');
       state.ownerArticles = state.ownerArticles.filter(a => a.id !== id);
-      await hcSave(state); renderAll(); showMsg('hcOwnerMsg','Owner article deleted.');
+      const pkg = ensurePackage();
+      if(Array.isArray(pkg.items)) pkg.items = pkg.items.filter(it => String(it.id || '') !== String(id));
+      await hcSave(state); renderAll(); showMsg('hcOwnerMsg','Article deleted.');
     }));
   }
 
@@ -2783,14 +2906,14 @@
   async function importFile(file){
     const raw = await file.text();
     const json = JSON.parse(raw);
-    state.importedPackage = json;
-    if(Array.isArray(json.topics)) state.topics = json.topics.map(t => ({ id: t.id || hcId('topic'), title: t.title || '', slug: t.slug || slugify(t.title || '') }));
-    if(Array.isArray(json.ownerArticles)) state.ownerArticles = json.ownerArticles.map(a => ({ id: a.id || hcId('owner'), title: a.title || '', topicId: a.topicId || '', summary: a.summary || '', body: a.body || '' }));
-    await hcSave(state); renderAll();
+    state = deriveStateFromPackage(json);
+    await hcSave(state);
+    renderAll();
   }
 
   async function bootHelpCenterAdmin(){
     state = await hcLoad();
+    if(!state.importedPackage && (state.topics.length || state.ownerArticles.length)) state = Object.assign(state, { importedPackage: ensurePackage() });
     renderAll();
     document.querySelectorAll('.hc-subtab').forEach(btn => btn.addEventListener('click', () => showHcSubtab(btn.getAttribute('data-hc-subtab'))));
 
@@ -2802,7 +2925,8 @@
 
     byId('btnHcExport')?.addEventListener('click', () => {
       try{
-        const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+        const pkg = ensurePackage();
+        const blob = new Blob([JSON.stringify(pkg, null, 2)], { type:'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href=url; a.download='help-centre-seed.json'; document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 200);
@@ -2811,7 +2935,7 @@
     });
 
     byId('btnHcClear')?.addEventListener('click', async () => {
-      state = { topics: [], ownerArticles: [], importedPackage: null };
+      state = { topics: [], ownerArticles: [], importedPackage: { meta:{ name:'Aderrig Help Centre Package', version:new Date().toISOString().slice(0,10), locale:'en-IE' }, categories:[], items:[] } };
       await hcSave(state); clearTopicForm(); clearOwnerForm(); renderAll(); showMsg('hcImportMsg','Current package cleared.');
     });
 
@@ -2820,14 +2944,21 @@
     byId('btnHcTopicSave')?.addEventListener('click', async () => {
       const title = byId('hcTopicTitle')?.value.trim() || '';
       const slug = slugify(byId('hcTopicSlug')?.value || title);
-      if(!title){ showMsg('hcTopicMsg','Enter a topic title.'); return; }
+      if(!title){ showMsg('hcTopicMsg','Enter a section title.'); return; }
+      const pkg = ensurePackage();
+      pkg.categories = Array.isArray(pkg.categories) ? pkg.categories : [];
       if(currentTopicId){
         const item = state.topics.find(t => t.id === currentTopicId);
         if(item){ item.title=title; item.slug=slug; }
+        const cat = pkg.categories.find(c => String(c.id || '') === String(currentTopicId));
+        if(cat){ cat.title = title; cat.id = currentTopicId; }
       } else {
-        state.topics.push({ id: hcId('topic'), title, slug });
+        const id = slug || hcId('topic');
+        state.topics.push({ id, title, slug, active:true });
+        pkg.categories.push({ id, title, icon:'', order: pkg.categories.length + 1, active:true });
       }
-      await hcSave(state); renderAll(); clearTopicForm(); showMsg('hcTopicMsg','Topic saved.');
+      state.importedPackage = pkg;
+      await hcSave(state); renderAll(); clearTopicForm(); showMsg('hcTopicMsg','Section saved.');
     });
 
     byId('btnHcOwnerNew')?.addEventListener('click', clearOwnerForm);
@@ -2838,13 +2969,20 @@
       const summary = byId('hcOwnerSummary')?.value.trim() || '';
       const body = byId('hcOwnerBody')?.value.trim() || '';
       if(!title){ showMsg('hcOwnerMsg','Enter an article title.'); return; }
+      const pkg = ensurePackage();
+      pkg.items = Array.isArray(pkg.items) ? pkg.items : [];
       if(currentOwnerId){
         const item = state.ownerArticles.find(a => a.id === currentOwnerId);
         if(item){ item.title=title; item.topicId=topicId; item.summary=summary; item.body=body; }
+        const row = pkg.items.find(it => String(it.id || '') === String(currentOwnerId));
+        if(row){ row.title=title; row.categoryId=topicId; row.summary=summary; row.content=body; }
       } else {
-        state.ownerArticles.push({ id: hcId('owner'), title, topicId, summary, body });
+        const id = hcId('item');
+        state.ownerArticles.push({ id, title, topicId, summary, body, roleView:'owner', active:true, status:'published' });
+        pkg.items.push({ id, groupKey: slugify(title), roleView:'owner', categoryId:topicId, title, summary, content:body, status:'published', type:'article', url:'', linkLabel:'', attachments:[], createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(), active:true });
       }
-      await hcSave(state); renderAll(); clearOwnerForm(); showMsg('hcOwnerMsg','Owner article saved.');
+      state.importedPackage = pkg;
+      await hcSave(state); renderAll(); clearOwnerForm(); showMsg('hcOwnerMsg','Article saved.');
     });
   }
 
