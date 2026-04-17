@@ -8,6 +8,7 @@
   const KEY_REPORTS = KEYS.REPORTS || KEYS.INCIDENTS || 'anw_incidents';
   const KEY_PROJECTS = KEYS.PROJECTS || 'anw_projects';
   const KEY_PROJECT_RECIPIENTS = KEYS.PROJECT_RECIPIENTS || 'anw_project_recipients';
+  const KEY_HANDBOOK = KEYS.HANDBOOK || 'anw_handbook';
   const KEY_ACCESS = KEYS.ACL || KEYS.ACCESS || 'acl';
   const KEY_TASKS = KEYS.TASKS || 'anw_tasks';
   const KEY_NOTICES = window.getNoticesKey();
@@ -2139,18 +2140,14 @@
   'use strict';
   const KEYS = window.ANW_KEYS || {};
   const KEY_HANDBOOK = KEYS.HANDBOOK || 'anw_handbook';
-  const KEY_USERS = KEYS.USERS || 'anw_users';
-  const KEY_HANDBOOK_READ_RECEIPTS = KEYS.HANDBOOK_READ_RECEIPTS || 'anw_handbook_read_receipts';
 
   const $id = (id) => document.getElementById(id);
 
-  let categories = [];
-  let items = [];
+  let handbook = { categories: [] };
   let currentCategoryId = '';
   let currentItemId = '';
   let currentImageData = '';
-  let handbookReadReceipts = {};
-  let totalHandbookResidents = 0;
+  let currentAttachments = [];
 
   function slugify(value){
     return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -2203,77 +2200,71 @@
     if(title.includes('volunteer')) return '🤝';
     if(title.includes('service')) return '🏢';
     if(title.includes('rule') || title.includes('guidance') || title.includes('policy')) return '📋';
-    if(title.includes('community') || title.includes('event')) return '🏘️';
+    if(title.includes('community') || title.includes('event') || title.includes('neighbourhood')) return '🏘️';
     if(title.includes('pet') || title.includes('animal')) return '🐾';
+    if(title.includes('map')) return '🗺️';
     return '📘';
   }
 
-  function normalizeCategories(list){
-    return (Array.isArray(list) ? list : []).map((cat, index) => {
-      const title = String((cat && (cat.title || cat.name)) || '').trim();
-      if(!title) return null;
-      return {
-        id: String(cat.id || slugify(title) || ('category-' + (index + 1))),
-        title,
-        icon: String(cat.icon || suggestCategoryIcon(title) || '📘').trim() || '📘',
-        order: Number(cat.order) || (index + 1),
-        active: cat.active !== false
-      };
-    }).filter(Boolean).sort((a,b) => (a.order - b.order) || a.title.localeCompare(b.title));
+  function normalizeAttachment(raw){
+    if(!raw || typeof raw !== 'object') return null;
+    const url = String(raw.url || '').trim();
+    if(!url) return null;
+    return {
+      label: String(raw.label || raw.name || 'Open').trim() || 'Open',
+      url
+    };
   }
 
-  function normalizeItems(list){
-    return (Array.isArray(list) ? list : []).map((item, index) => {
-      const hero = String(item.imageData || (item.image && item.image.dataUrl) || item.heroUrl || '').trim();
-      const attachments = Array.isArray(item.attachments) ? item.attachments.filter(Boolean) : [];
-      return {
-        id: String(item.id || item.slug || ('hb-item-' + (index + 1))),
-        categoryId: String(item.categoryId || item.category || '').trim(),
-        categoryTitle: String(item.categoryTitle || '').trim(),
-        title: String((item && (item.title || item.name)) || '').trim(),
-        summary: String(item.summary || item.excerpt || '').trim(),
-        content: String(item.content || '').trim(),
-        status: String(item.status || 'published').toLowerCase() === 'draft' ? 'draft' : 'published',
-        type: String(item.type || (item.url ? 'link' : 'page')).toLowerCase() === 'link' ? 'link' : 'page',
-        url: String(item.url || item.linkUrl || '').trim(),
-        linkLabel: String(item.linkLabel || (attachments[0] && attachments[0].label) || '').trim(),
-        heroUrl: hero,
-        imageData: hero,
-        imageName: String(item.imageName || '').trim(),
-        attachments,
-        createdAt: item.createdAt || '',
-        updatedAt: item.updatedAt || ''
-      };
-    }).filter(item => item.title);
+  function normalizeItem(raw, index){
+    if(!raw || typeof raw !== 'object') return null;
+    const title = String(raw.title || '').trim();
+    if(!title) return null;
+    const attachments = (Array.isArray(raw.attachments) ? raw.attachments : []).map(normalizeAttachment).filter(Boolean);
+    return {
+      id: String(raw.id || ('hb-item-' + (index + 1))),
+      title,
+      type: String(raw.type || (raw.url ? 'link' : 'page')).toLowerCase() === 'link' ? 'link' : 'page',
+      summary: String(raw.summary || '').trim(),
+      url: String(raw.url || '').trim(),
+      linkLabel: String(raw.linkLabel || '').trim(),
+      heroImage: String(raw.heroImage || raw.heroUrl || raw.imageData || '').trim(),
+      contentHtml: String(raw.contentHtml || raw.content || '').trim(),
+      attachments,
+      updatedAt: String(raw.updatedAt || '').trim(),
+      isPublished: raw.isPublished !== false && String(raw.status || '').toLowerCase() !== 'draft'
+    };
   }
 
-  function normalizeReadReceipts(value){
-    return (value && typeof value === 'object' && !Array.isArray(value)) ? value : {};
+  function normalizeCategory(raw, index){
+    if(!raw || typeof raw !== 'object') return null;
+    const title = String(raw.title || raw.name || '').trim();
+    if(!title) return null;
+    const items = (Array.isArray(raw.items) ? raw.items : []).map(normalizeItem).filter(Boolean);
+    return {
+      id: String(raw.id || slugify(title) || ('category-' + (index + 1))),
+      title,
+      icon: String(raw.icon || suggestCategoryIcon(title) || '📘').trim() || '📘',
+      order: Number(raw.order) || (index + 1),
+      isActive: raw.isActive !== false && raw.active !== false,
+      items
+    };
   }
 
-  function countApprovedResidents(list){
-    return (Array.isArray(list) ? list : []).filter(user => {
-      const status = String((user && user.status) || '').toLowerCase();
-      return status === 'approved' || status === 'active';
-    }).length;
+  function normalizeHandbook(raw){
+    const incoming = (raw && typeof raw === 'object') ? raw : {};
+    const categories = (Array.isArray(incoming.categories) ? incoming.categories : []).map(normalizeCategory).filter(Boolean);
+    return {
+      categories: categories.sort((a,b) => (a.order - b.order) || a.title.localeCompare(b.title))
+    };
   }
 
-  function ensureCategoriesFromItems(){
-    const known = new Set(categories.map(cat => cat.id));
-    items.forEach(item => {
-      const explicit = String(item.categoryId || item.category || '').trim();
-      if(explicit && !known.has(explicit)){
-        categories.push({
-          id: explicit,
-          title: String(item.categoryTitle || explicit).replace(/-/g,' ').replace(/\b\w/g, m => m.toUpperCase()),
-          icon: suggestCategoryIcon(item.categoryTitle || explicit),
-          order: categories.length + 1,
-          active: true
-        });
-        known.add(explicit);
-      }
-    });
-    categories = normalizeCategories(categories);
+  function getCategories(){
+    return handbook.categories || [];
+  }
+
+  function getCurrentCategory(){
+    return getCategories().find(cat => cat.id === currentCategoryId) || null;
   }
 
   function setCategoryMessage(message){
@@ -2286,58 +2277,28 @@
     if(el) el.textContent = message || '';
   }
 
-  function getCategoryInputValue(){
-    const preset = $id('hbSimpleCatPreset');
-    const other = $id('hbSimpleCatTitle');
-    const presetValue = String((preset && preset.value) || '').trim();
-    if(presetValue && presetValue !== 'Other') return presetValue;
-    return String((other && other.value) || '').trim();
-  }
-
-  function syncCategoryInput(title){
-    const preset = $id('hbSimpleCatPreset');
-    const other = $id('hbSimpleCatTitle');
-    const normalized = String(title || '').trim();
-    const presetValues = ['General','Security','Parking','Emergency','Volunteering','Waste & Recycling','Community Services','Rules & Guidance'];
-    const matched = presetValues.find(value => value.toLowerCase() === normalized.toLowerCase());
-
-    if(preset) preset.value = matched ? matched : 'Other';
-    if(other){
-      other.style.display = matched ? 'none' : 'block';
-      other.value = matched ? '' : normalized;
-    }
-    if($id('hbSimpleCatIconPreview')){
-      $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(normalized || matched || 'General');
-    }
-  }
-
-  function renderCategorySelect(){
-    const select = $id('hbSimpleItemCategory');
-    if(!select) return;
-    const active = categories.filter(cat => cat.active !== false);
-    select.innerHTML = active.length
-      ? active.map(cat => '<option value="' + esc(cat.id) + '">' + esc(cat.icon + ' ' + cat.title) + '</option>').join('')
-      : '<option value="">Create a category first</option>';
-    if(currentCategoryId && active.some(cat => cat.id === currentCategoryId)){
-      select.value = currentCategoryId;
-    }else if(active.length){
-      currentCategoryId = active[0].id;
-      select.value = currentCategoryId;
-    }
+  function renderCurrentCategory(){
+    const el = $id('hbSimpleCurrentCategory');
+    if(!el) return;
+    const cat = getCurrentCategory();
+    el.textContent = cat ? (cat.icon + ' ' + cat.title) : 'Choose or save a category first';
   }
 
   function renderCategoryList(){
     const wrap = $id('hbSimpleCatList');
     if(!wrap) return;
+    const categories = getCategories();
     if(!categories.length){
       wrap.innerHTML = '<p class="tiny muted" style="margin:0;">No categories yet.</p>';
+      renderCurrentCategory();
       return;
     }
     wrap.innerHTML = categories.map(cat => {
-      return '<div class="hb-admin-category-row">'
+      const activeClass = cat.id === currentCategoryId ? ' style="outline:2px solid rgba(47,125,91,.18);"' : '';
+      return '<div class="hb-admin-category-row"' + activeClass + '>'
         + '<div class="hb-admin-category-meta">'
         + '<div class="hb-admin-category-title">' + esc(cat.icon + ' ' + cat.title) + '</div>'
-        + '<div class="hb-admin-category-sub">' + esc(cat.id) + ' · ' + (cat.active ? 'Active' : 'Hidden') + '</div>'
+        + '<div class="hb-admin-category-sub">' + esc(cat.items.length) + ' item(s) · ' + (cat.isActive ? 'Published' : 'Hidden') + '</div>'
         + '</div>'
         + '<div class="hb-admin-row-actions">'
         + '<button type="button" class="btn btn-line small" data-hb-cat-edit="' + esc(cat.id) + '">Edit</button>'
@@ -2345,6 +2306,7 @@
         + '</div>'
         + '</div>';
     }).join('');
+    renderCurrentCategory();
   }
 
   function renderPreview(){
@@ -2357,18 +2319,29 @@
     }
   }
 
-  function getCategoryLabel(categoryId){
-    const found = categories.find(cat => cat.id === categoryId);
-    return found ? found.title : categoryId;
+  function renderAttachmentPreview(){
+    const preview = $id('hbSimpleAttachPreview');
+    if(!preview) return;
+    if(!currentAttachments.length){
+      preview.textContent = 'No attachments selected';
+      return;
+    }
+    preview.innerHTML = '<ul>' + currentAttachments.map(file => '<li>' + esc(file.label) + '</li>').join('') + '</ul>';
   }
 
-  function getItemReadStats(itemId){
-    const bucket = handbookReadReceipts[itemId] && typeof handbookReadReceipts[itemId] === 'object'
-      ? handbookReadReceipts[itemId]
-      : {};
-    const read = Object.keys(bucket).length;
-    const pending = Math.max(0, Number(totalHandbookResidents || 0) - read);
-    return { read, pending };
+  function getAllItems(){
+    const out = [];
+    getCategories().forEach(cat => {
+      (Array.isArray(cat.items) ? cat.items : []).forEach(item => {
+        out.push({
+          ...item,
+          categoryId: cat.id,
+          categoryTitle: cat.title,
+          categoryIcon: cat.icon
+        });
+      });
+    });
+    return out;
   }
 
   function renderItems(){
@@ -2377,9 +2350,9 @@
     if(!wrap || !empty) return;
 
     const query = String(($id('hbSimpleItemSearch') && $id('hbSimpleItemSearch').value) || '').trim().toLowerCase();
-    const filtered = items.filter(item => {
+    const filtered = getAllItems().filter(item => {
       if(!query) return true;
-      return [item.title, item.summary, item.content].join(' ').toLowerCase().includes(query);
+      return [item.title, item.summary, item.contentHtml].join(' ').toLowerCase().includes(query);
     });
 
     empty.style.display = filtered.length ? 'none' : 'block';
@@ -2389,21 +2362,16 @@
     }
 
     wrap.innerHTML = filtered
-      .sort((a,b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))
+      .sort((a,b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))
       .map(item => {
-        const stats = getItemReadStats(item.id);
         return '<div class="hb-admin-item-row">'
           + '<div class="hb-admin-item-meta">'
           + '<div class="hb-admin-item-title">' + esc(item.title) + '</div>'
           + '<div class="hb-admin-item-sub">' + esc(item.summary || 'No summary added') + '</div>'
-          + '<div class="hb-admin-item-sub">' + esc(getCategoryLabel(item.categoryId)) + ' · ' + esc(item.heroUrl ? 'Image saved' : 'No image') + (item.url ? ' · Link added' : '') + '</div>'
+          + '<div class="hb-admin-item-sub">' + esc(item.categoryTitle) + (item.heroImage ? ' · Image saved' : '') + (item.attachments.length ? ' · Attachments saved' : '') + '</div>'
           + '</div>'
           + '<div class="hb-admin-row-actions">'
-          + '<span class="hb-admin-read-metrics">'
-          + '<span class="hb-admin-read-chip">Read ' + esc(String(stats.read)) + '</span>'
-          + '<span class="hb-admin-read-chip pending">Unread ' + esc(String(stats.pending)) + '</span>'
-          + '</span>'
-          + '<span class="hb-status-pill ' + esc(item.status) + '">' + esc(item.status === 'published' ? 'Published' : 'Draft') + '</span>'
+          + '<span class="hb-status-pill ' + esc(item.isPublished ? 'published' : 'draft') + '">' + esc(item.isPublished ? 'Published' : 'Draft') + '</span>'
           + '<button type="button" class="btn btn-line small" data-hb-item-edit="' + esc(item.id) + '">Edit</button>'
           + '<button type="button" class="btn btn-line small" data-hb-item-delete="' + esc(item.id) + '">Delete</button>'
           + '</div>'
@@ -2412,29 +2380,27 @@
   }
 
   function clearCategoryForm(){
-    currentCategoryId = '';
-    if($id('hbSimpleCatPreset')) $id('hbSimpleCatPreset').value = 'General';
-    if($id('hbSimpleCatTitle')){
-      $id('hbSimpleCatTitle').value = '';
-      $id('hbSimpleCatTitle').style.display = 'none';
-    }
-    if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon('General');
-    if($id('hbSimpleCatActive')) $id('hbSimpleCatActive').checked = true;
+    currentCategoryId = currentCategoryId || '';
+    if($id('hbSimpleCatTitle')) $id('hbSimpleCatTitle').value = '';
+    if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon('');
     setCategoryMessage('');
+    renderCurrentCategory();
   }
 
   function fillCategoryForm(categoryId){
-    const cat = categories.find(entry => entry.id === categoryId);
+    const cat = getCategories().find(entry => entry.id === categoryId);
     if(!cat) return;
     currentCategoryId = cat.id;
-    syncCategoryInput(cat.title);
-    if($id('hbSimpleCatActive')) $id('hbSimpleCatActive').checked = cat.active !== false;
+    if($id('hbSimpleCatTitle')) $id('hbSimpleCatTitle').value = cat.title;
+    if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = cat.icon || suggestCategoryIcon(cat.title);
     setCategoryMessage('Editing category.');
+    renderCategoryList();
   }
 
   function clearItemForm(){
     currentItemId = '';
     currentImageData = '';
+    currentAttachments = [];
     if($id('hbSimpleItemTitle')) $id('hbSimpleItemTitle').value = '';
     if($id('hbSimpleItemSummary')) $id('hbSimpleItemSummary').value = '';
     if($id('hbSimpleItemContent')) $id('hbSimpleItemContent').value = '';
@@ -2442,90 +2408,98 @@
     if($id('hbSimpleItemLinkLabel')) $id('hbSimpleItemLinkLabel').value = '';
     if($id('hbSimpleItemLinkUrl')) $id('hbSimpleItemLinkUrl').value = '';
     if($id('hbSimpleItemImage')) $id('hbSimpleItemImage').value = '';
-    if($id('btnHbSimpleItemDelete')) $id('btnHbSimpleItemDelete').style.display = 'none';
+    if($id('hbSimpleItemAttachments')) $id('hbSimpleItemAttachments').value = '';
+    const btnDelete = $id('btnHbSimpleItemDelete');
+    if(btnDelete) btnDelete.style.display = 'none';
     renderPreview();
+    renderAttachmentPreview();
     setItemMessage('');
   }
 
   function fillItemForm(itemId){
-    const item = items.find(entry => entry.id === itemId);
+    const item = getAllItems().find(entry => entry.id === itemId);
     if(!item) return;
     currentItemId = item.id;
-    currentImageData = item.heroUrl || '';
-    if($id('hbSimpleItemCategory')) $id('hbSimpleItemCategory').value = item.categoryId;
+    currentCategoryId = item.categoryId;
     if($id('hbSimpleItemTitle')) $id('hbSimpleItemTitle').value = item.title;
     if($id('hbSimpleItemSummary')) $id('hbSimpleItemSummary').value = item.summary || '';
-    if($id('hbSimpleItemContent')) $id('hbSimpleItemContent').value = item.content || '';
-    if($id('hbSimpleItemStatus')) $id('hbSimpleItemStatus').value = item.status || 'published';
+    if($id('hbSimpleItemContent')) $id('hbSimpleItemContent').value = item.contentHtml || '';
+    if($id('hbSimpleItemStatus')) $id('hbSimpleItemStatus').value = item.isPublished ? 'published' : 'draft';
     if($id('hbSimpleItemLinkLabel')) $id('hbSimpleItemLinkLabel').value = item.linkLabel || '';
     if($id('hbSimpleItemLinkUrl')) $id('hbSimpleItemLinkUrl').value = item.url || '';
-    if($id('btnHbSimpleItemDelete')) $id('btnHbSimpleItemDelete').style.display = 'inline-flex';
+    currentImageData = item.heroImage || '';
+    currentAttachments = Array.isArray(item.attachments) ? item.attachments.slice() : [];
+    const btnDelete = $id('btnHbSimpleItemDelete');
+    if(btnDelete) btnDelete.style.display = 'inline-flex';
     renderPreview();
+    renderAttachmentPreview();
+    renderCategoryList();
     setItemMessage('Editing item.');
   }
 
+  async function saveHandbook(){
+    await saveStore(KEY_HANDBOOK, handbook);
+  }
+
   async function saveCategory(){
-    const title = getCategoryInputValue();
-    const active = !!($id('hbSimpleCatActive') && $id('hbSimpleCatActive').checked);
-
+    const title = String(($id('hbSimpleCatTitle') && $id('hbSimpleCatTitle').value) || '').trim();
     if(!title){
-      setCategoryMessage('Please enter a category.');
+      setCategoryMessage('Please enter a category title.');
       return;
     }
 
-    const existing = categories.find(cat => cat.title.toLowerCase() === title.toLowerCase() && cat.id !== currentCategoryId);
-    if(existing){
-      setCategoryMessage('This category already exists.');
-      return;
-    }
-
-    const base = categories.find(cat => cat.id === currentCategoryId) || {};
+    const categories = getCategories();
+    const existing = categories.find(cat => cat.id === currentCategoryId) || null;
     const category = {
-      id: base.id || slugify(title) || ('hb-cat-' + Date.now()),
-      title: title,
+      id: existing ? existing.id : slugify(title),
+      title,
       icon: suggestCategoryIcon(title),
-      order: base.order || (categories.length + 1),
-      active: active
+      order: existing ? existing.order : (categories.length + 1),
+      isActive: true,
+      items: existing ? existing.items : []
     };
 
-    categories = categories.filter(cat => cat.id !== category.id);
-    categories.push(category);
-    categories = normalizeCategories(categories);
-    await saveCombinedHandbook();
-    renderCategorySelect();
+    handbook.categories = categories.filter(cat => cat.id !== category.id);
+    handbook.categories.push(category);
+    handbook = normalizeHandbook(handbook);
+    currentCategoryId = category.id;
+    await saveHandbook();
     renderCategoryList();
     renderItems();
-    currentCategoryId = category.id;
-    if($id('hbSimpleItemCategory')) $id('hbSimpleItemCategory').value = category.id;
+    renderCurrentCategory();
     setCategoryMessage('Category saved.');
-    clearCategoryForm();
+    if($id('hbSimpleCatTitle')) $id('hbSimpleCatTitle').value = category.title;
+    if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = category.icon;
   }
 
   async function deleteCategory(categoryId){
-    const itemCount = items.filter(item => item.categoryId === categoryId).length;
-    if(itemCount){
-      setCategoryMessage('Move or delete the ' + itemCount + ' item(s) in this category first.');
+    const category = getCategories().find(cat => cat.id === categoryId);
+    if(!category) return;
+    if((category.items || []).length){
+      setCategoryMessage('Delete or move the items in this category first.');
       return;
     }
-    categories = categories.filter(cat => cat.id !== categoryId);
-    await saveCombinedHandbook();
-    renderCategorySelect();
+    handbook.categories = getCategories().filter(cat => cat.id !== categoryId);
+    handbook = normalizeHandbook(handbook);
+    if(currentCategoryId === categoryId) currentCategoryId = getCategories()[0] ? getCategories()[0].id : '';
+    await saveHandbook();
     renderCategoryList();
-    setCategoryMessage('Category removed.');
+    renderItems();
     clearCategoryForm();
+    setCategoryMessage('Category removed.');
   }
 
   async function saveItem(){
-    const categoryId = String(($id('hbSimpleItemCategory') && $id('hbSimpleItemCategory').value) || '').trim();
-    const title = String($id('hbSimpleItemTitle').value || '').trim();
-    const summary = String($id('hbSimpleItemSummary').value || '').trim();
-    const content = String($id('hbSimpleItemContent').value || '').trim();
-    const status = String($id('hbSimpleItemStatus').value || 'published');
-    const linkLabel = String($id('hbSimpleItemLinkLabel').value || '').trim();
-    const linkUrl = String($id('hbSimpleItemLinkUrl').value || '').trim();
+    const category = getCurrentCategory();
+    const title = String(($id('hbSimpleItemTitle') && $id('hbSimpleItemTitle').value) || '').trim();
+    const summary = String(($id('hbSimpleItemSummary') && $id('hbSimpleItemSummary').value) || '').trim();
+    const content = String(($id('hbSimpleItemContent') && $id('hbSimpleItemContent').value) || '').trim();
+    const status = String(($id('hbSimpleItemStatus') && $id('hbSimpleItemStatus').value) || 'published').toLowerCase();
+    const linkLabel = String(($id('hbSimpleItemLinkLabel') && $id('hbSimpleItemLinkLabel').value) || '').trim();
+    const linkUrl = String(($id('hbSimpleItemLinkUrl') && $id('hbSimpleItemLinkUrl').value) || '').trim();
 
-    if(!categoryId){
-      setItemMessage('Please choose a category.');
+    if(!category){
+      setItemMessage('Choose or save a category first.');
       return;
     }
     if(!title){
@@ -2538,44 +2512,46 @@
     }
 
     const now = new Date().toISOString();
-    const previous = items.find(entry => entry.id === currentItemId) || {};
+    const previous = (category.items || []).find(entry => entry.id === currentItemId) || {};
+    const extraAttachments = [];
+    if(linkUrl){
+      extraAttachments.push({ label: linkLabel || 'Open link', url: linkUrl });
+    }
     const next = {
       id: currentItemId || ('hb-' + Date.now()),
-      categoryId,
-      category: categoryId,
-      categoryTitle: (categories.find(cat => cat.id === categoryId) || {}).title || '',
       title,
+      type: (linkUrl && !content) ? 'link' : 'page',
       summary,
-      content,
-      status,
-      type: linkUrl ? 'link' : 'page',
       url: linkUrl,
-      linkLabel: linkLabel,
-      heroUrl: currentImageData || '',
-      imageData: currentImageData || '',
-      imageName: previous.imageName || '',
-      attachments: linkUrl ? [{ label: linkLabel || 'Open link', url: linkUrl }] : [],
-      createdAt: previous.createdAt || now,
-      updatedAt: now
+      linkLabel,
+      heroImage: currentImageData || '',
+      contentHtml: content,
+      attachments: [...currentAttachments, ...extraAttachments],
+      updatedAt: now,
+      isPublished: status !== 'draft'
     };
 
-    items = items.filter(entry => entry.id !== next.id);
-    items.push(next);
-    await saveCombinedHandbook();
+    category.items = (category.items || []).filter(entry => entry.id !== next.id);
+    category.items.push(next);
+    handbook = normalizeHandbook(handbook);
+    await saveHandbook();
+    renderCategoryList();
     renderItems();
-    setItemMessage('Item saved.');
     fillItemForm(next.id);
+    setItemMessage('Item saved.');
   }
 
   async function deleteItem(itemId){
-    const item = items.find(entry => entry.id === itemId);
-    if(!item) return;
-    if(!window.confirm('Delete this handbook item? The image saved inside it will be deleted too.')) return;
-    items = items.filter(entry => entry.id !== itemId);
-    await saveCombinedHandbook();
+    const category = getCategories().find(cat => (cat.items || []).some(entry => entry.id === itemId));
+    if(!category) return;
+    if(!window.confirm('Delete this handbook item?')) return;
+    category.items = (category.items || []).filter(entry => entry.id !== itemId);
+    handbook = normalizeHandbook(handbook);
+    await saveHandbook();
     if(currentItemId === itemId) clearItemForm();
+    renderCategoryList();
     renderItems();
-    setItemMessage('Item removed. Image space has been cleared together with the item.');
+    setItemMessage('Item removed.');
   }
 
   async function compressImage(file){
@@ -2604,7 +2580,6 @@
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
-
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
@@ -2618,7 +2593,7 @@
     try{
       currentImageData = await compressImage(file);
       renderPreview();
-      setItemMessage('Image ready. It will be saved inside this handbook item.');
+      setItemMessage('Image ready. Save the item to publish it.');
     }catch(err){
       currentImageData = '';
       renderPreview();
@@ -2626,30 +2601,46 @@
     }
   }
 
+  async function readAttachmentFiles(fileList){
+    const files = Array.from(fileList || []);
+    const output = [];
+    for(const file of files){
+      const url = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('Could not read attachment.'));
+        reader.readAsDataURL(file);
+      });
+      output.push({ label: file.name, url });
+    }
+    return output;
+  }
+
+  async function handleAttachmentsUpload(event){
+    try{
+      currentAttachments = await readAttachmentFiles(event.target && event.target.files);
+      renderAttachmentPreview();
+      setItemMessage('Attachments ready. Save the item to publish them.');
+    }catch(err){
+      currentAttachments = [];
+      renderAttachmentPreview();
+      setItemMessage(err && err.message ? err.message : 'Could not process the attachments.');
+    }
+  }
+
   async function boot(){
     if(!$id('tabHandbook') || !$id('hbSimpleItemTitle')) return;
 
-    const combined = await loadStore(KEY_HANDBOOK, { categories: [] });
-    hydrateFromCombinedHandbook(combined);
-    handbookReadReceipts = normalizeReadReceipts(await loadStore(KEY_HANDBOOK_READ_RECEIPTS, {}));
-    totalHandbookResidents = countApprovedResidents(await loadStore(KEY_USERS, []));
-    ensureCategoriesFromItems();
+    handbook = normalizeHandbook(await loadStore(KEY_HANDBOOK, { categories: [] }));
+    currentCategoryId = getCategories()[0] ? getCategories()[0].id : '';
 
-    if(categories.length){
-      await saveCombinedHandbook();
-    }
-
-    renderCategorySelect();
     renderCategoryList();
     renderPreview();
+    renderAttachmentPreview();
     renderItems();
     clearCategoryForm();
-    syncCategoryInput('General');
     clearItemForm();
 
-    $id('hbSimpleCatPreset')?.addEventListener('change', function(){
-      syncCategoryInput(this.value);
-    });
     $id('hbSimpleCatTitle')?.addEventListener('input', function(){
       if($id('hbSimpleCatIconPreview')) $id('hbSimpleCatIconPreview').textContent = suggestCategoryIcon(this.value);
     });
@@ -2664,13 +2655,17 @@
       currentImageData = '';
       if($id('hbSimpleItemImage')) $id('hbSimpleItemImage').value = '';
       renderPreview();
-      setItemMessage('Image removed from this item draft. Save to apply.');
+      setItemMessage('Image removed from this draft.');
+    });
+    $id('btnHbRemoveAttachments')?.addEventListener('click', function(){
+      currentAttachments = [];
+      if($id('hbSimpleItemAttachments')) $id('hbSimpleItemAttachments').value = '';
+      renderAttachmentPreview();
+      setItemMessage('Attachments removed from this draft.');
     });
     $id('hbSimpleItemImage')?.addEventListener('change', handleImageUpload);
+    $id('hbSimpleItemAttachments')?.addEventListener('change', handleAttachmentsUpload);
     $id('hbSimpleItemSearch')?.addEventListener('input', renderItems);
-    $id('hbSimpleItemCategory')?.addEventListener('change', function(){
-      currentCategoryId = this.value;
-    });
 
     $id('hbSimpleCatList')?.addEventListener('click', function(event){
       const editId = event.target && event.target.getAttribute('data-hb-cat-edit');
