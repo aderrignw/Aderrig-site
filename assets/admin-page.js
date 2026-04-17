@@ -8,8 +8,6 @@
   const KEY_REPORTS = KEYS.REPORTS || KEYS.INCIDENTS || 'anw_incidents';
   const KEY_PROJECTS = KEYS.PROJECTS || 'anw_projects';
   const KEY_PROJECT_RECIPIENTS = KEYS.PROJECT_RECIPIENTS || 'anw_project_recipients';
-  const KEY_HANDBOOK_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
-  const KEY_HANDBOOK_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
   const KEY_ACCESS = KEYS.ACL || KEYS.ACCESS || 'acl';
   const KEY_TASKS = KEYS.TASKS || 'anw_tasks';
   const KEY_NOTICES = window.getNoticesKey();
@@ -2140,8 +2138,6 @@
 (function(){
   'use strict';
   const KEYS = window.ANW_KEYS || {};
-  const KEY_CATEGORIES = KEYS.HANDBOOK_CATEGORIES || 'anw_handbook_categories';
-  const KEY_ITEMS = KEYS.HANDBOOK_ITEMS || 'anw_handbook_items';
   const KEY_HANDBOOK = KEYS.HANDBOOK || 'anw_handbook';
   const KEY_USERS = KEYS.USERS || 'anw_users';
   const KEY_HANDBOOK_READ_RECEIPTS = KEYS.HANDBOOK_READ_RECEIPTS || 'anw_handbook_read_receipts';
@@ -2280,52 +2276,6 @@
     categories = normalizeCategories(categories);
   }
 
-  function buildCombinedHandbook(){
-    const catMap = new Map(categories.map(cat => [cat.id, {
-      id: cat.id,
-      title: cat.title,
-      icon: cat.icon || suggestCategoryIcon(cat.title),
-      order: cat.order || 9999,
-      isActive: cat.active !== false,
-      items: []
-    }]));
-    items.forEach(item => {
-      const catId = String(item.categoryId || item.category || '').trim();
-      if(!catId) return;
-      if(!catMap.has(catId)){
-        catMap.set(catId, {
-          id: catId,
-          title: String(item.categoryTitle || catId).replace(/-/g,' ').replace(/\b\w/g, m => m.toUpperCase()),
-          icon: suggestCategoryIcon(item.categoryTitle || catId),
-          order: 9999,
-          isActive: true,
-          items: []
-        });
-      }
-      catMap.get(catId).items.push({
-        id: item.id,
-        title: item.title,
-        type: item.type || (item.url ? 'link' : 'page'),
-        summary: item.summary || '',
-        url: item.url || '',
-        heroImage: item.heroUrl || item.imageData || '',
-        contentHtml: item.content || '',
-        attachments: Array.isArray(item.attachments) ? item.attachments : [],
-        updatedAt: item.updatedAt || '',
-        isPublished: String(item.status || 'published').toLowerCase() !== 'draft'
-      });
-    });
-    const combined = {
-      categories: Array.from(catMap.values()).sort((a,b) => (a.order - b.order) || String(a.title).localeCompare(String(b.title)))
-    };
-    return combined;
-  }
-
-  async function publishCombinedHandbook(){
-    await saveStore(KEY_HANDBOOK, buildCombinedHandbook());
-  }
-
-
   function setCategoryMessage(message){
     const el = $id('hbSimpleCatMsg');
     if(el) el.textContent = message || '';
@@ -2387,7 +2337,7 @@
       return '<div class="hb-admin-category-row">'
         + '<div class="hb-admin-category-meta">'
         + '<div class="hb-admin-category-title">' + esc(cat.icon + ' ' + cat.title) + '</div>'
-        + '<div class="hb-admin-category-sub">' + (cat.active ? 'Visible' : 'Hidden') + '</div>'
+        + '<div class="hb-admin-category-sub">' + esc(cat.id) + ' · ' + (cat.active ? 'Active' : 'Hidden') + '</div>'
         + '</div>'
         + '<div class="hb-admin-row-actions">'
         + '<button type="button" class="btn btn-line small" data-hb-cat-edit="' + esc(cat.id) + '">Edit</button>'
@@ -2441,13 +2391,18 @@
     wrap.innerHTML = filtered
       .sort((a,b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))
       .map(item => {
+        const stats = getItemReadStats(item.id);
         return '<div class="hb-admin-item-row">'
           + '<div class="hb-admin-item-meta">'
           + '<div class="hb-admin-item-title">' + esc(item.title) + '</div>'
           + '<div class="hb-admin-item-sub">' + esc(item.summary || 'No summary added') + '</div>'
-          + '<div class="hb-admin-item-sub">' + esc(getCategoryLabel(item.categoryId)) + '</div>'
+          + '<div class="hb-admin-item-sub">' + esc(getCategoryLabel(item.categoryId)) + ' · ' + esc(item.heroUrl ? 'Image saved' : 'No image') + (item.url ? ' · Link added' : '') + '</div>'
           + '</div>'
           + '<div class="hb-admin-row-actions">'
+          + '<span class="hb-admin-read-metrics">'
+          + '<span class="hb-admin-read-chip">Read ' + esc(String(stats.read)) + '</span>'
+          + '<span class="hb-admin-read-chip pending">Unread ' + esc(String(stats.pending)) + '</span>'
+          + '</span>'
           + '<span class="hb-status-pill ' + esc(item.status) + '">' + esc(item.status === 'published' ? 'Published' : 'Draft') + '</span>'
           + '<button type="button" class="btn btn-line small" data-hb-item-edit="' + esc(item.id) + '">Edit</button>'
           + '<button type="button" class="btn btn-line small" data-hb-item-delete="' + esc(item.id) + '">Delete</button>'
@@ -2536,16 +2491,14 @@
     categories = categories.filter(cat => cat.id !== category.id);
     categories.push(category);
     categories = normalizeCategories(categories);
-    await saveStore(KEY_CATEGORIES, categories);
-    await publishCombinedHandbook();
+    await saveCombinedHandbook();
     renderCategorySelect();
     renderCategoryList();
     renderItems();
     currentCategoryId = category.id;
     if($id('hbSimpleItemCategory')) $id('hbSimpleItemCategory').value = category.id;
-    setCategoryMessage('Category saved. You can add an item now.');
+    setCategoryMessage('Category saved.');
     clearCategoryForm();
-    if($id('hbSimpleItemTitle')) $id('hbSimpleItemTitle').focus();
   }
 
   async function deleteCategory(categoryId){
@@ -2555,8 +2508,7 @@
       return;
     }
     categories = categories.filter(cat => cat.id !== categoryId);
-    await saveStore(KEY_CATEGORIES, categories);
-    await publishCombinedHandbook();
+    await saveCombinedHandbook();
     renderCategorySelect();
     renderCategoryList();
     setCategoryMessage('Category removed.');
@@ -2607,23 +2559,12 @@
       updatedAt: now
     };
 
-    const editing = !!currentItemId;
     items = items.filter(entry => entry.id !== next.id);
     items.push(next);
-    await saveStore(KEY_ITEMS, items);
-    await publishCombinedHandbook();
+    await saveCombinedHandbook();
     renderItems();
-    if(editing){
-      setItemMessage('Item updated.');
-      fillItemForm(next.id);
-    }else{
-      setItemMessage('Item saved. Add the next item or edit it from the list.');
-      const keepCategoryId = next.categoryId;
-      clearItemForm();
-      currentCategoryId = keepCategoryId;
-      if($id('hbSimpleItemCategory')) $id('hbSimpleItemCategory').value = keepCategoryId;
-      if($id('hbSimpleItemTitle')) $id('hbSimpleItemTitle').focus();
-    }
+    setItemMessage('Item saved.');
+    fillItemForm(next.id);
   }
 
   async function deleteItem(itemId){
@@ -2631,8 +2572,7 @@
     if(!item) return;
     if(!window.confirm('Delete this handbook item? The image saved inside it will be deleted too.')) return;
     items = items.filter(entry => entry.id !== itemId);
-    await saveStore(KEY_ITEMS, items);
-    await publishCombinedHandbook();
+    await saveCombinedHandbook();
     if(currentItemId === itemId) clearItemForm();
     renderItems();
     setItemMessage('Item removed. Image space has been cleared together with the item.');
@@ -2689,17 +2629,16 @@
   async function boot(){
     if(!$id('tabHandbook') || !$id('hbSimpleItemTitle')) return;
 
-    categories = normalizeCategories(await loadStore(KEY_CATEGORIES, []));
-    items = normalizeItems(await loadStore(KEY_ITEMS, []));
+    const combined = await loadStore(KEY_HANDBOOK, { categories: [] });
+    hydrateFromCombinedHandbook(combined);
     handbookReadReceipts = normalizeReadReceipts(await loadStore(KEY_HANDBOOK_READ_RECEIPTS, {}));
     totalHandbookResidents = countApprovedResidents(await loadStore(KEY_USERS, []));
     ensureCategoriesFromItems();
 
     if(categories.length){
-      await saveStore(KEY_CATEGORIES, categories);
+      await saveCombinedHandbook();
     }
 
-    await publishCombinedHandbook();
     renderCategorySelect();
     renderCategoryList();
     renderPreview();
