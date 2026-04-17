@@ -37,6 +37,10 @@
     .hc-md ul{margin:8px 0 8px 20px}
     .hc-md li{margin:6px 0}
     .hc-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+    .hc-quick-topics{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+    .hc-quick-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:14px;border:1px solid var(--hc-border);background:#fff;color:#23344b;font-weight:800;cursor:pointer}
+    .hc-quick-btn.active{background:#eef4f1;border-color:#d5e8dc;color:#215b3f}
     .hc-link{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:14px;border:1px solid rgba(17,24,39,.08);background:#fff;color:#23344b;text-decoration:none;font-weight:800}
     .hc-empty{padding:18px;border:1px dashed var(--hc-border);border-radius:16px;color:var(--hc-muted);background:#fbfcfd}
     @media (max-width:980px){.hc-hero-grid,.hc-grid{grid-template-columns:1fr}}
@@ -71,11 +75,7 @@
           <h2 id="hcTitle">Help Center</h2>
           <p id="hcSubtitle">Practical guidance organised by section and adapted to the signed-in role.</p>
         </div>
-        <div class="hc-hero-points">
-          <div class="hc-hero-point"><strong>Separate</strong>This page is only for Help. Handbook content does not render here.</div>
-          <div class="hc-hero-point"><strong>Role-aware</strong>Residents see resident guidance. Admin and owner can review the complete published help package.</div>
-          <div class="hc-hero-point"><strong>Managed in Admin</strong>Imports, updates and section controls stay inside Admin &gt; Help.</div>
-        </div>
+        
       </div>
     </section>
     <div class="hc-grid">
@@ -86,6 +86,7 @@
       </section>
       <section class="hc-panel">
         <h3>Guidance</h3>
+        <div class="hc-quick-topics" id="hcQuickTopics"></div>
         <div id="hcArticleWrap"></div>
       </section>
     </div>
@@ -249,6 +250,7 @@
 
   let helpData = { sections: [], articles: [] };
   let currentSectionId = '';
+  let currentArticleId = '';
 
   function renderSections(){
     const wrap = byId('hcSectionList');
@@ -264,15 +266,31 @@
     }).join('');
   }
 
+
+  function renderQuickTopics(){
+    const wrap = byId('hcQuickTopics');
+    if(!wrap) return;
+    if(!helpData.articles.length){
+      wrap.innerHTML = '';
+      return;
+    }
+    wrap.innerHTML = helpData.articles.map(article => {
+      const active = article.id === currentArticleId;
+      return '<button type="button" class="hc-quick-btn' + (active ? ' active' : '') + '" data-article-id="' + esc(article.id) + '">' + esc(article.title || 'Untitled topic') + '</button>';
+    }).join('');
+  }
+
   function renderArticle(){
     const wrap = byId('hcArticleWrap');
     if(!wrap) return;
-    const articles = helpData.articles.filter(article => article.sectionId === currentSectionId);
-    if(!articles.length){
-      wrap.innerHTML = '<div class="hc-empty">Choose a section to view the guidance.</div>';
+    const article = helpData.articles.find(item => item.id === currentArticleId) || helpData.articles.find(item => item.sectionId === currentSectionId) || null;
+    if(!article){
+      wrap.innerHTML = '<div class="hc-empty">Choose a topic to view the guidance.</div>';
       return;
     }
-    wrap.innerHTML = articles.map(article => '<article class="hc-article-card"><div class="hc-article-head"><h3>' + esc(article.title || 'Untitled article') + '</h3>' + (article.summary ? '<p>' + esc(article.summary) + '</p>' : '') + '</div><div class="hc-meta"><span class="hc-chip">' + esc(currentAudience() === 'full' ? (article.roleView || 'published') : 'resident') + '</span>' + (article.updatedAt ? '<span class="hc-chip">' + esc(article.updatedAt) + '</span>' : '') + (article.linkedPage ? '<span class="hc-chip">' + esc(article.linkedPage) + '</span>' : '') + '</div><div class="hc-md">' + markdownToHtml(article.contentMd || '') + '</div>' + (article.linkedPage ? '<div class="hc-actions"><a class="hc-link" href="' + esc(article.linkedPage) + '">Open linked page</a></div>' : '') + '</article>').join('');
+    currentSectionId = article.sectionId || currentSectionId;
+    currentArticleId = article.id || currentArticleId;
+    wrap.innerHTML = '<article class="hc-article-card"><div class="hc-article-head"><h3>' + esc(article.title || 'Untitled article') + '</h3>' + (article.summary ? '<p>' + esc(article.summary) + '</p>' : '') + '</div><div class="hc-meta"><span class="hc-chip">' + esc(currentAudience() === 'full' ? (article.roleView || 'published') : 'resident') + '</span>' + (article.updatedAt ? '<span class="hc-chip">' + esc(article.updatedAt) + '</span>' : '') + (article.linkedPage ? '<span class="hc-chip">' + esc(article.linkedPage) + '</span>' : '') + '</div><div class="hc-md">' + markdownToHtml(article.contentMd || '') + '</div>' + (article.linkedPage ? '<div class="hc-actions"><a class="hc-link" href="' + esc(article.linkedPage) + '">Open linked page</a></div>' : '') + '</article>';
   }
 
   async function bootHelp(){
@@ -280,7 +298,9 @@
     const pkg = await loadPackage();
     helpData = packageToHelpData(pkg);
     currentSectionId = helpData.sections[0] ? helpData.sections[0].id : '';
+    currentArticleId = helpData.articles[0] ? helpData.articles[0].id : '';
     renderSections();
+    renderQuickTopics();
     renderArticle();
     const list = byId('hcSectionList');
     if(list){
@@ -288,7 +308,25 @@
         const btn = event.target.closest('[data-section-id]');
         if(!btn) return;
         currentSectionId = btn.getAttribute('data-section-id') || '';
+        const firstArticle = helpData.articles.find(article => article.sectionId === currentSectionId);
+        currentArticleId = firstArticle ? firstArticle.id : '';
         renderSections();
+        renderQuickTopics();
+        renderArticle();
+      });
+    }
+    const quick = byId('hcQuickTopics');
+    if(quick){
+      quick.addEventListener('click', function(event){
+        const btn = event.target.closest('[data-article-id]');
+        if(!btn) return;
+        const articleId = btn.getAttribute('data-article-id') || '';
+        const article = helpData.articles.find(item => item.id === articleId);
+        if(!article) return;
+        currentArticleId = article.id;
+        currentSectionId = article.sectionId || currentSectionId;
+        renderSections();
+        renderQuickTopics();
         renderArticle();
       });
     }
