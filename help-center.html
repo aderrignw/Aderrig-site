@@ -81,96 +81,31 @@
 </header>
 <main class="container">
   <div class="mix-shell">
-    <section class="mix-card">
-      <div class="mix-tabs" role="tablist" aria-label="Handbook and Help tabs">
-        <button type="button" class="mix-tab" id="tabBtnHandbook" data-panel="panelHandbook">Handbook</button>
-        <button type="button" class="mix-tab" id="tabBtnHelp" data-panel="panelHelp">Help Center</button>
-      </div>
-      <p class="tiny muted" style="margin-top:12px;">Residents can consult both areas here. The Handbook stays structured, and the practical Help Center stays easy to use.</p>
-    </section>
-
-    <section class="mix-panel" id="panelHandbook">
-      <section class="mix-hero">
-        <div class="mix-hero-grid">
-          <div>
-            <span class="mix-badge">Handbook</span>
-            <h2>Platform handbook</h2>
-            <p>The Handbook is the calm reference space for platform structure, governance context and role-aware orientation. Practical resident help stays available in the Help Center tab, so this area remains clean and easier to trust.</p>
-            <div class="mix-actions">
-              <button type="button" class="mix-link" data-switch-panel="panelHelp">Open Help Center</button>
-              <a class="mix-link" href="admin.html">Open Admin</a>
-            </div>
-          </div>
-          <div class="mix-card" style="padding:20px;">
-            <h3>What this page is for</h3>
-            <div class="mix-stack">
-              <div class="mix-callout"><strong>Orientation</strong>Explain where core areas live and how the platform is organised.</div>
-              <div class="mix-callout"><strong>Governance</strong>Keep role expectations and oversight context visible without turning the page into a control panel.</div>
-              <div class="mix-callout"><strong>Reference</strong>Point residents to the Help Center tab when the goal is to complete a task quickly.</div>
-            </div>
-          </div>
+    <section class="hc-hero">
+      <div class="hc-hero-grid">
+        <div>
+          <span class="hc-badge">Resident Help Center</span>
+          <h2>Resident Help Center</h2>
+          <p>Simple guidance for residents, organised by section and written for quick consultation.</p>
         </div>
-      </section>
-
-      <section class="mix-card">
-        <h3>How the spaces work together</h3>
-        <div class="mix-lane-grid">
-          <article class="mix-lane">
-            <h4>Handbook</h4>
-            <p>Use this space for the overall structure, guidance framework and governance context.</p>
-          </article>
-          <article class="mix-lane">
-            <h4>Help Center</h4>
-            <p>Use the Help Center for resident-friendly, practical guidance and simple step-by-step help.</p>
-          </article>
-          <article class="mix-lane">
-            <h4>Admin &gt; Help</h4>
-            <p>Use the admin Help area for import, package management and help content updates, separate from the Handbook admin tools.</p>
-          </article>
+        <div class="hc-hero-points">
+          <div class="hc-hero-point"><strong>Simple</strong>Open a section and read what to do next without extra navigation.</div>
+          <div class="hc-hero-point"><strong>Separate</strong>The admin import area stays inside Admin &gt; Help, not mixed with Handbook management.</div>
+          <div class="hc-hero-point"><strong>Resident-friendly</strong>Only resident-facing articles appear here.</div>
         </div>
-      </section>
-
-      <section class="mix-mini-grid">
-        <article class="mix-card">
-          <h3>For residents</h3>
-          <p>Residents can read the Handbook for orientation and switch to Help Center for practical task guidance.</p>
-        </article>
-        <article class="mix-card">
-          <h3>For governance</h3>
-          <p>Admin and Owner can keep the public Handbook clean while managing Help content separately inside Admin.</p>
-        </article>
-      </section>
-
-      <div class="mix-note">The Handbook and the Help Center are intentionally separated in Admin, but residents can consult both from here in a simple way.</div>
-    </section>
-
-    <section class="mix-panel" id="panelHelp">
-      <section class="hc-hero">
-        <div class="hc-hero-grid">
-          <div>
-            <span class="hc-badge">Resident Help Center</span>
-            <h2>Resident Help Center</h2>
-            <p>Simple guidance for residents, organised by section and written for quick consultation.</p>
-          </div>
-          <div class="hc-hero-points">
-            <div class="hc-hero-point"><strong>Simple</strong>Open a section and read what to do next without extra navigation.</div>
-            <div class="hc-hero-point"><strong>Separate</strong>The admin import area stays inside Admin &gt; Help, not mixed with Handbook management.</div>
-            <div class="hc-hero-point"><strong>Resident-friendly</strong>Only resident-facing articles appear here.</div>
-          </div>
-        </div>
-      </section>
-      <div class="hc-grid">
-        <section class="hc-panel">
-          <h3>Sections</h3>
-          <p>Choose a section to view the published resident guidance.</p>
-          <div class="hc-section-list" id="hcSectionList"></div>
-        </section>
-        <section class="hc-panel">
-          <h3>Guidance</h3>
-          <div id="hcArticleWrap"></div>
-        </section>
       </div>
     </section>
+    <div class="hc-grid">
+      <section class="hc-panel">
+        <h3>Sections</h3>
+        <p>Choose a section to view the published resident guidance.</p>
+        <div class="hc-section-list" id="hcSectionList"></div>
+      </section>
+      <section class="hc-panel">
+        <h3>Guidance</h3>
+        <div id="hcArticleWrap"></div>
+      </section>
+    </div>
   </div>
 </main>
 <footer class="site-footer">
@@ -185,13 +120,10 @@
 <script src="assets/acl-guard.js"></script>
 <script>
 (function(){
-  const DEFAULT_PANEL = 'panelHelp';
   function esc(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
   function markdownToHtml(md){
     const text = String(md || '');
-    const lines = text.split(/
-?
-/);
+    const lines = text.split(/\r?\n/);
     let html = '';
     let inList = false;
     function flushList(){ if(inList){ html += '</ul>'; inList = false; } }
@@ -208,73 +140,109 @@
     return html || '<div class="hc-empty">No content available yet.</div>';
   }
   function byId(id){ return document.getElementById(id); }
-  function setPanel(panelId, pushHash){
-    document.querySelectorAll('.mix-panel').forEach(el => el.classList.toggle('active', el.id === panelId));
-    const btnHandbook = byId('tabBtnHandbook');
-    const btnHelp = byId('tabBtnHelp');
-    if(btnHandbook) btnHandbook.classList.toggle('active', panelId === 'panelHandbook');
-    if(btnHelp) btnHelp.classList.toggle('active', panelId === 'panelHelp');
-    if(pushHash){
-      const hash = panelId === 'panelHelp' ? '#help' : '#handbook';
-      if(location.hash !== hash) history.replaceState(null, '', hash);
-    }
-  }
-  function activePanelFromLocation(){
-    return location.hash === '#help' ? 'panelHelp' : (location.hash === '#handbook' ? 'panelHandbook' : DEFAULT_PANEL);
-  }
-  let handbookData = { sections: [], articles: [] };
+
+  let helpData = { sections: [], articles: [] };
   let currentSectionId = '';
-  async function loadHandbook(){
-    const keys = ['anw_help_center_admin', 'anw_handbook_help_content'];
+
+  function mapTopicsToHelp(topics){
+    const residentTopics = (Array.isArray(topics) ? topics : []).filter(t => {
+      const audience = String((t && t.audience) || 'resident').toLowerCase();
+      return !audience || audience === 'resident';
+    });
+    return {
+      sections: residentTopics.map(t => ({
+        id: t.id || t.slug || t.title,
+        title: t.title || 'Untitled section',
+        summary: t.summary || t.description || ''
+      })),
+      articles: residentTopics.map(t => ({
+        id: t.id || t.slug || t.title,
+        sectionId: t.id || t.slug || t.title,
+        title: t.title || 'Untitled article',
+        summary: t.summary || t.description || '',
+        contentMd: t.content || t.contentMd || '',
+        updatedAt: t.updatedAt || '',
+        linkedPage: t.linkedPage || ''
+      }))
+    };
+  }
+
+  function mapCategoryPackageToHelp(data){
+    const categories = Array.isArray(data && data.categories) ? data.categories : [];
+    const items = Array.isArray(data && data.items) ? data.items : [];
+    const sections = categories.map(cat => ({
+      id: cat.id || cat.slug || cat.title,
+      title: cat.title || 'Untitled section',
+      summary: cat.summary || cat.description || ''
+    }));
+    const articles = items.filter(item => {
+      const audience = String((item && item.audience) || 'resident').toLowerCase();
+      return !audience || audience === 'resident';
+    }).map(item => ({
+      id: item.id || item.slug || item.title,
+      sectionId: item.categoryId || item.sectionId || item.category || '',
+      title: item.title || 'Untitled article',
+      summary: item.summary || item.description || '',
+      contentMd: item.content || item.contentMd || '',
+      updatedAt: item.updatedAt || '',
+      linkedPage: item.linkedPage || ''
+    }));
+    return { sections, articles };
+  }
+
+  async function loadHelpData(){
+    const keys = ['anw_help_center_public', 'anw_help_center_admin', 'anw_handbook_help_content'];
     for(const key of keys){
       try{
         const raw = localStorage.getItem(key);
-        if(raw){
-          const data = JSON.parse(raw);
-          if(data && Array.isArray(data.topics)){
-            return {
-              sections: data.topics.map(t => ({ id: t.id, title: t.title, summary: t.description || '' })),
-              articles: data.topics.map(t => ({ id: t.id, sectionId: t.id, title: t.title, summary: t.description || '', contentMd: t.content || t.contentMd || '', updatedAt: t.updatedAt || '', linkedPage: t.linkedPage || '' }))
-            };
-          }
-        }
+        if(!raw) continue;
+        const data = JSON.parse(raw);
+        if(data && Array.isArray(data.topics)) return mapTopicsToHelp(data.topics);
+        if(data && (Array.isArray(data.categories) || Array.isArray(data.items))) return mapCategoryPackageToHelp(data);
       }catch(err){ console.warn(err); }
     }
     try{
       const response = await fetch('Help Center/INGLES/assets/help-centre-seed.json');
       if(response.ok){
         const data = await response.json();
-        const topics = Array.isArray(data.topics) ? data.topics.filter(t => (t.audience || 'resident') === 'resident' || !t.audience) : [];
-        return {
-          sections: topics.map(t => ({ id: t.id, title: t.title, summary: t.summary || '' })),
-          articles: topics.map(t => ({ id: t.id, sectionId: t.id, title: t.title, summary: t.summary || '', contentMd: t.content || t.contentMd || '', updatedAt: t.updatedAt || '', linkedPage: t.linkedPage || '' }))
-        };
+        if(data && Array.isArray(data.topics)) return mapTopicsToHelp(data.topics);
+        if(data && (Array.isArray(data.categories) || Array.isArray(data.items))) return mapCategoryPackageToHelp(data);
       }
     }catch(err){ console.warn(err); }
     return { sections: [], articles: [] };
   }
-  function visibleSections(){ return handbookData.sections || []; }
-  function visibleArticles(){ return handbookData.articles || []; }
+
+  function visibleSections(){ return helpData.sections || []; }
+  function visibleArticles(){ return helpData.articles || []; }
+
   function renderSections(){
     const wrap = byId('hcSectionList');
     const sections = visibleSections();
     if(!wrap) return;
-    if(!sections.length){ wrap.innerHTML = '<div class="hc-empty">No resident sections have been published yet.</div>'; return; }
+    if(!sections.length){
+      wrap.innerHTML = '<div class="hc-empty">No resident sections have been published yet.</div>';
+      return;
+    }
     wrap.innerHTML = sections.map(section => {
       const first = visibleArticles().find(article => article.sectionId === section.id);
       const active = section.id === currentSectionId;
       return '<button type="button" class="hc-section-btn' + (active ? ' active' : '') + '" data-section-id="' + esc(section.id) + '"><div class="hc-section-title">' + esc(section.title) + '</div><div class="hc-section-sub">' + esc((first && first.summary) || section.summary || 'Resident guidance in this section.') + '</div></button>';
     }).join('');
   }
+
   function renderArticle(){
     const wrap = byId('hcArticleWrap');
     const articles = visibleArticles().filter(article => article.sectionId === currentSectionId);
     if(!wrap) return;
-    if(!articles.length){ wrap.innerHTML = '<div class="hc-empty">Choose a resident section to view the guidance.</div>'; return; }
+    if(!articles.length){
+      wrap.innerHTML = '<div class="hc-empty">Choose a resident section to view the guidance.</div>';
+      return;
+    }
     wrap.innerHTML = articles.map(article => '<article class="hc-article-card"><div class="hc-article-head"><h3>' + esc(article.title || 'Untitled article') + '</h3>' + (article.summary ? '<p>' + esc(article.summary) + '</p>' : '') + '</div><div class="hc-meta"><span class="hc-chip">Resident</span>' + (article.updatedAt ? '<span class="hc-chip">' + esc(article.updatedAt) + '</span>' : '') + (article.linkedPage ? '<span class="hc-chip">' + esc(article.linkedPage) + '</span>' : '') + '</div><div class="hc-md">' + markdownToHtml(article.contentMd || '') + '</div>' + (article.linkedPage ? '<div class="hc-actions"><a class="hc-link" href="' + esc(article.linkedPage) + '">Open linked page</a></div>' : '') + '</article>').join('');
   }
+
   async function bootHelp(){
-    handbookData = await loadHandbook();
+    helpData = await loadHelpData();
     const sections = visibleSections();
     currentSectionId = sections[0] ? sections[0].id : '';
     renderSections();
@@ -290,10 +258,7 @@
       });
     }
   }
-  document.querySelectorAll('.mix-tab').forEach(btn => btn.addEventListener('click', () => setPanel(btn.getAttribute('data-panel'), true)));
-  document.querySelectorAll('[data-switch-panel]').forEach(btn => btn.addEventListener('click', () => setPanel(btn.getAttribute('data-switch-panel'), true)));
-  window.addEventListener('hashchange', () => setPanel(activePanelFromLocation(), false));
-  setPanel(activePanelFromLocation(), false);
+
   bootHelp().finally(() => document.documentElement.classList.remove('anw-preauth-hide'));
 })();
 </script>
