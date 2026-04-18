@@ -24,6 +24,10 @@
     return String(a?.title||'').localeCompare(String(b?.title||''));
   }
 
+  function slugify(value){
+    return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g, '');
+  }
+
   function getHashParams(){
     const h = String(location.hash || '').replace(/^#/, '');
     const p = new URLSearchParams(h);
@@ -81,6 +85,7 @@
     return {
       id: String(raw.id || ('item-' + (index + 1))).trim(),
       categoryId: String(raw.categoryId || raw.category || raw.sectionId || '').trim(),
+      categoryTitle: String(raw.categoryTitle || raw.sectionTitle || '').trim(),
       title,
       type: String(raw.type || (raw.url ? 'link' : 'page')).toLowerCase() === 'link' ? 'link' : 'page',
       summary: String(raw.summary || raw.excerpt || '').trim(),
@@ -94,9 +99,28 @@
     };
   }
 
+  function inferCategoriesFromItems(items, existingCategories){
+    const seen = new Set((existingCategories || []).map(cat => cat.id));
+    const inferred = [];
+    (Array.isArray(items) ? items : []).forEach((item, index) => {
+      const categoryId = String(item.categoryId || '').trim();
+      const categoryTitle = String(item.categoryTitle || item.categoryId || '').trim();
+      if(!categoryId || !categoryTitle || seen.has(categoryId)) return;
+      seen.add(categoryId);
+      inferred.push({
+        id: categoryId,
+        title: categoryTitle,
+        icon: '',
+        order: (existingCategories || []).length + index + 1,
+        isActive: true
+      });
+    });
+    return inferred;
+  }
+
   function normalizeHandbook(raw){
     const hb = (raw && typeof raw === 'object') ? raw : {};
-    const categories = Array.isArray(hb.categories) ? hb.categories.map(normalizeCategory).filter(Boolean).sort(byOrder) : [];
+    let categories = Array.isArray(hb.categories) ? hb.categories.map(normalizeCategory).filter(Boolean).sort(byOrder) : [];
     let items = [];
     if(Array.isArray(hb.items)){
       items = hb.items.map(normalizeItem).filter(Boolean);
@@ -104,15 +128,24 @@
       hb.categories.forEach((cat, cIndex) => {
         const catNorm = normalizeCategory(cat, cIndex);
         (Array.isArray(cat?.items) ? cat.items : []).forEach((item, iIndex) => {
-          const norm = normalizeItem({ ...item, categoryId: item.categoryId || catNorm?.id }, iIndex);
+          const norm = normalizeItem({ ...item, categoryId: item.categoryId || catNorm?.id, categoryTitle: item.categoryTitle || catNorm?.title }, iIndex);
           if(norm) items.push(norm);
         });
       });
     }
+    categories = categories.concat(inferCategoriesFromItems(items, categories)).sort(byOrder);
     return { categories, items };
   }
 
   async function loadStore(key, fallback){
+    try{
+      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
+      if(!res.ok) throw new Error('store load failed');
+      const data = await res.json();
+      try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){ }
+      return data;
+    }catch(_){ }
+
     try{
       if(typeof window.anwInitStore === 'function') await window.anwInitStore();
     }catch(_){ }
@@ -152,7 +185,10 @@
   function renderCategories(hb, q){
     const wrap = $('#hbCategories');
     if(!wrap) return;
-    const categories = visibleCategories(hb, q);
+    const categories = visibleCategories(hb, q).filter(cat => {
+      const count = hb.items.filter(it => it.categoryId === cat.id && it.isPublished).length;
+      return count > 0;
+    });
     if(!categories.length){
       wrap.innerHTML = '<div class="hb-empty">No handbook content has been published yet. Publish a category and at least one item in the admin panel and it will appear here.</div>';
       return;
@@ -292,14 +328,16 @@
     });
     backToCategories?.addEventListener('click', (e) => {
       e.preventDefault();
-      setHash({ cat: '', item: '', q: '' });
+      const { q } = getHashParams();
+      setHash({ cat: '', item: '', q });
     });
     window.addEventListener('hashchange', rerender);
     rerender();
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    main().catch(() => {
+    main().catch((err) => {
+      console.error('Handbook load error:', err);
       const el = document.getElementById('hbCategories');
       if(el) el.innerHTML = '<div class="hb-empty">Unable to load handbook.</div>';
       document.documentElement.classList.remove('anw-preauth-hide');
