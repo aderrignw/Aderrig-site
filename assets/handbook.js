@@ -115,13 +115,13 @@
   async function loadStore(key, fallback){
     try{
       if(typeof window.anwInitStore === 'function') await window.anwInitStore();
-    }catch(_){}
+    }catch(_){ }
     try{
       if(typeof window.anwFetchKey === 'function') return await window.anwFetchKey(key);
-    }catch(_){}
+    }catch(_){ }
     try{
       if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback);
-    }catch(_){}
+    }catch(_){ }
     try{
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : fallback;
@@ -154,7 +154,7 @@
     if(!wrap) return;
     const categories = visibleCategories(hb, q);
     if(!categories.length){
-      wrap.innerHTML = '<div class="hb-empty">No handbook categories are available.</div>';
+      wrap.innerHTML = '<div class="hb-empty">No handbook content has been published yet. Publish a category and at least one item in the admin panel and it will appear here.</div>';
       return;
     }
     wrap.innerHTML = categories.map(cat => {
@@ -195,7 +195,7 @@
     title.textContent = cat.title;
     const items = itemsForCategory(hb, cat.id, q);
     if(!items.length){
-      list.innerHTML = '<div class="hb-empty">No items found in this category.</div>';
+      list.innerHTML = '<div class="hb-empty">No published items were found in this category.</div>';
       return;
     }
     list.innerHTML = items.map(it => {
@@ -292,8 +292,7 @@
     });
     backToCategories?.addEventListener('click', (e) => {
       e.preventDefault();
-      const { q } = getHashParams();
-      setHash({ cat: '', item: '', q });
+      setHash({ cat: '', item: '', q: '' });
     });
     window.addEventListener('hashchange', rerender);
     rerender();
