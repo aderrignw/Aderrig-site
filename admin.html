@@ -966,9 +966,19 @@
   }
   #tabHandbook .hb-admin-item-top{
     display:grid;
-    grid-template-columns:minmax(0,1fr) 220px 180px;
-    gap:12px;
+    grid-template-columns:minmax(0,1fr) 240px;
+    gap:18px;
     align-items:end;
+  }
+  #tabHandbook .hb-admin-item-top > .field:first-child{
+    min-width:0;
+  }
+  #tabHandbook .hb-admin-item-top > .field:last-child{
+    justify-self:end;
+    width:240px;
+  }
+  #tabHandbook #hbSimpleItemStatus{
+    width:100%;
   }
   #tabHandbook .hb-admin-support-grid{
     display:grid;
