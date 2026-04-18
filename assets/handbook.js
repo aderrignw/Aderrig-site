@@ -333,16 +333,9 @@
     const mediaPanel = document.getElementById('hbMediaPanel');
     if(viewMoreBtn && mediaPanel){
       viewMoreBtn.addEventListener('click', () => {
-        const isOpen = !mediaPanel.hasAttribute('hidden');
-        if(isOpen){
-          mediaPanel.setAttribute('hidden', 'hidden');
-          viewMoreBtn.setAttribute('aria-expanded', 'false');
-          viewMoreBtn.textContent = 'View more';
-        } else {
-          mediaPanel.removeAttribute('hidden');
-          viewMoreBtn.setAttribute('aria-expanded', 'true');
-          viewMoreBtn.textContent = 'Hide details';
-        }
+        mediaPanel.removeAttribute('hidden');
+        viewMoreBtn.setAttribute('aria-expanded', 'true');
+        viewMoreBtn.style.display = 'none';
       });
     }
 
