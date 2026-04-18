@@ -2420,7 +2420,7 @@
     if(currentImageData){
       preview.innerHTML = '<img src="' + currentImageData + '" alt="Handbook preview" />';
     }else{
-      preview.textContent = 'No image selected';
+      preview.innerHTML = '<span class="hb-admin-file-empty">No image selected</span>';
     }
   }
 
@@ -2428,10 +2428,14 @@
     const preview = $id('hbSimpleAttachmentsPreview');
     if(!preview) return;
     if(!currentAttachments.length){
-      preview.textContent = 'No attachments selected';
+      preview.innerHTML = '<span class="hb-admin-file-empty">No files selected</span>';
       return;
     }
-    preview.innerHTML = currentAttachments.map(file => '<span class="tag gray" style="margin-right:6px;">' + esc(file.label || 'Attachment') + '</span>').join('');
+    const total = currentAttachments.length;
+    preview.innerHTML = '<div class="hb-admin-file-list">' + currentAttachments.map(file => {
+      const label = String(file.label || 'Attachment').trim() || 'Attachment';
+      return '<span class="hb-admin-file-chip" title="' + esc(label) + '"><span aria-hidden="true">📎</span><span>' + esc(label) + '</span></span>';
+    }).join('') + '</div>' + (total > 1 ? '<div class="hb-admin-file-count tiny muted">' + esc(total + ' files attached') + '</div>' : '');
   }
 
   function getCategoryLabel(categoryId){
@@ -2788,8 +2792,13 @@
         + '#hbSimpleCatMsg,#hbSimpleItemMsg{min-height:18px;margin:6px 0 0;}'
         + '#btnHbSimpleCatSave{display:none!important;}'
         + '#hbSimpleCurrentCategory{display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border-radius:999px;background:#edf5ef;color:#215b3f;font-weight:800;}'
-        + '#hbSimpleImagePreview,#hbSimpleAttachmentsPreview{min-height:48px!important;padding:8px 10px!important;border-radius:12px!important;}'
-        + '#hbSimpleImagePreview img{max-width:180px!important;max-height:100px!important;object-fit:cover;border-radius:10px;display:block;}'
+        + '#hbSimpleImagePreview,#hbSimpleAttachmentsPreview{min-height:36px!important;padding:8px 10px!important;border-radius:12px!important;display:flex;align-items:center;flex-wrap:wrap;gap:8px;background:#fbfcfd;}'
+        + '#hbSimpleImagePreview img{max-width:180px!important;max-height:88px!important;object-fit:cover;border-radius:10px;display:block;}'
+        + '.hb-admin-file-empty{color:#6a7b90;}'
+        + '.hb-admin-file-list{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}'
+        + '.hb-admin-file-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:6px 10px;border-radius:999px;border:1px solid rgba(17,24,39,.08);background:#fff;color:#23344b;font-size:.88rem;line-height:1.2;}'
+        + '.hb-admin-file-chip span:last-child{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;}'
+        + '.hb-admin-file-count{width:100%;margin-top:2px;}'
         + '#btnHbRemoveImage,#btnHbRemoveAttachments,#btnHbSimpleItemClear,#btnHbSimpleItemSave,#btnHbSimpleItemDelete,#btnHbSimpleCatClear{min-height:40px!important;border-radius:999px!important;padding:0 14px!important;}'
         + '.hb-status-pill{display:inline-flex;align-items:center;min-height:32px;padding:0 10px;border-radius:999px;font-size:.8rem;font-weight:800;}'
         + '.hb-status-pill.published{background:#edf5ef;color:#215b3f;}'
