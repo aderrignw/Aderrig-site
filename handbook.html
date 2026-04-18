@@ -32,13 +32,16 @@
     .hb-item-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
     .hb-item-main{min-width:0;display:grid;gap:6px}
     .hb-item-title{margin:0;color:var(--hb-text);font-size:1.08rem;font-weight:900;line-height:1.35;word-break:break-word;overflow-wrap:anywhere}
+    .hb-item-title-btn{display:inline;padding:0;border:0;background:transparent;color:inherit;font:inherit;font-weight:inherit;line-height:inherit;text-align:left;cursor:pointer}
+    .hb-item-title-btn:hover{text-decoration:underline}
     .hb-item-meta-line{color:var(--hb-muted);font-size:.92rem;line-height:1.45}
     .hb-item-summary{margin:0;color:var(--hb-text);line-height:1.6;font-weight:600}
     .hb-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .hb-pill{display:inline-flex;align-items:center;min-height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--hb-border);background:#fff;color:#55677c;font-size:.8rem;font-weight:800}
     .hb-pill.is-unread{background:var(--hb-accent);color:var(--brand)}
-    .hb-more-btn,.hb-download{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);text-decoration:none;font:inherit;font-weight:700;font-size:.92rem;cursor:pointer}
-    .hb-more-btn:hover,.hb-download:hover{background:#fbfcfd;text-decoration:none}
+    .hb-more-btn,.hb-download,.hb-close-btn{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);text-decoration:none;font:inherit;font-weight:700;font-size:.92rem;cursor:pointer}
+    .hb-more-btn:hover,.hb-download:hover,.hb-close-btn:hover{background:#fbfcfd;text-decoration:none}
+    .hb-expanded-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
     .hb-expanded{display:grid;gap:14px;padding-top:6px;border-top:1px solid rgba(17,24,39,.06)}
     .hb-body{color:#324458;line-height:1.72;font-size:.98rem}
     .hb-body p:first-child{margin-top:0}
