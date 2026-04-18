@@ -2721,30 +2721,94 @@
     }
   }
 
+  function findSharedContainer(a, b, root){
+    let node = a;
+    while(node && node !== root){
+      if(node.contains(b)) return node;
+      node = node.parentElement;
+    }
+    return null;
+  }
+
+  function reorganizeHandbookAdminLayout(){
+    const tab = $id('tabHandbook');
+    if(!tab || tab.getAttribute('data-hb-admin-rebuilt') === '1') return;
+    const catPreset = $id('hbSimpleCatPreset');
+    const catList = $id('hbSimpleCatList');
+    const itemTitle = $id('hbSimpleItemTitle');
+    const itemSave = $id('btnHbSimpleItemSave');
+    const itemSearch = $id('hbSimpleItemSearch');
+    const itemList = $id('hbSimpleItemList');
+    if(!catPreset || !catList || !itemTitle || !itemSave || !itemList) return;
+
+    const categoryBlock = findSharedContainer(catPreset, catList, tab);
+    const itemBlock = findSharedContainer(itemTitle, itemSave, tab);
+    const savedBlock = itemSearch ? findSharedContainer(itemSearch, itemList, tab) : findSharedContainer(itemList, itemList, tab);
+    if(!categoryBlock || !itemBlock || !savedBlock) return;
+
+    const workspace = document.createElement('div');
+    workspace.className = 'hb-admin-workspace';
+    const left = document.createElement('div');
+    left.className = 'hb-admin-col hb-admin-col-left';
+    const right = document.createElement('div');
+    right.className = 'hb-admin-col hb-admin-col-right';
+    workspace.appendChild(left);
+    workspace.appendChild(right);
+
+    categoryBlock.classList.add('hb-admin-compact-card','hb-admin-category-card');
+    savedBlock.classList.add('hb-admin-compact-card','hb-admin-saved-card');
+    itemBlock.classList.add('hb-admin-compact-card','hb-admin-editor-card');
+
+    left.appendChild(categoryBlock);
+    left.appendChild(savedBlock);
+    right.appendChild(itemBlock);
+
+    tab.appendChild(workspace);
+    tab.setAttribute('data-hb-admin-rebuilt', '1');
+  }
+
   function applyHandbookAdminUiFixes(){
+    reorganizeHandbookAdminLayout();
     const styleId = 'hb-admin-flow-fixes';
     if(!document.getElementById(styleId)){
       const style = document.createElement('style');
       style.id = styleId;
       style.textContent = ''
-        + '.hb-admin-category-row{cursor:pointer;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(0,0,0,.08);margin-bottom:8px;}'
-        + '.hb-admin-category-row.is-selected{border-color:rgba(0,0,0,.28);box-shadow:0 0 0 1px rgba(0,0,0,.08) inset;}'
-        + '.hb-admin-row-actions{display:flex;gap:6px;flex-wrap:wrap;}'
-        + '#hbSimpleImagePreview, #hbSimpleAttachmentsPreview{min-height:auto!important;padding:8px 10px!important;border-radius:10px;}'
-        + '#hbSimpleImagePreview img{max-width:220px!important;max-height:120px!important;object-fit:cover;border-radius:8px;display:block;}'
+        + '.hb-admin-workspace{display:grid;grid-template-columns:minmax(320px,420px) minmax(0,1fr);gap:18px;align-items:start;}'
+        + '.hb-admin-col{display:grid;gap:18px;align-items:start;}'
+        + '.hb-admin-compact-card{margin:0!important;}'
+        + '.hb-admin-category-card,.hb-admin-saved-card,.hb-admin-editor-card{padding:18px!important;border-radius:20px!important;}'
+        + '.hb-admin-category-row,.hb-admin-item-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;border:1px solid rgba(17,24,39,.08);margin-bottom:10px;background:#fff;}'
+        + '.hb-admin-category-row.is-selected{border-color:rgba(33,91,63,.32);box-shadow:0 0 0 1px rgba(33,91,63,.10) inset;background:#f8fcf9;}'
+        + '.hb-admin-category-meta,.hb-admin-item-meta{min-width:0;flex:1 1 auto;}'
+        + '.hb-admin-category-title,.hb-admin-item-title{font-weight:800;line-height:1.35;word-break:break-word;}'
+        + '.hb-admin-category-sub,.hb-admin-item-sub{margin-top:4px;color:#6a7b90;line-height:1.45;word-break:break-word;}'
+        + '.hb-admin-row-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}'
+        + '#hbSimpleCatList,#hbSimpleItemList{display:grid;gap:0;max-height:360px;overflow:auto;padding-right:2px;}'
+        + '#hbSimpleCatMsg,#hbSimpleItemMsg{min-height:18px;margin:6px 0 0;}'
         + '#btnHbSimpleCatSave{display:none!important;}'
-        + '#hbSimpleCurrentCategory{font-weight:600;}'
-        + '#hbSimpleCatMsg::before{content:"";}'
-        + '#hbSimpleItemMsg, #hbSimpleCatMsg{min-height:18px;}'
-        + '@media (max-width: 900px){#hbSimpleImagePreview img{max-width:100%!important;height:auto!important;}}';
+        + '#hbSimpleCurrentCategory{display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border-radius:999px;background:#edf5ef;color:#215b3f;font-weight:800;}'
+        + '#hbSimpleImagePreview,#hbSimpleAttachmentsPreview{min-height:48px!important;padding:8px 10px!important;border-radius:12px!important;}'
+        + '#hbSimpleImagePreview img{max-width:180px!important;max-height:100px!important;object-fit:cover;border-radius:10px;display:block;}'
+        + '#btnHbRemoveImage,#btnHbRemoveAttachments,#btnHbSimpleItemClear,#btnHbSimpleItemSave,#btnHbSimpleItemDelete,#btnHbSimpleCatClear{min-height:40px!important;border-radius:999px!important;padding:0 14px!important;}'
+        + '.hb-status-pill{display:inline-flex;align-items:center;min-height:32px;padding:0 10px;border-radius:999px;font-size:.8rem;font-weight:800;}'
+        + '.hb-status-pill.published{background:#edf5ef;color:#215b3f;}'
+        + '.hb-status-pill.draft{background:#f6f7f9;color:#55677c;}'
+        + '.hb-admin-editor-card details{margin-top:10px;}'
+        + '.hb-admin-editor-card textarea{min-height:120px;}'
+        + '.hb-admin-editor-card .input,.hb-admin-editor-card textarea,.hb-admin-category-card .input,.hb-admin-category-card select{margin-bottom:10px;}'
+        + '@media (max-width: 1100px){.hb-admin-workspace{grid-template-columns:1fr;}.hb-admin-col{gap:16px;}#hbSimpleCatList,#hbSimpleItemList{max-height:none;overflow:visible;}}'
+        + '@media (max-width: 720px){.hb-admin-category-row,.hb-admin-item-row{flex-direction:column;align-items:flex-start;}.hb-admin-row-actions{justify-content:flex-start;}}';
       document.head.appendChild(style);
     }
     const saveBtn = $id('btnHbSimpleCatSave');
     if(saveBtn){ saveBtn.title = 'No longer required for selecting a category'; }
     const categoryMsg = $id('hbSimpleCatMsg');
     if(categoryMsg && !categoryMsg.textContent.trim()){
-      categoryMsg.textContent = 'Choose a category above. The selected category is used automatically when you save the item.';
+      categoryMsg.textContent = 'Choose a category once. New items will use it automatically.';
     }
+    const itemMsg = $id('hbSimpleItemMsg');
+    if(itemMsg && !itemMsg.textContent.trim()) itemMsg.textContent = 'Add the item details and save.';
   }
 
   async function boot(){
