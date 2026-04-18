@@ -290,7 +290,6 @@
     }
 
     markRead(it.id);
-    const hero = it.heroImage ? `<button class="hb-image-btn" type="button" data-hb-image="${esc(it.heroImage)}" aria-label="Open image"><img class="hb-hero-image" src="${esc(it.heroImage)}" alt="${esc(it.title)}"></button>` : '';
     let body = '';
     if(it.type === 'link'){
       body = it.url
@@ -301,22 +300,52 @@
       body = summaryBlock + (it.contentHtml || '');
       if(!body.trim()) body = '<p>No content has been added yet.</p>';
     }
+
+    const hasHero = !!it.heroImage;
     const atts = Array.isArray(it.attachments) ? it.attachments.filter(a => a && a.url) : [];
+    const hasMedia = hasHero || atts.length;
+    const mediaButton = hasMedia ? `<button type="button" class="hb-more-btn" id="hbViewMoreBtn" aria-expanded="false">View more</button>` : '';
+    const hero = hasHero ? `<button class="hb-image-btn" type="button" data-hb-image="${esc(it.heroImage)}" aria-label="Open image"><img class="hb-hero-image" src="${esc(it.heroImage)}" alt="${esc(it.title)}"></button>` : '';
     const attHtml = atts.length ? `
       <div class="hb-attachments-wrap">
+        <div class="hb-attachments-title">Files</div>
         <div class="hb-attachments">
           ${atts.map(a => `<a class="hb-attach" href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.label || 'Open')}</a>`).join('')}
         </div>
+      </div>
+    ` : '';
+    const mediaHtml = hasMedia ? `
+      <div class="hb-media-panel" id="hbMediaPanel" hidden>
+        ${hero}
+        ${attHtml}
       </div>
     ` : '';
 
     panel.innerHTML = `
       <div class="hb-reader-simple">
         <div class="hb-body">${body}</div>
-        ${hero}
-        ${attHtml}
+        ${mediaButton}
+        ${mediaHtml}
       </div>
     `;
+
+    const viewMoreBtn = document.getElementById('hbViewMoreBtn');
+    const mediaPanel = document.getElementById('hbMediaPanel');
+    if(viewMoreBtn && mediaPanel){
+      viewMoreBtn.addEventListener('click', () => {
+        const isOpen = !mediaPanel.hasAttribute('hidden');
+        if(isOpen){
+          mediaPanel.setAttribute('hidden', 'hidden');
+          viewMoreBtn.setAttribute('aria-expanded', 'false');
+          viewMoreBtn.textContent = 'View more';
+        } else {
+          mediaPanel.removeAttribute('hidden');
+          viewMoreBtn.setAttribute('aria-expanded', 'true');
+          viewMoreBtn.textContent = 'Hide details';
+        }
+      });
+    }
+
     panel.querySelectorAll('[data-hb-image]').forEach(btn => {
       btn.addEventListener('click', () => openImageLightbox(btn.getAttribute('data-hb-image') || '', it.title || 'Image'));
     });
@@ -334,12 +363,13 @@
       modal.addEventListener('click', (e) => {
         if(e.target === modal || e.target.classList.contains('hb-lightbox-close')) modal.classList.remove('is-open');
       });
+      document.addEventListener('keydown', (e) => {
+        if(e.key === 'Escape') modal.classList.remove('is-open');
+      });
     }
-    const img = modal.querySelector('.hb-lightbox-image');
-    const caption = modal.querySelector('.hb-lightbox-caption');
-    if(img) img.src = src;
-    if(img) img.alt = title || 'Image';
-    if(caption) caption.textContent = title || '';
+    $('.hb-lightbox-image', modal).src = src;
+    $('.hb-lightbox-image', modal).alt = title || 'Image';
+    $('.hb-lightbox-caption', modal).textContent = title || '';
     modal.classList.add('is-open');
   }
 
@@ -347,12 +377,11 @@
     const hb = await loadHandbook();
 
     function rerender(){
-      const availableCategories = categoriesWithContent(hb);
-      let { cat, item } = getHashParams();
-      if(cat && !availableCategories.some(c => c.id === cat)) cat = '';
-      renderCategories(hb, cat);
-      const items = renderFeed(hb, cat, item);
-      renderReader(hb, cat, item, items);
+      const { cat, item } = getHashParams();
+      const selectedCat = cat || '';
+      renderCategories(hb, selectedCat);
+      const items = renderFeed(hb, selectedCat, item || '');
+      renderReader(hb, selectedCat, item || '', items);
       document.documentElement.classList.remove('anw-preauth-hide');
     }
 
@@ -362,10 +391,12 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     main().catch(() => {
-      const el = document.getElementById('hbFeed') || document.getElementById('hbCategories');
-      if(el) el.innerHTML = '<div class="hb-empty">Unable to load handbook.</div>';
+      const categories = document.getElementById('hbCategories');
+      const feed = document.getElementById('hbFeed');
       const reader = document.getElementById('hbReader');
-      if(reader) reader.innerHTML = '<div class="hb-empty">Unable to load handbook.</div>';
+      if(categories) categories.innerHTML = '<div class="hb-empty">Unable to load handbook.</div>';
+      if(feed) feed.innerHTML = '';
+      if(reader) reader.innerHTML = '<div class="hb-empty">Please try again in a moment.</div>';
       document.documentElement.classList.remove('anw-preauth-hide');
     });
   });
