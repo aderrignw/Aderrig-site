@@ -9,42 +9,61 @@
 <link href="assets/style.css" rel="stylesheet"/>
 <meta content="Aderrig Neighbourhood Watch (Adamstown). Community-led safety, reporting and alerts aligned with Garda guidance." name="description"/>
 <style>
-    body.page-home .hero .help{ margin:0 0 12px; color:var(--muted); }
-    body.page-home .grid{ display:grid; gap:12px; }
+    body.page-home .hero .help{ margin:0 0 14px; color:var(--muted); }
+    body.page-home .grid{ display:grid; gap:16px; }
     body.page-home .cols-3{ grid-template-columns:2fr 3fr auto; align-items:stretch; }
     @media (max-width:860px){
       body.page-home .cols-3{ grid-template-columns:1fr; }
     }
     body.page-home .result{
-      margin-top:12px;
-      padding:12px 14px;
-      border:1px dashed rgba(17,24,39,.16);
-      border-radius:14px;
+      margin-top:14px;
+      padding:14px 16px;
+      border:1px dashed rgba(17,24,39,.14);
+      border-radius:16px;
       background:#fbfdfc;
     }
     body.page-home .tile{
-      display:block;
+      display:flex;
+      align-items:center;
+      gap:12px;
       background:#fff;
       border:1px solid var(--border);
-      padding:14px;
-      border-radius:14px;
-      box-shadow:var(--shadow);
+      padding:18px;
+      border-radius:18px;
+      box-shadow:0 6px 18px rgba(0,0,0,0.06);
       color:var(--brand);
       font-weight:700;
       text-decoration:none;
+      transition:all 0.2s ease;
     }
-    body.page-home .tile:hover{ background:rgba(31,111,74,.04); text-decoration:none; }
-    body.page-home .quick-links{ display:grid; gap:12px; grid-template-columns:repeat(3,1fr); }
+    body.page-home .tile:hover{
+      transform:translateY(-3px);
+      box-shadow:0 12px 28px rgba(0,0,0,0.08);
+      background:rgba(31,111,74,.04);
+      text-decoration:none;
+    }
+    body.page-home .tile-icon{
+      font-size:20px;
+      width:36px;
+      height:36px;
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(31,111,74,.08);
+      flex:0 0 auto;
+    }
+    body.page-home .quick-links{ display:grid; gap:16px; grid-template-columns:repeat(3,1fr); }
     @media (max-width:860px){
       body.page-home .quick-links{ grid-template-columns:1fr; }
     }
-    body.page-home .btn{ height:44px; }
+    body.page-home .btn{ height:46px; }
     body.page-home #coordResult:empty{ display:none; }
 
     /* Nearby support refinement */
     body.page-home #coordResult{
       text-align:left;
-      line-height:1.5;
+      line-height:1.6;
     }
     body.page-home .support-summary{
       font-weight:700;
@@ -62,9 +81,9 @@
       gap:12px;
     }
     body.page-home .support-group{
-      padding:12px 14px;
-      border:1px solid rgba(17,24,39,.08);
-      border-radius:12px;
+      padding:14px 16px;
+      border:1px solid rgba(17,24,39,.06);
+      border-radius:14px;
       background:#fff;
     }
     body.page-home .support-group-title{
@@ -84,9 +103,9 @@
       grid-template-columns:minmax(170px,220px) minmax(0,1fr) auto;
       gap:12px;
       align-items:center;
-      padding:10px 12px;
+      padding:12px 14px;
       border:1px solid rgba(17,24,39,.06);
-      border-radius:10px;
+      border-radius:12px;
       background:#f8fafc;
     }
     body.page-home .support-name{
@@ -170,9 +189,9 @@
 <section class="card">
 <h3>Quick links</h3>
 <div class="grid cols-3">
-<a class="tile" href="about.html">What is Neighbourhood Watch?</a>
-<a class="tile" href="report.html">Report an Incident</a>
-<a class="tile" href="alerts.html">Community Alerts</a>
+<a class="tile" href="about.html"><span class="tile-icon" aria-hidden="true">🏠</span><span>What is Neighbourhood Watch?</span></a>
+<a class="tile" href="report.html"><span class="tile-icon" aria-hidden="true">🚨</span><span>Report an Incident</span></a>
+<a class="tile" href="help-center.html"><span class="tile-icon" aria-hidden="true">❓</span><span>Help Center</span></a>
 </div>
 </section>
 </main>
