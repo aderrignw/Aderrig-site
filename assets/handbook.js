@@ -243,12 +243,12 @@
     const hasHero = !!item.heroImage;
     const atts = Array.isArray(item.attachments) ? item.attachments.filter(a => a && a.url) : [];
     const heroDownload = hasHero ? `<a class="hb-download" href="${esc(item.heroImage)}" download>Download image</a>` : '';
+    const expandedActions = `<div class="hb-expanded-actions">${heroDownload}<button type="button" class="hb-close-btn" data-close-item="${esc(item.id)}">Close</button></div>`;
     const heroHtml = hasHero ? `
       <div class="hb-image-col">
         <button class="hb-image-btn" type="button" data-hb-image="${esc(item.heroImage)}" aria-label="Open image">
           <img class="hb-hero-image" src="${esc(item.heroImage)}" alt="${esc(item.title)}">
         </button>
-        ${heroDownload}
       </div>
     ` : '';
     const filesHtml = atts.length ? `
@@ -265,7 +265,7 @@
 
     const bodySection = bodyHtml ? `<div class="hb-body">${bodyHtml}</div>` : '';
     const mediaSection = (hasHero || atts.length) ? `<div class="hb-media-row">${heroHtml}${filesHtml}</div>` : '';
-    return `<div class="hb-expanded" id="hbExpanded-${esc(item.id)}" hidden>${bodySection}${mediaSection}</div>`;
+    return `<div class="hb-expanded" id="hbExpanded-${esc(item.id)}" hidden>${expandedActions}${bodySection}${mediaSection}</div>`;
   }
 
   function renderFeed(hb, selectedCat, selectedItemId){
@@ -282,17 +282,21 @@
       const cat = hb.categories.find(c => c.id === it.categoryId);
       const meta = [cat?.title || it.categoryTitle || 'General', formatDate(it.updatedAt)].filter(Boolean).join(' • ');
       const expanded = selectedItemId === it.id;
+      const canExpand = Boolean(it.heroImage || (Array.isArray(it.attachments) && it.attachments.length) || it.contentHtml || (it.type === 'link' && it.url));
+      const titleHtml = canExpand
+        ? `<button type="button" class="hb-item-title-btn" data-view-more="${esc(it.id)}">${esc(it.title)}</button>`
+        : esc(it.title);
       return `
         <article class="hb-item-card${read ? ' is-read' : ''}">
           <div class="hb-item-head">
             <div class="hb-item-main">
-              <h4 class="hb-item-title">${esc(it.title)}</h4>
+              <h4 class="hb-item-title">${titleHtml}</h4>
               <div class="hb-item-meta-line">${esc(meta)}</div>
               ${it.summary ? `<p class="hb-item-summary">${esc(it.summary)}</p>` : ''}
             </div>
             <div class="hb-actions">
               ${read ? '<span class="hb-pill">Read</span>' : '<span class="hb-pill is-unread">New</span>'}
-              ${(it.heroImage || (Array.isArray(it.attachments) && it.attachments.length) || it.contentHtml || (it.type === 'link' && it.url)) ? `<button type="button" class="hb-more-btn" data-view-more="${esc(it.id)}">View more</button>` : ''}
+              ${canExpand ? `<button type="button" class="hb-more-btn" data-view-more="${esc(it.id)}">${expanded ? 'Hide' : 'View more'}</button>` : ''}
             </div>
           </div>
           ${expanded ? buildExpandedSection(it) : ''}
@@ -303,8 +307,19 @@
     wrap.querySelectorAll('[data-view-more]').forEach(btn => {
       btn.addEventListener('click', () => {
         const itemId = btn.getAttribute('data-view-more') || '';
+        if(!itemId) return;
+        if(selectedItemId === itemId){
+          setHash({ cat: selectedCat, item: '' });
+          return;
+        }
         markRead(itemId);
         setHash({ cat: selectedCat, item: itemId });
+      });
+    });
+
+    wrap.querySelectorAll('[data-close-item]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setHash({ cat: selectedCat, item: '' });
       });
     });
 
