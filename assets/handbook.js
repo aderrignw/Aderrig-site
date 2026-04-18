@@ -1,14 +1,18 @@
 /* =========================================================
    Aderrig NW — Handbook
-   Resident-facing handbook in a reading-pane layout.
-   Reads combined handbook data from anw_handbook.
+   - Resident-facing handbook only
+   - Reads combined handbook data from anw_handbook
+   Data shape:
+   {
+     categories:[{ id,title,icon?,order?,isActive?|active? }],
+     items:[{ id,categoryId,title,summary,contentHtml|content,url,heroImage|heroUrl,attachments,updatedAt,isPublished|status,type }]
+   }
    ========================================================= */
 (function(){
   'use strict';
 
   const KEYS = window.ANW_KEYS || {};
   const KEY_HANDBOOK = KEYS.HANDBOOK || 'anw_handbook';
-  const KEY_READ = 'anw_handbook_read_items';
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -23,13 +27,14 @@
   function getHashParams(){
     const h = String(location.hash || '').replace(/^#/, '');
     const p = new URLSearchParams(h);
-    return { cat: p.get('cat') || '', item: p.get('item') || '' };
+    return { cat: p.get('cat') || '', item: p.get('item') || '', q: p.get('q') || '' };
   }
 
   function setHash(params){
     const p = new URLSearchParams();
     if(params.cat) p.set('cat', params.cat);
     if(params.item) p.set('item', params.item);
+    if(params.q) p.set('q', params.q);
     const s = p.toString();
     location.hash = s ? ('#' + s) : '';
   }
@@ -76,7 +81,6 @@
     return {
       id: String(raw.id || ('item-' + (index + 1))).trim(),
       categoryId: String(raw.categoryId || raw.category || raw.sectionId || '').trim(),
-      categoryTitle: String(raw.categoryTitle || raw.sectionTitle || '').trim(),
       title,
       type: String(raw.type || (raw.url ? 'link' : 'page')).toLowerCase() === 'link' ? 'link' : 'page',
       summary: String(raw.summary || raw.excerpt || '').trim(),
@@ -85,34 +89,14 @@
       heroImage: hero,
       contentHtml: toRichHtml(raw.contentHtml || raw.content || raw.body || ''),
       attachments: Array.isArray(raw.attachments) ? raw.attachments.filter(Boolean) : [],
-      updatedAt: String(raw.updatedAt || raw.createdAt || '').trim(),
-      isPublished: raw.isPublished !== false && String(raw.status || '').toLowerCase() !== 'draft',
-      _index: index
+      updatedAt: String(raw.updatedAt || '').trim(),
+      isPublished: raw.isPublished !== false && String(raw.status || '').toLowerCase() !== 'draft'
     };
-  }
-
-  function inferCategoriesFromItems(items, existingCategories){
-    const seen = new Set((existingCategories || []).map(cat => cat.id));
-    const inferred = [];
-    (Array.isArray(items) ? items : []).forEach((item, index) => {
-      const categoryId = String(item.categoryId || '').trim();
-      const categoryTitle = String(item.categoryTitle || item.categoryId || '').trim();
-      if(!categoryId || !categoryTitle || seen.has(categoryId)) return;
-      seen.add(categoryId);
-      inferred.push({
-        id: categoryId,
-        title: categoryTitle,
-        icon: '',
-        order: (existingCategories || []).length + index + 1,
-        isActive: true
-      });
-    });
-    return inferred;
   }
 
   function normalizeHandbook(raw){
     const hb = (raw && typeof raw === 'object') ? raw : {};
-    let categories = Array.isArray(hb.categories) ? hb.categories.map(normalizeCategory).filter(Boolean).sort(byOrder) : [];
+    const categories = Array.isArray(hb.categories) ? hb.categories.map(normalizeCategory).filter(Boolean).sort(byOrder) : [];
     let items = [];
     if(Array.isArray(hb.items)){
       items = hb.items.map(normalizeItem).filter(Boolean);
@@ -120,27 +104,24 @@
       hb.categories.forEach((cat, cIndex) => {
         const catNorm = normalizeCategory(cat, cIndex);
         (Array.isArray(cat?.items) ? cat.items : []).forEach((item, iIndex) => {
-          const norm = normalizeItem({ ...item, categoryId: item.categoryId || catNorm?.id, categoryTitle: item.categoryTitle || catNorm?.title }, iIndex);
+          const norm = normalizeItem({ ...item, categoryId: item.categoryId || catNorm?.id }, iIndex);
           if(norm) items.push(norm);
         });
       });
     }
-    categories = categories.concat(inferCategoriesFromItems(items, categories)).sort(byOrder);
     return { categories, items };
   }
 
   async function loadStore(key, fallback){
     try{
-      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
-      if(!res.ok) throw new Error('store load failed');
-      const data = await res.json();
-      try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){ }
-      return data;
-    }catch(_){ }
-
-    try{ if(typeof window.anwInitStore === 'function') await window.anwInitStore(); }catch(_){ }
-    try{ if(typeof window.anwFetchKey === 'function') return await window.anwFetchKey(key); }catch(_){ }
-    try{ if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback); }catch(_){ }
+      if(typeof window.anwInitStore === 'function') await window.anwInitStore();
+    }catch(_){}
+    try{
+      if(typeof window.anwFetchKey === 'function') return await window.anwFetchKey(key);
+    }catch(_){}
+    try{
+      if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback);
+    }catch(_){}
     try{
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : fallback;
@@ -154,193 +135,174 @@
     return normalizeHandbook(combined);
   }
 
-  function getReadMap(){
-    try{ return JSON.parse(localStorage.getItem(KEY_READ) || '{}') || {}; }catch(_){ return {}; }
-  }
-
-  function markRead(itemId){
-    const map = getReadMap();
-    map[itemId] = Date.now();
-    try{ localStorage.setItem(KEY_READ, JSON.stringify(map)); }catch(_){ }
-  }
-
-  function isRead(itemId){
-    return Boolean(getReadMap()[itemId]);
-  }
-
-  function parseTime(value){
-    const time = Date.parse(value || '');
-    return Number.isFinite(time) ? time : null;
-  }
-
-  function formatDate(value){
-    const time = parseTime(value);
-    if(!time) return 'Latest update';
-    try{
-      return new Intl.DateTimeFormat('en-IE', { day:'2-digit', month:'short', year:'numeric' }).format(new Date(time));
-    }catch(_){
-      return new Date(time).toLocaleDateString();
-    }
-  }
-
-  function publishedItems(hb, catId){
-    return hb.items.filter(it => it.isPublished && (!catId || it.categoryId === catId)).sort((a,b) => {
-      const bt = parseTime(b.updatedAt);
-      const at = parseTime(a.updatedAt);
-      if(bt && at && bt !== at) return bt - at;
-      if(bt && !at) return -1;
-      if(at && !bt) return 1;
-      return Number(b._index || 0) - Number(a._index || 0);
+  function visibleCategories(hb, q){
+    const needle = String(q || '').toLowerCase().trim();
+    const categories = hb.categories.filter(cat => cat.isActive !== false);
+    if(!needle) return categories;
+    return categories.filter(cat => {
+      if(String(cat.title).toLowerCase().includes(needle)) return true;
+      return hb.items.some(it =>
+        it.categoryId === cat.id &&
+        it.isPublished &&
+        (String(it.title).toLowerCase().includes(needle) || String(it.summary).toLowerCase().includes(needle))
+      );
     });
   }
 
-  function categoriesWithContent(hb){
-    return hb.categories.filter(cat => cat.isActive !== false && hb.items.some(it => it.isPublished && it.categoryId === cat.id));
-  }
-
-  function renderCategories(hb, selectedCat){
+  function renderCategories(hb, q){
     const wrap = $('#hbCategories');
     if(!wrap) return;
-    const categories = categoriesWithContent(hb);
+    const categories = visibleCategories(hb, q);
     if(!categories.length){
-      wrap.innerHTML = '<div class="hb-empty">No handbook content has been published yet.</div>';
+      wrap.innerHTML = '<div class="hb-empty">No handbook categories are available.</div>';
       return;
     }
-    const allCount = publishedItems(hb, '').length;
-    wrap.innerHTML = [
-      `<button class="hb-cat-btn${!selectedCat ? ' is-active' : ''}" type="button" data-cat="">` +
-        `<span class="hb-cat-name"><span>📥</span><span>All updates</span></span>` +
-        `<span class="hb-count">${allCount}</span>` +
-      `</button>`,
-      ...categories.map(cat => {
-        const count = publishedItems(hb, cat.id).length;
-        return `<button class="hb-cat-btn${selectedCat === cat.id ? ' is-active' : ''}" type="button" data-cat="${esc(cat.id)}">` +
-          `<span class="hb-cat-name"><span>${esc(cat.icon || '📘')}</span><span>${esc(cat.title)}</span></span>` +
-          `<span class="hb-count">${count}</span>` +
-        `</button>`;
-      })
-    ].join('');
-
-    wrap.querySelectorAll('[data-cat]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const cat = btn.getAttribute('data-cat') || '';
-        const items = publishedItems(hb, cat);
-        setHash({ cat, item: items[0]?.id || '' });
-      });
-    });
-  }
-
-  function renderFeed(hb, selectedCat, selectedItemId){
-    const wrap = $('#hbFeed');
-    if(!wrap) return [];
-    const items = publishedItems(hb, selectedCat);
-    if(!items.length){
-      wrap.innerHTML = '<div class="hb-empty">No updates are available in this category yet.</div>';
-      return items;
-    }
-    wrap.innerHTML = items.map(it => {
-      const active = selectedItemId === it.id;
-      const read = isRead(it.id);
-      const cat = hb.categories.find(c => c.id === it.categoryId);
+    wrap.innerHTML = categories.map(cat => {
+      const count = hb.items.filter(it => it.categoryId === cat.id && it.isPublished).length;
       return `
-        <article class="hb-item-card${active ? ' is-active' : ''}${read ? ' is-read' : ''}" data-item="${esc(it.id)}">
-          <div class="hb-item-top">
-            <div>
-              <h4 class="hb-item-title">${esc(it.title)}</h4>
-              ${it.summary ? `<p class="hb-item-sub">${esc(it.summary)}</p>` : ''}
-            </div>
-            <div class="hb-meta">
-              ${read ? '<span class="hb-pill">Read</span>' : '<span class="hb-pill is-unread"><span class="hb-dot" aria-hidden="true"></span>&nbsp;New</span>'}
-              <span class="hb-pill">${esc(cat?.title || it.categoryTitle || 'General')}</span>
-              <span class="hb-pill">${esc(formatDate(it.updatedAt))}</span>
-            </div>
+        <a class="hb-card hb-cat-card" href="#cat=${encodeURIComponent(cat.id)}" aria-label="Open ${esc(cat.title)}">
+          <div class="hb-cat-icon">${esc(cat.icon || '📘')}</div>
+          <div>
+            <div class="hb-cat-title">${esc(cat.title)}</div>
+            <div class="hb-cat-sub">${count} item${count === 1 ? '' : 's'}</div>
           </div>
-        </article>
+        </a>
       `;
     }).join('');
-    wrap.querySelectorAll('[data-item]').forEach(card => {
-      card.addEventListener('click', () => {
-        const itemId = card.getAttribute('data-item') || '';
-        setHash({ cat: selectedCat, item: itemId });
-      });
-    });
-    return items;
   }
 
-  function renderReader(hb, selectedCat, selectedItemId, items){
-    const panel = $('#hbReader');
-    if(!panel) return;
-    const it = items.find(x => x.id === selectedItemId) || items[0];
-    if(!it){
-      panel.innerHTML = '<div class="hb-empty">Choose a category to see updates here.</div>';
-      return;
-    }
-    if(selectedItemId !== it.id){
-      setHash({ cat: selectedCat, item: it.id });
-      return;
-    }
+  function itemsForCategory(hb, catId, q){
+    const needle = String(q || '').toLowerCase().trim();
+    return hb.items.filter(it => {
+      if(!it.isPublished) return false;
+      if(it.categoryId !== catId) return false;
+      if(!needle) return true;
+      return String(it.title).toLowerCase().includes(needle) || String(it.summary).toLowerCase().includes(needle);
+    }).sort((a,b) => String(a.title).localeCompare(String(b.title)));
+  }
 
-    markRead(it.id);
-    const cat = hb.categories.find(c => c.id === it.categoryId);
+  function renderCategoryView(hb, catId, q){
+    const panel = $('#hbCategory');
+    const list = $('#hbItems');
+    const title = $('#hbCatTitle');
+    if(!panel || !list || !title) return;
+    const cat = hb.categories.find(c => c.id === catId && c.isActive !== false);
+    if(!cat){
+      panel.style.display = 'none';
+      return;
+    }
+    panel.style.display = '';
+    title.textContent = cat.title;
+    const items = itemsForCategory(hb, cat.id, q);
+    if(!items.length){
+      list.innerHTML = '<div class="hb-empty">No items found in this category.</div>';
+      return;
+    }
+    list.innerHTML = items.map(it => {
+      const isLink = it.type === 'link';
+      const right = isLink ? '<span class="hb-status">External</span>' : '<span class="hb-status">Page</span>';
+      const href = isLink ? (it.url || '#') : `#cat=${encodeURIComponent(cat.id)}&item=${encodeURIComponent(it.id)}`;
+      const target = isLink ? ' target="_blank" rel="noopener"' : '';
+      const disabled = (isLink && !it.url) ? ' aria-disabled="true" style="opacity:.55; pointer-events:none;"' : '';
+      return `
+        <a class="hb-item" href="${esc(href)}"${target}${disabled}>
+          <div>
+            <div class="hb-item-title">${esc(it.title)}</div>
+            ${it.summary ? `<div class="hb-item-sub">${esc(it.summary)}</div>` : ''}
+          </div>
+          <div class="hb-item-right">${right}<span aria-hidden="true">›</span></div>
+        </a>
+      `;
+    }).join('');
+  }
+
+  function renderItem(hb, catId, itemId){
+    const cat = hb.categories.find(c => c.id === catId && c.isActive !== false);
+    const it = hb.items.find(x => x.categoryId === catId && x.id === itemId && x.isPublished);
+    const panel = $('#hbItem');
+    if(!panel) return;
+    if(!it){
+      panel.style.display = 'none';
+      return;
+    }
+    panel.style.display = '';
     const hero = it.heroImage ? `<img class="hb-hero-image" src="${esc(it.heroImage)}" alt="${esc(it.title)}">` : '';
     let body = '';
     if(it.type === 'link'){
       body = it.url
-        ? `<p>This update opens an external link.</p><p><a class="hb-link" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.linkLabel || 'Open link')}</a></p>`
+        ? `<p>This item opens an external link.</p><p><a class="hb-link" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.linkLabel || 'Open link')}</a></p>`
         : '<p>No link has been set yet.</p>';
     } else {
       body = it.contentHtml || '<p>No content has been added yet.</p>';
     }
     const atts = Array.isArray(it.attachments) ? it.attachments.filter(a => a && a.url) : [];
     const attHtml = atts.length ? `
-      <div style="display:grid;gap:8px;margin-top:${it.heroImage ? '10px' : '0'};">
-        <div class="tiny muted" style="font-weight:700;">Files</div>
+      <div>
+        <h4 style="margin:0 0 8px;">Attachments</h4>
         <div class="hb-attachments">
-          ${atts.map(a => `<a class="hb-attach" href="${esc(a.url)}" target="_blank" rel="noopener">📎 ${esc(a.label || 'Open')}</a>`).join('')}
+          ${atts.map(a => `<a class="hb-attach" href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.label || 'Open')}</a>`).join('')}
         </div>
       </div>
     ` : '';
-
     panel.innerHTML = `
-      <div class="hb-reader-head">
-        <div>
-          <div class="hb-reader-meta">
-            <span class="hb-pill">${esc(cat?.title || it.categoryTitle || 'General')}</span>
-            <span class="hb-pill">${esc(formatDate(it.updatedAt))}</span>
-            <span class="hb-pill">Read</span>
+      <div class="hb-item-shell">
+        <div class="hb-item-head">
+          <div>
+            <div class="hb-breadcrumb"><a href="#" data-hb-home>Handbook</a> <span aria-hidden="true">›</span> <a href="#cat=${encodeURIComponent(catId)}">${esc(cat?.title || '')}</a></div>
+            <h3 style="margin:6px 0 0;">${esc(it.title)}</h3>
           </div>
-          <h3 class="hb-reader-title">${esc(it.title)}</h3>
+          <div><button class="hb-link" type="button" id="hbBackBtn">Back</button></div>
         </div>
+        ${hero}
+        <div class="hb-body">${body}</div>
+        ${attHtml}
       </div>
-      ${hero}
-      ${attHtml}
-      <div class="hb-body">${body}</div>
     `;
+    $('#hbBackBtn')?.addEventListener('click', () => setHash({ cat: catId, item: '' }));
+    panel.querySelector('[data-hb-home]')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      setHash({ cat: '', item: '', q: getHashParams().q });
+    });
   }
 
   async function main(){
     const hb = await loadHandbook();
+    const qInput = $('#hbSearch');
+    const catsPanel = $('#hbHome');
+    const backToCategories = $('#hbBackToCategories');
 
     function rerender(){
-      const availableCategories = categoriesWithContent(hb);
-      let { cat, item } = getHashParams();
-      if(cat && !availableCategories.some(c => c.id === cat)) cat = '';
-      renderCategories(hb, cat);
-      const items = renderFeed(hb, cat, item);
-      renderReader(hb, cat, item, items);
+      const { cat, item, q } = getHashParams();
+      const query = q || (qInput ? qInput.value : '');
+      renderCategories(hb, query);
+      renderCategoryView(hb, cat, query);
+      renderItem(hb, cat, item);
+      const catPanel = $('#hbCategory');
+      const itemPanel = $('#hbItem');
+      if(catsPanel) catsPanel.style.display = !cat ? '' : 'none';
+      if(catPanel) catPanel.style.display = cat ? '' : 'none';
+      if(itemPanel) itemPanel.style.display = (cat && item) ? '' : 'none';
+      if(qInput && qInput.value !== query) qInput.value = query;
       document.documentElement.classList.remove('anw-preauth-hide');
     }
 
+    qInput?.addEventListener('input', () => {
+      const { cat, item } = getHashParams();
+      setHash({ cat, item, q: qInput.value });
+    });
+    backToCategories?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const { q } = getHashParams();
+      setHash({ cat: '', item: '', q });
+    });
     window.addEventListener('hashchange', rerender);
     rerender();
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     main().catch(() => {
-      const el = document.getElementById('hbFeed') || document.getElementById('hbCategories');
+      const el = document.getElementById('hbCategories');
       if(el) el.innerHTML = '<div class="hb-empty">Unable to load handbook.</div>';
-      const reader = document.getElementById('hbReader');
-      if(reader) reader.innerHTML = '<div class="hb-empty">Unable to load handbook.</div>';
       document.documentElement.classList.remove('anw-preauth-hide');
     });
   });
