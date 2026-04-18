@@ -173,11 +173,11 @@
       .mail-board-header,
       .mail-board-row{
         display:grid;
-        grid-template-columns:110px minmax(140px,1fr) minmax(160px,1fr) 100px 130px;
+        grid-template-columns:110px minmax(150px,1fr) minmax(140px,1fr) minmax(160px,1fr) 100px 130px;
         gap:8px;
         align-items:center;
         padding:10px 12px;
-        min-width:620px;
+        min-width:760px;
         box-sizing:border-box;
       }
 
@@ -420,7 +420,7 @@
         }
         .mail-board-header,
         .mail-board-row{
-          min-width:640px;
+          min-width:760px;
         }
       }
 
@@ -780,6 +780,10 @@
     return raw ? raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase() : 'Letter';
   }
 
+  function getMailRecipientName(it){
+    return String(it?.meta?.recipientName || '').trim();
+  }
+
   function getMailExpiryIso(it){
     const direct = parseDateValue(it?.expiresAt || it?.expires || it?.endDate || it?.endsOn || '');
     if (direct) return direct.toISOString();
@@ -845,6 +849,7 @@
 
     const rows = safeItems.map((it) => {
       const type = formatMailType(getMailItemType(it));
+      const recipient = esc(getMailRecipientName(it) || '—');
       const delivered = esc(it?.meta?.deliveredAddress || '');
       const correct = esc(it?.meta?.intendedAddress || '');
       const actions = [];
@@ -859,6 +864,7 @@
       return `
         <div class="mail-board-row">
           <div class="mail-board-cell"><span class="mail-board-type"><span class="mail-board-type-icon" aria-hidden="true">${getMailIcon(type)}</span><span>${esc(type)}</span></span></div>
+          <div class="mail-board-cell">${recipient}</div>
           <div class="mail-board-cell">${delivered}</div>
           <div class="mail-board-cell">${correct}</div>
           <div class="mail-board-cell mail-board-status"><span class="mail-pill">Not collected</span></div>
@@ -880,6 +886,7 @@
           <div class="mail-board-grid">
             <div class="mail-board-header">
               <div>Type</div>
+              <div>Recipient name</div>
               <div>Delivered at</div>
               <div>Correct address</div>
               <div>Status</div>
@@ -956,7 +963,7 @@
           <div class="mail-entry-modal__header">
             <div>
               <h4 class="mail-entry-modal__title" id="mailEntryTitle">Report misdelivered mail</h4>
-              <p class="mail-entry-modal__subtitle">Add the delivery address, the correct address and the item type.</p>
+              <p class="mail-entry-modal__subtitle">Add the recipient name, the delivery address, the correct address and the item type.</p>
             </div>
             <button type="button" class="mail-entry-close" data-mail-modal-close aria-label="Close">×</button>
           </div>
@@ -971,6 +978,11 @@
                     <option value="Envelope">Envelope</option>
                     <option value="Parcel">Parcel</option>
                   </select>
+                </div>
+
+                <div class="mail-entry-field">
+                  <label class="mail-entry-label" for="mailRecipientName">Recipient name</label>
+                  <input class="mail-entry-input" id="mailRecipientName" name="recipientName" type="text" maxlength="120" placeholder="Name shown on the item" required />
                 </div>
 
                 <div class="mail-entry-field mail-entry-field--full">
@@ -1100,10 +1112,11 @@
     const errorEl = document.getElementById('mailEntryError');
 
     const itemType = String(form?.itemType?.value || '').trim();
+    const recipientName = String(form?.recipientName?.value || '').trim();
     const deliveredAddress = String(form?.deliveredAddress?.value || '').trim();
     const intendedAddress = String(form?.intendedAddress?.value || '').trim();
 
-    if (!itemType || !deliveredAddress || !intendedAddress) {
+    if (!itemType || !recipientName || !deliveredAddress || !intendedAddress) {
       if (errorEl) errorEl.textContent = 'Please complete all fields.';
       return;
     }
@@ -1136,6 +1149,7 @@
         meta: {
           type: 'misdelivered_mail',
           itemType: formatMailType(itemType),
+          recipientName,
           deliveredAddress,
           intendedAddress
         }
