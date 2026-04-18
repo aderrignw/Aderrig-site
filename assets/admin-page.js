@@ -2811,12 +2811,9 @@
         + '.hb-admin-category-card label{display:block!important;margin-bottom:8px!important;}'
         + '.hb-admin-category-card label[for="hbSimpleCatPreset"],.hb-admin-category-card label[for="hbSimpleCatTitle"],.hb-admin-category-card label[for="hbSimpleCatIconPreview"]{font-weight:800!important;}'
         + '.hb-admin-category-card > div,.hb-admin-category-card > label{max-width:none!important;}'
-        + '.hb-admin-item-title-row{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(170px,220px);gap:12px;align-items:end;}'
+        + '.hb-admin-item-title-row{display:grid!important;grid-template-columns:minmax(0,2.2fr) minmax(160px,.9fr);gap:12px;align-items:end;}'
         + '.hb-admin-item-title-row > label,.hb-admin-item-title-row > div,.hb-admin-item-title-row .field,.hb-admin-item-title-row .input-wrap{min-width:0!important;max-width:none!important;width:100%!important;}'
         + '.hb-admin-item-title-row input,.hb-admin-item-title-row select,.hb-admin-item-title-row textarea{width:100%!important;min-width:0!important;max-width:none!important;}'
-        + '.hb-admin-item-actions-row{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:10px!important;flex-wrap:wrap!important;}'
-        + '.hb-admin-item-actions-row > *{margin:0!important;}'
-        + '#btnHbSimpleItemDelete,#btnHbSimpleItemClear,#btnHbSimpleItemSave{display:inline-flex!important;align-items:center!important;justify-content:center!important;vertical-align:middle!important;}'
         + '@media (min-width: 900px){.hb-admin-category-card > .row,.hb-admin-category-card .row:first-of-type{display:grid!important;grid-template-columns:minmax(0,1.5fr) minmax(150px,.9fr);gap:16px;align-items:end;}}'
         + '@media (max-width: 1100px){.hb-admin-workspace{grid-template-columns:1fr;}.hb-admin-col{gap:16px;}#hbSimpleCatList,#hbSimpleItemList{max-height:none;overflow:visible;}}'
         + '@media (max-width: 720px){.hb-admin-category-row,.hb-admin-item-row{flex-direction:column;align-items:flex-start;}.hb-admin-row-actions{justify-content:flex-start;}.hb-admin-item-title-row{grid-template-columns:1fr!important;}.hb-admin-item-actions-row{justify-content:flex-start!important;}}';
@@ -2838,19 +2835,10 @@
     }
     const titleField = $id('hbSimpleItemTitle');
     const statusField = $id('hbSimpleItemStatus');
-    const deleteBtn = $id('btnHbSimpleItemDelete');
-    const clearBtn = $id('btnHbSimpleItemClear');
-    const saveItemBtn = $id('btnHbSimpleItemSave');
-
     const titleRow = titleField && titleField.closest ? titleField.closest('.row') : null;
     if(titleRow) titleRow.classList.add('hb-admin-item-title-row');
     const statusRow = statusField && statusField.closest ? statusField.closest('.row') : null;
     if(statusRow && titleRow && statusRow === titleRow) statusRow.classList.add('hb-admin-item-title-row');
-
-    const actionRow = (saveItemBtn && saveItemBtn.closest ? saveItemBtn.closest('.row') : null)
-      || (deleteBtn && deleteBtn.closest ? deleteBtn.closest('.row') : null)
-      || (clearBtn && clearBtn.closest ? clearBtn.closest('.row') : null);
-    if(actionRow) actionRow.classList.add('hb-admin-item-actions-row');
 
     if(titleField){
       const titleWrap = titleField.closest('label,div');
@@ -2858,6 +2846,7 @@
         titleWrap.style.width = '100%';
         titleWrap.style.maxWidth = 'none';
         titleWrap.style.minWidth = '0';
+        titleWrap.style.flex = '1 1 auto';
       }
       titleField.style.width = '100%';
       titleField.style.minWidth = '0';
@@ -2868,21 +2857,9 @@
     if(statusField){
       const statusWrap = statusField.closest('label,div');
       if(statusWrap){
-        statusWrap.style.width = '100%';
-        statusWrap.style.maxWidth = 'none';
-        statusWrap.style.minWidth = '0';
+        statusWrap.style.minWidth = '160px';
       }
-      statusField.style.width = '100%';
-      statusField.style.minWidth = '0';
     }
-
-    [deleteBtn, clearBtn, saveItemBtn].forEach(function(btn){
-      if(!btn) return;
-      btn.style.display = 'inline-flex';
-      btn.style.alignItems = 'center';
-      btn.style.justifyContent = 'center';
-      btn.style.verticalAlign = 'middle';
-    });
 
     const itemMsg = $id('hbSimpleItemMsg');
     if(itemMsg && !itemMsg.textContent.trim()) itemMsg.textContent = 'Add the item details and save.';
