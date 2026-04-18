@@ -41,7 +41,6 @@
     .hb-item-meta-line{color:var(--hb-muted);font-size:.9rem;line-height:1.45}
     .hb-pill{display:inline-flex;align-items:center;min-height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--hb-border);background:#fff;color:#55677c;font-size:.8rem;font-weight:800}
     .hb-pill.is-unread{background:var(--hb-accent);color:var(--brand)}
-    .hb-dot{width:8px;height:8px;border-radius:999px;background:#2f8f62;flex:0 0 auto}
 
     .hb-reader{display:grid;gap:16px;padding:22px;border:1px solid var(--hb-border);border-radius:22px;background:#fcfdfd}
     .hb-reader-simple{display:grid;gap:14px}
@@ -51,9 +50,13 @@
     .hb-body h3,.hb-body h4{color:#215b3f;margin:18px 0 8px}
     .hb-body ul,.hb-body ol{margin:8px 0 8px 20px}
     .hb-body li{margin:6px 0}
+    .hb-more-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);font:inherit;font-weight:700;cursor:pointer;width:max-content}
+    .hb-more-btn:hover{background:#fbfcfd}
+    .hb-media-panel{display:grid;gap:14px;padding-top:4px}
     .hb-image-btn{display:block;padding:0;border:0;background:transparent;cursor:zoom-in;max-width:380px;width:100%}
     .hb-hero-image{width:100%;display:block;border-radius:18px;border:1px solid var(--hb-border);max-height:240px;object-fit:cover}
     .hb-attachments-wrap{display:grid;gap:8px}
+    .hb-attachments-title{font-size:.92rem;font-weight:800;color:var(--hb-text)}
     .hb-attachments{display:flex;gap:10px;flex-wrap:wrap}
     .hb-link,.hb-attach{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);text-decoration:none;font-weight:700;font-size:.92rem}
     .hb-link:hover,.hb-attach:hover{text-decoration:none;background:#fbfcfd}
@@ -64,13 +67,8 @@
     .hb-lightbox-close{position:absolute;top:20px;right:24px;width:44px;height:44px;border-radius:999px;border:0;background:#fff;color:#23344b;font-size:1.6rem;cursor:pointer}
     .hb-lightbox-caption{position:absolute;left:24px;right:24px;bottom:24px;color:#fff;text-align:center;font-weight:700}
 
-    @media (max-width:980px){
-      .hb-workspace{grid-template-columns:1fr}
-    }
-    @media (max-width:720px){
-      .hb-hero,.hb-card,.hb-panel{padding:20px}
-      .hb-reader{padding:18px}
-    }
+    @media (max-width:980px){.hb-workspace{grid-template-columns:1fr}}
+    @media (max-width:720px){.hb-hero,.hb-card,.hb-panel{padding:20px}.hb-reader{padding:18px}}
   </style>
 </head>
 <body class="page-handbook" data-acl-loading="true">
