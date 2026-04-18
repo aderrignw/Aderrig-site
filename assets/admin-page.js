@@ -2767,8 +2767,54 @@
     tab.setAttribute('data-hb-admin-rebuilt', '1');
   }
 
+  function refineHandbookEditorLayout(){
+    const editor = $id('hbSimpleItemTitle') ? findSharedContainer($id('hbSimpleItemTitle'), $id('btnHbSimpleItemSave') || $id('hbSimpleItemTitle'), $id('tabHandbook') || document.body) : null;
+    if(!editor || editor.getAttribute('data-hb-editor-refined') === '1') return;
+
+    const titleInput = $id('hbSimpleItemTitle');
+    const statusSelect = $id('hbSimpleItemStatus');
+    const deleteBtn = $id('btnHbSimpleItemDelete');
+    const clearBtn = $id('btnHbSimpleItemClear');
+    const saveBtn = $id('btnHbSimpleItemSave');
+
+    const titleField = titleInput ? (titleInput.closest('label') || titleInput.parentElement) : null;
+    const statusField = statusSelect ? (statusSelect.closest('label') || statusSelect.parentElement) : null;
+
+    if(titleField && statusField && titleField !== statusField){
+      const topRow = document.createElement('div');
+      topRow.className = 'hb-admin-item-top-row';
+      titleField.classList.add('hb-admin-title-field');
+      statusField.classList.add('hb-admin-status-field');
+      const insertBefore = titleField.compareDocumentPosition(statusField) & Node.DOCUMENT_POSITION_FOLLOWING ? titleField : statusField;
+      editor.insertBefore(topRow, insertBefore);
+      topRow.appendChild(titleField);
+      topRow.appendChild(statusField);
+    }
+
+    const actionButtons = [deleteBtn, clearBtn, saveBtn].filter(Boolean);
+    if(actionButtons.length){
+      const actionRow = document.createElement('div');
+      actionRow.className = 'hb-admin-item-action-row';
+      const anchor = saveBtn || clearBtn || deleteBtn;
+      const anchorWrap = anchor ? (anchor.closest('.row') || anchor.parentElement) : null;
+      if(anchorWrap && anchorWrap.parentElement === editor){
+        editor.insertBefore(actionRow, anchorWrap);
+      } else {
+        editor.appendChild(actionRow);
+      }
+      actionButtons.forEach(btn => actionRow.appendChild(btn));
+      if(anchorWrap && anchorWrap !== actionRow && !anchorWrap.querySelector('button, .btn, .btn-line')){
+        anchorWrap.remove();
+      }
+    }
+
+    editor.getAttribute('data-hb-editor-refined', '1');
+    editor.setAttribute('data-hb-editor-refined', '1');
+  }
+
   function applyHandbookAdminUiFixes(){
     reorganizeHandbookAdminLayout();
+    refineHandbookEditorLayout();
     const styleId = 'hb-admin-flow-fixes';
     if(!document.getElementById(styleId)){
       const style = document.createElement('style');
@@ -2800,6 +2846,14 @@
         + '.hb-admin-editor-card textarea{min-height:128px;}'
         + '.hb-admin-editor-card .input,.hb-admin-editor-card textarea,.hb-admin-category-card .input,.hb-admin-category-card select{margin-bottom:10px;}'
         + '.hb-admin-category-card select,.hb-admin-category-card .input{width:100%!important;}'
+        + '.hb-admin-item-top-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(210px,260px);gap:14px;align-items:end;}'
+        + '.hb-admin-title-field,.hb-admin-status-field{min-width:0;max-width:none!important;}'
+        + '.hb-admin-title-field .input,.hb-admin-status-field select,.hb-admin-title-field input,.hb-admin-status-field .input{width:100%!important;min-width:0!important;max-width:none!important;}'
+        + '.hb-admin-item-action-row{display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding-top:2px;}'
+        + '.hb-admin-item-action-row > *{flex:0 0 auto;}'
+        + '#btnHbSimpleItemDelete{order:1;}'
+        + '#btnHbSimpleItemClear{order:2;}'
+        + '#btnHbSimpleItemSave{order:3;}'
         + '#hbSimpleCatPreset{min-width:0!important;width:100%!important;max-width:none!important;}'
         + '#hbSimpleCatTitle{min-width:0!important;width:100%!important;max-width:none!important;}'
         + '#hbSimpleCatList{display:none!important;}'
@@ -2813,7 +2867,7 @@
         + '.hb-admin-category-card > div,.hb-admin-category-card > label{max-width:none!important;}'
         + '@media (min-width: 900px){.hb-admin-category-card > .row,.hb-admin-category-card .row:first-of-type{display:grid!important;grid-template-columns:minmax(0,1.5fr) minmax(150px,.9fr);gap:16px;align-items:end;}}'
         + '@media (max-width: 1100px){.hb-admin-workspace{grid-template-columns:1fr;}.hb-admin-col{gap:16px;}#hbSimpleCatList,#hbSimpleItemList{max-height:none;overflow:visible;}}'
-        + '@media (max-width: 720px){.hb-admin-category-row,.hb-admin-item-row{flex-direction:column;align-items:flex-start;}.hb-admin-row-actions{justify-content:flex-start;}}';
+        + '@media (max-width: 720px){.hb-admin-category-row,.hb-admin-item-row{flex-direction:column;align-items:flex-start;}.hb-admin-row-actions{justify-content:flex-start;}.hb-admin-item-top-row{grid-template-columns:1fr;}.hb-admin-item-action-row{justify-content:flex-start;}}';
       document.head.appendChild(style);
     }
     const saveBtn = $id('btnHbSimpleCatSave');
