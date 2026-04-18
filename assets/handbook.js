@@ -293,10 +293,10 @@
     }
     const atts = Array.isArray(it.attachments) ? it.attachments.filter(a => a && a.url) : [];
     const attHtml = atts.length ? `
-      <div>
-        <h4 style="margin:0 0 8px;">Attachments</h4>
+      <div style="display:grid;gap:8px;margin-top:${it.heroImage ? '10px' : '0'};">
+        <div class="tiny muted" style="font-weight:700;">Files</div>
         <div class="hb-attachments">
-          ${atts.map(a => `<a class="hb-attach" href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.label || 'Open')}</a>`).join('')}
+          ${atts.map(a => `<a class="hb-attach" href="${esc(a.url)}" target="_blank" rel="noopener">📎 ${esc(a.label || 'Open')}</a>`).join('')}
         </div>
       </div>
     ` : '';
@@ -313,8 +313,8 @@
         </div>
       </div>
       ${hero}
-      <div class="hb-body">${body}</div>
       ${attHtml}
+      <div class="hb-body">${body}</div>
     `;
   }
 
