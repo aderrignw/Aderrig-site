@@ -1,7 +1,6 @@
 /* =========================================================
    Aderrig NW — Handbook
-   Resident-facing handbook in a reading-pane layout.
-   Reads combined handbook data from anw_handbook.
+   Resident-facing handbook with category sidebar and inline items.
    ========================================================= */
 (function(){
   'use strict';
@@ -26,7 +25,7 @@
     const ao = Number(a?.order ?? 9999);
     const bo = Number(b?.order ?? 9999);
     if(ao !== bo) return ao - bo;
-    return String(a?.title||'').localeCompare(String(b?.title||''));
+    return String(a?.title || '').localeCompare(String(b?.title || ''));
   }
 
   function getHashParams(){
@@ -144,13 +143,13 @@
       const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
       if(!res.ok) throw new Error('store load failed');
       const data = unwrapStorePayload(await res.json());
-      try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){ }
+      try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){}
       if(data && typeof data === 'object') return data;
-    }catch(_){ }
+    }catch(_){}
 
-    try{ if(typeof window.anwInitStore === 'function') await window.anwInitStore(); }catch(_){ }
-    try{ if(typeof window.anwFetchKey === 'function') return unwrapStorePayload(await window.anwFetchKey(key)); }catch(_){ }
-    try{ if(typeof window.anwLoad === 'function') return unwrapStorePayload(await window.anwLoad(key, fallback)); }catch(_){ }
+    try{ if(typeof window.anwInitStore === 'function') await window.anwInitStore(); }catch(_){}
+    try{ if(typeof window.anwFetchKey === 'function') return unwrapStorePayload(await window.anwFetchKey(key)); }catch(_){}
+    try{ if(typeof window.anwLoad === 'function') return unwrapStorePayload(await window.anwLoad(key, fallback)); }catch(_){}
     try{
       const raw = localStorage.getItem(key);
       return raw ? unwrapStorePayload(JSON.parse(raw)) : fallback;
@@ -171,7 +170,7 @@
   function markRead(itemId){
     const map = getReadMap();
     map[itemId] = Date.now();
-    try{ localStorage.setItem(KEY_READ, JSON.stringify(map)); }catch(_){ }
+    try{ localStorage.setItem(KEY_READ, JSON.stringify(map)); }catch(_){}
   }
 
   function isRead(itemId){
@@ -240,108 +239,83 @@
     });
   }
 
+  function buildExpandedSection(item){
+    const hasHero = !!item.heroImage;
+    const atts = Array.isArray(item.attachments) ? item.attachments.filter(a => a && a.url) : [];
+    const heroDownload = hasHero ? `<a class="hb-download" href="${esc(item.heroImage)}" download>Download image</a>` : '';
+    const heroHtml = hasHero ? `
+      <div class="hb-image-col">
+        <button class="hb-image-btn" type="button" data-hb-image="${esc(item.heroImage)}" aria-label="Open image">
+          <img class="hb-hero-image" src="${esc(item.heroImage)}" alt="${esc(item.title)}">
+        </button>
+        ${heroDownload}
+      </div>
+    ` : '';
+    const filesHtml = atts.length ? `
+      <div class="hb-file-col">
+        <div class="hb-file-title">Attachments</div>
+        <div class="hb-files">
+          ${atts.map(a => `<a class="hb-download" href="${esc(a.url)}" target="_blank" rel="noopener" download>${esc(a.label || 'Download file')}</a>`).join('')}
+        </div>
+      </div>
+    ` : '';
+    const bodyHtml = item.type === 'link'
+      ? (item.url ? `<p><a class="hb-download" href="${esc(item.url)}" target="_blank" rel="noopener">${esc(item.linkLabel || 'Open link')}</a></p>` : '<p>No link has been set yet.</p>')
+      : (item.contentHtml || '');
+
+    const bodySection = bodyHtml ? `<div class="hb-body">${bodyHtml}</div>` : '';
+    const mediaSection = (hasHero || atts.length) ? `<div class="hb-media-row">${heroHtml}${filesHtml}</div>` : '';
+    return `<div class="hb-expanded" id="hbExpanded-${esc(item.id)}" hidden>${bodySection}${mediaSection}</div>`;
+  }
+
   function renderFeed(hb, selectedCat, selectedItemId){
     const wrap = $('#hbFeed');
-    if(!wrap) return [];
+    if(!wrap) return;
     const items = publishedItems(hb, selectedCat);
     if(!items.length){
       wrap.innerHTML = '<div class="hb-empty">No updates are available in this category yet.</div>';
-      return items;
+      return;
     }
+
     wrap.innerHTML = items.map(it => {
-      const active = selectedItemId === it.id;
       const read = isRead(it.id);
       const cat = hb.categories.find(c => c.id === it.categoryId);
       const meta = [cat?.title || it.categoryTitle || 'General', formatDate(it.updatedAt)].filter(Boolean).join(' • ');
+      const expanded = selectedItemId === it.id;
       return `
-        <article class="hb-item-card${active ? ' is-active' : ''}${read ? ' is-read' : ''}" data-item="${esc(it.id)}">
-          <div class="hb-item-top">
+        <article class="hb-item-card${read ? ' is-read' : ''}">
+          <div class="hb-item-head">
             <div class="hb-item-main">
               <h4 class="hb-item-title">${esc(it.title)}</h4>
               <div class="hb-item-meta-line">${esc(meta)}</div>
-              ${it.summary ? `<p class="hb-item-sub">${esc(it.summary)}</p>` : ''}
+              ${it.summary ? `<p class="hb-item-summary">${esc(it.summary)}</p>` : ''}
             </div>
-            ${read ? '<span class="hb-pill">Read</span>' : '<span class="hb-pill is-unread">New</span>'}
+            <div class="hb-actions">
+              ${read ? '<span class="hb-pill">Read</span>' : '<span class="hb-pill is-unread">New</span>'}
+              ${(it.heroImage || (Array.isArray(it.attachments) && it.attachments.length) || it.contentHtml || (it.type === 'link' && it.url)) ? `<button type="button" class="hb-more-btn" data-view-more="${esc(it.id)}">View more</button>` : ''}
+            </div>
           </div>
+          ${expanded ? buildExpandedSection(it) : ''}
         </article>
       `;
     }).join('');
 
-    wrap.querySelectorAll('[data-item]').forEach(card => {
-      card.addEventListener('click', () => {
-        const itemId = card.getAttribute('data-item') || '';
+    wrap.querySelectorAll('[data-view-more]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const itemId = btn.getAttribute('data-view-more') || '';
+        markRead(itemId);
         setHash({ cat: selectedCat, item: itemId });
       });
     });
-    return items;
-  }
 
-  function renderReader(hb, selectedCat, selectedItemId, items){
-    const panel = $('#hbReader');
-    if(!panel) return;
-    const it = items.find(x => x.id === selectedItemId) || items[0];
-    if(!it){
-      panel.innerHTML = '<div class="hb-empty">Choose a category to see updates here.</div>';
-      return;
-    }
-    if(selectedItemId !== it.id){
-      setHash({ cat: selectedCat, item: it.id });
-      return;
-    }
-
-    markRead(it.id);
-    let body = '';
-    if(it.type === 'link'){
-      body = it.url
-        ? `<p><a class="hb-link" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.linkLabel || 'Open link')}</a></p>`
-        : '<p>No link has been set yet.</p>';
-    } else {
-      const summaryBlock = it.summary ? `<p class="hb-reader-summary">${esc(it.summary)}</p>` : '';
-      body = summaryBlock + (it.contentHtml || '');
-      if(!body.trim()) body = '<p>No content has been added yet.</p>';
-    }
-
-    const hasHero = !!it.heroImage;
-    const atts = Array.isArray(it.attachments) ? it.attachments.filter(a => a && a.url) : [];
-    const hasMedia = hasHero || atts.length;
-    const mediaButton = hasMedia ? `<button type="button" class="hb-more-btn" id="hbViewMoreBtn" aria-expanded="false">View more</button>` : '';
-    const hero = hasHero ? `<button class="hb-image-btn" type="button" data-hb-image="${esc(it.heroImage)}" aria-label="Open image"><img class="hb-hero-image" src="${esc(it.heroImage)}" alt="${esc(it.title)}"></button>` : '';
-    const attHtml = atts.length ? `
-      <div class="hb-attachments-wrap">
-        <div class="hb-attachments-title">Files</div>
-        <div class="hb-attachments">
-          ${atts.map(a => `<a class="hb-attach" href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.label || 'Open')}</a>`).join('')}
-        </div>
-      </div>
-    ` : '';
-    const mediaHtml = hasMedia ? `
-      <div class="hb-media-panel" id="hbMediaPanel" hidden>
-        ${hero}
-        ${attHtml}
-      </div>
-    ` : '';
-
-    panel.innerHTML = `
-      <div class="hb-reader-simple">
-        <div class="hb-body">${body}</div>
-        ${mediaButton}
-        ${mediaHtml}
-      </div>
-    `;
-
-    const viewMoreBtn = document.getElementById('hbViewMoreBtn');
-    const mediaPanel = document.getElementById('hbMediaPanel');
-    if(viewMoreBtn && mediaPanel){
-      viewMoreBtn.addEventListener('click', () => {
-        mediaPanel.removeAttribute('hidden');
-        viewMoreBtn.setAttribute('aria-expanded', 'true');
-        viewMoreBtn.style.display = 'none';
+    wrap.querySelectorAll('[data-hb-image]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openImageLightbox(btn.getAttribute('data-hb-image') || '', btn.closest('.hb-item-card')?.querySelector('.hb-item-title')?.textContent || 'Image');
       });
-    }
-
-    panel.querySelectorAll('[data-hb-image]').forEach(btn => {
-      btn.addEventListener('click', () => openImageLightbox(btn.getAttribute('data-hb-image') || '', it.title || 'Image'));
     });
+
+    const expanded = selectedItemId ? document.getElementById('hbExpanded-' + selectedItemId) : null;
+    if(expanded) expanded.removeAttribute('hidden');
   }
 
   function openImageLightbox(src, title){
@@ -373,8 +347,7 @@
       const { cat, item } = getHashParams();
       const selectedCat = cat || '';
       renderCategories(hb, selectedCat);
-      const items = renderFeed(hb, selectedCat, item || '');
-      renderReader(hb, selectedCat, item || '', items);
+      renderFeed(hb, selectedCat, item || '');
       document.documentElement.classList.remove('anw-preauth-hide');
     }
 
@@ -386,10 +359,8 @@
     main().catch(() => {
       const categories = document.getElementById('hbCategories');
       const feed = document.getElementById('hbFeed');
-      const reader = document.getElementById('hbReader');
       if(categories) categories.innerHTML = '<div class="hb-empty">Unable to load handbook.</div>';
-      if(feed) feed.innerHTML = '';
-      if(reader) reader.innerHTML = '<div class="hb-empty">Please try again in a moment.</div>';
+      if(feed) feed.innerHTML = '<div class="hb-empty">Please try again in a moment.</div>';
       document.documentElement.classList.remove('anw-preauth-hide');
     });
   });
