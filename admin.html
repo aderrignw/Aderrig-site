@@ -903,7 +903,7 @@
         ? window.netlifyIdentity.currentUser()
         : null;
       document.querySelectorAll('nav.nav a[href="login.html"]').forEach(a => {
-        a.textContent = u ? 'My Account' : 'Login / Register';
+        a.textContent = 'Login / Register';
       });
     }catch(_){}
   }
