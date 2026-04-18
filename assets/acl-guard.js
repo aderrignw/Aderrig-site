@@ -469,7 +469,7 @@
           navLink("report.html", "Report", "page:report"),
           navLink("alerts.html", "Community Alerts", "page:alerts"),
           navLink("projects.html", "Community Projects", "page:projects"),
-          navLink("login.html", loggedIn ? "My Account" : "Login / Register", "page:login", "nav-login"),
+          navLink("login.html", "Login / Register", "page:login", "nav-login"),
           navLink("dashboard.html", "Dashboard", "page:dashboard"),
           navLink("household.html", "Household", "page:household"),
           navLink("admin.html", "Admin", "page:admin"),
