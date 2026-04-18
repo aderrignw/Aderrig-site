@@ -2777,15 +2777,14 @@
         + '.hb-admin-workspace{display:grid;grid-template-columns:minmax(320px,420px) minmax(0,1fr);gap:18px;align-items:start;}'
         + '.hb-admin-col{display:grid;gap:18px;align-items:start;}'
         + '.hb-admin-compact-card{margin:0!important;}'
-        + '.hb-admin-category-card,.hb-admin-saved-card,.hb-admin-editor-card{padding:18px!important;border-radius:20px!important;}'
+        + '.hb-admin-category-card,.hb-admin-saved-card,.hb-admin-editor-card{padding:18px!important;border-radius:20px!important;}.hb-admin-category-card{align-content:start;}'
         + '.hb-admin-category-row,.hb-admin-item-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;border:1px solid rgba(17,24,39,.08);margin-bottom:10px;background:#fff;}'
         + '.hb-admin-category-row.is-selected{border-color:rgba(33,91,63,.32);box-shadow:0 0 0 1px rgba(33,91,63,.10) inset;background:#f8fcf9;}'
         + '.hb-admin-category-meta,.hb-admin-item-meta{min-width:0;flex:1 1 auto;}'
         + '.hb-admin-category-title,.hb-admin-item-title{font-weight:800;line-height:1.35;word-break:break-word;}'
         + '.hb-admin-category-sub,.hb-admin-item-sub{margin-top:4px;color:#6a7b90;line-height:1.45;word-break:break-word;}'
         + '.hb-admin-row-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}'
-        + '#hbSimpleCatList{display:none!important;}'
-        + '#hbSimpleItemList{display:grid;gap:0;max-height:360px;overflow:auto;padding-right:2px;}'
+        + '#hbSimpleCatList,#hbSimpleItemList{display:grid;gap:0;max-height:360px;overflow:auto;padding-right:2px;}#hbSimpleCatList{margin-top:6px;}#hbSimpleCatActive{display:none!important;}'
         + '#hbSimpleCatMsg,#hbSimpleItemMsg{min-height:18px;margin:6px 0 0;}'
         + '#btnHbSimpleCatSave{display:none!important;}'
         + '#hbSimpleCurrentCategory{display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border-radius:999px;background:#edf5ef;color:#215b3f;font-weight:800;}'
@@ -2805,8 +2804,20 @@
     const saveBtn = $id('btnHbSimpleCatSave');
     if(saveBtn){ saveBtn.title = 'No longer required for selecting a category'; }
     const categoryMsg = $id('hbSimpleCatMsg');
-    if(categoryMsg && !categoryMsg.textContent.trim()){
-      categoryMsg.textContent = 'Choose a category above. New items will use it automatically.';
+    if(categoryMsg){
+      categoryMsg.textContent = '';
+      categoryMsg.style.display = 'none';
+    }
+    const catActive = $id('hbSimpleCatActive');
+    if(catActive){
+      const activeWrap = catActive.closest('label') || catActive.parentElement;
+      if(activeWrap) activeWrap.style.display = 'none';
+    }
+    const catClearBtn = $id('btnHbSimpleCatClear');
+    if(catClearBtn) catClearBtn.style.display = 'none';
+    const categoryList = $id('hbSimpleCatList');
+    if(categoryList){
+      categoryList.style.marginTop = '8px';
     }
     const itemMsg = $id('hbSimpleItemMsg');
     if(itemMsg && !itemMsg.textContent.trim()) itemMsg.textContent = 'Add the item details and save.';
