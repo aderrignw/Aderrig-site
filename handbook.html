@@ -8,44 +8,37 @@
   <link rel="stylesheet" href="assets/style.css" />
   <style>
     html.anw-preauth-hide body{visibility:hidden}
-    :root{--hb-border:rgba(17,24,39,.08);--hb-text:#23344b;--hb-muted:#6a7b90;--hb-soft:#f8fafc;--hb-accent:#edf5ef}
+    :root{--hb-border:rgba(17,24,39,.08);--hb-text:#23344b;--hb-muted:#6a7b90;--hb-soft:#f8fafc}
     .hb-shell{display:grid;gap:18px}
-    .hb-hero,.hb-card,.hb-panel{background:#fff;border:1px solid var(--hb-border);border-radius:24px;box-shadow:var(--shadow)}
+    .hb-card,.hb-hero,.hb-panel{background:#fff;border:1px solid var(--hb-border);border-radius:24px;box-shadow:var(--shadow)}
     .hb-hero,.hb-card,.hb-panel{padding:28px}
-    .hb-badge{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:var(--hb-accent);color:var(--brand);font-weight:800;font-size:.88rem}
+    .hb-badge{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:#edf5ef;color:var(--brand);font-weight:800;font-size:.88rem}
+    .hb-hero-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
+    .hb-hero-copy{max-width:900px}
     .hb-hero h2{margin:14px 0 10px;color:var(--hb-text);font-size:2rem}
     .hb-hero p,.hb-card p,.hb-panel p{margin:0;color:var(--hb-muted);line-height:1.6}
-    .hb-helper{margin-top:18px;padding:14px 16px;border:1px dashed var(--hb-border);border-radius:16px;background:#fbfcfd;color:var(--hb-muted);line-height:1.6}
-
-    .hb-workspace{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start}
-    .hb-side,.hb-main{min-width:0}
-    .hb-side-title,.hb-section-title{margin:0 0 14px;color:var(--hb-text);font-size:1.05rem;font-weight:900}
-    .hb-category-list{display:grid;gap:10px}
-    .hb-cat-btn{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--hb-border);border-radius:16px;background:#fff;color:var(--hb-text);font:inherit;font-weight:700;cursor:pointer;text-align:left}
-    .hb-cat-btn:hover{background:#fbfcfd}
-    .hb-cat-btn.is-active{background:var(--hb-accent);border-color:rgba(33,91,63,.18)}
-    .hb-cat-name{display:flex;align-items:center;gap:10px;min-width:0}
-    .hb-cat-name span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .hb-count{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 8px;border-radius:999px;background:#f7f9fb;color:#55677c;font-size:.8rem;font-weight:800}
-
-    .hb-main{display:grid;gap:18px}
-    .hb-feed{display:grid;gap:12px}
-    .hb-item-card{display:grid;gap:10px;padding:16px 18px;border:1px solid var(--hb-border);border-radius:18px;background:#fff;cursor:pointer}
-    .hb-item-card:hover{background:#fbfcfd}
-    .hb-item-card.is-active{border-color:rgba(33,91,63,.18);box-shadow:0 0 0 2px rgba(33,91,63,.06)}
-    .hb-item-card.is-read .hb-item-title{font-weight:800}
-    .hb-item-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
-    .hb-item-title{margin:0;color:var(--hb-text);font-size:1.03rem;font-weight:900;line-height:1.35;word-break:break-word;overflow-wrap:anywhere}
-    .hb-item-sub{margin:0;color:var(--hb-muted);font-size:.95rem;line-height:1.55;word-break:break-word;overflow-wrap:anywhere}
-    .hb-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .hb-pill{display:inline-flex;align-items:center;min-height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--hb-border);background:#fff;color:#55677c;font-size:.8rem;font-weight:800}
-    .hb-pill.is-unread{background:var(--hb-accent);color:var(--brand)}
-    .hb-dot{width:8px;height:8px;border-radius:999px;background:#2f8f62;flex:0 0 auto}
-
-    .hb-reader{display:grid;gap:16px;padding:22px;border:1px solid var(--hb-border);border-radius:22px;background:#fcfdfd}
-    .hb-reader-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
-    .hb-reader-title{margin:0;color:var(--hb-text);font-size:1.35rem;line-height:1.3}
-    .hb-reader-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .hb-intro-note{margin-top:14px;display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:10px 14px;border:1px solid var(--hb-border);border-radius:16px;background:var(--hb-soft);color:var(--hb-text);font-weight:700}
+    .hb-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+    .hb-cat-card{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;text-decoration:none;color:inherit;min-height:100%}
+    .hb-cat-card:hover{text-decoration:none;background:#fbfcfd}
+    .hb-cat-icon{width:52px;height:52px;border-radius:16px;border:1px solid var(--hb-border);display:flex;align-items:center;justify-content:center;background:#fff;font-size:1.45rem;flex:0 0 auto}
+    .hb-cat-title{font-weight:900;color:var(--hb-text);line-height:1.3;word-break:break-word}
+    .hb-cat-sub{margin-top:4px;color:var(--hb-muted);font-size:.9rem;line-height:1.45;word-break:break-word}
+    .hb-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+    .hb-link{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:14px;border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);text-decoration:none;font-weight:800}
+    .hb-link:hover{text-decoration:none;background:#fbfcfd}
+    .hb-item-list{display:grid;gap:10px;margin-top:14px}
+    .hb-item{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:14px 16px;border:1px solid var(--hb-border);border-radius:18px;background:#fff;text-decoration:none;color:inherit}
+    .hb-item:hover{text-decoration:none;background:#fbfcfd}
+    .hb-item-title{font-weight:900;color:var(--hb-text);word-break:break-word}
+    .hb-item-sub{margin-top:4px;color:var(--hb-muted);font-size:.92rem;line-height:1.45;word-break:break-word}
+    .hb-item-right{display:flex;align-items:center;gap:10px;white-space:nowrap;flex-shrink:0}
+    .hb-status{display:inline-flex;align-items:center;min-height:30px;padding:0 10px;border-radius:999px;background:var(--hb-soft);border:1px solid var(--hb-border);color:#55677c;font-size:.8rem;font-weight:800}
+    .hb-item-shell{display:grid;gap:16px}
+    .hb-item-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+    .hb-breadcrumb{font-size:.85rem;color:var(--hb-muted)}
+    .hb-breadcrumb a{text-decoration:none}
+    .hb-breadcrumb a:hover{text-decoration:underline}
     .hb-body{color:#324458;line-height:1.72;font-size:.98rem}
     .hb-body p:first-child{margin-top:0}
     .hb-body h3,.hb-body h4{color:#215b3f;margin:18px 0 8px}
@@ -53,16 +46,14 @@
     .hb-body li{margin:6px 0}
     .hb-hero-image{width:100%;display:block;border-radius:18px;border:1px solid var(--hb-border)}
     .hb-attachments{display:flex;gap:10px;flex-wrap:wrap}
-    .hb-link,.hb-attach{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);text-decoration:none;font-weight:700;font-size:.92rem}
-    .hb-link:hover,.hb-attach:hover{text-decoration:none;background:#fbfcfd}
-    .hb-empty{padding:18px;border:1px dashed var(--hb-border);border-radius:16px;color:var(--hb-muted);background:#fbfcfd;line-height:1.6;white-space:normal;overflow-wrap:anywhere}
-
-    @media (max-width:980px){
-      .hb-workspace{grid-template-columns:1fr}
-    }
-    @media (max-width:720px){
-      .hb-hero,.hb-card,.hb-panel{padding:20px}
-      .hb-reader{padding:18px}
+    .hb-attach{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:14px;border:1px solid var(--hb-border);background:#fff;color:var(--hb-text);text-decoration:none;font-weight:800}
+    .hb-empty{padding:18px 20px;border:1px dashed var(--hb-border);border-radius:16px;color:var(--hb-muted);background:#fbfcfd;line-height:1.6}
+    @media (max-width:980px){.hb-grid{grid-template-columns:1fr}}
+    @media (max-width:700px){
+      .hb-hero,.hb-card,.hb-panel{padding:22px}
+      .hb-hero h2{font-size:1.7rem}
+      .hb-item{flex-direction:column}
+      .hb-item-right{width:100%;justify-content:flex-start;white-space:normal}
     }
   </style>
 </head>
@@ -87,29 +78,32 @@
 
 <main class="container">
   <div class="hb-shell">
-    <section class="hb-hero">
-      <span class="hb-badge">Handbook</span>
-      <h2>Resident handbook</h2>
-      <p>Policies, services, maps and useful local information in one place. New updates appear in order of arrival and open directly below for easy reading.</p>
-      <div class="hb-helper">Choose a category on the left or keep “All updates” selected to read everything in arrival order.</div>
-    </section>
-
-    <section class="hb-card">
-      <div class="hb-workspace">
-        <aside class="hb-side">
-          <h3 class="hb-side-title">Categories</h3>
-          <div id="hbCategories" class="hb-category-list"></div>
-        </aside>
-
-        <div class="hb-main">
-          <div>
-            <h3 class="hb-section-title">Updates</h3>
-            <div id="hbFeed" class="hb-feed"></div>
-          </div>
-          <section id="hbReader" class="hb-reader"></section>
+    <section class="hb-hero" id="hbHome">
+      <div class="hb-hero-grid">
+        <div class="hb-hero-copy">
+          <span class="hb-badge">Handbook</span>
+          <h2>Resident handbook</h2>
+          <p>Policies, services, maps and useful local information in one place. Choose a category to open the topic you need.</p>
+          <div class="hb-intro-note">Published categories and items from the admin panel will appear here.</div>
         </div>
       </div>
+      <div id="hbCategories" class="hb-grid" style="margin-top:18px;"></div>
     </section>
+
+    <section id="hbCategory" class="hb-card" style="display:none;">
+      <div class="hb-toolbar">
+        <div>
+          <h3 id="hbCatTitle" style="margin:0;">Category</h3>
+          <p class="tiny muted" style="margin-top:6px;">Open the item you need.</p>
+        </div>
+        <div>
+          <a class="hb-link" href="#" id="hbBackToCategories">Back to categories</a>
+        </div>
+      </div>
+      <div id="hbItems" class="hb-item-list"></div>
+    </section>
+
+    <section id="hbItem" class="hb-panel" style="display:none;"></section>
   </div>
 </main>
 
