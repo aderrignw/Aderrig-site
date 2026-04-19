@@ -1,21 +1,13 @@
+
 import { getStore } from "@netlify/blobs";
+import { withSecurity, jsonResponse, normalizeEmail } from "./aderrig-security-layer.mjs";
 
 function json(data, status = 200, extraHeaders = {}) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      ...extraHeaders,
-    },
-  });
+  return jsonResponse(data, status, extraHeaders);
 }
 
 function normalizeEircode(value) {
   return String(value || "").toUpperCase().replace(/\s+/g, "").trim();
-}
-
-function normalizeEmail(value) {
-  return String(value || "").toLowerCase().trim();
 }
 
 function normalizeText(value) {
@@ -152,6 +144,81 @@ const STREET_NETWORK = {
     cluster: [],
   },
 };
+
+const ADMIN_ONLY_KEYS = new Set([
+  "acl",
+  "anw_backup_settings",
+  "anw_audit_log",
+  "anw_backups_index",
+  "anw_help_center_admin",
+  "anw_project_recipients",
+  "anw_project_monitoring",
+  "anw_alert_contacts",
+  "anw_tasks",
+]);
+
+const AUTHENTICATED_READ_KEYS = new Set([
+  "anw_notices",
+  "anw_projects",
+  "anw_alerts",
+  "anw_handbook_help_content",
+  "anw_help_center_public",
+  "anw_parking_registry_v1",
+]);
+
+const USER_SUBMISSION_KEYS = new Set([
+  "anw_incidents",
+  "anw_parking_registry_v1",
+  "anw_election_interest",
+  "anw_expressions_of_interest",
+  "anw_volunteer_interest",
+]);
+
+const SELF_SERVICE_ALLOWED_FIELDS = new Set([
+  "name",
+  "phone",
+  "mobile",
+  "avatar",
+  "avatarUrl",
+  "profileImage",
+  "photoUrl",
+  "residentType",
+  "vol_roles",
+  "volunteerRoles",
+  "volunteer_roles",
+  "parkingSpace",
+  "vehicleReg",
+  "vehicleRegs",
+  "vehicles",
+  "preferences",
+  "language",
+  "updatedAt",
+  "modifiedAt",
+]);
+
+function isBackupKey(key) {
+  return /^anw_backup_/i.test(String(key || "")) || /^backup_/i.test(String(key || ""));
+}
+
+function isAdminManagedKey(key) {
+  return ADMIN_ONLY_KEYS.has(key) || isBackupKey(key);
+}
+
+function mayReadKey(key, ctx) {
+  if (key === "nearby_support") return true;
+  if (key === "anw_users") return !!ctx.user;
+  if (isAdminManagedKey(key)) return !!ctx.isAdmin;
+  if (AUTHENTICATED_READ_KEYS.has(key)) return !!ctx.user;
+  return !!ctx.isAdmin;
+}
+
+function mayWriteKey(key, ctx) {
+  if (key === "nearby_support") return true;
+  if (key === "anw_users") return !!ctx.user;
+  if (isAdminManagedKey(key)) return !!ctx.isAdmin;
+  if (USER_SUBMISSION_KEYS.has(key)) return !!ctx.user;
+  return !!ctx.isAdmin;
+}
 
 function extractStreetFromAddress(value) {
   const raw = String(value || "").trim();
@@ -312,308 +379,319 @@ async function readJsonBody(req) {
   }
 }
 
-function getBearerToken(req) {
-  try {
-    const auth = req.headers.get("authorization") || "";
-    const match = auth.match(/^Bearer\s+(.+)$/i);
-    return match ? match[1].trim() : "";
-  } catch {
-    return "";
-  }
+function getUserEmails(user) {
+  return [
+    normalizeEmail(user?.email),
+    normalizeEmail(user?.userEmail),
+    normalizeEmail(user?.loginEmail),
+    normalizeEmail(user?.netlifyEmail),
+  ].filter(Boolean);
 }
 
-function decodeBase64Url(value) {
-  const input = String(value || "");
-  if (!input) return "";
-  const normalized = input.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = normalized + "=".repeat((4 - (normalized.length % 4 || 4)) % 4);
-  return Buffer.from(padded, "base64").toString("utf8");
+function getUserReg(user) {
+  return String(
+    user?.regId ||
+    user?.regNo ||
+    user?.registrationNo ||
+    ""
+  ).trim().toUpperCase();
 }
 
-function parseJwtPayload(token) {
-  try {
-    const parts = String(token || "").split(".");
-    if (parts.length < 2) return null;
-    const payloadJson = decodeBase64Url(parts[1]);
-    return JSON.parse(payloadJson);
-  } catch {
-    return null;
-  }
+function getUserTimestamp(user) {
+  return Date.parse(
+    user?.updatedAt || user?.modifiedAt || user?.createdAt || 0
+  ) || 0;
 }
 
-function parseNetlifyCustomContext(context) {
-  try {
-    const raw = context?.clientContext?.custom?.netlify;
-    if (!raw) return null;
+function sameUser(a, b) {
+  const regA = getUserReg(a);
+  const regB = getUserReg(b);
+  if (regA && regB && regA === regB) return true;
 
-    if (typeof raw === "object") {
-      return raw;
-    }
+  const emailsA = getUserEmails(a);
+  const emailsB = getUserEmails(b);
+  if (!emailsA.length || !emailsB.length) return false;
 
-    const decoded = Buffer.from(String(raw), "base64").toString("utf8");
-    return JSON.parse(decoded);
-  } catch {
-    return null;
-  }
+  return emailsA.some((email) => emailsB.includes(email));
 }
 
-function readCurrentUser(context, req) {
-  const directUser = context?.clientContext?.user;
-  if (directUser?.email) {
-    return directUser;
+function mergeUserRecords(existing, incoming) {
+  const existingTs = getUserTimestamp(existing);
+  const incomingTs = getUserTimestamp(incoming);
+
+  if (incomingTs >= existingTs) {
+    return { ...existing, ...incoming };
   }
 
-  const netlifyContext = parseNetlifyCustomContext(context);
-  if (netlifyContext?.user?.email) {
-    return netlifyContext.user;
-  }
-  if (netlifyContext?.identity?.email) {
-    return netlifyContext.identity;
-  }
+  return { ...incoming, ...existing };
+}
 
-  const token = getBearerToken(req);
-  if (token) {
-    const payload = parseJwtPayload(token);
-    if (payload?.email) {
-      return payload;
+function sanitizeSelfServiceUserUpdate(incoming, currentEmail) {
+  const source = incoming && typeof incoming === "object" ? incoming : {};
+  const clean = {};
+
+  for (const [key, value] of Object.entries(source)) {
+    if (SELF_SERVICE_ALLOWED_FIELDS.has(key)) {
+      clean[key] = value;
     }
   }
 
-  return null;
+  clean.email = currentEmail || source.email || "";
+  clean.updatedAt = source.updatedAt || new Date().toISOString();
+
+  return clean;
 }
 
-export default async (req, context) => {
-  const url = new URL(req.url);
-  const key = url.searchParams.get("key");
+function filterUsersForSelf(users, currentEmail) {
+  return (Array.isArray(users) ? users : []).filter((u) => {
+    return getUserEmails(u).includes(currentEmail);
+  });
+}
 
-  if (!key) {
-    return json({ error: "missing key" }, 400);
-  }
-
-  const store = getStore("aderrig-nw");
-
+async function getJsonArray(store, key) {
   try {
-    if (key === "nearby_support" && req.method === "POST") {
-      const body = await readJsonBody(req);
-      const eircode = normalizeEircode(body?.eircode || body?.eir || "");
-      const bodyAddress = String(body?.address || body?.street || "");
+    const raw = await store.get(key);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
-      if (!eircode && !bodyAddress) {
-        return json({ error: "missing eircode or address" }, 400);
-      }
+export default withSecurity(
+  {
+    methods: ["GET", "POST"],
+    maxBodyBytes: 1024 * 1024 * 2,
+  },
+  async (ctx, req) => {
+    const url = new URL(req.url);
+    const key = url.searchParams.get("key");
 
-      let users = [];
-      try {
-        const rawUsers = await store.get("anw_users");
-        const parsedUsers = rawUsers ? JSON.parse(rawUsers) : [];
-        users = Array.isArray(parsedUsers) ? parsedUsers : [];
-      } catch {
-        users = [];
-      }
+    if (!key) {
+      return json({ error: "missing key" }, 400);
+    }
 
-      const activeUsers = users.filter((u) => isActiveStatus(u?.status));
+    const store = getStore("aderrig-nw");
 
-      const currentUser = readCurrentUser(context, req);
-      const currentUserEmail = normalizeEmail(currentUser?.email || currentUser?.user_metadata?.email || "");
-      const currentUserRecord = currentUserEmail
-        ? users.find((u) => normalizeEmail(u?.email) === currentUserEmail) || null
-        : null;
+    try {
+      if (key === "nearby_support" && req.method === "POST") {
+        const body = await readJsonBody(req);
+        const eircode = normalizeEircode(body?.eircode || body?.eir || "");
+        const bodyAddress = String(body?.address || body?.street || "");
 
-      const targetStreet = resolveTargetStreet({
-        users: activeUsers,
-        eircode,
-        currentUserRecord,
-        bodyAddress,
-      });
+        if (!eircode && !bodyAddress) {
+          return json({ error: "missing eircode or address" }, 400);
+        }
 
-      const matched = activeUsers
-        .map((user) => {
-          const street = getUserStreet(user);
-          const streetScore = scoreByStreet(targetStreet, street);
-          const eirScore = streetScore > 0 ? 0 : scoreByEircode(eircode, user);
-          const score = streetScore || eirScore;
-          const relation = streetScore >= 300
-            ? "same_street"
-            : streetScore >= 200
-              ? "connected_street"
-              : streetScore >= 120
-                ? "cluster_street"
-                : eirScore > 0
-                  ? "eircode_fallback"
-                  : "";
+        const users = await getJsonArray(store, "anw_users");
+        const activeUsers = users.filter((u) => isActiveStatus(u?.status));
 
-          return { user, score, relation };
-        })
-        .filter((item) => item.score > 0);
+        const currentUserEmail = normalizeEmail(ctx?.user?.email || ctx?.user?.user_metadata?.email || "");
+        const currentUserRecord = currentUserEmail
+          ? users.find((u) => normalizeEmail(u?.email) === currentUserEmail) || null
+          : null;
 
-      const coordinators = uniqBy(
-        sortPeople(
-          matched
-            .filter((item) => isCoordinatorUser(item.user))
-            .map((item) => buildCoordinatorItem(item.user, item.relation, item.score))
-        ).slice(0, 5),
-        (item) => normalizeEmail(item.email || item.name)
-      );
+        const targetStreet = resolveTargetStreet({
+          users: activeUsers,
+          eircode,
+          currentUserRecord,
+          bodyAddress,
+        });
 
-      const volunteers = uniqBy(
-        sortPeople(
-          matched
-            .filter((item) => isVolunteerUser(item.user))
-            .map((item) => buildVolunteerItem(item.user, item.relation, item.score))
-        ).slice(0, 8),
-        (item) => normalizeEmail(item.email || item.name)
-      );
+        const matched = activeUsers
+          .map((user) => {
+            const street = getUserStreet(user);
+            const streetScore = scoreByStreet(targetStreet, street);
+            const eirScore = streetScore > 0 ? 0 : scoreByEircode(eircode, user);
+            const score = streetScore || eirScore;
+            const relation = streetScore >= 300
+              ? "same_street"
+              : streetScore >= 200
+                ? "connected_street"
+                : streetScore >= 120
+                  ? "cluster_street"
+                  : eirScore > 0
+                    ? "eircode_fallback"
+                    : "";
 
-      const counts = {
-        coordinators: coordinators.length,
-        volunteers: volunteers.length,
-      };
+            return { user, score, relation };
+          })
+          .filter((item) => item.score > 0);
 
-      if (!currentUserEmail) {
+        const coordinators = uniqBy(
+          sortPeople(
+            matched
+              .filter((item) => isCoordinatorUser(item.user))
+              .map((item) => buildCoordinatorItem(item.user, item.relation, item.score))
+          ).slice(0, 5),
+          (item) => normalizeEmail(item.email || item.name)
+        );
+
+        const volunteers = uniqBy(
+          sortPeople(
+            matched
+              .filter((item) => isVolunteerUser(item.user))
+              .map((item) => buildVolunteerItem(item.user, item.relation, item.score))
+          ).slice(0, 8),
+          (item) => normalizeEmail(item.email || item.name)
+        );
+
+        const counts = {
+          coordinators: coordinators.length,
+          volunteers: volunteers.length,
+        };
+
+        if (!currentUserEmail) {
+          return json({
+            ok: true,
+            mode: "public",
+            eircode,
+            targetStreet: targetStreet || null,
+            counts,
+          });
+        }
+
+        const canSeeDetails = !!currentUserRecord && isActiveStatus(currentUserRecord?.status);
+        if (!canSeeDetails) {
+          return json({
+            ok: true,
+            mode: "counts",
+            eircode,
+            targetStreet: targetStreet || null,
+            counts,
+          });
+        }
+
         return json({
           ok: true,
-          mode: "public",
+          mode: "details",
           eircode,
           targetStreet: targetStreet || null,
           counts,
+          coordinators,
+          volunteers,
+          streetNetworkVersion: "aderrig-v2-full-street-map",
         });
       }
 
-      const canSeeDetails = !!currentUserRecord && isActiveStatus(currentUserRecord?.status);
-      if (!canSeeDetails) {
-        return json({
-          ok: true,
-          mode: "counts",
-          eircode,
-          targetStreet: targetStreet || null,
-          counts,
-        });
-      }
-
-      return json({
-        ok: true,
-        mode: "details",
-        eircode,
-        targetStreet: targetStreet || null,
-        counts,
-        coordinators,
-        volunteers,
-        streetNetworkVersion: "aderrig-v2-full-street-map",
-      });
-    }
-
-    if (req.method === "GET") {
-      let raw = await store.get(key);
-
-      if (!raw) {
-        raw = "[]";
-        await store.set(key, raw);
-      }
-
-      try {
-        const data = JSON.parse(raw);
-        return json(data);
-      } catch {
-        await store.set(key, "[]");
-        return json([]);
-      }
-    }
-
-    if (req.method === "POST") {
-      const body = await req.text();
-
-      let parsed;
-      try {
-        parsed = JSON.parse(body);
-      } catch {
-        return json({ error: "invalid json" }, 400);
-      }
-
-      if (key !== "anw_users") {
-        await store.set(key, JSON.stringify(parsed));
-        return json({ ok: true });
-      }
-
-      if (!Array.isArray(parsed)) {
-        return json({ error: "anw_users must be an array" }, 400);
-      }
-
-      let current = [];
-      try {
-        const rawCurrent = await store.get(key);
-        const parsedCurrent = rawCurrent ? JSON.parse(rawCurrent) : [];
-        current = Array.isArray(parsedCurrent) ? parsedCurrent : [];
-      } catch {
-        current = [];
-      }
-
-      function getUserEmails(user) {
-        return [
-          normalizeEmail(user?.email),
-          normalizeEmail(user?.userEmail),
-          normalizeEmail(user?.loginEmail),
-          normalizeEmail(user?.netlifyEmail),
-        ].filter(Boolean);
-      }
-
-      function getUserReg(user) {
-        return String(
-          user?.regId ||
-          user?.regNo ||
-          user?.registrationNo ||
-          ""
-        ).trim().toUpperCase();
-      }
-
-      function getUserTimestamp(user) {
-        return Date.parse(
-          user?.updatedAt || user?.modifiedAt || user?.createdAt || 0
-        ) || 0;
-      }
-
-      function sameUser(a, b) {
-        const regA = getUserReg(a);
-        const regB = getUserReg(b);
-        if (regA && regB && regA === regB) return true;
-
-        const emailsA = getUserEmails(a);
-        const emailsB = getUserEmails(b);
-        if (!emailsA.length || !emailsB.length) return false;
-
-        return emailsA.some((email) => emailsB.includes(email));
-      }
-
-      function mergeUserRecords(existing, incoming) {
-        const existingTs = getUserTimestamp(existing);
-        const incomingTs = getUserTimestamp(incoming);
-
-        if (incomingTs >= existingTs) {
-          return { ...existing, ...incoming };
+      if (req.method === "GET") {
+        if (!mayReadKey(key, ctx)) {
+          return json({ error: ctx.user ? "forbidden" : "unauthorized" }, ctx.user ? 403 : 401);
         }
 
-        return { ...incoming, ...existing };
-      }
+        let raw = await store.get(key);
 
-      const merged = Array.isArray(current) ? current.slice() : [];
+        if (!raw) {
+          raw = "[]";
+          await store.set(key, raw);
+        }
 
-      for (const incomingUser of parsed) {
-        if (!incomingUser || typeof incomingUser !== "object") continue;
+        try {
+          const data = JSON.parse(raw);
 
-        const idx = merged.findIndex((existingUser) => sameUser(existingUser, incomingUser));
+          if (key === "anw_users" && !ctx.isAdmin) {
+            const currentEmail = normalizeEmail(ctx?.user?.email);
+            return json(filterUsersForSelf(data, currentEmail));
+          }
 
-        if (idx === -1) {
-          merged.push(incomingUser);
-        } else {
-          merged[idx] = mergeUserRecords(merged[idx], incomingUser);
+          return json(data);
+        } catch {
+          await store.set(key, "[]");
+          return json(key === "anw_users" && !ctx.isAdmin ? [] : []);
         }
       }
 
-      await store.set(key, JSON.stringify(merged));
-      return json({ ok: true, merged: true });
-    }
+      if (req.method === "POST") {
+        if (!mayWriteKey(key, ctx)) {
+          return json({ error: ctx.user ? "forbidden" : "unauthorized" }, ctx.user ? 403 : 401);
+        }
 
-    return json({ error: "method not allowed" }, 405);
-  } catch (err) {
-    return json({ error: err?.message || "server error" }, 500);
+        const bodyText = await req.text();
+
+        let parsed;
+        try {
+          parsed = JSON.parse(bodyText);
+        } catch {
+          return json({ error: "invalid json" }, 400);
+        }
+
+        if (key !== "anw_users") {
+          await store.set(key, JSON.stringify(parsed));
+          return json({ ok: true });
+        }
+
+        let current = [];
+        try {
+          const rawCurrent = await store.get(key);
+          const parsedCurrent = rawCurrent ? JSON.parse(rawCurrent) : [];
+          current = Array.isArray(parsedCurrent) ? parsedCurrent : [];
+        } catch {
+          current = [];
+        }
+
+        if (ctx.isAdmin) {
+          if (!Array.isArray(parsed)) {
+            return json({ error: "anw_users must be an array" }, 400);
+          }
+
+          const merged = Array.isArray(current) ? current.slice() : [];
+
+          for (const incomingUser of parsed) {
+            if (!incomingUser || typeof incomingUser !== "object") continue;
+
+            const idx = merged.findIndex((existingUser) => sameUser(existingUser, incomingUser));
+
+            if (idx === -1) {
+              merged.push(incomingUser);
+            } else {
+              merged[idx] = mergeUserRecords(merged[idx], incomingUser);
+            }
+          }
+
+          await store.set(key, JSON.stringify(merged));
+          return json({ ok: true, merged: true, scope: "admin" });
+        }
+
+        const currentEmail = normalizeEmail(ctx?.user?.email);
+        if (!currentEmail) {
+          return json({ error: "unauthorized" }, 401);
+        }
+
+        const incomingRecords = Array.isArray(parsed) ? parsed : [parsed];
+        const safeRecords = incomingRecords
+          .filter((record) => record && typeof record === "object")
+          .map((record) => sanitizeSelfServiceUserUpdate(record, currentEmail));
+
+        if (!safeRecords.length) {
+          return json({ error: "no valid user payload" }, 400);
+        }
+
+        const merged = Array.isArray(current) ? current.slice() : [];
+
+        for (const incomingUser of safeRecords) {
+          const idx = merged.findIndex((existingUser) => {
+            const emails = getUserEmails(existingUser);
+            return emails.includes(currentEmail);
+          });
+
+          if (idx === -1) {
+            merged.push(incomingUser);
+          } else {
+            merged[idx] = {
+              ...merged[idx],
+              ...incomingUser,
+              email: currentEmail,
+            };
+          }
+        }
+
+        await store.set(key, JSON.stringify(merged));
+        return json({ ok: true, merged: true, scope: "self" });
+      }
+
+      return json({ error: "method not allowed" }, 405);
+    } catch (err) {
+      return json({ error: err?.message || "server error" }, 500);
+    }
   }
-};
+);
