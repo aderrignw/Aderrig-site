@@ -222,22 +222,28 @@
         if(!raw) continue;
         const data = JSON.parse(raw);
         if(data && (Array.isArray(data.items) || Array.isArray(data.topics))) return data.importedPackage || data;
-      }catch(err){ console.warn(err); }
+      }catch(err){ console.warn('[help-center] local package load failed for', key, err); }
     }
-    try{
-      const response = await fetch('help-centre-seed.json', { cache:'no-store' });
-      if(response.ok){
+
+    const sources = [
+      'help-centre-seed.json',
+      'help-centre-seed-enhanced.json',
+      'assets/help-centre-seed.json',
+      'assets/help-centre-seed-enhanced.json',
+      'Help Center/INGLES/assets/help-centre-seed.json'
+    ];
+
+    for (const source of sources){
+      try{
+        const response = await fetch(source, { cache:'no-store' });
+        if(!response.ok) continue;
         const data = await response.json();
         if(data && (Array.isArray(data.items) || Array.isArray(data.topics))) return data;
+      }catch(err){
+        console.warn('[help-center] package fetch failed for', source, err);
       }
-    }catch(err){ console.warn(err); }
-    try{
-      const response = await fetch('Help Center/INGLES/assets/help-centre-seed.json', { cache:'no-store' });
-      if(response.ok){
-        const data = await response.json();
-        if(data && (Array.isArray(data.items) || Array.isArray(data.topics))) return data;
-      }
-    }catch(err){ console.warn(err); }
+    }
+
     return { sections: [], articles: [] };
   }
 
