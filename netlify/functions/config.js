@@ -1,23 +1,20 @@
-export default async () => {
-  // Expose ONLY a browser-safe key (used by Maps JavaScript API in the frontend).
-  // Never expose admin tokens here.
-  // Accept common env var names to avoid mismatches between local/prod.
-  const browserKey =
-    process.env.GOOGLE_MAPS_BROWSER_KEY ||
-    process.env.GOOGLE_MAPS_API_KEY ||
-    process.env.GOOGLE_MAPS_SERVER_KEY ||
-    "";
+import { withSecurity, jsonResponse } from "./aderrig-security-layer.mjs";
 
-  return new Response(
-    JSON.stringify({
-      googleMapsApiKey: browserKey,
-    }),
-    {
-      status: 200,
-      headers: {
-        "content-type": "application/json; charset=utf-8",
-        "cache-control": "no-store",
+export default withSecurity(
+  {
+    methods: ["GET"],
+    maxBodyBytes: 64 * 1024,
+  },
+  async () => {
+    // Expose ONLY a browser-safe key intended for frontend Maps usage.
+    // Never fall back to server/admin keys here.
+    const browserKey = String(process.env.GOOGLE_MAPS_BROWSER_KEY || "").trim();
+
+    return jsonResponse(
+      {
+        googleMapsApiKey: browserKey,
       },
-    }
-  );
-};
+      200
+    );
+  }
+);
