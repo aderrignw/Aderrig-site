@@ -58,7 +58,7 @@ body.page-dashboard .footer-left,body.page-dashboard .footer-center{width:100%}
 body.page-dashboard .footer-center{text-align:left}
 @media (min-width:768px){body.page-dashboard .footer-row{flex-direction:row;justify-content:space-between;align-items:center}body.page-dashboard .footer-left,body.page-dashboard .footer-center{width:auto}body.page-dashboard .footer-center{flex:1 1 auto;text-align:center;padding-right:120px}}
 footer.site-footer{position:relative}footer.site-footer .page-access{position:static;color:green}
-.parking-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.parking-card{border:1px solid var(--line);border-radius:18px;padding:18px;background:#fbfcf8}.parking-span-2{grid-column:1/-1}.parking-card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.parking-owner-banner{margin:12px 0 18px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fbfcf8;color:#43513d;font-size:.92rem}.parking-stack{display:grid;gap:14px}.parking-label{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:#7b8675;margin-bottom:6px}.parking-value{font-weight:600;color:#223025}.parking-info-row{display:grid;gap:14px}.parking-3cols{grid-template-columns:1.6fr 1fr 1fr;align-items:end}.parking-space-badge{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:16px;border:1px solid var(--line);background:#fff;font-weight:800;min-width:120px}.parking-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:#fff4d8;color:#8b6b22;border:1px solid rgba(139,107,34,.18);font-size:.82rem;font-weight:700}.parking-chip.single{background:#e7eef8;color:#4b6487;border-color:rgba(75,100,135,.14)}.parking-chip.none{background:#fde9e7;color:#9a4a3f;border-color:rgba(154,74,63,.16)}.parking-chip.muted{background:#eef1e7;color:#4b5a43;border-color:rgba(75,90,67,.12)}.parking-note{padding:11px 13px;border:1px solid var(--line);border-radius:14px;background:#fff;color:#42503d}.parking-actions-row{display:flex;gap:10px;flex-wrap:wrap}.parking-check{display:flex;align-items:flex-start;gap:10px;margin:0}.parking-empty-box{padding:16px;border:1px dashed var(--line);border-radius:16px;background:#fff;color:#6a7b90}.parking-table-wrap{overflow:auto}.parking-table-wrap table th,.parking-table-wrap table td{vertical-align:middle}.parking-delete-btn{white-space:nowrap}.parking-head{margin-bottom:8px}@media (max-width:980px){.parking-grid{grid-template-columns:1fr}.parking-span-2{grid-column:auto}.parking-3cols{grid-template-columns:1fr}}
+.parking-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.parking-card{border:1px solid var(--line);border-radius:18px;padding:18px;background:#fbfcf8}.parking-span-2{grid-column:1/-1}.parking-card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.parking-owner-banner{margin:12px 0 18px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fbfcf8;color:#43513d;font-size:.92rem}.parking-stack{display:grid;gap:14px}.parking-label{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:#7b8675;margin-bottom:6px}.parking-value{font-weight:600;color:#223025}.parking-info-row{display:grid;gap:14px}.parking-3cols{grid-template-columns:1.6fr 1fr 1fr;align-items:end}.parking-space-badge{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:16px;border:1px solid var(--line);background:#fff;font-weight:800;min-width:120px}.parking-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:#fff4d8;color:#8b6b22;border:1px solid rgba(139,107,34,.18);font-size:.82rem;font-weight:700}.parking-chip.single{background:#e7eef8;color:#4b6487;border-color:rgba(75,100,135,.14)}.parking-chip.none{background:#fde9e7;color:#9a4a3f;border-color:rgba(154,74,63,.16)}.parking-chip.muted{background:#eef1e7;color:#4b5a43;border-color:rgba(75,90,67,.12)}.parking-note{padding:11px 13px;border:1px solid var(--line);border-radius:14px;background:#fff;color:#42503d}.parking-actions-row{display:flex;gap:10px;flex-wrap:wrap}.parking-quick-flag{margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}.parking-check{display:flex;align-items:flex-start;gap:10px;margin:0}.parking-empty-box{padding:16px;border:1px dashed var(--line);border-radius:16px;background:#fff;color:#6a7b90}.parking-table-wrap{overflow:auto}.parking-table-wrap table th,.parking-table-wrap table td{vertical-align:middle}.parking-delete-btn{white-space:nowrap}.parking-head{margin-bottom:8px}@media (max-width:980px){.parking-grid{grid-template-columns:1fr}.parking-span-2{grid-column:auto}.parking-3cols{grid-template-columns:1fr}}
 
 </style>
 </head>
@@ -141,7 +141,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 <div id="pfVolRolesWrap"></div>
 </div>
 <p class="tiny muted" id="pfMsg" style="margin-top:0.5rem;"></p>
-<div class="actions profile-actions"><a class="btn-line" href="handbook.html" id="btnHelpCenter">Help Center</a><button class="btn-line" id="btnLogout" type="button">Logout</button><button class="btn" id="btnSaveProfile" type="button">Save</button></div>
+<div class="actions profile-actions"><button class="btn-line" id="btnLogout" type="button">Logout</button><button class="btn" id="btnSaveProfile" type="button">Save</button></div>
 </div>
 </section>
 
@@ -187,9 +187,20 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   </section>
 
   <section class="parking-card parking-span-2" id="pkVehiclesCard">
-    <div class="parking-card-head"><h4 style="margin:0;">Registered Vehicles</h4><button class="btn small" id="btnParkingAddVehicle" type="button">+ Add Vehicle</button></div>
+    <div class="parking-card-head">
+      <h4 style="margin:0;">Registered Vehicles</h4>
+      <div class="parking-actions-row">
+        <button class="btn-line small" id="btnParkingDeclareNoVehicle" type="button">No Vehicle</button>
+        <button class="btn small" id="btnParkingAddVehicle" type="button">+ Add Vehicle</button>
+      </div>
+    </div>
+    <div class="parking-quick-flag" id="pkQuickDeclareWrap" style="display:none;">
+      <div style="font-weight:700; margin-bottom:6px;">No vehicle for this numbered space</div>
+      <div class="tiny muted" style="margin-bottom:10px;">Use this when the resident has a valid numbered parking space available but currently has no own vehicle to register. This declaration is saved for admin reporting.</div>
+      <button class="btn-line small" id="btnParkingDeclareNoVehicleInline" type="button">Declare no vehicle</button>
+    </div>
     <div class="parking-empty-box" id="pkEmptyState">No vehicles registered yet.</div>
-    <div class="parking-empty-box" id="pkNoVehicleState" style="display:none;">This resident has declared that the parking space is currently empty.</div>
+    <div class="parking-empty-box" id="pkNoVehicleState" style="display:none;">This resident has declared that there is currently no vehicle assigned to this numbered parking space. This status is saved for admin reporting.</div>
     <div class="parking-table-wrap" id="pkVehiclesWrap" style="display:none;">
       <table style="width:100%;"><thead><tr><th>License Plate</th><th>Vehicle Type</th><th>Brand</th><th>Model</th><th>Colour</th><th>Fuel Type</th><th>Status</th><th>Action</th></tr></thead><tbody id="pkVehiclesBody"></tbody></table>
     </div>
@@ -1617,6 +1628,9 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     ownerConfirmed: document.getElementById('pkOwnerConfirmed'),
     policyMeta: document.getElementById('pkPolicyMeta'),
     addVehicle: document.getElementById('btnParkingAddVehicle'),
+    declareNoVehicle: document.getElementById('btnParkingDeclareNoVehicle'),
+    declareNoVehicleInline: document.getElementById('btnParkingDeclareNoVehicleInline'),
+    quickDeclareWrap: document.getElementById('pkQuickDeclareWrap'),
     form: document.getElementById('pkVehicleForm'),
     emptyState: document.getElementById('pkEmptyState'),
     noVehicleState: document.getElementById('pkNoVehicleState'),
@@ -1626,6 +1640,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     save: document.getElementById('btnParkingSave'),
     cancel: document.getElementById('btnParkingCancel'),
     noVehicleNow: document.getElementById('pkNoVehicleNow'),
+    saveHelp: document.getElementById('pkSaveHelp'),
     plate: document.getElementById('pkPlate'), type: document.getElementById('pkVehicleType'), brand: document.getElementById('pkBrand'), model: document.getElementById('pkModel'), colour: document.getElementById('pkColour'), fuel: document.getElementById('pkFuel')
   };
   let pkPolicyOpened = false;
@@ -1637,6 +1652,18 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   function pkResidentKey(profile){ const email = (window.anwNormEmail ? window.anwNormEmail(profile?.email || profile?.userEmail || currentEmail || '') : String(profile?.email || currentEmail || '').toLowerCase()); const eir = String(profile?.eircode || '').toUpperCase().replace(/\s+/g,''); return email || ('eir:' + eir) || 'resident'; }
   function pkFindAllocation(profile){ const registry = pkRegistry(); const allocations = Array.isArray(registry.allocations) ? registry.allocations : []; const pe = String(profile?.eircode || '').toUpperCase().replace(/\s+/g,''); const pa = pkNormalize(profile?.address || ''); const pn = pkNormalize(fullNameFromUser ? fullNameFromUser(profile) : (profile?.name || '')); return allocations.find(a => String(a.eircode || '').toUpperCase().replace(/\s+/g,'') === pe && pe) || allocations.find(a => pkNormalize(a.address) === pa && pa) || allocations.find(a => pkNormalize(a.residentName) === pn && pn) || null; }
   function pkSubmission(profile){ const reg = pkRegistry(); const key = pkResidentKey(profile); return reg.submissions && reg.submissions[key] ? reg.submissions[key] : null; }
+  function pkToggleVehicleInputs(){
+    const noVehicle = !!(pkEls.noVehicleNow && pkEls.noVehicleNow.checked);
+    ['plate','type','brand','model','colour','fuel'].forEach((k) => {
+      const input = pkEls[k];
+      const field = input ? input.closest('.field') : null;
+      if(field) field.style.display = noVehicle ? 'none' : '';
+    });
+    if(pkEls.save) pkEls.save.textContent = noVehicle ? 'Save Empty-Space Declaration' : 'Save Registration';
+    if(pkEls.saveHelp) pkEls.saveHelp.textContent = noVehicle
+      ? 'This will save that the resident has a numbered parking space available but currently has no vehicle. Admin reporting can use this information.'
+      : 'You can register more than one vehicle in the same submission after accepting the policy.';
+  }
   function pkRender(){
     const profile = currentProfile || {};
     const allocation = pkFindAllocation(profile);
@@ -1659,28 +1686,40 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     if(policy && policy.dataUrl){ pkEls.downloadPolicy.href = policy.dataUrl; pkEls.downloadPolicy.download = policy.name || 'parking-policy.pdf'; pkEls.downloadPolicy.style.pointerEvents='auto'; pkEls.downloadPolicy.style.opacity='1'; } else { pkEls.downloadPolicy.href='#'; pkEls.downloadPolicy.style.pointerEvents='none'; pkEls.downloadPolicy.style.opacity='.5'; }
     pkPolicyOpened = false; pkEls.policyAccepted.checked = false; pkEls.ownerConfirmed.checked = !!submission.ownerConfirmed; pkEls.policyAccepted.disabled = true; pkEls.ownerConfirmed.disabled = true; pkEls.policyMeta.textContent = policy && policy.dataUrl ? 'Open the policy first to enable acceptance.' : 'Parking policy file not available yet.';
     const vehicles = Array.isArray(submission.vehicles) ? submission.vehicles.filter(v => !v.deletedAt) : [];
+    const canDeclareNoVehicle = !noParking && !vehicles.length && !submission.noVehicleDeclared;
+    if(pkEls.quickDeclareWrap) pkEls.quickDeclareWrap.style.display = canDeclareNoVehicle ? 'block' : 'none';
+    if(pkEls.declareNoVehicle) pkEls.declareNoVehicle.style.display = canDeclareNoVehicle ? 'inline-flex' : 'none';
+    if(pkEls.addVehicle){
+      pkEls.addVehicle.textContent = submission.noVehicleDeclared ? 'I now have a vehicle' : '+ Add Vehicle';
+      pkEls.addVehicle.style.display = noParking ? 'none' : 'inline-flex';
+    }
     pkEls.body.innerHTML = vehicles.map((v, idx) => `<tr><td>${esc(v.plate||'')}</td><td>${esc(v.type||'')}</td><td>${esc(v.brand||'')}</td><td>${esc(v.model||'')}</td><td>${esc(v.colour||'')}</td><td>${esc(v.fuel||'')}</td><td>${esc(v.status||'Active')}</td><td><button type="button" class="btn-line small parking-delete-btn" data-pk-del="${idx}">Delete</button></td></tr>`).join('');
     pkEls.wrap.style.display = vehicles.length ? 'block' : 'none';
     pkEls.emptyState.style.display = (!vehicles.length && !submission.noVehicleDeclared) ? 'block' : 'none';
     pkEls.noVehicleState.style.display = submission.noVehicleDeclared ? 'block' : 'none';
     Array.from(pkEls.body.querySelectorAll('[data-pk-del]')).forEach(btn => btn.addEventListener('click', () => pkDeleteVehicle(Number(btn.getAttribute('data-pk-del')))));
-    pkEls.form.style.display = 'none'; pkEls.noVehicleNow.checked = false; ['plate','type','brand','model','colour','fuel'].forEach(k=>{ if(pkEls[k]) pkEls[k].value=''; });
+    pkEls.form.style.display = 'none'; pkEls.noVehicleNow.checked = false; ['plate','type','brand','model','colour','fuel'].forEach(k=>{ if(pkEls[k]) pkEls[k].value=''; }); pkToggleVehicleInputs();
   }
-  function pkOpenForm(){ pkEls.form.style.display = 'block'; pkMessage(''); }
-  function pkDeleteVehicle(idx){ const profile = currentProfile || {}; const key = pkResidentKey(profile); const reg = pkRegistry(); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] }; const vehicle = (sub.vehicles || [])[idx]; if(!vehicle) return; vehicle.deletedAt = new Date().toISOString(); vehicle.deletedBy = 'resident'; sub.deletedVehicles = Array.isArray(sub.deletedVehicles) ? sub.deletedVehicles : []; sub.deletedVehicles.push(Object.assign({}, vehicle)); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); }
+  function pkOpenForm(forceNoVehicle){
+    pkEls.form.style.display = 'block';
+    pkEls.noVehicleNow.checked = !!forceNoVehicle;
+    pkToggleVehicleInputs();
+    pkMessage('');
+  }
+  function pkDeleteVehicle(idx){ const profile = currentProfile || {}; const key = pkResidentKey(profile); const reg = pkRegistry(); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] }; const vehicle = (sub.vehicles || [])[idx]; if(!vehicle) return; vehicle.deletedAt = new Date().toISOString(); vehicle.deletedBy = 'resident'; sub.deletedVehicles = Array.isArray(sub.deletedVehicles) ? sub.deletedVehicles : []; sub.deletedVehicles.push(Object.assign({}, vehicle)); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); }\n  function pkQuickDeclareNoVehicle(){ pkOpenForm(true); pkSaveSubmission(); }
   function pkSaveSubmission(){
     const profile = currentProfile || {}; const allocation = pkFindAllocation(profile); if(!allocation || allocation.hasParking === false){ pkMessage('No parking allocation is available for this residence.','error'); return; }
     const policy = (window.anwParkingLoadPolicy && window.anwParkingLoadPolicy()) || pkRegistry().policy || null;
     if(!(policy && policy.dataUrl && pkPolicyOpened && pkEls.policyAccepted.checked && pkEls.ownerConfirmed.checked)){ pkMessage('Please open the policy and confirm acceptance and ownership before saving.','error'); return; }
     const reg = pkRegistry(); const key = pkResidentKey(profile); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] };
-    sub.residentEmail = currentEmail || profile.email || ''; sub.residentName = (typeof fullNameFromUser === 'function' ? fullNameFromUser(profile) : profile.name || 'Resident'); sub.eircode = profile.eircode || ''; sub.address = profile.address || ''; sub.spaceDisplay = allocation.spaceDisplay || allocation.spaceNo || ''; sub.type = allocation.type || 'Single'; sub.ownerConfirmed = true; sub.lastUpdatedAt = new Date().toISOString();
+    sub.residentEmail = currentEmail || profile.email || ''; sub.residentName = (typeof fullNameFromUser === 'function' ? fullNameFromUser(profile) : profile.name || 'Resident'); sub.eircode = profile.eircode || ''; sub.address = profile.address || ''; sub.spaceDisplay = allocation.spaceDisplay || allocation.spaceNo || ''; sub.type = allocation.type || 'Single'; sub.ownerConfirmed = true; sub.lastUpdatedAt = new Date().toISOString(); sub.hasAllocatedParking = true; sub.parkingSpaceAvailable = true;
     const now = new Date().toISOString();
-    if(pkEls.noVehicleNow.checked){ sub.noVehicleDeclared = true; sub.noVehicleDeclaredAt = now; sub.vehicles = Array.isArray(sub.vehicles) ? sub.vehicles.filter(v => !v.deletedAt) : []; sub.acceptanceHistory = Array.isArray(sub.acceptanceHistory) ? sub.acceptanceHistory : []; sub.acceptanceHistory.push({ acceptedAt: now, mode:'no_vehicle_declared', vehicleCount:0 }); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); pkMessage('Empty-space declaration saved.'); return; }
+    if(pkEls.noVehicleNow.checked){ sub.noVehicleDeclared = true; sub.noVehicleDeclaredAt = now; sub.parkingOccupancyStatus = 'no_vehicle_declared'; sub.adminReportFlag = 'resident_has_allocated_space_but_no_vehicle'; sub.vehicles = Array.isArray(sub.vehicles) ? sub.vehicles.filter(v => !v.deletedAt) : []; sub.acceptanceHistory = Array.isArray(sub.acceptanceHistory) ? sub.acceptanceHistory : []; sub.acceptanceHistory.push({ acceptedAt: now, mode:'no_vehicle_declared', vehicleCount:0, allocatedSpace: sub.spaceDisplay || '' }); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); pkMessage('Empty-space declaration saved.'); return; }
     const vehicle = { plate: pkEls.plate.value.trim().toUpperCase(), type: pkEls.type.value.trim(), brand: pkEls.brand.value.trim(), model: pkEls.model.value.trim(), colour: pkEls.colour.value.trim(), fuel: pkEls.fuel.value.trim(), status:'Active', createdAt: now };
     if(!vehicle.plate){ pkMessage('License plate is required.','error'); return; }
-    sub.noVehicleDeclared = false; sub.noVehicleDeclaredAt = ''; sub.vehicles = Array.isArray(sub.vehicles) ? sub.vehicles : []; sub.vehicles.push(vehicle); sub.acceptanceHistory = Array.isArray(sub.acceptanceHistory) ? sub.acceptanceHistory : []; sub.acceptanceHistory.push({ acceptedAt: now, mode:'vehicle_registration', vehicleCount:1, vehicles:[vehicle.plate] }); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); pkMessage('Vehicle registration saved.'); }
+    sub.noVehicleDeclared = false; sub.noVehicleDeclaredAt = ''; sub.parkingOccupancyStatus = 'vehicle_registered'; sub.adminReportFlag = ''; sub.vehicles = Array.isArray(sub.vehicles) ? sub.vehicles : []; sub.vehicles.push(vehicle); sub.acceptanceHistory = Array.isArray(sub.acceptanceHistory) ? sub.acceptanceHistory : []; sub.acceptanceHistory.push({ acceptedAt: now, mode:'vehicle_registration', vehicleCount:1, vehicles:[vehicle.plate] }); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); pkMessage('Vehicle registration saved.'); }
   pkEls.openPolicy?.addEventListener('click', ()=>{ const policy = (window.anwParkingLoadPolicy && window.anwParkingLoadPolicy()) || pkRegistry().policy || null; if(!(policy && policy.dataUrl)){ pkMessage('Parking policy file is not available yet.','error'); return; } window.open(policy.dataUrl, '_blank'); pkPolicyOpened = true; pkEls.policyAccepted.disabled = false; pkEls.ownerConfirmed.disabled = false; pkEls.policyMeta.textContent = 'Acceptance will be recorded with date and time for this submission.'; });
-  pkEls.addVehicle?.addEventListener('click', pkOpenForm); pkEls.cancel?.addEventListener('click', ()=>{ pkEls.form.style.display='none'; pkMessage(''); }); pkEls.save?.addEventListener('click', pkSaveSubmission);
+  pkEls.addVehicle?.addEventListener('click', ()=>pkOpenForm(false)); pkEls.declareNoVehicle?.addEventListener('click', pkQuickDeclareNoVehicle); pkEls.declareNoVehicleInline?.addEventListener('click', pkQuickDeclareNoVehicle); pkEls.noVehicleNow?.addEventListener('change', pkToggleVehicleInputs); pkEls.cancel?.addEventListener('click', ()=>{ pkEls.form.style.display='none'; pkEls.noVehicleNow.checked = false; pkToggleVehicleInputs(); pkMessage(''); }); pkEls.save?.addEventListener('click', pkSaveSubmission);
   const oldRefresh = window.anwRefreshDashboardProfile;
   window.anwRefreshDashboardProfile = async function(){ if(typeof oldRefresh === 'function') await oldRefresh(); try{ pkRender(); }catch(err){ console.error(err); } };
   try{ pkRender(); }catch(err){ console.error(err); }
@@ -1803,6 +1842,9 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     ownerConfirmed: document.getElementById('pkOwnerConfirmed'),
     policyMeta: document.getElementById('pkPolicyMeta'),
     addVehicle: document.getElementById('btnParkingAddVehicle'),
+    declareNoVehicle: document.getElementById('btnParkingDeclareNoVehicle'),
+    declareNoVehicleInline: document.getElementById('btnParkingDeclareNoVehicleInline'),
+    quickDeclareWrap: document.getElementById('pkQuickDeclareWrap'),
     form: document.getElementById('pkVehicleForm'),
     emptyState: document.getElementById('pkEmptyState'),
     noVehicleState: document.getElementById('pkNoVehicleState'),
@@ -1812,6 +1854,7 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     save: document.getElementById('btnParkingSave'),
     cancel: document.getElementById('btnParkingCancel'),
     noVehicleNow: document.getElementById('pkNoVehicleNow'),
+    saveHelp: document.getElementById('pkSaveHelp'),
     plate: document.getElementById('pkPlate'), type: document.getElementById('pkVehicleType'), brand: document.getElementById('pkBrand'), model: document.getElementById('pkModel'), colour: document.getElementById('pkColour'), fuel: document.getElementById('pkFuel')
   };
   let pkPolicyOpened = false;
@@ -1823,6 +1866,18 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
   function pkResidentKey(profile){ const email = (window.anwNormEmail ? window.anwNormEmail(profile?.email || profile?.userEmail || currentEmail || '') : String(profile?.email || currentEmail || '').toLowerCase()); const eir = String(profile?.eircode || '').toUpperCase().replace(/\s+/g,''); return email || ('eir:' + eir) || 'resident'; }
   function pkFindAllocation(profile){ const registry = pkRegistry(); const allocations = Array.isArray(registry.allocations) ? registry.allocations : []; const pe = String(profile?.eircode || '').toUpperCase().replace(/\s+/g,''); const pa = pkNormalize(profile?.address || ''); const pn = pkNormalize(fullNameFromUser ? fullNameFromUser(profile) : (profile?.name || '')); return allocations.find(a => String(a.eircode || '').toUpperCase().replace(/\s+/g,'') === pe && pe) || allocations.find(a => pkNormalize(a.address) === pa && pa) || allocations.find(a => pkNormalize(a.residentName) === pn && pn) || null; }
   function pkSubmission(profile){ const reg = pkRegistry(); const key = pkResidentKey(profile); return reg.submissions && reg.submissions[key] ? reg.submissions[key] : null; }
+  function pkToggleVehicleInputs(){
+    const noVehicle = !!(pkEls.noVehicleNow && pkEls.noVehicleNow.checked);
+    ['plate','type','brand','model','colour','fuel'].forEach((k) => {
+      const input = pkEls[k];
+      const field = input ? input.closest('.field') : null;
+      if(field) field.style.display = noVehicle ? 'none' : '';
+    });
+    if(pkEls.save) pkEls.save.textContent = noVehicle ? 'Save Empty-Space Declaration' : 'Save Registration';
+    if(pkEls.saveHelp) pkEls.saveHelp.textContent = noVehicle
+      ? 'This will save that the resident has a numbered parking space available but currently has no vehicle. Admin reporting can use this information.'
+      : 'You can register more than one vehicle in the same submission after accepting the policy.';
+  }
   function pkRender(){
     const profile = currentProfile || {};
     const allocation = pkFindAllocation(profile);
@@ -1845,28 +1900,40 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     if(policy && policy.dataUrl){ pkEls.downloadPolicy.href = policy.dataUrl; pkEls.downloadPolicy.download = policy.name || 'parking-policy.pdf'; pkEls.downloadPolicy.style.pointerEvents='auto'; pkEls.downloadPolicy.style.opacity='1'; } else { pkEls.downloadPolicy.href='#'; pkEls.downloadPolicy.style.pointerEvents='none'; pkEls.downloadPolicy.style.opacity='.5'; }
     pkPolicyOpened = false; pkEls.policyAccepted.checked = false; pkEls.ownerConfirmed.checked = !!submission.ownerConfirmed; pkEls.policyAccepted.disabled = true; pkEls.ownerConfirmed.disabled = true; pkEls.policyMeta.textContent = policy && policy.dataUrl ? 'Open the policy first to enable acceptance.' : 'Parking policy file not available yet.';
     const vehicles = Array.isArray(submission.vehicles) ? submission.vehicles.filter(v => !v.deletedAt) : [];
+    const canDeclareNoVehicle = !noParking && !vehicles.length && !submission.noVehicleDeclared;
+    if(pkEls.quickDeclareWrap) pkEls.quickDeclareWrap.style.display = canDeclareNoVehicle ? 'block' : 'none';
+    if(pkEls.declareNoVehicle) pkEls.declareNoVehicle.style.display = canDeclareNoVehicle ? 'inline-flex' : 'none';
+    if(pkEls.addVehicle){
+      pkEls.addVehicle.textContent = submission.noVehicleDeclared ? 'I now have a vehicle' : '+ Add Vehicle';
+      pkEls.addVehicle.style.display = noParking ? 'none' : 'inline-flex';
+    }
     pkEls.body.innerHTML = vehicles.map((v, idx) => `<tr><td>${esc(v.plate||'')}</td><td>${esc(v.type||'')}</td><td>${esc(v.brand||'')}</td><td>${esc(v.model||'')}</td><td>${esc(v.colour||'')}</td><td>${esc(v.fuel||'')}</td><td>${esc(v.status||'Active')}</td><td><button type="button" class="btn-line small parking-delete-btn" data-pk-del="${idx}">Delete</button></td></tr>`).join('');
     pkEls.wrap.style.display = vehicles.length ? 'block' : 'none';
     pkEls.emptyState.style.display = (!vehicles.length && !submission.noVehicleDeclared) ? 'block' : 'none';
     pkEls.noVehicleState.style.display = submission.noVehicleDeclared ? 'block' : 'none';
     Array.from(pkEls.body.querySelectorAll('[data-pk-del]')).forEach(btn => btn.addEventListener('click', () => pkDeleteVehicle(Number(btn.getAttribute('data-pk-del')))));
-    pkEls.form.style.display = 'none'; pkEls.noVehicleNow.checked = false; ['plate','type','brand','model','colour','fuel'].forEach(k=>{ if(pkEls[k]) pkEls[k].value=''; });
+    pkEls.form.style.display = 'none'; pkEls.noVehicleNow.checked = false; ['plate','type','brand','model','colour','fuel'].forEach(k=>{ if(pkEls[k]) pkEls[k].value=''; }); pkToggleVehicleInputs();
   }
-  function pkOpenForm(){ pkEls.form.style.display = 'block'; pkMessage(''); }
-  function pkDeleteVehicle(idx){ const profile = currentProfile || {}; const key = pkResidentKey(profile); const reg = pkRegistry(); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] }; const vehicle = (sub.vehicles || [])[idx]; if(!vehicle) return; vehicle.deletedAt = new Date().toISOString(); vehicle.deletedBy = 'resident'; sub.deletedVehicles = Array.isArray(sub.deletedVehicles) ? sub.deletedVehicles : []; sub.deletedVehicles.push(Object.assign({}, vehicle)); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); }
+  function pkOpenForm(forceNoVehicle){
+    pkEls.form.style.display = 'block';
+    pkEls.noVehicleNow.checked = !!forceNoVehicle;
+    pkToggleVehicleInputs();
+    pkMessage('');
+  }
+  function pkDeleteVehicle(idx){ const profile = currentProfile || {}; const key = pkResidentKey(profile); const reg = pkRegistry(); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] }; const vehicle = (sub.vehicles || [])[idx]; if(!vehicle) return; vehicle.deletedAt = new Date().toISOString(); vehicle.deletedBy = 'resident'; sub.deletedVehicles = Array.isArray(sub.deletedVehicles) ? sub.deletedVehicles : []; sub.deletedVehicles.push(Object.assign({}, vehicle)); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); }\n  function pkQuickDeclareNoVehicle(){ pkOpenForm(true); pkSaveSubmission(); }
   function pkSaveSubmission(){
     const profile = currentProfile || {}; const allocation = pkFindAllocation(profile); if(!allocation || allocation.hasParking === false){ pkMessage('No parking allocation is available for this residence.','error'); return; }
     const policy = (window.anwParkingLoadPolicy && window.anwParkingLoadPolicy()) || pkRegistry().policy || null;
     if(!(policy && policy.dataUrl && pkPolicyOpened && pkEls.policyAccepted.checked && pkEls.ownerConfirmed.checked)){ pkMessage('Please open the policy and confirm acceptance and ownership before saving.','error'); return; }
     const reg = pkRegistry(); const key = pkResidentKey(profile); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] };
-    sub.residentEmail = currentEmail || profile.email || ''; sub.residentName = (typeof fullNameFromUser === 'function' ? fullNameFromUser(profile) : profile.name || 'Resident'); sub.eircode = profile.eircode || ''; sub.address = profile.address || ''; sub.spaceDisplay = allocation.spaceDisplay || allocation.spaceNo || ''; sub.type = allocation.type || 'Single'; sub.ownerConfirmed = true; sub.lastUpdatedAt = new Date().toISOString();
+    sub.residentEmail = currentEmail || profile.email || ''; sub.residentName = (typeof fullNameFromUser === 'function' ? fullNameFromUser(profile) : profile.name || 'Resident'); sub.eircode = profile.eircode || ''; sub.address = profile.address || ''; sub.spaceDisplay = allocation.spaceDisplay || allocation.spaceNo || ''; sub.type = allocation.type || 'Single'; sub.ownerConfirmed = true; sub.lastUpdatedAt = new Date().toISOString(); sub.hasAllocatedParking = true; sub.parkingSpaceAvailable = true;
     const now = new Date().toISOString();
-    if(pkEls.noVehicleNow.checked){ sub.noVehicleDeclared = true; sub.noVehicleDeclaredAt = now; sub.vehicles = Array.isArray(sub.vehicles) ? sub.vehicles.filter(v => !v.deletedAt) : []; sub.acceptanceHistory = Array.isArray(sub.acceptanceHistory) ? sub.acceptanceHistory : []; sub.acceptanceHistory.push({ acceptedAt: now, mode:'no_vehicle_declared', vehicleCount:0 }); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); pkMessage('Empty-space declaration saved.'); return; }
+    if(pkEls.noVehicleNow.checked){ sub.noVehicleDeclared = true; sub.noVehicleDeclaredAt = now; sub.parkingOccupancyStatus = 'no_vehicle_declared'; sub.adminReportFlag = 'resident_has_allocated_space_but_no_vehicle'; sub.vehicles = Array.isArray(sub.vehicles) ? sub.vehicles.filter(v => !v.deletedAt) : []; sub.acceptanceHistory = Array.isArray(sub.acceptanceHistory) ? sub.acceptanceHistory : []; sub.acceptanceHistory.push({ acceptedAt: now, mode:'no_vehicle_declared', vehicleCount:0, allocatedSpace: sub.spaceDisplay || '' }); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); pkMessage('Empty-space declaration saved.'); return; }
     const vehicle = { plate: pkEls.plate.value.trim().toUpperCase(), type: pkEls.type.value.trim(), brand: pkEls.brand.value.trim(), model: pkEls.model.value.trim(), colour: pkEls.colour.value.trim(), fuel: pkEls.fuel.value.trim(), status:'Active', createdAt: now };
     if(!vehicle.plate){ pkMessage('License plate is required.','error'); return; }
-    sub.noVehicleDeclared = false; sub.noVehicleDeclaredAt = ''; sub.vehicles = Array.isArray(sub.vehicles) ? sub.vehicles : []; sub.vehicles.push(vehicle); sub.acceptanceHistory = Array.isArray(sub.acceptanceHistory) ? sub.acceptanceHistory : []; sub.acceptanceHistory.push({ acceptedAt: now, mode:'vehicle_registration', vehicleCount:1, vehicles:[vehicle.plate] }); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); pkMessage('Vehicle registration saved.'); }
+    sub.noVehicleDeclared = false; sub.noVehicleDeclaredAt = ''; sub.parkingOccupancyStatus = 'vehicle_registered'; sub.adminReportFlag = ''; sub.vehicles = Array.isArray(sub.vehicles) ? sub.vehicles : []; sub.vehicles.push(vehicle); sub.acceptanceHistory = Array.isArray(sub.acceptanceHistory) ? sub.acceptanceHistory : []; sub.acceptanceHistory.push({ acceptedAt: now, mode:'vehicle_registration', vehicleCount:1, vehicles:[vehicle.plate] }); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); pkMessage('Vehicle registration saved.'); }
   pkEls.openPolicy?.addEventListener('click', ()=>{ const policy = (window.anwParkingLoadPolicy && window.anwParkingLoadPolicy()) || pkRegistry().policy || null; if(!(policy && policy.dataUrl)){ pkMessage('Parking policy file is not available yet.','error'); return; } window.open(policy.dataUrl, '_blank'); pkPolicyOpened = true; pkEls.policyAccepted.disabled = false; pkEls.ownerConfirmed.disabled = false; pkEls.policyMeta.textContent = 'Acceptance will be recorded with date and time for this submission.'; });
-  pkEls.addVehicle?.addEventListener('click', pkOpenForm); pkEls.cancel?.addEventListener('click', ()=>{ pkEls.form.style.display='none'; pkMessage(''); }); pkEls.save?.addEventListener('click', pkSaveSubmission);
+  pkEls.addVehicle?.addEventListener('click', ()=>pkOpenForm(false)); pkEls.declareNoVehicle?.addEventListener('click', pkQuickDeclareNoVehicle); pkEls.declareNoVehicleInline?.addEventListener('click', pkQuickDeclareNoVehicle); pkEls.noVehicleNow?.addEventListener('change', pkToggleVehicleInputs); pkEls.cancel?.addEventListener('click', ()=>{ pkEls.form.style.display='none'; pkEls.noVehicleNow.checked = false; pkToggleVehicleInputs(); pkMessage(''); }); pkEls.save?.addEventListener('click', pkSaveSubmission);
   const oldRefresh = window.anwRefreshDashboardProfile;
   window.anwRefreshDashboardProfile = async function(){ if(typeof oldRefresh === 'function') await oldRefresh(); try{ pkRender(); }catch(err){ console.error(err); } };
   try{ pkRender(); }catch(err){ console.error(err); }
