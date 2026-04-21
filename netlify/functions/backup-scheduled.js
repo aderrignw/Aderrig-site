@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs";
+import { withSecurity, jsonResponse } from "./aderrig-security-layer.mjs";
 
 function getCentralStore(context) {
   const fixed = (process && process.env && process.env.CENTRAL_STORE_NAME)
@@ -29,17 +30,8 @@ async function safeSetJson(store, key, value, options = {}) {
   return store.set(key, JSON.stringify(value), options);
 }
 
-const ADMIN_TOKEN = (process?.env?.ANW_ADMIN_TOKEN || "").trim();
-
-function isAuthorizedByAdminToken(req) {
-  if (!ADMIN_TOKEN) return false;
-  const auth = req.headers.get("authorization") || "";
-  const match = auth.match(/^Bearer\s+(.+)$/i);
-  return !!match && match[1].trim() === ADMIN_TOKEN;
-}
-
 function isScheduledInvocation(req) {
-  const ev = (req.headers.get("x-netlify-event") || "").toLowerCase();
+  const ev = String(req.headers.get("x-netlify-event") || "").toLowerCase();
   return ev === "schedule";
 }
 
@@ -91,7 +83,6 @@ async function purgeExpiredRemovedResidents(store) {
   return { purged, remaining: kept.length };
 }
 
-
 function buildBackupListItem(snapshot, extra = {}) {
   const json = JSON.stringify(snapshot);
   return {
@@ -130,74 +121,72 @@ const DATA_KEYS = [
   "anw_audit_log",
 ];
 
-export default async (req, context) => {
-  if (!isScheduledInvocation(req) && !isAuthorizedByAdminToken(req)) {
-    return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), {
-      status: 401,
-      headers: { "content-type": "application/json; charset=utf-8" },
-    });
-  }
-
-  try {
-    const store = getCentralStore(context);
-
-    const currentSettings = await safeGetJson(store, "anw_backup_settings", null);
-    const settings = currentSettings ?? {
-      enabled: true,
-      schedule: "0 2 * * *",
-      timezone: "UTC",
-    };
-
-    if (!currentSettings) {
-      await safeSetJson(
-        store,
-        "anw_backup_settings",
-        { ...settings, updatedAt: new Date().toISOString() },
-        {
-          metadata: {
-            updatedAt: new Date().toISOString(),
-            reason: "initial-enable-automatic-backup",
-          },
-        }
-      );
+export default withSecurity(
+  {
+    methods: ["GET", "POST"],
+    maxBodyBytes: 256 * 1024,
+  },
+  async (_ctx, req, context) => {
+    if (!isScheduledInvocation(req)) {
+      return jsonResponse({ ok: false, error: "Unauthorized" }, 401);
     }
 
-    if (!settings.enabled) {
-      return new Response(JSON.stringify({ ok: true, skipped: true, reason: "disabled" }), {
-        status: 200,
-        headers: { "content-type": "application/json; charset=utf-8" },
+    try {
+      const store = getCentralStore(context);
+
+      const currentSettings = await safeGetJson(store, "anw_backup_settings", null);
+      const settings = currentSettings ?? {
+        enabled: true,
+        schedule: "0 2 * * *",
+        timezone: "UTC",
+      };
+
+      if (!currentSettings) {
+        await safeSetJson(
+          store,
+          "anw_backup_settings",
+          { ...settings, updatedAt: new Date().toISOString() },
+          {
+            metadata: {
+              updatedAt: new Date().toISOString(),
+              reason: "initial-enable-automatic-backup",
+            },
+          }
+        );
+      }
+
+      if (!settings.enabled) {
+        return jsonResponse({ ok: true, skipped: true, reason: "disabled" }, 200);
+      }
+
+      const purgeResult = await purgeExpiredRemovedResidents(store);
+
+      const createdAt = new Date().toISOString();
+      const id = `BKP-${createdAt.replace(/[:.]/g, "-")}`;
+      const snapshot = { id, createdAt, includes: DATA_KEYS, purgeResult, data: {} };
+
+      for (const key of DATA_KEYS) {
+        snapshot.data[key] = (await safeGetJson(store, key, null)) ?? null;
+      }
+
+      await safeSetJson(store, `anw_backup_${id}`, snapshot, {
+        metadata: { createdAt, kind: "backup" },
       });
+
+      const indexKey = "anw_backups_index";
+      const idx = (await safeGetJson(store, indexKey, { items: [] })) ?? { items: [] };
+      idx.items = Array.isArray(idx.items) ? idx.items : [];
+      idx.items.unshift(buildBackupListItem(snapshot, { purgeResult }));
+      idx.items = idx.items.slice(0, 100);
+      await safeSetJson(store, indexKey, idx, { metadata: { updatedAt: createdAt } });
+
+      return jsonResponse({ ok: true, id, scheduled: true, purgeResult }, 200);
+    } catch (e) {
+      return jsonResponse({ ok: false, error: String(e?.message || e) }, 500);
     }
-
-    const purgeResult = await purgeExpiredRemovedResidents(store);
-
-    const createdAt = new Date().toISOString();
-    const id = `BKP-${createdAt.replace(/[:.]/g, "-")}`;
-    const snapshot = { id, createdAt, includes: DATA_KEYS, purgeResult, data: {} };
-
-    for (const key of DATA_KEYS) {
-      snapshot.data[key] = (await safeGetJson(store, key, null)) ?? null;
-    }
-
-    await safeSetJson(store, `anw_backup_${id}`, snapshot, {
-      metadata: { createdAt, kind: "backup" },
-    });
-
-    const indexKey = "anw_backups_index";
-    const idx = (await safeGetJson(store, indexKey, { items: [] })) ?? { items: [] };
-    idx.items = Array.isArray(idx.items) ? idx.items : [];
-    idx.items.unshift(buildBackupListItem(snapshot, { purgeResult }));
-    idx.items = idx.items.slice(0, 100);
-    await safeSetJson(store, indexKey, idx, { metadata: { updatedAt: createdAt } });
-
-    return new Response(JSON.stringify({ ok: true, id, scheduled: true, purgeResult }), {
-      status: 200,
-      headers: { "content-type": "application/json; charset=utf-8" },
-    });
-  } catch (e) {
-    return new Response(JSON.stringify({ ok: false, error: String(e?.message || e) }), {
-      status: 500,
-      headers: { "content-type": "application/json; charset=utf-8" },
-    });
   }
+);
+
+export const config = {
+  schedule: "0 2 * * *"
 };
