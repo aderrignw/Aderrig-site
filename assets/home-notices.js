@@ -173,7 +173,7 @@
       .mail-board-header,
       .mail-board-row{
         display:grid;
-        grid-template-columns:110px minmax(150px,1fr) minmax(140px,1fr) minmax(160px,1fr) 100px 130px;
+        grid-template-columns:170px 110px minmax(170px,1fr) minmax(180px,1fr) 110px 140px;
         gap:8px;
         align-items:center;
         padding:10px 12px;
@@ -237,6 +237,10 @@
         font-weight:700;
         white-space:nowrap;
         max-width:100%;
+      }
+      .mail-pill--issue{
+        background:#eff6ff;
+        color:#1d4ed8;
       }
 
       .mail-board-actions{
@@ -764,6 +768,16 @@
     return cat === 'misdelivered_mail' || type === 'misdelivered_mail';
   }
 
+  function isMissingExpectedMailNotice(it){
+    const cat = normalizeText(it?.category);
+    const type = normalizeText(it?.meta?.type);
+    return cat === 'missing_expected_mail' || type === 'missing_expected_mail';
+  }
+
+  function isMailIssueNotice(it){
+    return isMisdeliveredMailNotice(it) || isMissingExpectedMailNotice(it);
+  }
+
   function getMailItemType(it){
     return String(it?.meta?.itemType || 'Letter').trim() || 'Letter';
   }
@@ -782,6 +796,41 @@
 
   function getMailRecipientName(it){
     return String(it?.meta?.recipientName || '').trim();
+  }
+
+  function getMailIssueType(it){
+    return isMissingExpectedMailNotice(it) ? 'missing_expected_delivery' : 'received_wrong_delivery';
+  }
+
+  function getMailIssueLabel(it){
+    return isMissingExpectedMailNotice(it) ? 'Missing expected delivery' : 'Received wrong delivery';
+  }
+
+  function getMailIssuePrimaryText(it){
+    if (isMissingExpectedMailNotice(it)) {
+      return String(it?.meta?.expectedSender || '').trim() || 'Expected delivery';
+    }
+    return String(it?.meta?.recipientName || '').trim() || 'Recipient not provided';
+  }
+
+  function getMailIssueAddressText(it){
+    if (isMissingExpectedMailNotice(it)) {
+      const addr = String(it?.meta?.missingAddress || '').trim();
+      const dt = String(it?.meta?.expectedDate || '').trim();
+      return [addr, dt ? `Expected: ${dt}` : ''].filter(Boolean).join(' · ');
+    }
+    return String(it?.meta?.intendedAddress || '').trim() || '';
+  }
+
+  function getMailIssueStatusLabel(it){
+    const status = normalizeText(it?.mailStatus || it?.status || 'not_collected');
+    if (isMissingExpectedMailNotice(it)) {
+      if (status === 'resolved') return 'Resolved';
+      return 'Open';
+    }
+    if (status === 'returned_to_sender') return 'Returned';
+    if (status === 'collected') return 'Collected';
+    return 'Not collected';
   }
 
   function getMailExpiryIso(it){
@@ -821,10 +870,10 @@
         _displayCustomHtml: `
           <section class="mail-board-card" aria-label="Misdelivered mail">
             <div class="mail-board-head">
-              <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
+              <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Mail Delivery Issues</span></h4>
               <button type="button" class="mail-board-add" data-mail-action="add">+ Add</button>
             </div>
-            <p class="mail-board-sub">Report misdelivered mail received at your address.</p>
+            <p class="mail-board-sub">Report either misdelivered mail received at your address or mail you expected but did not receive.</p>
           </section>`
       };
     }
@@ -836,12 +885,12 @@
         _displayCustomHtml: `
           <section class="mail-board-card" aria-label="Misdelivered mail">
             <div class="mail-board-head">
-              <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
+              <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Mail Delivery Issues</span></h4>
               <button type="button" class="mail-board-add" data-mail-action="add">+ Add</button>
             </div>
-            <p class="mail-board-sub">Report misdelivered mail received at your address.</p>
+            <p class="mail-board-sub">Report either misdelivered mail received at your address or mail you expected but did not receive.</p>
             <div class="mail-board-grid">
-              <div class="mail-board-empty">No open misdelivered mail entries right now.</div>
+              <div class="mail-board-empty">No open mail delivery issue entries right now.</div>
             </div>
           </section>`
       };
@@ -849,13 +898,17 @@
 
     const rows = safeItems.map((it) => {
       const type = formatMailType(getMailItemType(it));
-      const recipient = esc(getMailRecipientName(it) || '—');
-      const delivered = esc(it?.meta?.deliveredAddress || '');
-      const correct = esc(it?.meta?.intendedAddress || '');
+      const primary = esc(getMailIssuePrimaryText(it) || '—');
+      const addressText = esc(getMailIssueAddressText(it) || '—');
+      const issueLabel = esc(getMailIssueLabel(it));
       const actions = [];
       if (canManageMail(it)) {
-        actions.push(`<button type="button" class="mail-action-btn" data-mail-action="collected" data-mail-id="${esc(it.id || '')}">Collected</button>`);
-        actions.push(`<button type="button" class="mail-action-btn" data-mail-action="returned" data-mail-id="${esc(it.id || '')}">Returned</button>`);
+        if (isMissingExpectedMailNotice(it)) {
+          actions.push(`<button type="button" class="mail-action-btn" data-mail-action="resolved" data-mail-id="${esc(it.id || '')}">Resolved</button>`);
+        } else {
+          actions.push(`<button type="button" class="mail-action-btn" data-mail-action="collected" data-mail-id="${esc(it.id || '')}">Collected</button>`);
+          actions.push(`<button type="button" class="mail-action-btn" data-mail-action="returned" data-mail-id="${esc(it.id || '')}">Returned</button>`);
+        }
       }
       if (hasOwnerAccess()) {
         actions.push(`<button type="button" class="mail-action-btn mail-action-btn--owner" data-mail-action="remove" data-mail-id="${esc(it.id || '')}">Remove</button>`);
@@ -863,11 +916,11 @@
 
       return `
         <div class="mail-board-row">
+          <div class="mail-board-cell"><span class="mail-pill mail-pill--issue">${issueLabel}</span></div>
           <div class="mail-board-cell"><span class="mail-board-type"><span class="mail-board-type-icon" aria-hidden="true">${getMailIcon(type)}</span><span>${esc(type)}</span></span></div>
-          <div class="mail-board-cell">${recipient}</div>
-          <div class="mail-board-cell">${delivered}</div>
-          <div class="mail-board-cell">${correct}</div>
-          <div class="mail-board-cell mail-board-status"><span class="mail-pill">Not collected</span></div>
+          <div class="mail-board-cell">${primary}</div>
+          <div class="mail-board-cell">${addressText}</div>
+          <div class="mail-board-cell mail-board-status"><span class="mail-pill">${esc(getMailIssueStatusLabel(it))}</span></div>
           <div class="mail-board-cell"><div class="mail-board-actions">${actions.join('')}</div></div>
         </div>`;
     }).join('');
@@ -877,18 +930,18 @@
       createdAt: new Date().toISOString(),
       _sortTs: Date.now() - 1,
       _displayCustomHtml: `
-        <section class="mail-board-card" aria-label="Misdelivered mail">
+        <section class="mail-board-card" aria-label="Mail delivery issues">
           <div class="mail-board-head">
-            <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Misdelivered Mail</span></h4>
+            <h4 class="mail-board-title"><span aria-hidden="true">📬</span><span>Mail Delivery Issues</span></h4>
             <button type="button" class="mail-board-add" data-mail-action="add">+ Add</button>
           </div>
-          <p class="mail-board-sub">Report misdelivered mail received at your address.</p>
+          <p class="mail-board-sub">Report either misdelivered mail received at your address or mail you expected but did not receive.</p>
           <div class="mail-board-grid">
             <div class="mail-board-header">
-              <div>Type</div>
-              <div>Recipient name</div>
-              <div>Delivered at</div>
-              <div>Correct address</div>
+              <div>Issue</div>
+              <div>Item</div>
+              <div>Name / Sender</div>
+              <div>Address / Date</div>
               <div>Status</div>
               <div>Action</div>
             </div>
@@ -931,7 +984,7 @@
       const now = Date.now();
 
       const next = all.map((it) => {
-        if (!isMisdeliveredMailNotice(it)) return it;
+        if (!isMailIssueNotice(it)) return it;
         const status = normalizeText(it?.mailStatus || it?.status || 'not_collected');
         const exp = parseDateValue(getMailExpiryIso(it));
 
@@ -962,8 +1015,8 @@
         <div class="mail-entry-modal" role="dialog" aria-modal="true" aria-labelledby="mailEntryTitle">
           <div class="mail-entry-modal__header">
             <div>
-              <h4 class="mail-entry-modal__title" id="mailEntryTitle">Report misdelivered mail</h4>
-              <p class="mail-entry-modal__subtitle">Add the recipient name, the delivery address, the correct address and the item type.</p>
+              <h4 class="mail-entry-modal__title" id="mailEntryTitle">Report a mail delivery issue</h4>
+              <p class="mail-entry-modal__subtitle">Choose the issue type and complete only the basic details. The notice text is pre-prepared automatically.</p>
             </div>
             <button type="button" class="mail-entry-close" data-mail-modal-close aria-label="Close">×</button>
           </div>
@@ -971,6 +1024,14 @@
           <form id="mailEntryForm">
             <div class="mail-entry-modal__body">
               <div class="mail-entry-form-grid">
+                <div class="mail-entry-field">
+                  <label class="mail-entry-label" for="mailIssueType">Issue type</label>
+                  <select class="mail-entry-select" id="mailIssueType" name="issueType" required>
+                    <option value="received_wrong_delivery">Received wrong delivery</option>
+                    <option value="missing_expected_delivery">Missing expected delivery</option>
+                  </select>
+                </div>
+
                 <div class="mail-entry-field">
                   <label class="mail-entry-label" for="mailItemType">Item type</label>
                   <select class="mail-entry-select" id="mailItemType" name="itemType" required>
@@ -980,23 +1041,38 @@
                   </select>
                 </div>
 
-                <div class="mail-entry-field">
+                <div class="mail-entry-field" data-mail-mode="received">
                   <label class="mail-entry-label" for="mailRecipientName">Recipient name</label>
-                  <input class="mail-entry-input" id="mailRecipientName" name="recipientName" type="text" maxlength="120" placeholder="Name shown on the item" required />
+                  <input class="mail-entry-input" id="mailRecipientName" name="recipientName" type="text" maxlength="120" placeholder="Name shown on the item" />
                 </div>
 
-                <div class="mail-entry-field mail-entry-field--full">
+                <div class="mail-entry-field" data-mail-mode="missing">
+                  <label class="mail-entry-label" for="mailExpectedSender">Expected from</label>
+                  <input class="mail-entry-input" id="mailExpectedSender" name="expectedSender" type="text" maxlength="120" placeholder="Sender or organisation" />
+                </div>
+
+                <div class="mail-entry-field mail-entry-field--full" data-mail-mode="received">
                   <label class="mail-entry-label" for="mailDeliveredAt">Delivered at</label>
-                  <input class="mail-entry-input" id="mailDeliveredAt" name="deliveredAddress" type="text" maxlength="180" placeholder="House where the item was delivered" required />
+                  <input class="mail-entry-input" id="mailDeliveredAt" name="deliveredAddress" type="text" maxlength="180" placeholder="House where the item was delivered" />
                 </div>
 
-                <div class="mail-entry-field mail-entry-field--full">
+                <div class="mail-entry-field mail-entry-field--full" data-mail-mode="received">
                   <label class="mail-entry-label" for="mailCorrectAddress">Correct address</label>
-                  <input class="mail-entry-input" id="mailCorrectAddress" name="intendedAddress" type="text" maxlength="180" placeholder="Address shown on the item" required />
+                  <input class="mail-entry-input" id="mailCorrectAddress" name="intendedAddress" type="text" maxlength="180" placeholder="Address shown on the item" />
+                </div>
+
+                <div class="mail-entry-field mail-entry-field--full" data-mail-mode="missing">
+                  <label class="mail-entry-label" for="mailMissingAddress">Your address / unit</label>
+                  <input class="mail-entry-input" id="mailMissingAddress" name="missingAddress" type="text" maxlength="180" placeholder="Address that should have received the item" />
+                </div>
+
+                <div class="mail-entry-field" data-mail-mode="missing">
+                  <label class="mail-entry-label" for="mailExpectedDate">Expected delivery date</label>
+                  <input class="mail-entry-input" id="mailExpectedDate" name="expectedDate" type="date" />
                 </div>
               </div>
 
-              <p class="mail-entry-help">This notice is visible only to logged-in members and expires automatically after five days.</p>
+              <p class="mail-entry-help" id="mailEntryHelp">This notice is visible only to logged-in members and expires automatically after five days.</p>
               <div class="mail-entry-error" id="mailEntryError"></div>
             </div>
 
@@ -1037,7 +1113,7 @@
           <div class="mail-entry-modal__header">
             <div>
               <h4 class="mail-entry-modal__title" id="mailLoginPromptTitle">Login required</h4>
-              <p class="mail-entry-modal__subtitle">Please log in or register to add a misdelivered mail entry.</p>
+              <p class="mail-entry-modal__subtitle">Please log in or register to add a mail delivery issue.</p>
             </div>
             <button type="button" class="mail-entry-close" data-mail-login-close aria-label="Close">×</button>
           </div>
@@ -1079,16 +1155,51 @@
     overlay.setAttribute('aria-hidden', 'true');
   }
 
+  function setMailEntryMode(mode){
+    const issueType = String(mode || 'received_wrong_delivery');
+    const isMissing = issueType === 'missing_expected_delivery';
+    document.querySelectorAll('[data-mail-mode="received"]').forEach((el) => { el.style.display = isMissing ? 'none' : ''; });
+    document.querySelectorAll('[data-mail-mode="missing"]').forEach((el) => { el.style.display = isMissing ? '' : 'none'; });
+
+    const title = document.getElementById('mailEntryTitle');
+    const subtitle = document.querySelector('.mail-entry-modal__subtitle');
+    const help = document.getElementById('mailEntryHelp');
+    if (title) title.textContent = isMissing ? 'Report missing expected mail' : 'Report misdelivered mail';
+    if (subtitle) subtitle.textContent = isMissing
+      ? 'Use the pre-prepared notice to tell neighbours that you expected a delivery for your address but did not receive it.'
+      : 'Use the pre-prepared notice to tell neighbours that you received mail meant for another address.';
+    if (help) help.textContent = isMissing
+      ? 'The notice text is pre-prepared. Add only the sender, your address, expected date and item type.'
+      : 'The notice text is pre-prepared. Add only the recipient name, delivered address, correct address and item type.';
+
+    const receivedFields = ['mailRecipientName','mailDeliveredAt','mailCorrectAddress'];
+    const missingFields = ['mailExpectedSender','mailMissingAddress','mailExpectedDate'];
+    receivedFields.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.required = !isMissing;
+    });
+    missingFields.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.required = isMissing && id !== 'mailExpectedDate';
+    });
+  }
+
   function openMailEntryModal(){
     const overlay = ensureMailEntryModal();
     const form = overlay.querySelector('#mailEntryForm');
     const error = overlay.querySelector('#mailEntryError');
     if (form) form.reset();
     if (error) error.textContent = '';
+    const issueType = overlay.querySelector('#mailIssueType');
+    if (issueType && !issueType.__anwBound) {
+      issueType.addEventListener('change', () => setMailEntryMode(issueType.value));
+      issueType.__anwBound = true;
+    }
+    setMailEntryMode((issueType && issueType.value) || 'received_wrong_delivery');
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
 
-    const firstInput = overlay.querySelector('#mailDeliveredAt');
+    const firstInput = document.getElementById('mailIssueType');
     if (firstInput) {
       setTimeout(() => firstInput.focus(), 30);
     }
@@ -1111,13 +1222,24 @@
     const submitBtn = document.getElementById('mailEntrySubmit');
     const errorEl = document.getElementById('mailEntryError');
 
+    const issueType = String(form?.issueType?.value || 'received_wrong_delivery').trim();
     const itemType = String(form?.itemType?.value || '').trim();
     const recipientName = String(form?.recipientName?.value || '').trim();
     const deliveredAddress = String(form?.deliveredAddress?.value || '').trim();
     const intendedAddress = String(form?.intendedAddress?.value || '').trim();
+    const expectedSender = String(form?.expectedSender?.value || '').trim();
+    const missingAddress = String(form?.missingAddress?.value || '').trim();
+    const expectedDate = String(form?.expectedDate?.value || '').trim();
 
-    if (!itemType || !recipientName || !deliveredAddress || !intendedAddress) {
-      if (errorEl) errorEl.textContent = 'Please complete all fields.';
+    const isMissing = issueType === 'missing_expected_delivery';
+    const invalid = !itemType || (
+      isMissing
+        ? (!expectedSender || !missingAddress)
+        : (!recipientName || !deliveredAddress || !intendedAddress)
+    );
+
+    if (invalid) {
+      if (errorEl) errorEl.textContent = 'Please complete all required fields.';
       return;
     }
 
@@ -1130,10 +1252,34 @@
       const expires = new Date(now.getTime());
       expires.setDate(expires.getDate() + 5);
 
-      const entry = {
+      const entry = isMissing ? {
+        id: `mail_${Date.now()}`,
+        title: 'Missing Expected Mail',
+        message: 'I am expecting a delivery for my address, but I have not received it. If this item was delivered elsewhere by mistake, please contact the resident or Aderrig NW.',
+        category: 'missing_expected_mail',
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+        expiresAt: expires.toISOString(),
+        published: true,
+        showOnHome: true,
+        status: 'open',
+        mailStatus: 'open',
+        createdBy: String(me.email || ''),
+        target: { include: { allLoggedIn: true } },
+        targets: { allLoggedIn: true },
+        home: { enabled: true, visibility: 'private' },
+        meta: {
+          type: 'missing_expected_mail',
+          issueType: 'missing_expected_delivery',
+          itemType: formatMailType(itemType),
+          expectedSender,
+          missingAddress,
+          expectedDate
+        }
+      } : {
         id: `mail_${Date.now()}`,
         title: 'Misdelivered Mail',
-        message: 'Misdelivered Mail',
+        message: 'I received mail at my address that appears to belong to another address.',
         category: 'misdelivered_mail',
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
@@ -1148,6 +1294,7 @@
         home: { enabled: true, visibility: 'private' },
         meta: {
           type: 'misdelivered_mail',
+          issueType: 'received_wrong_delivery',
           itemType: formatMailType(itemType),
           recipientName,
           deliveredAddress,
@@ -1167,6 +1314,7 @@
   }
 
   async function createMisdeliveredMailEntry(){
+
     const me = getLoggedProfile();
     if (!me || !me.email) {
       openMailLoginPrompt();
@@ -1395,6 +1543,11 @@
         return;
       }
 
+      if (action === 'resolved') {
+        await updateMisdeliveredMailStatus(id, 'resolved');
+        return;
+      }
+
       if (action === 'remove') {
         await removeMisdeliveredMail(id);
       }
@@ -1417,15 +1570,15 @@
       const publicBinItems = publicItems.filter(isBinNotice);
       const publicRegularItems = publicItems
         .filter(n => !isBinNotice(n))
-        .filter(n => !isMisdeliveredMailNotice(n))
+        .filter(n => !isMailIssueNotice(n))
         .filter(n => !isNotStarted(n));
 
       const privateMailItems = privateItems
-        .filter(isMisdeliveredMailNotice)
+        .filter(isMailIssueNotice)
         .filter(isMailOpen)
         .sort((a, b) => getNoticeSortValue(b) - getNoticeSortValue(a));
 
-      const privateRegularItems = privateItems.filter(n => !isMisdeliveredMailNotice(n));
+      const privateRegularItems = privateItems.filter(n => !isMailIssueNotice(n));
 
       const binSummary = buildBinSummary(publicBinItems);
       const mailBoard = buildMisdeliveredMailBoard(privateMailItems);
