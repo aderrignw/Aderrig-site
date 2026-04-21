@@ -145,8 +145,8 @@
 <input id="rPhone" placeholder="Optional" type="tel"/>
 </div>
 <div class="field">
-<label>Garda station email (optional)</label>
-<input id="rGarda" placeholder="e.g., lucan.garda@…" type="email"/>
+<label>Garda station email</label>
+<input id="rGarda" placeholder="Enter Garda email (or leave blank until confirmed)" type="email"/>
 </div>
 </div>
 <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
@@ -157,7 +157,7 @@
 <div class="card" id="previewBlock" style="display:none; background:#f9fafb; margin-top:0.75rem;">
 <h3 style="margin-top:0;">Email preview</h3>
 <p class="tiny muted" style="margin-top:0;">
-        Use <strong>Copy</strong> or <strong>Open email</strong> to send with your own email client.
+        Use <strong>Copy</strong> or <strong>Open email draft</strong> to send with your own email app. The website does not store or send attachments.
       </p>
 <div class="field">
 <label>Subject</label>
@@ -169,8 +169,8 @@
 </div>
 <div class="actions" style="justify-content:flex-end; gap:0.5rem; flex-wrap:wrap;">
 <button class="btn btn-line" id="btnCopy" type="button">Copy</button>
-<button class="btn" id="btnSendEmail" type="button">Send securely (with attachments)</button>
-<button class="btn" id="btnMailto" type="button">Open email</button>
+<button class="btn" id="btnSendEmail" type="button">Open email draft</button>
+<button class="btn btn-line" id="btnMailto" type="button">Open email draft (copy only)</button>
 </div>
 <p class="tiny muted" id="copyMsg" style="margin:0.5rem 0 0;"></p>
 </div>
@@ -429,7 +429,7 @@
       'Attachments (metadata only — files are not stored on the website):',
       ...formatAttachmentLines(report.attachments),
       '',
-      'Note: Attachments are included automatically when using the “Send email (with attachments)” button.'
+      'Important: Aderrig NW does not store or send attachments. Please attach the selected files yourself in your email app before sending to Gardaí.'
     ];
     return { subject: subj, body: lines.join('\n') };
   }
@@ -527,6 +527,38 @@ const d = new Date();
   const pSubject = document.getElementById('pSubject');
   const pBody = document.getElementById('pBody');
   const copyMsg = document.getElementById('copyMsg');
+  const INCIDENT_COPY_EMAIL = 'aderrignw@gmail.com';
+  const GARDA_DEFAULT_EMAIL = '';
+
+  function resolveGardaEmail(){
+    return anwNormEmail(document.getElementById('rGarda').value) || anwNormEmail(GARDA_DEFAULT_EMAIL) || '';
+  }
+
+  function ensurePreviewFromCurrentForm(){
+    const form = readForm();
+    const err = validate(form);
+    if(err){
+      anwSetMsg('rMsg', err, 'warn');
+      document.getElementById('rMsg').className = 'msg err';
+      return null;
+    }
+    const tmp = Object.assign({ id: 'RPT-XXXX' }, form);
+    updatePreview(tmp);
+    return buildEmailPayload(tmp);
+  }
+
+  function openPreparedEmail(report){
+    const payload = buildEmailPayload(report);
+    const to = anwNormEmail(report.gardaEmail) || resolveGardaEmail();
+    if(!to){
+      anwSetMsg('rMsg', 'Report saved. Please enter the Garda email before opening the email draft.', 'warn');
+      document.getElementById('rMsg').className = 'msg ok';
+      return false;
+    }
+    const mailto = `mailto:${encodeURIComponent(to)}?cc=${encodeURIComponent(INCIDENT_COPY_EMAIL)}&subject=${encodeURIComponent(payload.subject)}&body=${encodeURIComponent(payload.body)}`;
+    window.location.href = mailto;
+    return true;
+  }
 
   function readForm(){
     return {
@@ -581,81 +613,38 @@ const d = new Date();
     }
   });
 
-  document.getElementById('btnSendEmail').addEventListener('click', async ()=>{
-    try{
-      const to = anwNormEmail(document.getElementById('rGarda').value) || '';
-      if(!to){
-        alert('Please enter a recipient email in the Garda station email field before sending.');
-        return;
-      }
-
-      const previewPayload = ensurePreviewFromCurrentForm();
-      if(!previewPayload) return;
-
-      const replyToEmail = anwNormEmail(document.getElementById('rEmail').value) || '';
-      const replyToName = document.getElementById('rName').value.trim() || '';
-
-      const files = Array.from(document.getElementById('rFiles').files || []);
-      const attachments = [];
-      let totalBytes = 0;
-      for(const f of files){
-        const maxBytes = 10 * 1024 * 1024; // 10 MB each
-        if(f.size > maxBytes){
-          alert(`File too large: ${f.name} (${Math.round(f.size/1024/1024)}MB). Please keep each file under 10MB.`);
-          return;
-        }
-        totalBytes += Number(f.size || 0);
-        const maxTotal = 20 * 1024 * 1024;
-        if(totalBytes > maxTotal){
-          alert('Total attachment size is too large. Please keep all files together under 20MB.');
-          return;
-        }
-        const b64 = await new Promise((resolve, reject)=>{
-          const reader = new FileReader();
-          reader.onload = ()=> resolve(String(reader.result).split(',')[1] || '');
-          reader.onerror = ()=> reject(new Error('Failed to read file: ' + f.name));
-          reader.readAsDataURL(f);
-        });
-        attachments.push({ filename: f.name, content: b64 });
-      }
-
-      const payload = {
-        to,
-        subject: previewPayload.subject,
-        text: previewPayload.body,
-        attachments,
-        replyToEmail,
-        replyToName
-      };
-
-      const res = await fetch('/.netlify/functions/send-incident-email', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
-
-      const out = await res.json().catch(()=> ({}));
-      if(!res.ok){
-        const msg = out && (out.error || out.message) ? (out.error || out.message) : 'Failed to send email.';
-        alert(msg);
-        return;
-      }
-
-      alert(replyToEmail
-        ? 'Email sent successfully. Replies will go to the resident email provided.'
-        : 'Email sent successfully.');
-    }catch(err){
-      console.error(err);
-      alert('Error sending email. Check console logs.');
+  document.getElementById('btnSendEmail').addEventListener('click', ()=>{
+    const form = readForm();
+    const err = validate(form);
+    if(err){
+      anwSetMsg('rMsg', err, 'warn');
+      document.getElementById('rMsg').className = 'msg err';
+      return;
+    }
+    const draft = Object.assign({ id: 'RPT-XXXX' }, form);
+    updatePreview(draft);
+    const opened = openPreparedEmail(draft);
+    if(opened){
+      copyMsg.textContent = 'Your email app should open now. Please attach the selected files there before sending.';
     }
   });
 
-;
+
 
 document.getElementById('btnMailto').addEventListener('click', ()=>{
-    const to = anwNormEmail(document.getElementById('rGarda').value) || '';
-    const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(pSubject.value)}&body=${encodeURIComponent(pBody.value)}`;
-    window.location.href = url;
+    const form = readForm();
+    const err = validate(form);
+    if(err){
+      anwSetMsg('rMsg', err, 'warn');
+      document.getElementById('rMsg').className = 'msg err';
+      return;
+    }
+    const draft = Object.assign({ id: 'RPT-XXXX' }, form);
+    updatePreview(draft);
+    const opened = openPreparedEmail(draft);
+    if(opened){
+      copyMsg.textContent = 'Draft opened. Attach the selected files in your email app before sending.';
+    }
   });
 
   // ---------------- Submit ----------------
@@ -699,6 +688,10 @@ document.getElementById('btnMailto').addEventListener('click', ()=>{
     document.getElementById('rMsg').className = 'msg ok';
 
     renderStatus();
+    const opened = openPreparedEmail(report);
+    if(opened){
+      copyMsg.textContent = 'Your report was saved and your email draft has been opened. Please attach the selected files in your email app before sending.';
+    }
   });
 
   // ---------------- Status ----------------
