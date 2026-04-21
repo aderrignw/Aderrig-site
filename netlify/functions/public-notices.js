@@ -6,16 +6,17 @@
     so the Home page can compute "completed this week + next week" correctly.
 */
 
-import { getStore } from '@netlify/blobs';
+import { getStore } from "@netlify/blobs";
+import { withSecurity, jsonResponse } from "./aderrig-security-layer.mjs";
 
 function getCentralStore(context){
-  const fixed = (process?.env?.CENTRAL_STORE_NAME || '').trim();
-  const storeName = fixed || (context?.site?.id ? `kv_${context.site.id}` : 'kv_default');
+  const fixed = (process?.env?.CENTRAL_STORE_NAME || "").trim();
+  const storeName = fixed || (context?.site?.id ? `kv_${context.site.id}` : "kv_default");
   return getStore(storeName);
 }
 
-const KEY_NOTICES = 'anw_notices';
-const KEY_ACL = 'anw_acl';
+const KEY_NOTICES = "anw_notices";
+const KEY_ACL = "anw_acl";
 
 function safeJsonParse(s, fallback) {
   try {
@@ -27,14 +28,14 @@ function safeJsonParse(s, fallback) {
 }
 
 function normalizeText(v) {
-  return String(v || '').trim().toLowerCase();
+  return String(v || "").trim().toLowerCase();
 }
 
 function isBinNotice(n) {
   const cat = normalizeText(n?.category);
   const type = normalizeText(n?.meta?.type);
   const title = normalizeText(n?.title);
-  return cat === 'bins' || type === 'bin_collection_import' || title.includes('bin collection');
+  return cat === "bins" || type === "bin_collection_import" || title.includes("bin collection");
 }
 
 function parseDateValue(value) {
@@ -44,17 +45,17 @@ function parseDateValue(value) {
   if (!raw) return null;
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    const [y, m, d] = raw.split('-').map(Number);
+    const [y, m, d] = raw.split("-").map(Number);
     return new Date(y, m - 1, d, 12, 0, 0, 0);
   }
 
   if (/^\d{2}-\d{2}-\d{4}$/.test(raw)) {
-    const [d, m, y] = raw.split('-').map(Number);
+    const [d, m, y] = raw.split("-").map(Number);
     return new Date(y, m - 1, d, 12, 0, 0, 0);
   }
 
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
-    const [m, d, y] = raw.split('/').map(Number);
+    const [m, d, y] = raw.split("/").map(Number);
     return new Date(y, m - 1, d, 12, 0, 0, 0);
   }
 
@@ -63,18 +64,18 @@ function parseDateValue(value) {
 }
 
 function isNotStarted(n) {
-  const d = parseDateValue(n?.startsAt || n?.startsOn || n?.startDate || n?.showFrom || '');
+  const d = parseDateValue(n?.startsAt || n?.startsOn || n?.startDate || n?.showFrom || "");
   return !!(d && d.getTime() > Date.now());
 }
 
 function isExpired(n) {
-  const d = parseDateValue(n?.expiresAt || n?.endsOn || n?.endDate || n?.expires || n?.showUntil || '');
+  const d = parseDateValue(n?.expiresAt || n?.endsOn || n?.endDate || n?.expires || n?.showUntil || "");
   return !!(d && d.getTime() < Date.now());
 }
 
 function isPublicHome(n) {
   const home = n?.home || {};
-  return !!home.enabled && String(home.visibility || '').toLowerCase() === 'public';
+  return !!home.enabled && String(home.visibility || "").toLowerCase() === "public";
 }
 
 async function loadKey(store, key) {
@@ -84,10 +85,10 @@ async function loadKey(store, key) {
 }
 
 function aclAllowsPublicHome(acl) {
-  if (!acl || typeof acl !== 'object') return true;
-  const roles = acl['feature:home_notice_bar'];
+  if (!acl || typeof acl !== "object") return true;
+  const roles = acl["feature:home_notice_bar"];
   if (!Array.isArray(roles)) return true;
-  return roles.map(String).map(r => r.toLowerCase()).includes('public');
+  return roles.map(String).map((r) => r.toLowerCase()).includes("public");
 }
 
 function binSortTs(n) {
@@ -100,68 +101,62 @@ function createdSortTs(n) {
   return d ? d.getTime() : 0;
 }
 
-export default async (req, context) => {
-  try {
-    const store = getCentralStore(context);
-    const acl = await loadKey(store, KEY_ACL);
+export default withSecurity(
+  {
+    methods: ["GET"],
+    maxBodyBytes: 128 * 1024,
+  },
+  async (_ctx, _req, context) => {
+    try {
+      const store = getCentralStore(context);
+      const acl = await loadKey(store, KEY_ACL);
 
-    if (!aclAllowsPublicHome(acl)) {
-      return new Response(JSON.stringify({ items: [] }), {
-        status: 200,
-        headers: {
-          'content-type': 'application/json; charset=utf-8',
-          'cache-control': 'no-store'
-        }
-      });
+      if (!aclAllowsPublicHome(acl)) {
+        return jsonResponse({ items: [] }, 200);
+      }
+
+      const all = (await loadKey(store, KEY_NOTICES)) || [];
+      const list = Array.isArray(all) ? all : [];
+
+      const publicHome = list
+        .filter((n) => n && typeof n === "object")
+        .filter(isPublicHome)
+        .filter((n) => !isExpired(n))
+        .filter((n) => isBinNotice(n) || !isNotStarted(n));
+
+      const binItems = publicHome
+        .filter(isBinNotice)
+        .sort((a, b) => binSortTs(a) - binSortTs(b));
+
+      const regularItems = publicHome
+        .filter((n) => !isBinNotice(n))
+        .sort((a, b) => createdSortTs(b) - createdSortTs(a))
+        .slice(0, 20);
+
+      const items = [...binItems, ...regularItems].map((n) => ({
+        id: n.id,
+        title: n.title,
+        message: n.message,
+        createdAt: n.createdAt,
+        category: n.category,
+        home: n.home,
+        startsAt: n.startsAt || n.startsOn || n.startDate || null,
+        expiresAt: n.expiresAt || n.endsOn || n.endDate || n.expires || null,
+        date: n.date || null,
+        bin: n.bin || null,
+        provider: n.provider || null,
+        meta: n.meta || null
+      }));
+
+      return jsonResponse({ items }, 200);
+    } catch (err) {
+      return jsonResponse(
+        {
+          error: "Unable to load public notices.",
+          detail: String(err?.message || err || "")
+        },
+        200
+      );
     }
-
-    const all = (await loadKey(store, KEY_NOTICES)) || [];
-    const list = Array.isArray(all) ? all : [];
-
-    const publicHome = list
-      .filter(n => n && typeof n === 'object')
-      .filter(isPublicHome)
-      .filter(n => !isExpired(n))
-      .filter(n => isBinNotice(n) || !isNotStarted(n));
-
-    const binItems = publicHome
-      .filter(isBinNotice)
-      .sort((a, b) => binSortTs(a) - binSortTs(b));
-
-    const regularItems = publicHome
-      .filter(n => !isBinNotice(n))
-      .sort((a, b) => createdSortTs(b) - createdSortTs(a))
-      .slice(0, 20);
-
-    const items = [...binItems, ...regularItems].map(n => ({
-      id: n.id,
-      title: n.title,
-      message: n.message,
-      createdAt: n.createdAt,
-      category: n.category,
-      home: n.home,
-      startsAt: n.startsAt || n.startsOn || n.startDate || null,
-      expiresAt: n.expiresAt || n.endsOn || n.endDate || n.expires || null,
-      date: n.date || null,
-      bin: n.bin || null,
-      provider: n.provider || null,
-      meta: n.meta || null
-    }));
-
-    return new Response(JSON.stringify({ items }), {
-      status: 200,
-      headers: {
-        'content-type': 'application/json; charset=utf-8',
-        'cache-control': 'no-store'
-      }
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: 'Unable to load public notices.', detail: String(err?.message || err || '') }), {
-      status: 200,
-      headers: {
-        'content-type': 'application/json; charset=utf-8',
-        'cache-control': 'no-store'
-      }
-    });
   }
-};
+);
