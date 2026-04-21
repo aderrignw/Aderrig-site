@@ -1,4 +1,10 @@
+
 import { getStore } from "@netlify/blobs";
+import {
+  withSecurity,
+  jsonResponse,
+  normalizeEmail,
+} from "./aderrig-security-layer.mjs";
 
 function getCentralStore(context) {
   const fixed = (process && process.env && process.env.CENTRAL_STORE_NAME)
@@ -25,57 +31,9 @@ async function safeGetJson(store, key, fallback = null) {
   }
 }
 
-const ADMIN_TOKEN = (process?.env?.ANW_ADMIN_TOKEN || "").trim();
-const MASTER_EMAIL = String(process?.env?.MASTER_EMAIL || "claudiosantos1968@gmail.com").trim().toLowerCase();
-
-function getBearerToken(req) {
-  try {
-    const auth = req.headers.get("authorization") || "";
-    const match = auth.match(/^Bearer\s+(.+)$/i);
-    return match ? match[1].trim() : "";
-  } catch {
-    return "";
-  }
-}
-
-function isAuthorizedByAdminToken(req) {
-  if (!ADMIN_TOKEN) return false;
-  const token = getBearerToken(req);
-  return !!token && token === ADMIN_TOKEN;
-}
-
-function decodeBase64Url(value) {
-  const input = String(value || "");
-  if (!input) return "";
-  const normalized = input.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = normalized + "=".repeat((4 - (normalized.length % 4 || 4)) % 4);
-  return Buffer.from(padded, "base64").toString("utf8");
-}
-
-function parseJwtPayload(token) {
-  try {
-    const parts = String(token || "").split(".");
-    if (parts.length < 2) return null;
-    return JSON.parse(decodeBase64Url(parts[1]));
-  } catch {
-    return null;
-  }
-}
-
-function parseNetlifyCustomContext(context) {
-  try {
-    const raw = context?.clientContext?.custom?.netlify;
-    if (!raw) return null;
-    if (typeof raw === "object") return raw;
-    return JSON.parse(Buffer.from(String(raw), "base64").toString("utf8"));
-  } catch {
-    return null;
-  }
-}
-
-function normalizeEmail(value) {
-  return String(value || "").trim().toLowerCase();
-}
+const MASTER_EMAIL = String(
+  process?.env?.MASTER_EMAIL || "claudiosantos1968@gmail.com"
+).trim().toLowerCase();
 
 function normalizeRoleName(value) {
   const raw = String(value || "").trim().toLowerCase();
@@ -150,31 +108,18 @@ function extractCandidateEmails(user) {
   return [...new Set(values.map(normalizeEmail).filter(Boolean))];
 }
 
-function readCurrentUser(context, req) {
-  const directUser = context?.clientContext?.user;
-  if (directUser?.email) return directUser;
-
-  const netlifyContext = parseNetlifyCustomContext(context);
-  if (netlifyContext?.user?.email) return netlifyContext.user;
-  if (netlifyContext?.identity?.email) return netlifyContext.identity;
-
-  const token = getBearerToken(req);
-  if (token) {
-    const payload = parseJwtPayload(token);
-    if (payload?.email) return payload;
-  }
-
-  return null;
-}
-
-async function isBackupAuthorized(context, req) {
-  const currentUser = readCurrentUser(context, req);
+async function isBackupAuthorized(ctx, context) {
+  const currentUser = ctx?.user;
   if (!currentUser) return false;
 
   const currentEmails = extractCandidateEmails(currentUser);
   if (!currentEmails.length) return false;
 
   if (MASTER_EMAIL && currentEmails.includes(MASTER_EMAIL)) {
+    return true;
+  }
+
+  if (hasBackupAccessRole(currentUser)) {
     return true;
   }
 
@@ -189,45 +134,42 @@ async function isBackupAuthorized(context, req) {
   return !!(match && isApprovedUser(match) && hasBackupAccessRole(match));
 }
 
-export default async (req, context) => {
-  if (!(await isBackupAuthorized(context, req)) && !isAuthorizedByAdminToken(req)) {
-    return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), {
-      status: 401,
-      headers: { "content-type": "application/json; charset=utf-8" }
-    });
-  }
-
-  try {
-    const url = new URL(req.url);
-    const id = url.searchParams.get("id");
-    if (!id) {
-      return new Response(JSON.stringify({ ok: false, error: "Missing id" }), {
-        status: 400,
-        headers: { "content-type": "application/json; charset=utf-8" }
-      });
+export default withSecurity(
+  {
+    methods: ["GET"],
+    maxBodyBytes: 128 * 1024,
+  },
+  async (ctx, req, context) => {
+    if (!(await isBackupAuthorized(ctx, context))) {
+      return jsonResponse({ ok: false, error: "Unauthorized" }, 401);
     }
 
-    const store = getCentralStore(context);
-    const snap = await safeGetJson(store, `anw_backup_${id}`, null);
-    if (!snap) {
-      return new Response(JSON.stringify({ ok: false, error: "Not found" }), {
-        status: 404,
-        headers: { "content-type": "application/json; charset=utf-8" }
-      });
-    }
-
-    return new Response(JSON.stringify(snap, null, 2), {
-      status: 200,
-      headers: {
-        "content-type": "application/json; charset=utf-8",
-        "cache-control": "no-store",
-        "content-disposition": `attachment; filename="${id}.json"`
+    try {
+      const url = new URL(req.url);
+      const id = url.searchParams.get("id");
+      if (!id) {
+        return jsonResponse({ ok: false, error: "Missing id" }, 400);
       }
-    });
-  } catch (e) {
-    return new Response(JSON.stringify({ ok: false, error: String(e?.message || e) }), {
-      status: 500,
-      headers: { "content-type": "application/json; charset=utf-8" }
-    });
+
+      const store = getCentralStore(context);
+      const snap = await safeGetJson(store, `anw_backup_${id}`, null);
+      if (!snap) {
+        return jsonResponse({ ok: false, error: "Not found" }, 404);
+      }
+
+      return new Response(JSON.stringify(snap, null, 2), {
+        status: 200,
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "no-store",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "DENY",
+          "referrer-policy": "same-origin",
+          "content-disposition": `attachment; filename="${id}.json"`,
+        },
+      });
+    } catch (e) {
+      return jsonResponse({ ok: false, error: String(e?.message || e) }, 500);
+    }
   }
-};
+);
