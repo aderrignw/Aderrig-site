@@ -1,13 +1,5 @@
-/**
- * netlify/functions/garda-feed.js
- * Fast Garda & Safety feed with server-side cache.
- * - Keeps Garda as the official source
- * - Stores only lightweight metadata (category, title, snippet, official URL)
- * - Removes broken/not-found links automatically
- * - Falls back to the last valid cached version if Garda is slow
- */
-
 import { getStore } from "@netlify/blobs";
+import { withSecurity, jsonResponse } from "./aderrig-security-layer.mjs";
 
 const HOMEPAGE_URL = "https://www.garda.ie/en/";
 const SITEMAP_URLS = [
@@ -17,7 +9,7 @@ const SITEMAP_URLS = [
 
 const CACHE_STORE = "anw-garda-cache";
 const CACHE_KEY = "feed-v2";
-const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6 hours
+const CACHE_TTL_MS = 1000 * 60 * 60 * 6;
 
 const FALLBACK_CATEGORIES = [
   { label: "Fraud / Economic Crime", title: "Fraud", category: "Fraud / Economic Crime", url: "https://www.garda.ie/en/crime/fraud/", snippet: "Official Garda guidance on fraud, scams and economic crime." },
@@ -187,7 +179,9 @@ async function validateItems(items = [], limit = 20) {
   const input = dedupeByUrl(items).filter((item) => validGardaUrl(item.url));
   const toCheck = input.slice(0, limit);
   const rest = input.slice(limit);
-  const checks = await Promise.allSettled(toCheck.map((item) => urlExists(item.url).then((ok) => ok ? item : null)));
+  const checks = await Promise.allSettled(
+    toCheck.map((item) => urlExists(item.url).then((ok) => ok ? item : null))
+  );
   const valid = checks
     .filter((result) => result.status === "fulfilled" && result.value)
     .map((result) => result.value);
@@ -200,7 +194,10 @@ async function fetchDynamicCategories() {
   for (const result of results) {
     if (result.status === "fulfilled") categories.push(...parseSitemap(result.value));
   }
-  const combined = dedupeByUrl([...categories, ...FALLBACK_CATEGORIES.map((item) => ({ ...item, date: "Official link" }))]);
+  const combined = dedupeByUrl([
+    ...categories,
+    ...FALLBACK_CATEGORIES.map((item) => ({ ...item, date: "Official link" }))
+  ]);
   return validateItems(combined, 18);
 }
 
@@ -261,47 +258,61 @@ async function buildFreshPayload() {
     fetchHomepageUpdates()
   ]);
 
-  const safeCategories = categories.length ? categories : await validateItems(FALLBACK_CATEGORIES.map((item) => ({ ...item, date: "Official link" })), 8);
+  const safeCategories = categories.length
+    ? categories
+    : await validateItems(FALLBACK_CATEGORIES.map((item) => ({ ...item, date: "Official link" })), 8);
+
   return buildPayload({ categories: safeCategories, recent, stale: false });
 }
 
-function jsonResponse(body, status = 200, extraHeaders = {}) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "public, max-age=300",
-      ...extraHeaders
-    }
-  });
-}
+export default withSecurity(
+  {
+    methods: ["GET"],
+    maxBodyBytes: 128 * 1024,
+  },
+  async () => {
+    const cached = await readCache();
+    const now = Date.now();
 
-export default async function handler() {
-  const cached = await readCache();
-  const now = Date.now();
-
-  if (cached?.payload && cached?.cachedAt && (now - cached.cachedAt) < CACHE_TTL_MS) {
-    return jsonResponse(cached.payload, 200, { "x-garda-cache": "HIT" });
-  }
-
-  try {
-    const payload = await Promise.race([
-      buildFreshPayload(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("refresh-timeout")), 4200))
-    ]);
-    await writeCache(payload);
-    return jsonResponse(payload, 200, { "x-garda-cache": "MISS" });
-  } catch (error) {
-    if (cached?.payload) {
-      const stalePayload = { ...cached.payload, stale: true, updated: cached.payload.updated || new Date(cached.cachedAt).toISOString() };
-      return jsonResponse(stalePayload, 200, { "x-garda-cache": "STALE" });
+    if (cached?.payload && cached?.cachedAt && (now - cached.cachedAt) < CACHE_TTL_MS) {
+      return jsonResponse(cached.payload, 200, {
+        "cache-control": "public, max-age=300",
+        "x-garda-cache": "HIT",
+      });
     }
 
-    const fallbackPayload = buildPayload({
-      categories: FALLBACK_CATEGORIES.map((item) => ({ ...item, date: "Official link" })),
-      recent: [],
-      stale: true
-    });
-    return jsonResponse(fallbackPayload, 200, { "x-garda-cache": "FALLBACK" });
+    try {
+      const payload = await Promise.race([
+        buildFreshPayload(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("refresh-timeout")), 4200))
+      ]);
+      await writeCache(payload);
+      return jsonResponse(payload, 200, {
+        "cache-control": "public, max-age=300",
+        "x-garda-cache": "MISS",
+      });
+    } catch (_error) {
+      if (cached?.payload) {
+        const stalePayload = {
+          ...cached.payload,
+          stale: true,
+          updated: cached.payload.updated || new Date(cached.cachedAt).toISOString()
+        };
+        return jsonResponse(stalePayload, 200, {
+          "cache-control": "public, max-age=300",
+          "x-garda-cache": "STALE",
+        });
+      }
+
+      const fallbackPayload = buildPayload({
+        categories: FALLBACK_CATEGORIES.map((item) => ({ ...item, date: "Official link" })),
+        recent: [],
+        stale: true
+      });
+      return jsonResponse(fallbackPayload, 200, {
+        "cache-control": "public, max-age=300",
+        "x-garda-cache": "FALLBACK",
+      });
+    }
   }
-}
+);
