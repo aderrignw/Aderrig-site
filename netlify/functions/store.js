@@ -181,11 +181,19 @@ const SELF_SERVICE_ALLOWED_FIELDS = new Set([
   "avatar",
   "avatarUrl",
   "profileImage",
+  "photo",
+  "profilePhoto",
   "photoUrl",
+  "photoURL",
   "residentType",
   "vol_roles",
   "volunteerRoles",
   "volunteer_roles",
+  "volRoles",
+  "alertsConsent",
+  "interest",
+  "termsAccepted",
+  "termsAcceptedAt",
   "parkingSpace",
   "vehicleReg",
   "vehicleRegs",
@@ -194,6 +202,33 @@ const SELF_SERVICE_ALLOWED_FIELDS = new Set([
   "language",
   "updatedAt",
   "modifiedAt",
+]);
+
+const REGISTRATION_BOOTSTRAP_FIELDS = new Set([
+  "name",
+  "fullName",
+  "email",
+  "userEmail",
+  "loginEmail",
+  "netlifyEmail",
+  "eircode",
+  "eir",
+  "address",
+  "fullAddress",
+  "streetAddress",
+  "householdAddress",
+  "phone",
+  "mobile",
+  "residentType",
+  "managementCompany",
+  "status",
+  "role",
+  "isCoordinator",
+  "isVolunteer",
+  "termsAccepted",
+  "termsAcceptedAt",
+  "createdAt",
+  "updatedAt",
 ]);
 
 function isBackupKey(key) {
@@ -388,22 +423,6 @@ function getUserEmails(user) {
   ].filter(Boolean);
 }
 
-
-function emailLocalPart(value) {
-  const email = normalizeEmail(value);
-  return email.includes("@") ? email.split("@")[0] : email;
-}
-
-function userMatchesEmail(user, email) {
-  const target = normalizeEmail(email);
-  if (!target) return false;
-  const emails = getUserEmails(user);
-  if (emails.includes(target)) return true;
-  const targetLocal = emailLocalPart(target);
-  return !!targetLocal && emails.some((value) => emailLocalPart(value) === targetLocal);
-}
-
-
 function getUserReg(user) {
   return String(
     user?.regId ||
@@ -428,7 +447,7 @@ function sameUser(a, b) {
   const emailsB = getUserEmails(b);
   if (!emailsA.length || !emailsB.length) return false;
 
-  return emailsA.some((email) => emailsB.includes(email)) || emailsA.some((email) => emailsB.some((other) => emailLocalPart(email) && emailLocalPart(email) === emailLocalPart(other)));
+  return emailsA.some((email) => emailsB.includes(email));
 }
 
 function mergeUserRecords(existing, incoming) {
@@ -442,20 +461,46 @@ function mergeUserRecords(existing, incoming) {
   return { ...incoming, ...existing };
 }
 
-function sanitizeSelfServiceUserUpdate(incoming, currentEmail) {
-  const source = incoming && typeof incoming === "object" ? incoming : {};
-  const clean = {};
+function sanitizeSelfServiceUserUpdate(incoming, currentEmail, existingUser) {
+  const wrapped = incoming && typeof incoming === "object" && incoming.action && incoming.profile
+    ? incoming.profile
+    : incoming;
+  const source = wrapped && typeof wrapped === "object" ? wrapped : {};
+  const existing = existingUser && typeof existingUser === "object" ? existingUser : null;
+  const clean = existing ? { ...existing } : {};
 
   for (const [key, value] of Object.entries(source)) {
     if (SELF_SERVICE_ALLOWED_FIELDS.has(key)) {
       clean[key] = value;
+      continue;
+    }
+
+    if (!existing && REGISTRATION_BOOTSTRAP_FIELDS.has(key)) {
+      clean[key] = value;
+      continue;
+    }
+
+    if (existing && REGISTRATION_BOOTSTRAP_FIELDS.has(key) && (clean[key] == null || clean[key] === "")) {
+      clean[key] = value;
     }
   }
 
-  clean.email = source.email || currentEmail || "";
-  clean.userEmail = source.userEmail || clean.userEmail || clean.email || currentEmail || "";
-  clean.loginEmail = source.loginEmail || currentEmail || clean.email || "";
-  clean.netlifyEmail = source.netlifyEmail || currentEmail || clean.email || "";
+  if (source.eir && !clean.eircode) clean.eircode = source.eir;
+  if (source.eircode && !clean.eir) clean.eir = source.eircode;
+  if (source.fullAddress && !clean.address) clean.address = source.fullAddress;
+  if (source.address && !clean.fullAddress) clean.fullAddress = source.address;
+
+  clean.email = currentEmail || source.email || clean.email || "";
+  clean.userEmail = clean.userEmail || clean.email || currentEmail || "";
+  clean.loginEmail = clean.loginEmail || clean.email || currentEmail || "";
+  clean.netlifyEmail = clean.netlifyEmail || clean.email || currentEmail || "";
+
+  if (!existing) {
+    if (!clean.status) clean.status = "pending";
+    if (!clean.role) clean.role = "resident";
+    if (!clean.createdAt) clean.createdAt = source.createdAt || new Date().toISOString();
+  }
+
   clean.updatedAt = source.updatedAt || new Date().toISOString();
 
   return clean;
@@ -463,8 +508,27 @@ function sanitizeSelfServiceUserUpdate(incoming, currentEmail) {
 
 function filterUsersForSelf(users, currentEmail) {
   return (Array.isArray(users) ? users : []).filter((u) => {
-    return userMatchesEmail(u, currentEmail);
+    return getUserEmails(u).includes(currentEmail);
   });
+}
+
+function filterParkingRegistryForSelf(data, currentEmail) {
+  const registry = data && typeof data === "object" ? data : {};
+  const submissions = registry.submissions && typeof registry.submissions === "object" ? registry.submissions : {};
+  const filteredSubmissions = {};
+  const email = normalizeEmail(currentEmail || "");
+
+  for (const [submissionKey, submission] of Object.entries(submissions)) {
+    const submissionEmail = normalizeEmail(submission?.residentEmail || submission?.email || submission?.userEmail || "");
+    if (email && (normalizeEmail(submissionKey) === email || submissionEmail === email)) {
+      filteredSubmissions[submissionKey] = submission;
+    }
+  }
+
+  return {
+    ...registry,
+    submissions: filteredSubmissions,
+  };
 }
 
 async function getJsonArray(store, key) {
@@ -507,7 +571,7 @@ export default withSecurity(
 
         const currentUserEmail = normalizeEmail(ctx?.user?.email || ctx?.user?.user_metadata?.email || "");
         const currentUserRecord = currentUserEmail
-          ? users.find((u) => userMatchesEmail(u, currentUserEmail)) || null
+          ? users.find((u) => normalizeEmail(u?.email) === currentUserEmail) || null
           : null;
 
         const targetStreet = resolveTargetStreet({
@@ -610,10 +674,12 @@ export default withSecurity(
 
           if (key === "anw_users" && !ctx.isAdmin) {
             const currentEmail = normalizeEmail(ctx?.user?.email);
-            const filtered = filterUsersForSelf(data, currentEmail);
-            if (filtered.length) return json(filtered);
-            if (Array.isArray(data) && data.length === 1 && currentEmail === normalizeEmail("claudiosantos1968@gmail.com")) return json(data);
-            return json(filtered);
+            return json(filterUsersForSelf(data, currentEmail));
+          }
+
+          if (key === "anw_parking_registry_v1" && !ctx.isAdmin) {
+            const currentEmail = normalizeEmail(ctx?.user?.email);
+            return json(filterParkingRegistryForSelf(data, currentEmail));
           }
 
           return json(data);
@@ -638,6 +704,49 @@ export default withSecurity(
         }
 
         if (key !== "anw_users") {
+          if (key === "anw_parking_registry_v1" && !ctx.isAdmin) {
+            const currentEmail = normalizeEmail(ctx?.user?.email);
+            if (!currentEmail) {
+              return json({ error: "unauthorized" }, 401);
+            }
+
+            let currentRegistry = {};
+            try {
+              const rawCurrent = await store.get(key);
+              currentRegistry = rawCurrent ? JSON.parse(rawCurrent) : {};
+            } catch {
+              currentRegistry = {};
+            }
+
+            const nextRegistry = currentRegistry && typeof currentRegistry === "object" ? { ...currentRegistry } : {};
+            nextRegistry.allocations = Array.isArray(currentRegistry?.allocations) ? currentRegistry.allocations : [];
+            nextRegistry.policy = currentRegistry?.policy || null;
+            nextRegistry.updatedAt = new Date().toISOString();
+            nextRegistry.submissions = currentRegistry?.submissions && typeof currentRegistry.submissions === "object" ? { ...currentRegistry.submissions } : {};
+
+            const submittedEntries = Object.entries(parsed?.submissions && typeof parsed.submissions === "object" ? parsed.submissions : {});
+            const ownEntry = submittedEntries.find(([submissionKey, submission]) => {
+              const submissionEmail = normalizeEmail(submission?.residentEmail || submission?.email || submission?.userEmail || "");
+              return normalizeEmail(submissionKey) === currentEmail || submissionEmail === currentEmail;
+            });
+
+            if (!ownEntry) {
+              return json({ error: "parking registry write requires own submission" }, 400);
+            }
+
+            const [, submission] = ownEntry;
+            nextRegistry.submissions[currentEmail] = {
+              ...(nextRegistry.submissions[currentEmail] || {}),
+              ...(submission && typeof submission === "object" ? submission : {}),
+              residentEmail: currentEmail,
+              email: currentEmail,
+              updatedAt: new Date().toISOString(),
+            };
+
+            await store.set(key, JSON.stringify(nextRegistry));
+            return json({ ok: true, scope: "self", key });
+          }
+
           await store.set(key, JSON.stringify(parsed));
           return json({ ok: true });
         }
@@ -679,33 +788,27 @@ export default withSecurity(
           return json({ error: "unauthorized" }, 401);
         }
 
-        const incomingRecords = Array.isArray(parsed) ? parsed : [parsed];
-        const safeRecords = incomingRecords
-          .filter((record) => record && typeof record === "object")
-          .map((record) => sanitizeSelfServiceUserUpdate(record, currentEmail));
+        const incomingRecords = (Array.isArray(parsed) ? parsed : [parsed])
+          .filter((record) => record && typeof record === "object");
 
-        if (!safeRecords.length) {
+        if (!incomingRecords.length) {
           return json({ error: "no valid user payload" }, 400);
         }
 
         const merged = Array.isArray(current) ? current.slice() : [];
 
-        for (const incomingUser of safeRecords) {
+        for (const rawIncomingUser of incomingRecords) {
           const idx = merged.findIndex((existingUser) => {
-            return userMatchesEmail(existingUser, currentEmail);
+            const emails = getUserEmails(existingUser);
+            return emails.includes(currentEmail);
           });
 
+          const sanitized = sanitizeSelfServiceUserUpdate(rawIncomingUser, currentEmail, idx >= 0 ? merged[idx] : null);
+
           if (idx === -1) {
-            merged.push(incomingUser);
+            merged.push(sanitized);
           } else {
-            merged[idx] = {
-              ...merged[idx],
-              ...incomingUser,
-              email: merged[idx]?.email || incomingUser.email || currentEmail,
-              userEmail: merged[idx]?.userEmail || incomingUser.userEmail || currentEmail,
-              loginEmail: incomingUser.loginEmail || merged[idx]?.loginEmail || currentEmail,
-              netlifyEmail: incomingUser.netlifyEmail || merged[idx]?.netlifyEmail || currentEmail,
-            };
+            merged[idx] = sanitized;
           }
         }
 
