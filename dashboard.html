@@ -62,7 +62,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
 </style>
 </head>
-<body data-acl-shell-public="true" class="page-dashboard">
+<body class="page-dashboard">
 <header class="site-header">
 <div class="brand">
 <a class="site-logo" href="index.html"><img alt="Aderrig Neighbourhood Watch" class="logo-img" src="assets/logo/logo.png"/></a>
@@ -372,13 +372,14 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   async function saveUsersAndSync(){
     const emailRef = currentEmail || (currentProfile && (currentProfile.email || currentProfile.userEmail || currentProfile.loginEmail || currentProfile.netlifyEmail)) || '';
     let payload = cloneUsersList(users);
+    let source = currentProfile ? JSON.parse(JSON.stringify(currentProfile)) : null;
 
     try{
       const remoteUsers = await fetchUsersFromStoreRaw();
       if(currentProfile && emailRef){
         const remoteIndex = getCanonicalUserIndexFromList(remoteUsers, emailRef);
         const localIndex = getCanonicalUserIndexFromList(payload, emailRef);
-        const source = localIndex >= 0 ? payload[localIndex] : currentProfile;
+        source = localIndex >= 0 ? JSON.parse(JSON.stringify(payload[localIndex])) : JSON.parse(JSON.stringify(currentProfile));
         if(remoteIndex >= 0){
           remoteUsers[remoteIndex] = JSON.parse(JSON.stringify(source));
         }else{
@@ -396,15 +397,19 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     markLocalUsersWrite();
     try{ await anwSave(KEY_USERS, users); }catch(_){}
 
-    if(typeof window.anwFetchStorePost === 'function'){
-      await window.anwFetchStorePost(KEY_USERS, users);
-    } else {
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify(users)
-      });
-      if(!res.ok) throw new Error('store save failed');
+    if(source){
+      if(typeof window.anwUpsertMyProfile === 'function'){
+        await window.anwUpsertMyProfile(source);
+      } else if(typeof window.anwFetchStorePost === 'function'){
+        await window.anwFetchStorePost(KEY_USERS, source);
+      } else {
+        const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify(source)
+        });
+        if(!res.ok) throw new Error('store save failed');
+      }
     }
 
     try{ await anwSave(KEY_USERS, users); }catch(_){}
@@ -1657,8 +1662,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   function pkNormalize(v){ try{return window.anwParkingNormalizeText(v);}catch(_){return String(v||'').toLowerCase().trim();} }
   function pkRegistry(){ return (window.anwParkingLoadRegistry && window.anwParkingLoadRegistry()) || { allocations:[], submissions:{}, policy:null }; }
   function pkSaveRegistry(data){ return (window.anwParkingSaveRegistry && window.anwParkingSaveRegistry(data)) || data; }
-  function pkResidentKey(profile){ const email = (window.anwNormEmail ? window.anwNormEmail(profile?.email || profile?.userEmail || currentEmail || '') : String(profile?.email || currentEmail || '').toLowerCase()); const eir = String(profile?.eircode || '').toUpperCase().replace(/\s+/g,''); return email || ('eir:' + eir) || 'resident'; }
-  function pkFindAllocation(profile){ const registry = pkRegistry(); const allocations = Array.isArray(registry.allocations) ? registry.allocations : []; const pe = String(profile?.eircode || '').toUpperCase().replace(/\s+/g,''); const pa = pkNormalize(profile?.address || ''); const pn = pkNormalize(fullNameFromUser ? fullNameFromUser(profile) : (profile?.name || '')); return allocations.find(a => String(a.eircode || '').toUpperCase().replace(/\s+/g,'') === pe && pe) || allocations.find(a => pkNormalize(a.address) === pa && pa) || allocations.find(a => pkNormalize(a.residentName) === pn && pn) || null; }
+  function pkResidentKey(profile){ const email = (window.anwNormEmail ? window.anwNormEmail(profile?.email || profile?.userEmail || profile?.loginEmail || profile?.netlifyEmail || currentEmail || '') : String(profile?.email || currentEmail || '').toLowerCase()); const eir = String(profile?.eircode || profile?.eir || '').toUpperCase().replace(/\s+/g,''); return email || (eir ? ('eir:' + eir) : '') || 'resident'; }
+  function pkFindAllocation(profile){ const registry = pkRegistry(); const allocations = Array.isArray(registry.allocations) ? registry.allocations : []; const pe = String(profile?.eircode || profile?.eir || '').toUpperCase().replace(/\s+/g,''); const pa = pkNormalize(profile?.address || profile?.fullAddress || profile?.streetAddress || profile?.householdAddress || ''); const pn = pkNormalize(fullNameFromUser ? fullNameFromUser(profile) : (profile?.name || profile?.fullName || '')); return allocations.find(a => String(a.eircode || a.eir || '').toUpperCase().replace(/\s+/g,'') === pe && pe) || allocations.find(a => pkNormalize(a.address || a.fullAddress || '') === pa && pa) || allocations.find(a => pkNormalize(a.residentName || a.name || '') === pn && pn) || null; }
   function pkSubmission(profile){ const reg = pkRegistry(); const key = pkResidentKey(profile); return reg.submissions && reg.submissions[key] ? reg.submissions[key] : null; }
   function pkToggleVehicleInputs(){
     const noVehicle = !!(pkEls.noVehicleNow && pkEls.noVehicleNow.checked);
@@ -1679,8 +1684,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const policy = (window.anwParkingLoadPolicy && window.anwParkingLoadPolicy()) || pkRegistry().policy || null;
     const residentName = (typeof fullNameFromUser === 'function' ? fullNameFromUser(profile) : (profile.name || 'Resident'));
     pkEls.residentName.textContent = residentName || 'Resident';
-    pkEls.address.textContent = profile.address || '—';
-    pkEls.eircode.textContent = profile.eircode || '—';
+    pkEls.address.textContent = profile.address || profile.fullAddress || profile.streetAddress || profile.householdAddress || '—';
+    pkEls.eircode.textContent = profile.eircode || profile.eir || '—';
     const type = allocation?.type || (allocation?.hasParking === false ? 'No Parking' : 'Single');
     const noParking = !allocation || allocation.hasParking === false || type === 'No Parking';
     const spaceText = noParking ? 'N/A' : (allocation.spaceDisplay || allocation.spaceNo || allocation.space1 || '—');
@@ -1720,7 +1725,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const policy = (window.anwParkingLoadPolicy && window.anwParkingLoadPolicy()) || pkRegistry().policy || null;
     if(!(policy && policy.dataUrl && pkPolicyOpened && pkEls.policyAccepted.checked && pkEls.ownerConfirmed.checked)){ pkMessage('Please open the policy and confirm acceptance and ownership before saving.','error'); return; }
     const reg = pkRegistry(); const key = pkResidentKey(profile); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] };
-    sub.residentEmail = currentEmail || profile.email || ''; sub.residentName = (typeof fullNameFromUser === 'function' ? fullNameFromUser(profile) : profile.name || 'Resident'); sub.eircode = profile.eircode || ''; sub.address = profile.address || ''; sub.spaceDisplay = allocation.spaceDisplay || allocation.spaceNo || ''; sub.type = allocation.type || 'Single'; sub.ownerConfirmed = true; sub.lastUpdatedAt = new Date().toISOString(); sub.hasAllocatedParking = true; sub.parkingSpaceAvailable = true;
+    sub.residentEmail = currentEmail || profile.email || profile.userEmail || ''; sub.residentName = (typeof fullNameFromUser === 'function' ? fullNameFromUser(profile) : profile.name || profile.fullName || 'Resident'); sub.eircode = profile.eircode || profile.eir || ''; sub.address = profile.address || profile.fullAddress || profile.streetAddress || profile.householdAddress || '';  sub.spaceDisplay = allocation.spaceDisplay || allocation.spaceNo || ''; sub.type = allocation.type || 'Single'; sub.ownerConfirmed = true; sub.lastUpdatedAt = new Date().toISOString(); sub.hasAllocatedParking = true; sub.parkingSpaceAvailable = true;
     const now = new Date().toISOString();
     if(pkEls.noVehicleNow.checked){ sub.noVehicleDeclared = true; sub.noVehicleDeclaredAt = now; sub.parkingOccupancyStatus = 'no_vehicle_declared'; sub.adminReportFlag = 'resident_has_allocated_space_but_no_vehicle'; sub.vehicles = Array.isArray(sub.vehicles) ? sub.vehicles.filter(v => !v.deletedAt) : []; sub.acceptanceHistory = Array.isArray(sub.acceptanceHistory) ? sub.acceptanceHistory : []; sub.acceptanceHistory.push({ acceptedAt: now, mode:'no_vehicle_declared', vehicleCount:0, allocatedSpace: sub.spaceDisplay || '' }); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); pkMessage('Empty-space declaration saved.'); return; }
     const vehicle = { plate: pkEls.plate.value.trim().toUpperCase(), type: pkEls.type.value.trim(), brand: pkEls.brand.value.trim(), model: pkEls.model.value.trim(), colour: pkEls.colour.value.trim(), fuel: pkEls.fuel.value.trim(), status:'Active', createdAt: now };
@@ -1871,8 +1876,8 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
   function pkNormalize(v){ try{return window.anwParkingNormalizeText(v);}catch(_){return String(v||'').toLowerCase().trim();} }
   function pkRegistry(){ return (window.anwParkingLoadRegistry && window.anwParkingLoadRegistry()) || { allocations:[], submissions:{}, policy:null }; }
   function pkSaveRegistry(data){ return (window.anwParkingSaveRegistry && window.anwParkingSaveRegistry(data)) || data; }
-  function pkResidentKey(profile){ const email = (window.anwNormEmail ? window.anwNormEmail(profile?.email || profile?.userEmail || currentEmail || '') : String(profile?.email || currentEmail || '').toLowerCase()); const eir = String(profile?.eircode || '').toUpperCase().replace(/\s+/g,''); return email || ('eir:' + eir) || 'resident'; }
-  function pkFindAllocation(profile){ const registry = pkRegistry(); const allocations = Array.isArray(registry.allocations) ? registry.allocations : []; const pe = String(profile?.eircode || '').toUpperCase().replace(/\s+/g,''); const pa = pkNormalize(profile?.address || ''); const pn = pkNormalize(fullNameFromUser ? fullNameFromUser(profile) : (profile?.name || '')); return allocations.find(a => String(a.eircode || '').toUpperCase().replace(/\s+/g,'') === pe && pe) || allocations.find(a => pkNormalize(a.address) === pa && pa) || allocations.find(a => pkNormalize(a.residentName) === pn && pn) || null; }
+  function pkResidentKey(profile){ const email = (window.anwNormEmail ? window.anwNormEmail(profile?.email || profile?.userEmail || profile?.loginEmail || profile?.netlifyEmail || currentEmail || '') : String(profile?.email || currentEmail || '').toLowerCase()); const eir = String(profile?.eircode || profile?.eir || '').toUpperCase().replace(/\s+/g,''); return email || (eir ? ('eir:' + eir) : '') || 'resident'; }
+  function pkFindAllocation(profile){ const registry = pkRegistry(); const allocations = Array.isArray(registry.allocations) ? registry.allocations : []; const pe = String(profile?.eircode || profile?.eir || '').toUpperCase().replace(/\s+/g,''); const pa = pkNormalize(profile?.address || profile?.fullAddress || profile?.streetAddress || profile?.householdAddress || ''); const pn = pkNormalize(fullNameFromUser ? fullNameFromUser(profile) : (profile?.name || profile?.fullName || '')); return allocations.find(a => String(a.eircode || a.eir || '').toUpperCase().replace(/\s+/g,'') === pe && pe) || allocations.find(a => pkNormalize(a.address || a.fullAddress || '') === pa && pa) || allocations.find(a => pkNormalize(a.residentName || a.name || '') === pn && pn) || null; }
   function pkSubmission(profile){ const reg = pkRegistry(); const key = pkResidentKey(profile); return reg.submissions && reg.submissions[key] ? reg.submissions[key] : null; }
   function pkToggleVehicleInputs(){
     const noVehicle = !!(pkEls.noVehicleNow && pkEls.noVehicleNow.checked);
@@ -1893,8 +1898,8 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     const policy = (window.anwParkingLoadPolicy && window.anwParkingLoadPolicy()) || pkRegistry().policy || null;
     const residentName = (typeof fullNameFromUser === 'function' ? fullNameFromUser(profile) : (profile.name || 'Resident'));
     pkEls.residentName.textContent = residentName || 'Resident';
-    pkEls.address.textContent = profile.address || '—';
-    pkEls.eircode.textContent = profile.eircode || '—';
+    pkEls.address.textContent = profile.address || profile.fullAddress || profile.streetAddress || profile.householdAddress || '—';
+    pkEls.eircode.textContent = profile.eircode || profile.eir || '—';
     const type = allocation?.type || (allocation?.hasParking === false ? 'No Parking' : 'Single');
     const noParking = !allocation || allocation.hasParking === false || type === 'No Parking';
     const spaceText = noParking ? 'N/A' : (allocation.spaceDisplay || allocation.spaceNo || allocation.space1 || '—');
@@ -1934,7 +1939,7 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     const policy = (window.anwParkingLoadPolicy && window.anwParkingLoadPolicy()) || pkRegistry().policy || null;
     if(!(policy && policy.dataUrl && pkPolicyOpened && pkEls.policyAccepted.checked && pkEls.ownerConfirmed.checked)){ pkMessage('Please open the policy and confirm acceptance and ownership before saving.','error'); return; }
     const reg = pkRegistry(); const key = pkResidentKey(profile); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] };
-    sub.residentEmail = currentEmail || profile.email || ''; sub.residentName = (typeof fullNameFromUser === 'function' ? fullNameFromUser(profile) : profile.name || 'Resident'); sub.eircode = profile.eircode || ''; sub.address = profile.address || ''; sub.spaceDisplay = allocation.spaceDisplay || allocation.spaceNo || ''; sub.type = allocation.type || 'Single'; sub.ownerConfirmed = true; sub.lastUpdatedAt = new Date().toISOString(); sub.hasAllocatedParking = true; sub.parkingSpaceAvailable = true;
+    sub.residentEmail = currentEmail || profile.email || profile.userEmail || ''; sub.residentName = (typeof fullNameFromUser === 'function' ? fullNameFromUser(profile) : profile.name || profile.fullName || 'Resident'); sub.eircode = profile.eircode || profile.eir || ''; sub.address = profile.address || profile.fullAddress || profile.streetAddress || profile.householdAddress || '';  sub.spaceDisplay = allocation.spaceDisplay || allocation.spaceNo || ''; sub.type = allocation.type || 'Single'; sub.ownerConfirmed = true; sub.lastUpdatedAt = new Date().toISOString(); sub.hasAllocatedParking = true; sub.parkingSpaceAvailable = true;
     const now = new Date().toISOString();
     if(pkEls.noVehicleNow.checked){ sub.noVehicleDeclared = true; sub.noVehicleDeclaredAt = now; sub.parkingOccupancyStatus = 'no_vehicle_declared'; sub.adminReportFlag = 'resident_has_allocated_space_but_no_vehicle'; sub.vehicles = Array.isArray(sub.vehicles) ? sub.vehicles.filter(v => !v.deletedAt) : []; sub.acceptanceHistory = Array.isArray(sub.acceptanceHistory) ? sub.acceptanceHistory : []; sub.acceptanceHistory.push({ acceptedAt: now, mode:'no_vehicle_declared', vehicleCount:0, allocatedSpace: sub.spaceDisplay || '' }); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); pkMessage('Empty-space declaration saved.'); return; }
     const vehicle = { plate: pkEls.plate.value.trim().toUpperCase(), type: pkEls.type.value.trim(), brand: pkEls.brand.value.trim(), model: pkEls.model.value.trim(), colour: pkEls.colour.value.trim(), fuel: pkEls.fuel.value.trim(), status:'Active', createdAt: now };
