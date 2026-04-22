@@ -1714,8 +1714,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     pkToggleVehicleInputs();
     pkMessage('');
   }
-  function pkDeleteVehicle(idx){ const profile = currentProfile || {}; const key = pkResidentKey(profile); const reg = pkRegistry(); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] }; const vehicle = (sub.vehicles || [])[idx]; if(!vehicle) return; vehicle.deletedAt = new Date().toISOString(); vehicle.deletedBy = 'resident'; sub.deletedVehicles = Array.isArray(sub.deletedVehicles) ? sub.deletedVehicles : []; sub.deletedVehicles.push(Object.assign({}, vehicle)); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); }
-  function pkQuickDeclareNoVehicle(){ pkOpenForm(true); pkSaveSubmission(); }
+  function pkDeleteVehicle(idx){ const profile = currentProfile || {}; const key = pkResidentKey(profile); const reg = pkRegistry(); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] }; const vehicle = (sub.vehicles || [])[idx]; if(!vehicle) return; vehicle.deletedAt = new Date().toISOString(); vehicle.deletedBy = 'resident'; sub.deletedVehicles = Array.isArray(sub.deletedVehicles) ? sub.deletedVehicles : []; sub.deletedVehicles.push(Object.assign({}, vehicle)); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); }\n  function pkQuickDeclareNoVehicle(){ pkOpenForm(true); pkSaveSubmission(); }
   function pkSaveSubmission(){
     const profile = currentProfile || {}; const allocation = pkFindAllocation(profile); if(!allocation || allocation.hasParking === false){ pkMessage('No parking allocation is available for this residence.','error'); return; }
     const policy = (window.anwParkingLoadPolicy && window.anwParkingLoadPolicy()) || pkRegistry().policy || null;
@@ -1929,8 +1928,7 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     pkToggleVehicleInputs();
     pkMessage('');
   }
-  function pkDeleteVehicle(idx){ const profile = currentProfile || {}; const key = pkResidentKey(profile); const reg = pkRegistry(); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] }; const vehicle = (sub.vehicles || [])[idx]; if(!vehicle) return; vehicle.deletedAt = new Date().toISOString(); vehicle.deletedBy = 'resident'; sub.deletedVehicles = Array.isArray(sub.deletedVehicles) ? sub.deletedVehicles : []; sub.deletedVehicles.push(Object.assign({}, vehicle)); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); }
-  function pkQuickDeclareNoVehicle(){ pkOpenForm(true); pkSaveSubmission(); }
+  function pkDeleteVehicle(idx){ const profile = currentProfile || {}; const key = pkResidentKey(profile); const reg = pkRegistry(); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] }; const vehicle = (sub.vehicles || [])[idx]; if(!vehicle) return; vehicle.deletedAt = new Date().toISOString(); vehicle.deletedBy = 'resident'; sub.deletedVehicles = Array.isArray(sub.deletedVehicles) ? sub.deletedVehicles : []; sub.deletedVehicles.push(Object.assign({}, vehicle)); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); }\n  function pkQuickDeclareNoVehicle(){ pkOpenForm(true); pkSaveSubmission(); }
   function pkSaveSubmission(){
     const profile = currentProfile || {}; const allocation = pkFindAllocation(profile); if(!allocation || allocation.hasParking === false){ pkMessage('No parking allocation is available for this residence.','error'); return; }
     const policy = (window.anwParkingLoadPolicy && window.anwParkingLoadPolicy()) || pkRegistry().policy || null;
