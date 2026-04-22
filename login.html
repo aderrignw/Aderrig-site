@@ -699,6 +699,41 @@
     return s.split(',')[0].trim() || s;
   }
 
+  function getUserEmails(user){
+    return [
+      user && user.email,
+      user && user.userEmail,
+      user && user.loginEmail,
+      user && user.netlifyEmail
+    ].map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
+  }
+
+  function findUserByEmail(users, email){
+    const norm = String(email || '').trim().toLowerCase();
+    if(!norm) return null;
+    const list = Array.isArray(users) ? users : [];
+    return list.find(u => getUserEmails(u).includes(norm)) || null;
+  }
+
+  function getUserEir(user){
+    return normalizeEir(
+      (user && (user.eircode || user.eir || user.postcode || user.postalCode)) || ''
+    );
+  }
+
+  function getUserAddress(user){
+    return String(
+      (user && (
+        user.address ||
+        user.fullAddress ||
+        user.streetAddress ||
+        user.householdAddress ||
+        user.homeAddress
+      )) || ''
+    ).trim();
+  }
+
+
   const loginEmail = document.getElementById('loginEmail');
   const loginEir   = document.getElementById('loginEir');
   const loginPass  = document.getElementById('loginPass');
@@ -803,21 +838,19 @@
     try{
       await anwInitStore();
       const users = anwLoad(KEY_USERS, []);
-      const u = Array.isArray(users)
-        ? users.find(x => (x.email||'').toLowerCase() === email)
-        : null;
+      const u = findUserByEmail(users, email);
 
       if(!u){
         loginStreet.value = '';
         return;
       }
 
-      if(normalizeEir(u.eircode || '') !== eir){
+      if(getUserEir(u) !== eir){
         loginStreet.value = 'Eircode not registered';
         return;
       }
 
-      loginStreet.value = streetFromAddress(u.address || '') || 'Street not available';
+      loginStreet.value = streetFromAddress(getUserAddress(u)) || 'Street not available';
     }catch{
       loginStreet.value = '';
     }
@@ -860,7 +893,7 @@
     try{
       const sKey = (window.ANW_KEYS && ANW_KEYS.SESSION) ? ANW_KEYS.SESSION : 'anw_session';
       const payload = {
-        email: userRecord && userRecord.email ? String(userRecord.email).toLowerCase() : '',
+        email: userRecord ? String((userRecord.email || userRecord.userEmail || userRecord.loginEmail || userRecord.netlifyEmail || '')).toLowerCase() : '',
         name: userRecord && userRecord.name ? String(userRecord.name) : '',
         role: (userRecord && (userRecord.role || (userRecord.isCoordinator ? 'street_admin' : 'resident'))) || 'resident',
         status: userRecord && userRecord.status ? String(userRecord.status).toLowerCase() : 'active',
@@ -1125,13 +1158,13 @@
         let users = anwLoad(KEY_USERS, []);
         if(!Array.isArray(users)) users = [];
 
-        if (users.some(x => (x.email||'').toLowerCase() === email)) {
+        if (findUserByEmail(users, email)) {
           modal('This email is already registered.', 'Duplicate');
           try{ window.netlifyIdentity.logout(); } catch {}
           return;
         }
 
-        if (users.some(x => normalizeEir(x.eircode||'') === eir)) {
+        if (users.some(x => getUserEir(x) === eir)) {
           modal('This eircode is already registered. Only one account per residence is allowed.', 'Duplicate');
           try{ window.netlifyIdentity.logout(); } catch {}
           return;
