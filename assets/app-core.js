@@ -47,6 +47,39 @@ function anwNormEmail(v) {
   return String(v || "").trim().toLowerCase();
 }
 
+
+function anwEmailLocalPart(v) {
+  const email = anwNormEmail(v);
+  return email.includes("@") ? email.split("@")[0] : email;
+}
+
+function anwGetUserEmails(user) {
+  try {
+    return [
+      anwNormEmail(user && user.email),
+      anwNormEmail(user && user.userEmail),
+      anwNormEmail(user && user.loginEmail),
+      anwNormEmail(user && user.netlifyEmail),
+    ].filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function anwUserMatchesEmail(user, email) {
+  try {
+    const target = anwNormEmail(email);
+    if (!target) return false;
+    const emails = anwGetUserEmails(user);
+    if (emails.includes(target)) return true;
+    const targetLocal = anwEmailLocalPart(target);
+    return !!targetLocal && emails.some((value) => anwEmailLocalPart(value) === targetLocal);
+  } catch {
+    return false;
+  }
+}
+
+
 function anwIsMasterEmail(email) {
   try {
     return anwNormEmail(email) === anwNormEmail(window.ANW_MASTER_EMAIL);
@@ -222,7 +255,7 @@ function anwGetLoggedRole() {
     const users = anwLoad(ANW_KEYS.USERS, []);
     if (!Array.isArray(users)) return "resident";
 
-    const me = users.find(u => anwNormEmail(u && u.email) === email);
+    const me = users.find(u => anwUserMatchesEmail(u, email));
     if (!me) return "resident";
 
     const normalized = anwCollectProfileRoles(me).map(anwNormalizeRoleName);
@@ -403,7 +436,7 @@ window.anwGetCurrentUserProfile = function () {
     if (!email) return null;
     const users = anwLoad(ANW_KEYS.USERS, []);
     if (!Array.isArray(users)) return null;
-    return users.find(u => anwNormEmail(u && u.email) === email) || null;
+    return users.find(u => anwUserMatchesEmail(u, email)) || null;
   } catch {
     return null;
   }
