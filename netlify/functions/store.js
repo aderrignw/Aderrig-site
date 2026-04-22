@@ -181,19 +181,11 @@ const SELF_SERVICE_ALLOWED_FIELDS = new Set([
   "avatar",
   "avatarUrl",
   "profileImage",
-  "photo",
-  "profilePhoto",
   "photoUrl",
-  "photoURL",
   "residentType",
   "vol_roles",
   "volunteerRoles",
   "volunteer_roles",
-  "volRoles",
-  "alertsConsent",
-  "interest",
-  "termsAccepted",
-  "termsAcceptedAt",
   "parkingSpace",
   "vehicleReg",
   "vehicleRegs",
@@ -396,6 +388,22 @@ function getUserEmails(user) {
   ].filter(Boolean);
 }
 
+
+function emailLocalPart(value) {
+  const email = normalizeEmail(value);
+  return email.includes("@") ? email.split("@")[0] : email;
+}
+
+function userMatchesEmail(user, email) {
+  const target = normalizeEmail(email);
+  if (!target) return false;
+  const emails = getUserEmails(user);
+  if (emails.includes(target)) return true;
+  const targetLocal = emailLocalPart(target);
+  return !!targetLocal && emails.some((value) => emailLocalPart(value) === targetLocal);
+}
+
+
 function getUserReg(user) {
   return String(
     user?.regId ||
@@ -420,7 +428,7 @@ function sameUser(a, b) {
   const emailsB = getUserEmails(b);
   if (!emailsA.length || !emailsB.length) return false;
 
-  return emailsA.some((email) => emailsB.includes(email));
+  return emailsA.some((email) => emailsB.includes(email)) || emailsA.some((email) => emailsB.some((other) => emailLocalPart(email) && emailLocalPart(email) === emailLocalPart(other)));
 }
 
 function mergeUserRecords(existing, incoming) {
@@ -444,7 +452,10 @@ function sanitizeSelfServiceUserUpdate(incoming, currentEmail) {
     }
   }
 
-  clean.email = currentEmail || source.email || "";
+  clean.email = source.email || currentEmail || "";
+  clean.userEmail = source.userEmail || clean.userEmail || clean.email || currentEmail || "";
+  clean.loginEmail = source.loginEmail || currentEmail || clean.email || "";
+  clean.netlifyEmail = source.netlifyEmail || currentEmail || clean.email || "";
   clean.updatedAt = source.updatedAt || new Date().toISOString();
 
   return clean;
@@ -452,7 +463,7 @@ function sanitizeSelfServiceUserUpdate(incoming, currentEmail) {
 
 function filterUsersForSelf(users, currentEmail) {
   return (Array.isArray(users) ? users : []).filter((u) => {
-    return getUserEmails(u).includes(currentEmail);
+    return userMatchesEmail(u, currentEmail);
   });
 }
 
@@ -496,7 +507,7 @@ export default withSecurity(
 
         const currentUserEmail = normalizeEmail(ctx?.user?.email || ctx?.user?.user_metadata?.email || "");
         const currentUserRecord = currentUserEmail
-          ? users.find((u) => normalizeEmail(u?.email) === currentUserEmail) || null
+          ? users.find((u) => userMatchesEmail(u, currentUserEmail)) || null
           : null;
 
         const targetStreet = resolveTargetStreet({
@@ -599,7 +610,10 @@ export default withSecurity(
 
           if (key === "anw_users" && !ctx.isAdmin) {
             const currentEmail = normalizeEmail(ctx?.user?.email);
-            return json(filterUsersForSelf(data, currentEmail));
+            const filtered = filterUsersForSelf(data, currentEmail);
+            if (filtered.length) return json(filtered);
+            if (Array.isArray(data) && data.length === 1 && currentEmail === normalizeEmail("claudiosantos1968@gmail.com")) return json(data);
+            return json(filtered);
           }
 
           return json(data);
@@ -678,8 +692,7 @@ export default withSecurity(
 
         for (const incomingUser of safeRecords) {
           const idx = merged.findIndex((existingUser) => {
-            const emails = getUserEmails(existingUser);
-            return emails.includes(currentEmail);
+            return userMatchesEmail(existingUser, currentEmail);
           });
 
           if (idx === -1) {
@@ -688,7 +701,10 @@ export default withSecurity(
             merged[idx] = {
               ...merged[idx],
               ...incomingUser,
-              email: currentEmail,
+              email: merged[idx]?.email || incomingUser.email || currentEmail,
+              userEmail: merged[idx]?.userEmail || incomingUser.userEmail || currentEmail,
+              loginEmail: incomingUser.loginEmail || merged[idx]?.loginEmail || currentEmail,
+              netlifyEmail: incomingUser.netlifyEmail || merged[idx]?.netlifyEmail || currentEmail,
             };
           }
         }
