@@ -332,7 +332,7 @@
     "page:help_center": "Public",
     "page:login": "Public",
     "page:privacy": "Public",
-    "page:dashboard": "Public",
+    "page:dashboard": "Authenticated",
     "page:report": "Authenticated",
     "page:household": "Authenticated",
     "page:alerts": "Authenticated",
