@@ -931,9 +931,7 @@
 
         await anwInitStore();
         const users = anwLoad(KEY_USERS, []);
-        const me = Array.isArray(users)
-          ? users.find(x => (x.email||'').toLowerCase() === email)
-          : null;
+        const me = findUserByEmail(users, email);
 
         if(!me){
           try{ window.netlifyIdentity.logout(); } catch {}
@@ -941,7 +939,7 @@
           return;
         }
 
-        if(normalizeEir(me.eircode || '') !== eir){
+        if(getUserEir(me) !== eir){
           try{ window.netlifyIdentity.logout(); } catch {}
           setMsg(loginMsg, 'Eircode does not match this account.', 'error');
           modal('The eircode entered does not match the registered address for this email.', 'Eircode mismatch');
@@ -956,7 +954,7 @@
           return;
         }
 
-        if(status !== 'active'){
+        if(status !== 'active' && status !== 'approved'){
           try{ window.netlifyIdentity.logout(); } catch {}
           setMsg(loginMsg, 'Your registration is pending approval by an ANW admin.', 'error');
           modal('Your account is pending approval. Please wait for an admin to approve your registration.', 'Pending approval');
@@ -1166,6 +1164,18 @@
 
         users.push(newUser);
         await anwSave(KEY_USERS, users);
+
+        try{
+          if(typeof window.anwFetchStorePost === 'function'){
+            await window.anwUpsertMyProfile ? window.anwUpsertMyProfile(newUser) : window.anwFetchStorePost(KEY_USERS, newUser);
+          }
+        }catch(syncErr){
+          console.warn('Registration sync to Netlify store failed', syncErr);
+          setMsg(regMsg, 'Registration created locally, but sync to server failed. Please try again or contact admin.', 'error');
+          modal('Your registration was created, but it could not be synced to the secure server record yet. Please try again or contact admin.', 'Sync required');
+          try{ window.netlifyIdentity.logout(); } catch {}
+          return;
+        }
 
         setMsg(regMsg, 'Registration created. Your account is pending admin approval.', 'ok');
         modal('Registration submitted. Your account is pending admin approval.', 'Success');
