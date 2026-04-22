@@ -199,6 +199,51 @@
     return normalized.some((role) => ADMIN_ALLOWED_ROLES.includes(role));
   }
 
+  function getApprovedProfile() {
+    try {
+      if (typeof window.anwGetLoggedProfile === "function") {
+        return window.anwGetLoggedProfile() || null;
+      }
+    } catch (_) {}
+
+    try {
+      const email = getLoggedEmail();
+      if (!email) return null;
+      let users = [];
+      if (typeof window.anwLoad === "function") {
+        users = window.anwLoad(getUsersKey(), []) || [];
+      } else {
+        const raw = localStorage.getItem(getUsersKey());
+        users = raw ? JSON.parse(raw) : [];
+      }
+      const row = Array.isArray(users)
+        ? users.find((u) => String((u && (u.email || u.userEmail || "")) || "").trim().toLowerCase() === email)
+        : null;
+      return row || null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function hasApprovedAccess() {
+    try {
+      const email = getLoggedEmail();
+      if (!email) return false;
+      if (isMasterOwnerEmail(email)) return true;
+      if (typeof window.anwHasApprovedAccess === "function") {
+        return !!window.anwHasApprovedAccess();
+      }
+      const profile = getApprovedProfile();
+      if (typeof window.anwIsApproved === "function") {
+        return !!window.anwIsApproved(profile);
+      }
+      const status = String(profile && (profile.status || profile.accountStatus || profile.registrationStatus) || "").trim().toLowerCase();
+      return !!profile && (profile.approved === true || profile.active === true || status === "approved" || status === "active");
+    } catch (_) {
+      return false;
+    }
+  }
+
   function getRole() {
     try {
       const email = getLoggedEmail();
@@ -438,7 +483,8 @@
   function ruleAllows(rule, role) {
     const clean = normalizeRule(rule);
     if (clean.toLowerCase() === "public") return true;
-    if (clean.toLowerCase() === "authenticated") return isLoggedIn();
+    if (clean.toLowerCase() === "authenticated") return isLoggedIn() && hasApprovedAccess();
+    if (!hasApprovedAccess() && !isMasterOwnerEmail(getLoggedEmail())) return false;
     return roleAllows(clean, role);
   }
 
@@ -505,7 +551,7 @@
 
       const adminLike = !!(email && (isMasterOwnerEmail(email) || hasAllowedAdminRole(getAdminRolesForEmail(email))));
       const shouldShowFullMenu = !loggedIn || adminLike || role !== "resident";
-      const shouldShowResidentShort = loggedIn && !adminLike && role === "resident";
+      const shouldShowResidentShort = loggedIn && hasApprovedAccess() && !adminLike && role === "resident";
 
       nav.innerHTML = shouldShowFullMenu ? fullMenuHtml() : residentMenuHtml();
 
@@ -614,11 +660,20 @@
     if (clean.toLowerCase() === "authenticated") {
       if (!isLoggedIn()) {
         location.replace("login.html");
+        return;
+      }
+      if (!hasApprovedAccess()) {
+        location.replace("login.html");
       }
       return;
     }
 
     if (!isLoggedIn()) {
+      location.replace("login.html");
+      return;
+    }
+
+    if (!hasApprovedAccess() && !isMasterOwnerEmail(getLoggedEmail())) {
       location.replace("login.html");
       return;
     }
