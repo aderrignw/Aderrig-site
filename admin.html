@@ -1223,22 +1223,22 @@
     <p id="adminGateMsg" class="tiny muted" style="margin-top:0.5rem; display:none;"></p>
 
     <div class="actions admin-tabs" style="margin-top:0.5rem;">
-      <button type="button" class="btn small admin-tab active" data-tab="tabResidents">Residents</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabTasks">Volunteer tasks</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabElections">Elections</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabParkingAdmin">Parking &amp; Vehicles</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabReports">Reports</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabNotices">Notices</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabHandbook">Handbook</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabHelpCenterAdmin">Help</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabProjects">Projects Monitoring</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabAccessControl">Access Control</button>
-      <button type="button" class="btn small admin-tab" data-tab="tabTools">Tools</button>
+      <button type="button" class="btn small admin-tab active" data-tab="tabResidents" data-acl-feature="admin:tab_residents">Residents</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabTasks" data-acl-feature="admin:tab_tasks">Volunteer tasks</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabElections" data-acl-feature="admin:tab_elections">Elections</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabParkingAdmin" data-acl-feature="admin:tab_parking">Parking &amp; Vehicles</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabReports" data-acl-feature="admin:tab_reports">Reports</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabNotices" data-acl-feature="admin:tab_notices">Notices</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabHandbook" data-acl-feature="admin:tab_handbook">Handbook</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabHelpCenterAdmin" data-acl-feature="admin:tab_help">Help</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabProjects" data-acl-feature="admin:tab_projects">Projects Monitoring</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabAccessControl" data-acl-feature="admin:tab_access_control">Access Control</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabTools" data-acl-feature="admin:tab_tools">Tools</button>
     </div>
   </section>
 
   <!-- ================= RESIDENTS ================= -->
-  <section class="card admin-tab-content" id="tabResidents">
+  <section class="card admin-tab-content" id="tabResidents" data-acl-feature="admin:tab_residents">
     <h3>Residents</h3>
 
     <div class="actions resident-tabs" style="margin-top:0.25rem;">
@@ -1269,7 +1269,7 @@
     <p id="resEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No residents found.</p>
   </section>
 
-  <section class="card admin-tab-content" id="tabParkingAdmin" style="display:none;">
+  <section class="card admin-tab-content" id="tabParkingAdmin" data-acl-feature="admin:tab_parking" style="display:none;">
     <h3>Parking &amp; Vehicles</h3>
     <p class="tiny muted" style="margin-top:0;">Private parking allocation management connected directly to the resident dashboard. Visitor vehicles must not be registered here and must use the visitor parking procedure.</p>
     <div class="parking-admin-grid">
@@ -1508,7 +1508,7 @@
   </div>
 
   <!-- ================= TASKS ================= -->
-  <section class="card admin-tab-content" id="tabTasks" style="display:none;">
+  <section class="card admin-tab-content" id="tabTasks" data-acl-feature="admin:tab_tasks" style="display:none;">
     <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
       <div>
         <h3 style="margin:0;">Volunteer tasks</h3>
@@ -1637,7 +1637,7 @@
     </div>
   </section>
   <!-- ================= ELECTIONS ================= -->
-  <section class="card admin-tab-content" id="tabElections" style="display:none;">
+  <section class="card admin-tab-content" id="tabElections" data-acl-feature="admin:tab_elections" style="display:none;">
     <h3>Elections</h3>
 
     <div class="actions resident-tabs" style="margin-top:0.25rem;">
@@ -1733,7 +1733,7 @@
   </section>
 
   <!-- ================= REPORTS ================= -->
-  <section class="card admin-tab-content" id="tabReports" style="display:none;">
+  <section class="card admin-tab-content" id="tabReports" data-acl-feature="admin:tab_reports" style="display:none;">
     <h3>Reports</h3>
     <p class="tiny muted" style="margin-top:0;">
       View and manage incident reports submitted via the <a href="report.html">Report</a> page. This admin view reads the same incident storage used by the resident report form and overview, with no Google Maps dependency.
@@ -1863,7 +1863,7 @@
   </section>
 
   <!-- ================= NOTICES ================= -->
-  <section class="card admin-tab-content" id="tabNotices" style="display:none;">
+  <section class="card admin-tab-content" id="tabNotices" data-acl-feature="admin:tab_notices" style="display:none;">
     <h3>Notices</h3>
     <p class="tiny muted" style="margin-top:0;">Create official notices that appear on member dashboards. Messages are read-only for residents.</p>
 
@@ -2007,7 +2007,7 @@
   </section>
 
   <!-- ================= HANDBOOK ================= -->
-  <section class="card admin-tab-content" id="tabHandbook" style="display:none;">
+  <section class="card admin-tab-content" id="tabHandbook" data-acl-feature="admin:tab_handbook" style="display:none;">
   <div class="hb-admin-shell">
     <div class="hb-admin-panel">
       <div class="hb-admin-panel-head">
@@ -2156,7 +2156,7 @@
 </section>
 
   <!-- ================= HELP CENTER ================= -->
-  <section class="card admin-tab-content" id="tabHelpCenterAdmin" style="display:none;">
+  <section class="card admin-tab-content" id="tabHelpCenterAdmin" data-acl-feature="admin:tab_help" style="display:none;">
     <h3>Help Center</h3>
     <p class="tiny muted" style="margin-top:0;">Manage Help Center packages, topics and owner guidance. The Handbook stays separate.</p>
 
@@ -2268,7 +2268,7 @@
   </section>
 
   <!-- ================= PROJECTS ================= -->
-  <section class="card admin-tab-content" id="tabProjects" style="display:none;">
+  <section class="card admin-tab-content" id="tabProjects" data-acl-feature="admin:tab_projects" style="display:none;">
     <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
       <div>
         <h3 style="margin:0;">Projects Monitoring</h3>
@@ -2339,7 +2339,7 @@
   </section>
 
   <!-- ================= ACCESS CONTROL ================= -->
-  <section class="card admin-tab-content" id="tabAccessControl" style="display:none;">
+  <section class="card admin-tab-content" id="tabAccessControl" data-acl-feature="admin:tab_access_control" style="display:none;">
     <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
       <div>
         <h3 style="margin:0;">Access Control</h3>
@@ -2377,7 +2377,7 @@
   </section>
 
   <!-- ================= TOOLS ================= -->
-  <section class="card admin-tab-content" id="tabTools" style="display:none;">
+  <section class="card admin-tab-content" id="tabTools" data-acl-feature="admin:tab_tools" style="display:none;">
     <h3>Tools</h3>
     <p class="tiny muted" style="margin-top:0;">
       Maintenance tools for backups, restore, exports and diagnostics.
