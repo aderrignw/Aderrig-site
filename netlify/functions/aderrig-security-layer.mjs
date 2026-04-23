@@ -1,3 +1,5 @@
+import { getUser } from "@netlify/identity";
+
 function securityHeaders(extra = {}) {
   return {
     "Content-Type": "application/json",
@@ -18,6 +20,51 @@ export function jsonResponse(data, status = 200, extraHeaders = {}) {
 
 export function normalizeEmail(value) {
   return String(value || "").toLowerCase().trim();
+}
+
+function parseJwtPayload(token) {
+  try {
+    const parts = String(token || "").split(".");
+    if (parts.length < 2) return null;
+    const normalized = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized + "=".repeat((4 - (normalized.length % 4 || 4)) % 4);
+    return JSON.parse(Buffer.from(padded, "base64").toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function readBearerToken(req) {
+  const auth = String(req?.headers?.get("authorization") || "").trim();
+  const match = auth.match(/^Bearer\s+(.+)$/i);
+  return match ? match[1].trim() : "";
+}
+
+function readUserFromTokenPayload(req) {
+  const token = readBearerToken(req);
+  if (!token) return null;
+
+  const payload = parseJwtPayload(token);
+  if (!payload || typeof payload !== "object") return null;
+
+  const exp = Number(payload.exp || 0);
+  if (exp && exp * 1000 <= Date.now()) return null;
+
+  const email = normalizeEmail(
+    payload.email ||
+    payload?.user_metadata?.email ||
+    payload?.app_metadata?.email ||
+    ""
+  );
+
+  if (!email) return null;
+
+  return {
+    ...payload,
+    email,
+    app_metadata: payload.app_metadata || {},
+    user_metadata: payload.user_metadata || {},
+  };
 }
 
 function parseNetlifyCustomContext(context) {
@@ -45,6 +92,7 @@ export function getUserRoles(user) {
   return Array.from(
     new Set([
       ...splitRoles(user?.app_metadata?.roles),
+      ...splitRoles(user?.app_metadata?.authorization?.roles),
       ...splitRoles(user?.roles),
       ...splitRoles(user?.role),
       ...splitRoles(user?.user_metadata?.roles),
@@ -53,13 +101,23 @@ export function getUserRoles(user) {
   );
 }
 
-export function readCurrentUser(context) {
+export async function readCurrentUser(req, context) {
+  try {
+    const sdkUser = await getUser();
+    if (sdkUser?.email) return sdkUser;
+  } catch {
+    // Fall back to context and token parsing below.
+  }
+
   const directUser = context?.clientContext?.user;
   if (directUser?.email) return directUser;
 
   const netlifyContext = parseNetlifyCustomContext(context);
   if (netlifyContext?.user?.email) return netlifyContext.user;
   if (netlifyContext?.identity?.email) return netlifyContext.identity;
+
+  const tokenUser = readUserFromTokenPayload(req);
+  if (tokenUser?.email) return tokenUser;
 
   return null;
 }
@@ -119,7 +177,7 @@ export function withSecurity(config, handler) {
         return jsonResponse({ error: "payload too large" }, 413);
       }
 
-      const user = readCurrentUser(context);
+      const user = await readCurrentUser(req, context);
       const roles = getUserRoles(user);
       const ownerEmails = Array.from(
         new Set(
