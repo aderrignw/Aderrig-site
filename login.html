@@ -914,6 +914,40 @@
     return 'dashboard.html#profile';
   }
 
+
+  async function loadUsersForAuthenticatedLogin(email){
+    const norm = String(email || '').trim().toLowerCase();
+    let latest = [];
+
+    try{
+      if(typeof window.anwInitStore === 'function'){
+        await window.anwInitStore({ force:true });
+      }
+    }catch(_){ }
+
+    try{
+      if(typeof window.anwFetchStoreKey === 'function'){
+        const data = await window.anwFetchStoreKey(KEY_USERS);
+        latest = Array.isArray(data) ? data : [];
+        try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, latest); }catch(_){ }
+        const direct = findUserByEmail(latest, norm);
+        if(direct) return { users: latest, me: direct };
+      }
+    }catch(_){ }
+
+    try{
+      if(typeof window.anwGetCurrentUserProfileFresh === 'function'){
+        const me = await window.anwGetCurrentUserProfileFresh({ allowMissing:true });
+        const users = Array.isArray(latest) && latest.length ? latest : (Array.isArray(anwLoad(KEY_USERS, [])) ? anwLoad(KEY_USERS, []) : []);
+        return { users, me: me || findUserByEmail(users, norm) || null };
+      }
+    }catch(_){ }
+
+    const cached = anwLoad(KEY_USERS, []);
+    const users = Array.isArray(cached) ? cached : [];
+    return { users, me: findUserByEmail(users, norm) || null };
+  }
+
   if(btnLogin){
     btnLogin.addEventListener('click', async () => {
       setMsg(loginMsg, '', '');
@@ -961,10 +995,10 @@
 
         await window.netlifyIdentity.gotrue.login(email, pass, true);
         clearAttemptState(email, eir);
-        await anwInitStore();
 
-        const users = anwLoad(KEY_USERS, []);
-        const me = findUserByEmail(users, email);
+        const authSnapshot = await loadUsersForAuthenticatedLogin(email);
+        const users = Array.isArray(authSnapshot && authSnapshot.users) ? authSnapshot.users : [];
+        const me = authSnapshot && authSnapshot.me ? authSnapshot.me : findUserByEmail(users, email);
 
         if(!me){
           try{ window.netlifyIdentity.logout(); } catch {}
