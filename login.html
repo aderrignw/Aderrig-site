@@ -1270,6 +1270,39 @@
     });
   }
 
+  async function requestPasswordResetEmail(email){
+    await new Promise((resolve,reject)=>{
+      if(window.__ensureIdentityReady){
+        return window.__ensureIdentityReady(err=>err?reject(err):resolve());
+      }
+      resolve();
+    });
+
+    if(window.netlifyIdentity && typeof window.netlifyIdentity.requestPasswordRecovery === 'function'){
+      return window.netlifyIdentity.requestPasswordRecovery(email);
+    }
+
+    if(window.netlifyIdentity && window.netlifyIdentity.gotrue && typeof window.netlifyIdentity.gotrue.requestPasswordRecovery === 'function'){
+      return window.netlifyIdentity.gotrue.requestPasswordRecovery(email);
+    }
+
+    const res = await fetch('/.netlify/identity/recover', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+
+    if(!res.ok){
+      let details = '';
+      try{ details = await res.text(); }catch(_){ }
+      const err = new Error(details || ('Password reset request failed (' + res.status + ')'));
+      err.status = res.status;
+      throw err;
+    }
+
+    return true;
+  }
+
   if(btnSendReset){
     btnSendReset.addEventListener('click', async () => {
       const email = (resetEmail.value || '').trim().toLowerCase();
@@ -1277,17 +1310,26 @@
         setMsg(resetMsg, 'Please enter your email.', 'error');
         return;
       }
+
+      const originalText = btnSendReset.textContent;
+      btnSendReset.disabled = true;
+      btnSendReset.textContent = 'Sending...';
+      setMsg(resetMsg, '', '');
+
       try{
-        await new Promise((resolve,reject)=>{
-          if(window.__ensureIdentityReady){
-            return window.__ensureIdentityReady(err=>err?reject(err):resolve());
-          }
-          resolve();
-        });
-        await window.netlifyIdentity.requestPasswordRecovery(email);
-        setMsg(resetMsg, 'Reset email sent. Please check your inbox.', 'ok');
+        await requestPasswordResetEmail(email);
+        setMsg(resetMsg, 'Reset email sent. Please check your inbox and spam folder.', 'ok');
       }catch(e){
-        setMsg(resetMsg, 'Could not send reset email. Please try again.', 'error');
+        console.error('Password reset failed', e);
+        const raw = String((e && (e.message || e.error_description || e.description)) || '').toLowerCase();
+        if((e && e.status === 429) || raw.includes('rate') || raw.includes('too many') || raw.includes('limit')){
+          setMsg(resetMsg, 'A reset email was requested recently. Please wait 15 minutes and try again.', 'error');
+        }else{
+          setMsg(resetMsg, 'Could not send reset email. Please confirm this email exists in Netlify Identity and try again.', 'error');
+        }
+      }finally{
+        btnSendReset.disabled = false;
+        btnSendReset.textContent = originalText || 'Send reset email';
       }
     });
   }
