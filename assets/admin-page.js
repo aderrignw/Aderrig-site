@@ -27,40 +27,73 @@
     return normalized.some(v => ADMIN_ALLOWED_ROLES.includes(v));
   }
 
-  async function anwLoadSafe(key, fallback){
+  async function getIdentityToken(){
     try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, { cache:'no-store' });
-      if(!res.ok) throw new Error('store load failed');
-      const data = await res.json();
-      try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){ }
-      return data;
+      const user = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function'
+        ? window.netlifyIdentity.currentUser()
+        : null;
+      if(!user || typeof user.jwt !== 'function') return null;
+      return await user.jwt();
     }catch(_){
-      try{
-        if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback);
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      }catch(__){
-        return fallback;
-      }
+      return null;
     }
   }
 
-  async function anwSaveSafe(key, value){
-    try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify(value)
-      });
-      if(!res.ok) throw new Error('store save failed');
-      try{ if(typeof window.anwSave === 'function') window.anwSave(key, value); }catch(_){ }
-      return true;
-    }catch(err){
-      try{ localStorage.setItem(key, JSON.stringify(value)); }catch(_){ }
-      console.error(err);
-      throw err;
+  async function waitForIdentityToken(timeoutMs){
+    const startedAt = Date.now();
+    const limit = Number(timeoutMs || 8000);
+    while((Date.now() - startedAt) < limit){
+      const token = await getIdentityToken();
+      if(token) return token;
+      await new Promise(resolve => setTimeout(resolve, 125));
     }
+    return null;
   }
+
+  async function getStoreAuthHeaders(extraHeaders){
+    const token = await getIdentityToken() || await waitForIdentityToken(8000);
+    if(!token) throw new Error('Not authenticated (missing token)');
+    return Object.assign({}, extraHeaders || {}, { Authorization: 'Bearer ' + token });
+  }
+
+  async function ensureStoreResponse(res, action, key){
+    if(res.ok) return res;
+    let details = '';
+    try{
+      details = await res.text();
+    }catch(_){ }
+    const err = new Error(`${action} failed for ${key} (${res.status})${details ? ': ' + details : ''}`);
+    err.status = res.status;
+    throw err;
+  }
+
+  async function anwLoadSafe(key, fallback){
+    const headers = await getStoreAuthHeaders();
+    const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+      cache:'no-store',
+      headers
+    });
+    await ensureStoreResponse(res, 'store load', key);
+    const data = await res.json();
+    try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){ }
+    return (data == null && arguments.length > 1) ? fallback : data;
+  }
+
+  async function anwSaveSafe(key, value){
+    const headers = await getStoreAuthHeaders({ 'Content-Type':'application/json' });
+    const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
+      method:'POST',
+      headers,
+      body: JSON.stringify(value)
+    });
+    await ensureStoreResponse(res, 'store save', key);
+    try{ if(typeof window.anwSave === 'function') window.anwSave(key, value); }catch(_){ }
+    return true;
+  }
+
+  window.anwGetStoreAuthHeaders = getStoreAuthHeaders;
+  window.anwLoadSafe = anwLoadSafe;
+  window.anwSaveSafe = anwSaveSafe;
 
   function downloadText(filename, text, type='application/json'){
     const blob = new Blob([text], { type });
@@ -337,7 +370,7 @@
       console.error(err);
       if(msg){
         msg.style.display = 'block';
-        msg.textContent = 'Unable to fully verify admin access right now. Local admin tools are still available.';
+        msg.textContent = 'Unable to verify admin access right now. Reload the page and sign in again before using admin tools.';
       }
     }finally{
       showAdminTab(getCurrentAdminTabId());
@@ -1874,36 +1907,13 @@
   let taskCache = [];
 
   async function loadStore(key, fallback){
-    try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, { cache:'no-store' });
-      if(!res.ok) throw new Error('store load failed');
-      const data = await res.json();
-      try{ if(typeof window.anwSave === 'function') window.anwSave(key, data); }catch(_){}
-      return data;
-    }catch(_){
-      try{
-        if(typeof window.anwLoad === 'function') return await window.anwLoad(key, fallback);
-      }catch(__){}
-      try{
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      }catch(__){
-        return fallback;
-      }
-    }
+    if(typeof window.anwLoadSafe !== 'function') throw new Error('Store loader not available');
+    return window.anwLoadSafe(key, fallback);
   }
 
   async function saveStore(key, value){
-    try{
-      const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify(value)
-      });
-      if(!res.ok) throw new Error('store save failed');
-    }catch(_){}
-    try{ if(typeof window.anwSave === 'function') window.anwSave(key, value); }catch(__){}
-    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(__){}
+    if(typeof window.anwSaveSafe !== 'function') throw new Error('Store saver not available');
+    return window.anwSaveSafe(key, value);
   }
 
   function normList(v){
@@ -2159,31 +2169,13 @@
   }
 
   async function loadStore(key, fallback){
-    try{
-      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), { cache:'no-store' });
-      if(!res.ok) throw new Error('store load failed');
-      return await res.json();
-    }catch(_){
-      try{
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      }catch(__){
-        return fallback;
-      }
-    }
+    if(typeof window.anwLoadSafe !== 'function') throw new Error('Store loader not available');
+    return window.anwLoadSafe(key, fallback);
   }
 
   async function saveStore(key, value){
-    try{
-      const res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(key), {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify(value)
-      });
-      if(!res.ok) throw new Error('store save failed');
-    }catch(_){
-      localStorage.setItem(key, JSON.stringify(value));
-    }
+    if(typeof window.anwSaveSafe !== 'function') throw new Error('Store saver not available');
+    return window.anwSaveSafe(key, value);
   }
 
   function suggestCategoryIcon(value){
