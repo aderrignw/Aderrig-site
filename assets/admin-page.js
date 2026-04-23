@@ -208,10 +208,42 @@
     return active ? active.getAttribute('data-tab') : 'tabResidents';
   }
 
+  const ADMIN_TAB_ACL = {
+    tabResidents: 'admin:tab_residents',
+    tabTasks: 'admin:tab_tasks',
+    tabElections: 'admin:tab_elections',
+    tabParkingAdmin: 'admin:tab_parking',
+    tabReports: 'admin:tab_reports',
+    tabNotices: 'admin:tab_notices',
+    tabHandbook: 'admin:tab_handbook',
+    tabHelpCenterAdmin: 'admin:tab_help',
+    tabProjects: 'admin:tab_projects',
+    tabAccessControl: 'admin:tab_access_control',
+    tabTools: 'admin:tab_tools'
+  };
+
+  function canOpenAdminTab(tabId){
+    try{
+      const key = ADMIN_TAB_ACL[String(tabId || '')] || '';
+      if(!key) return true;
+      if(typeof window.anwAclAllows !== 'function') return false;
+      return !!window.anwAclAllows(key);
+    }catch(_){
+      return false;
+    }
+  }
+
+  function firstAllowedAdminTab(){
+    const ordered = ['tabResidents','tabTasks','tabElections','tabParkingAdmin','tabReports','tabNotices','tabHandbook','tabHelpCenterAdmin','tabProjects','tabAccessControl','tabTools'];
+    return ordered.find(canOpenAdminTab) || 'tabResidents';
+  }
+
   function showAdminTab(tabId){
+    const requested = String(tabId || 'tabResidents');
+    const target = canOpenAdminTab(requested) ? requested : firstAllowedAdminTab();
     closeResidentModal();
-    $$('.admin-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId));
-    $$('.admin-tab-content').forEach(p => { p.style.display = (p.id === tabId) ? 'block' : 'none'; });
+    $$('.admin-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === target));
+    $$('.admin-tab-content').forEach(p => { p.style.display = (p.id === target) ? 'block' : 'none'; });
   }
 
   function showResidentSubtab(id){
@@ -1148,8 +1180,19 @@
     { key:'page:regional-management', label:'Regional management', group:'Residents', indent:1, defaults:{ assistant_area_coordinator:true, area_coordinator:true, owner:true } },
 
     { key:'page:admin', label:'Admin panel', group:'Owner controls', indent:0, defaults:{ owner:true } },
+    { key:'admin:tab_residents', label:'Admin · Residents', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'admin:tab_tasks', label:'Admin · Volunteer tasks', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'admin:tab_elections', label:'Admin · Elections', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'admin:tab_parking', label:'Admin · Parking & Vehicles', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'admin:tab_reports', label:'Admin · Reports', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'admin:tab_notices', label:'Admin · Notices', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'admin:tab_handbook', label:'Admin · Handbook', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'admin:tab_help', label:'Admin · Help', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'admin:tab_projects', label:'Admin · Projects Monitoring', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'admin:tab_access_control', label:'Admin · Access Control', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'admin:tab_tools', label:'Admin · Tools', group:'Owner controls', indent:1, defaults:{ owner:true } },
     { key:'page:access-control', label:'Access Control sub-tab', group:'Owner controls', indent:1, defaults:{ owner:true } },
-    { key:'page:admin-parking', label:'Admin · Parking & Vehicles', group:'Owner controls', indent:1, defaults:{ owner:true } },
+    { key:'page:admin-parking', label:'Admin · Parking & Vehicles (legacy)', group:'Owner controls', indent:1, defaults:{ owner:true } },
     { key:'page:report-map', label:'Report Map', group:'Site pages', indent:0, defaults:{ resident:true, street_coordinator:true, assistant_area_coordinator:true, area_coordinator:true, owner:true } },
   ];
 
@@ -1394,7 +1437,16 @@
   // ---------- Events ----------
   document.addEventListener('click', ev => {
     const btn = ev.target.closest('.admin-tab');
-    if(btn){ showAdminTab(btn.getAttribute('data-tab')); }
+    if(btn){
+      const tabId = btn.getAttribute('data-tab');
+      if(!canOpenAdminTab(tabId)){
+        ev.preventDefault();
+        ev.stopPropagation();
+        try{ window.toast && window.toast('This admin section is not enabled for your access role.', 'warn'); }catch(_){}
+        return;
+      }
+      showAdminTab(tabId);
+    }
 
     const rtab = ev.target.closest('.resident-tab');
     if(rtab){ showResidentSubtab(rtab.getAttribute('data-subtab')); }
@@ -1852,7 +1904,7 @@
         return;
       }
 
-      showAdminTab('tabResidents');
+      showAdminTab(firstAllowedAdminTab());
       showElectionSubtab('subManage');
 
       await Promise.all([
