@@ -1,5 +1,3 @@
-import { getUser } from "@netlify/identity";
-
 function securityHeaders(extra = {}) {
   return {
     "Content-Type": "application/json",
@@ -101,14 +99,7 @@ export function getUserRoles(user) {
   );
 }
 
-export async function readCurrentUser(req, context) {
-  try {
-    const sdkUser = await getUser();
-    if (sdkUser?.email) return sdkUser;
-  } catch {
-    // Fall back to context and token parsing below.
-  }
-
+export function readCurrentUser(req, context) {
   const directUser = context?.clientContext?.user;
   if (directUser?.email) return directUser;
 
@@ -177,7 +168,7 @@ export function withSecurity(config, handler) {
         return jsonResponse({ error: "payload too large" }, 413);
       }
 
-      const user = await readCurrentUser(req, context);
+      const user = readCurrentUser(req, context);
       const roles = getUserRoles(user);
       const ownerEmails = Array.from(
         new Set(
