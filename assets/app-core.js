@@ -5,6 +5,7 @@
 // - Never crash pages if ANW_KEYS is missing
 // - Avoid repeated Netlify Function calls (credit saving) using TTL cache
 // - Keep owner/admin recognition consistent
+// - Make post-login production sync reliable (especially anw_users)
 
 window.ANW_KEYS = window.ANW_KEYS || {
   SESSION: "anw_session",
@@ -88,9 +89,37 @@ function anwGetSession() {
 
 const ANW_AUTH_EVENT_KEY = "anw_auth_event";
 const ANW_AUTH_CHANNEL_NAME = "anw_auth_channel";
+const ANW_USERS_VERIFIED_PREFIX = "anw_users_verified__";
+
+function _anwUsersVerifiedKey(email) {
+  return ANW_USERS_VERIFIED_PREFIX + anwNormEmail(email || "");
+}
+
+function _anwMarkUsersVerified(email) {
+  const clean = anwNormEmail(email);
+  if (!clean) return;
+  try { localStorage.setItem(_anwUsersVerifiedKey(clean), String(Date.now())); } catch {}
+}
+
+function _anwHasVerifiedUsers(email) {
+  const clean = anwNormEmail(email);
+  if (!clean) return false;
+  try { return !!localStorage.getItem(_anwUsersVerifiedKey(clean)); } catch { return false; }
+}
+
+function _anwClearUsersVerified(email) {
+  const clean = anwNormEmail(email);
+  if (!clean) return;
+  try { localStorage.removeItem(_anwUsersVerifiedKey(clean)); } catch {}
+}
 
 function anwClearSession() {
+  const previous = anwGetSession();
   try { localStorage.removeItem(ANW_KEYS.SESSION); } catch {}
+  try {
+    const email = previous && previous.email ? previous.email : "";
+    if (email) _anwClearUsersVerified(email);
+  } catch {}
 }
 
 function anwBroadcastAuthEvent(type, extra) {
@@ -221,10 +250,46 @@ function _anwUserEmails(user) {
   ].map(anwNormEmail).filter(Boolean);
 }
 
+
+
+async function anwLoadUsersFresh(options) {
+  const opts = (options && typeof options === "object") ? options : {};
+  const key = ANW_KEYS.USERS;
+  const email = anwNormEmail(anwGetLoggedEmail());
+  try {
+    if (typeof window.anwFetchStoreKey === "function") {
+      const data = await window.anwFetchStoreKey(key);
+      const users = Array.isArray(data) ? data : [];
+      try { anwSave(key, users); } catch {}
+      if (email && !anwUserRecordPresentForEmail(email, users) && !opts.allowMissing) {
+        throw new Error(`Current user ${email} not found in fresh anw_users payload`);
+      }
+      if (email && (opts.allowMissing || anwUserRecordPresentForEmail(email, users) || anwIsMasterEmail(email))) {
+        _anwMarkUsersVerified(email);
+      }
+      return users;
+    }
+  } catch (e) {
+    if (!opts.silent) {
+      console.warn("[anwLoadUsersFresh]", e && e.message ? e.message : e);
+    }
+    if (opts.throwOnError) throw e;
+  }
+  const cached = anwLoad(key, []);
+  if (email && !_anwHasVerifiedUsers(email) && !opts.allowMissing && !anwIsMasterEmail(email)) {
+    return [];
+  }
+  return Array.isArray(cached) ? cached : [];
+}
+
 function anwGetLoggedProfile() {
   try {
     const email = anwNormEmail(anwGetLoggedEmail());
     if (!email) return null;
+
+    if (!anwIsMasterEmail(email) && !_anwHasVerifiedUsers(email)) {
+      return null;
+    }
 
     const users = anwLoad(ANW_KEYS.USERS, []);
     if (!Array.isArray(users)) return null;
@@ -285,8 +350,22 @@ async function anwGetIdentityToken() {
   }
 }
 
+async function anwWaitForIdentityToken(timeoutMs) {
+  const started = Date.now();
+  const limit = Number(timeoutMs || 8000);
+  while ((Date.now() - started) < limit) {
+    try {
+      const token = await anwGetIdentityToken();
+      if (token) return token;
+    } catch {}
+    await new Promise((resolve) => setTimeout(resolve, 125));
+  }
+  return null;
+}
+
 async function anwFetchStoreKey(key) {
-  const token = await anwGetIdentityToken();
+  let token = await anwGetIdentityToken();
+  if (!token) token = await anwWaitForIdentityToken(8000);
   if (!token) throw new Error("Not authenticated (missing token)");
 
   const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
@@ -312,44 +391,109 @@ function _markSynced(key){
   localStorage.setItem(_syncKeyTsName(key), String(Date.now()));
 }
 
+function anwUserRecordPresentForEmail(email, usersValue) {
+  const norm = anwNormEmail(email);
+  const users = Array.isArray(usersValue) ? usersValue : [];
+  if (!norm || !users.length) return false;
+  return users.some((u) => _anwUserEmails(u).includes(norm));
+}
+
+function anwNormalizeUsersPayload(data) {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object") {
+    if (Array.isArray(data.users)) return data.users;
+    if (data.me && typeof data.me === "object") return [data.me];
+  }
+  return null;
+}
+
 // Public: sync keys (default: acl + anw_users)
-window.anwSyncFromServer = async function(keys, ttlMs){
+// options:
+// - force: bypass TTL for all requested keys
+// - forceKeys: array of keys to bypass TTL selectively
+// - requireKeys: array of keys that must be fetched successfully or an error is thrown
+window.anwSyncFromServer = async function(keys, ttlMs, options){
   const list = Array.isArray(keys) && keys.length ? keys : [ANW_KEYS.ACL, ANW_KEYS.USERS];
-  const ttl = Number.isFinite(ttlMs) ? ttlMs : 10 * 60 * 1000; // 10 minutes
+  const ttl = Number.isFinite(ttlMs) ? ttlMs : 10 * 60 * 1000;
+  const opts = (options && typeof options === "object") ? options : {};
+  const forceAll = !!opts.force;
+  const forceKeys = new Set(Array.isArray(opts.forceKeys) ? opts.forceKeys : []);
+  const requireKeys = new Set(Array.isArray(opts.requireKeys) ? opts.requireKeys : []);
 
   const email = anwNormEmail(anwGetLoggedEmail());
-  if (!email) return;
+  if (!email) return { ok: false, reason: "no-email" };
+
+  const failures = [];
 
   for (const k of list) {
-    if (!_shouldSync(k, ttl)) continue;
+    const shouldBypassTtl = forceAll || forceKeys.has(k);
+
+    if (!shouldBypassTtl && !_shouldSync(k, ttl)) {
+      if (k === ANW_KEYS.USERS) {
+        const cachedUsers = anwLoad(k, []);
+        if (anwUserRecordPresentForEmail(email, cachedUsers)) {
+          continue;
+        }
+      } else {
+        continue;
+      }
+    }
+
     try {
       const data = await anwFetchStoreKey(k);
 
       if (k === ANW_KEYS.USERS) {
-        if (Array.isArray(data)) {
-          anwSave(k, data);
-        } else if (data && data.me) {
-          anwSave(k, [data.me]);
-        } else {
-          // keep as-is
+        const normalizedUsers = anwNormalizeUsersPayload(data);
+        if (!Array.isArray(normalizedUsers)) {
+          throw new Error("Invalid anw_users payload");
         }
+        anwSave(k, normalizedUsers);
+        if (!anwUserRecordPresentForEmail(email, normalizedUsers) && !anwIsMasterEmail(email)) {
+          _anwClearUsersVerified(email);
+          throw new Error(`Current user ${email} not found in anw_users payload`);
+        }
+        _anwMarkUsersVerified(email);
       } else {
         anwSave(k, data);
       }
       _markSynced(k);
     } catch (e) {
+      if (k === ANW_KEYS.USERS) {
+        _anwClearUsersVerified(email);
+      }
+      failures.push({ key: k, error: e });
       console.warn(`[anwSyncFromServer] ${e && e.message ? e.message : e}`);
     }
   }
+
+  const blockingFailure = failures.find((f) => requireKeys.has(f.key));
+  if (blockingFailure) {
+    throw blockingFailure.error;
+  }
+
+  return { ok: failures.length === 0, failures };
 };
 
-async function anwInitStore() {
+async function anwInitStore(options) {
   try {
-    if (window.anwSyncFromServer) {
-      await window.anwSyncFromServer([ANW_KEYS.ACL, ANW_KEYS.USERS, ANW_KEYS.PARKING_REGISTRY, ANW_KEYS.PARKING_POLICY]);
-    }
+    const opts = (options && typeof options === "object") ? options : {};
+    const email = anwNormEmail(anwGetLoggedEmail());
+    if (!email) return { ok: false, reason: "no-email" };
+
+    const cachedUsers = anwLoad(ANW_KEYS.USERS, []);
+    const mustForceUsers = !!opts.force || !anwUserRecordPresentForEmail(email, cachedUsers);
+
+    return await window.anwSyncFromServer(
+      [ANW_KEYS.ACL, ANW_KEYS.USERS, ANW_KEYS.PARKING_REGISTRY, ANW_KEYS.PARKING_POLICY],
+      mustForceUsers ? 0 : undefined,
+      {
+        forceKeys: mustForceUsers ? [ANW_KEYS.USERS, ANW_KEYS.ACL] : [],
+        requireKeys: [ANW_KEYS.USERS]
+      }
+    );
   } catch (e) {
     console.warn("Erro ao inicializar store:", e);
+    throw e;
   }
 }
 
@@ -389,7 +533,7 @@ function anwBindIdentitySync() {
         const email = anwNormEmail(user && user.email);
         if (email) anwSave(ANW_KEYS.SESSION, { email });
         anwBroadcastAuthEvent("login", { email });
-        try { await anwInitStore(); } catch {}
+        try { await anwInitStore({ force: true }); } catch (e) { console.warn("Erro pós-login ao sincronizar store:", e); }
       });
 
       window.netlifyIdentity.on("logout", () => {
@@ -401,7 +545,7 @@ function anwBindIdentitySync() {
         const email = anwNormEmail(user && user.email);
         if (email) {
           anwSave(ANW_KEYS.SESSION, { email });
-          try { await anwInitStore(); } catch {}
+          try { await anwInitStore(); } catch (e) { console.warn("Erro ao sincronizar store no init:", e); }
         }
       });
     }
@@ -440,6 +584,18 @@ window.anwGetCurrentUserProfile = function () {
   }
 };
 
+window.anwGetCurrentUserProfileFresh = async function (options) {
+  try {
+    const email = anwNormEmail(anwGetLoggedEmail());
+    if (!email) return null;
+    const users = await anwLoadUsersFresh(options || {});
+    if (!Array.isArray(users)) return null;
+    return users.find((u) => _anwUserEmails(u).includes(email)) || null;
+  } catch {
+    return null;
+  }
+};
+
 window.anwUpsertMyProfile = async function (profile) {
   return await anwFetchStorePost(ANW_KEYS.USERS, profile || {});
 };
@@ -449,7 +605,8 @@ window.anwAdminSaveUsers = async function (usersArray) {
 };
 
 async function anwFetchStorePost(key, payload) {
-  const token = await anwGetIdentityToken();
+  let token = await anwGetIdentityToken();
+  if (!token) token = await anwWaitForIdentityToken(8000);
   if (!token) throw new Error("Not authenticated (missing token)");
 
   const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(key)}`, {
@@ -507,7 +664,7 @@ function anwParkingBaseRegistry() {
 function anwParkingLoadRegistry() {
   const data = anwLoad(window.ANW_KEYS.PARKING_REGISTRY, null);
   if (!data || typeof data !== 'object') return anwParkingBaseRegistry();
-  return Object.assign(anwParkingBaseRegistry(), data, {
+  return Object.assign(anwParkingBaseRegistry(), data || {}, {
     allocations: Array.isArray(data.allocations) ? data.allocations : [],
     submissions: data.submissions && typeof data.submissions === 'object' ? data.submissions : {},
     policy: data.policy && typeof data.policy === 'object' ? data.policy : null,
@@ -545,9 +702,22 @@ function anwParkingLoadPolicy() {
   return null;
 }
 
+function anwHasVerifiedUserRecord(email) {
+  return _anwHasVerifiedUsers(email || anwGetLoggedEmail());
+}
+
+function anwGetVerifiedUsers() {
+  const email = anwNormEmail(anwGetLoggedEmail());
+  if (!email) return [];
+  if (!anwIsMasterEmail(email) && !_anwHasVerifiedUsers(email)) return [];
+  const users = anwLoad(ANW_KEYS.USERS, []);
+  return Array.isArray(users) ? users : [];
+}
+
 window.anwSave = anwSave;
 window.anwLoad = anwLoad;
 window.anwNormEmail = anwNormEmail;
+window.anwGetLoggedEmail = anwGetLoggedEmail;
 window.anwIsApproved = anwIsApproved;
 window.anwParkingNormalizeText = anwParkingNormalizeText;
 window.anwParkingLoadRegistry = anwParkingLoadRegistry;
@@ -555,5 +725,11 @@ window.anwParkingSaveRegistry = anwParkingSaveRegistry;
 window.anwParkingLoadPolicy = anwParkingLoadPolicy;
 window.anwFetchStorePost = anwFetchStorePost;
 window.anwFetchStoreKey = anwFetchStoreKey;
+window.anwGetUserEmails = _anwUserEmails;
+window.anwLoadUsersFresh = anwLoadUsersFresh;
 window.anwGetLoggedProfile = anwGetLoggedProfile;
+window.anwGetVerifiedUsers = anwGetVerifiedUsers;
+window.anwHasVerifiedUserRecord = anwHasVerifiedUserRecord;
 window.anwHasApprovedAccess = anwHasApprovedAccess;
+window.anwWaitForIdentityToken = anwWaitForIdentityToken;
+window.anwInitStore = anwInitStore;
