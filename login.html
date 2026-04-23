@@ -825,6 +825,8 @@
   if(loginEir) loginEir.addEventListener('input', applySoftLockUI);
 
   async function updateLoginStreetPreview(){
+    // Security rule: do NOT call anwInitStore() here before login.
+    // Pre-login preview must not try to fetch protected store data from the server.
     if(!loginStreet) return;
     loginStreet.value = '';
 
@@ -836,7 +838,6 @@
     }
 
     try{
-      await anwInitStore();
       const users = anwLoad(KEY_USERS, []);
       const u = findUserByEmail(users, email);
 
@@ -880,7 +881,6 @@
   async function auditLog(eventType, emailAddr, eircodeVal){
     try{
       if(!eventType || !emailAddr || !eircodeVal) return;
-      await anwInitStore();
       await anwSave('anw_audit_log', {
         event: String(eventType),
         eircode: String(eircodeVal),
@@ -961,8 +961,8 @@
 
         await window.netlifyIdentity.gotrue.login(email, pass, true);
         clearAttemptState(email, eir);
-
         await anwInitStore();
+
         const users = anwLoad(KEY_USERS, []);
         const me = findUserByEmail(users, email);
 
@@ -1153,8 +1153,8 @@
 
         await gt.signup(email, pass, { full_name: name });
         await window.netlifyIdentity.gotrue.login(email, pass, true);
-
         await anwInitStore();
+
         let users = anwLoad(KEY_USERS, []);
         if(!Array.isArray(users)) users = [];
 
