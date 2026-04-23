@@ -160,24 +160,38 @@
     return String(value).split(/[;,|]/).map((part) => part.trim()).filter(Boolean);
   }
 
+
+
+  function getUserEmails(user) {
+    try {
+      if (typeof window.anwGetUserEmails === "function") {
+        return (window.anwGetUserEmails(user) || []).map((v) => String(v || "").trim().toLowerCase()).filter(Boolean);
+      }
+    } catch (_) {}
+
+    return [
+      user && user.email,
+      user && user.userEmail,
+      user && user.loginEmail,
+      user && user.netlifyEmail
+    ].map((v) => String(v || "").trim().toLowerCase()).filter(Boolean);
+  }
+
   function getAdminRolesForEmail(email) {
     const cleanEmail = String(email || "").trim().toLowerCase();
     if (!cleanEmail) return [];
 
     let users = [];
     try {
-      if (typeof window.anwLoad === "function") {
-        users = window.anwLoad(getUsersKey(), []) || [];
-      } else {
-        const raw = localStorage.getItem(getUsersKey());
-        users = raw ? JSON.parse(raw) : [];
+      if (typeof window.anwGetVerifiedUsers === "function") {
+        users = window.anwGetVerifiedUsers() || [];
       }
     } catch (_) {
       users = [];
     }
 
     const row = Array.isArray(users)
-      ? users.find((u) => String((u && (u.email || u.userEmail || "")) || "").trim().toLowerCase() === cleanEmail)
+      ? users.find((u) => getUserEmails(u).includes(cleanEmail))
       : null;
 
     if (!row || typeof row !== "object") return [];
@@ -205,24 +219,7 @@
         return window.anwGetLoggedProfile() || null;
       }
     } catch (_) {}
-
-    try {
-      const email = getLoggedEmail();
-      if (!email) return null;
-      let users = [];
-      if (typeof window.anwLoad === "function") {
-        users = window.anwLoad(getUsersKey(), []) || [];
-      } else {
-        const raw = localStorage.getItem(getUsersKey());
-        users = raw ? JSON.parse(raw) : [];
-      }
-      const row = Array.isArray(users)
-        ? users.find((u) => String((u && (u.email || u.userEmail || "")) || "").trim().toLowerCase() === email)
-        : null;
-      return row || null;
-    } catch (_) {
-      return null;
-    }
+    return null;
   }
 
   function hasApprovedAccess() {
@@ -260,17 +257,6 @@
     try {
       if (!isAdminPath() && typeof window.anwGetLoggedRole === "function") {
         const role = normalizeRoleName(window.anwGetLoggedRole());
-        if (role) return role;
-      }
-    } catch (_) {}
-
-    try {
-      if (!isAdminPath()) {
-        const rawLogged = localStorage.getItem("anw_logged");
-        const logged = rawLogged ? JSON.parse(rawLogged) : null;
-        const role = normalizeRoleName(
-          logged && (logged.role || logged.primaryRole || (Array.isArray(logged.roles) ? logged.roles[0] : ""))
-        );
         if (role) return role;
       }
     } catch (_) {}
@@ -395,7 +381,7 @@
   async function ensureFresh() {
     try {
       if (typeof window.anwInitStore === "function" && isLoggedIn()) {
-        await window.anwInitStore();
+        await window.anwInitStore({ force: isAdminPath() });
       }
     } catch (_) {}
   }
