@@ -239,6 +239,62 @@ function isAdminManagedKey(key) {
   return ADMIN_ONLY_KEYS.has(key) || isBackupKey(key);
 }
 
+const ADMIN_ROLE_NAMES = new Set([
+  "admin",
+  "owner",
+  "platform support",
+  "platform_support",
+  "area coordinator",
+  "area_coordinator",
+  "aux coordinator",
+  "aux_coordinator",
+  "assistant area coordinator",
+  "assistant_area_coordinator",
+]);
+
+function userHasAdminPrivilegesFromRecord(userRecord) {
+  if (!userRecord || typeof userRecord !== "object") return false;
+  const roles = getUserRolesNormalized(userRecord);
+  return roles.some((role) => ADMIN_ROLE_NAMES.has(role));
+}
+
+function findUserRecordByEmail(users, email) {
+  const currentEmail = normalizeEmail(email || "");
+  if (!currentEmail) return null;
+  return (Array.isArray(users) ? users : []).find((user) => getUserEmails(user).includes(currentEmail)) || null;
+}
+
+async function enrichSecurityContext(baseCtx, store) {
+  if (!baseCtx?.user || baseCtx?.isAdmin) return baseCtx;
+
+  try {
+    const users = await getJsonArray(store, "anw_users");
+    const currentUserRecord = findUserRecordByEmail(users, baseCtx?.user?.email);
+    if (!currentUserRecord || !userHasAdminPrivilegesFromRecord(currentUserRecord)) {
+      return {
+        ...baseCtx,
+        currentUserRecord: currentUserRecord || null,
+      };
+    }
+
+    const mergedRoles = Array.from(new Set([
+      ...(Array.isArray(baseCtx.roles) ? baseCtx.roles : []),
+      ...getUserRolesNormalized(currentUserRecord),
+    ].filter(Boolean)));
+
+    return {
+      ...baseCtx,
+      roles: mergedRoles,
+      role: baseCtx.role || mergedRoles[0] || "admin",
+      isAdmin: true,
+      isOwner: baseCtx.isOwner || mergedRoles.includes("owner"),
+      currentUserRecord,
+    };
+  } catch {
+    return baseCtx;
+  }
+}
+
 function mayReadKey(key, ctx) {
   if (key === "nearby_support") return true;
   if (key === "anw_users") return !!ctx.user;
@@ -555,6 +611,7 @@ export default withSecurity(
     }
 
     const store = getStore("aderrig-nw");
+    const secureCtx = await enrichSecurityContext(ctx, store);
 
     try {
       if (key === "nearby_support" && req.method === "POST") {
@@ -658,8 +715,8 @@ export default withSecurity(
       }
 
       if (req.method === "GET") {
-        if (!mayReadKey(key, ctx)) {
-          return json({ error: ctx.user ? "forbidden" : "unauthorized" }, ctx.user ? 403 : 401);
+        if (!mayReadKey(key, secureCtx)) {
+          return json({ error: secureCtx.user ? "forbidden" : "unauthorized" }, secureCtx.user ? 403 : 401);
         }
 
         let raw = await store.get(key);
@@ -672,26 +729,26 @@ export default withSecurity(
         try {
           const data = JSON.parse(raw);
 
-          if (key === "anw_users" && !ctx.isAdmin) {
-            const currentEmail = normalizeEmail(ctx?.user?.email);
+          if (key === "anw_users" && !secureCtx.isAdmin) {
+            const currentEmail = normalizeEmail(secureCtx?.user?.email);
             return json(filterUsersForSelf(data, currentEmail));
           }
 
-          if (key === "anw_parking_registry_v1" && !ctx.isAdmin) {
-            const currentEmail = normalizeEmail(ctx?.user?.email);
+          if (key === "anw_parking_registry_v1" && !secureCtx.isAdmin) {
+            const currentEmail = normalizeEmail(secureCtx?.user?.email);
             return json(filterParkingRegistryForSelf(data, currentEmail));
           }
 
           return json(data);
         } catch {
           await store.set(key, "[]");
-          return json(key === "anw_users" && !ctx.isAdmin ? [] : []);
+          return json(key === "anw_users" && !secureCtx.isAdmin ? [] : []);
         }
       }
 
       if (req.method === "POST") {
-        if (!mayWriteKey(key, ctx)) {
-          return json({ error: ctx.user ? "forbidden" : "unauthorized" }, ctx.user ? 403 : 401);
+        if (!mayWriteKey(key, secureCtx)) {
+          return json({ error: secureCtx.user ? "forbidden" : "unauthorized" }, secureCtx.user ? 403 : 401);
         }
 
         const bodyText = await req.text();
@@ -704,8 +761,8 @@ export default withSecurity(
         }
 
         if (key !== "anw_users") {
-          if (key === "anw_parking_registry_v1" && !ctx.isAdmin) {
-            const currentEmail = normalizeEmail(ctx?.user?.email);
+          if (key === "anw_parking_registry_v1" && !secureCtx.isAdmin) {
+            const currentEmail = normalizeEmail(secureCtx?.user?.email);
             if (!currentEmail) {
               return json({ error: "unauthorized" }, 401);
             }
@@ -760,7 +817,7 @@ export default withSecurity(
           current = [];
         }
 
-        if (ctx.isAdmin) {
+        if (secureCtx.isAdmin) {
           if (!Array.isArray(parsed)) {
             return json({ error: "anw_users must be an array" }, 400);
           }
@@ -783,7 +840,7 @@ export default withSecurity(
           return json({ ok: true, merged: true, scope: "admin" });
         }
 
-        const currentEmail = normalizeEmail(ctx?.user?.email);
+        const currentEmail = normalizeEmail(secureCtx?.user?.email);
         if (!currentEmail) {
           return json({ error: "unauthorized" }, 401);
         }
