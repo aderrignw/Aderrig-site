@@ -317,13 +317,10 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   }
 
   async function fetchUsersFromStoreRaw(){
-    if(typeof window.anwFetchStoreKey === 'function'){
-      const data = await window.anwFetchStoreKey(KEY_USERS);
-      return Array.isArray(data) ? data : [];
+    if(typeof window.anwFetchStoreKey !== 'function'){
+      throw new Error('Authenticated store loader not available');
     }
-    const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, { cache:'no-store' });
-    if(!res.ok) throw new Error('store load failed');
-    const data = await res.json();
+    const data = await window.anwFetchStoreKey(KEY_USERS);
     return Array.isArray(data) ? data : [];
   }
 
@@ -403,12 +400,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       } else if(typeof window.anwFetchStorePost === 'function'){
         await window.anwFetchStorePost(KEY_USERS, source);
       } else {
-        const res = await fetch(`/.netlify/functions/store?key=${encodeURIComponent(KEY_USERS)}`, {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json' },
-          body: JSON.stringify(source)
-        });
-        if(!res.ok) throw new Error('store save failed');
+        throw new Error('Authenticated store saver not available');
       }
     }
 
