@@ -340,7 +340,12 @@
           role = 'owner';
         }else{
           const users = await anwLoadSafe(KEY_USERS, []);
-          const row = users.find(u => String((u && (u.email || u.userEmail || '')) || '').trim().toLowerCase() === email);
+          const row = users.find(u => {
+            const emails = [u && u.email, u && u.userEmail, u && u.loginEmail, u && u.netlifyEmail]
+              .map(v => String(v || '').trim().toLowerCase())
+              .filter(Boolean);
+            return emails.includes(email);
+          });
           if(row){
             const roles = []
               .concat(normList(row.type))
@@ -363,18 +368,18 @@
           msg.textContent = '';
         }else{
           msg.style.display = 'block';
-          msg.textContent = 'Admin access is restricted to approved admin roles. Some sections may be hidden until your role is confirmed.';
+          msg.textContent = 'Admin access is restricted to approved admin roles. Please sign in with an approved admin or owner account.';
         }
       }
+
+      return allowed;
     }catch(err){
       console.error(err);
       if(msg){
         msg.style.display = 'block';
         msg.textContent = 'Unable to verify admin access right now. Reload the page and sign in again before using admin tools.';
       }
-    }finally{
-      showAdminTab(getCurrentAdminTabId());
-      showElectionSubtab('subManage');
+      return false;
     }
   }
   // ---------- Residents ----------
@@ -1841,11 +1846,14 @@
         return;
       }
 
+      const gateAllowed = await runAdminGate();
+      if(!gateAllowed){
+        redirectAdminDenied('/dashboard.html');
+        return;
+      }
+
       showAdminTab('tabResidents');
       showElectionSubtab('subManage');
-
-      adminGuardPending(false);
-      adminMarkReady();
 
       await Promise.all([
         loadResidents(),
@@ -1859,11 +1867,11 @@
       parkingBindAdmin();
       parkingRenderAdmin();
 
-      await runAdminGate();
-    }catch(err){
-      console.error(err);
       adminGuardPending(false);
       adminMarkReady();
+    }catch(err){
+      console.error(err);
+      redirectAdminDenied('/login.html');
     }
   });
 })();
