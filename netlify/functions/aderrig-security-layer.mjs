@@ -1,3 +1,4 @@
+import crypto from "crypto";
 function securityHeaders(extra = {}) {
   return {
     "Content-Type": "application/json",
@@ -20,13 +21,85 @@ export function normalizeEmail(value) {
   return String(value || "").toLowerCase().trim();
 }
 
+function decodeJwtSegment(segment) {
+  try {
+    const normalized = String(segment || "").replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized + "=".repeat((4 - (normalized.length % 4 || 4)) % 4);
+    return JSON.parse(Buffer.from(padded, "base64").toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function timingSafeEqualString(a, b) {
+  try {
+    const aa = Buffer.from(String(a || ""));
+    const bb = Buffer.from(String(b || ""));
+    if (aa.length !== bb.length) return false;
+    return crypto.timingSafeEqual(aa, bb);
+  } catch {
+    return false;
+  }
+}
+
+function getJwtVerificationSecrets() {
+  return []
+    .concat(process.env.NETLIFY_IDENTITY_JWT_SECRET || [])
+    .concat(process.env.GOTRUE_JWT_SECRET || [])
+    .concat(process.env.JWT_SECRET || [])
+    .concat(process.env.IDENTITY_JWT_SECRET || [])
+    .flatMap((value) => String(value || "").split(","))
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function verifyJwtSignature(token, header) {
+  const parts = String(token || "").split(".");
+  if (parts.length !== 3) return false;
+
+  const alg = String(header?.alg || "").toUpperCase();
+  if (!alg || alg === "NONE") return false;
+
+  const secrets = getJwtVerificationSecrets();
+  if (!secrets.length) return false;
+
+  const signingInput = parts[0] + "." + parts[1];
+  const expected = parts[2];
+
+  for (const secret of secrets) {
+    try {
+      let digest = "";
+      if (alg === "HS256") {
+        digest = crypto.createHmac("sha256", secret).update(signingInput).digest("base64url");
+      } else if (alg === "HS384") {
+        digest = crypto.createHmac("sha384", secret).update(signingInput).digest("base64url");
+      } else if (alg === "HS512") {
+        digest = crypto.createHmac("sha512", secret).update(signingInput).digest("base64url");
+      } else {
+        continue;
+      }
+
+      if (timingSafeEqualString(digest, expected)) return true;
+    } catch {}
+  }
+
+  return false;
+}
+
 function parseJwtPayload(token) {
   try {
     const parts = String(token || "").split(".");
     if (parts.length < 2) return null;
-    const normalized = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized + "=".repeat((4 - (normalized.length % 4 || 4)) % 4);
-    return JSON.parse(Buffer.from(padded, "base64").toString("utf8"));
+
+    const header = decodeJwtSegment(parts[0]);
+    const payload = decodeJwtSegment(parts[1]);
+    if (!payload || typeof payload !== "object") return null;
+
+    return {
+      header: header && typeof header === "object" ? header : {},
+      payload,
+      verified: verifyJwtSignature(token, header || {}),
+    };
   } catch {
     return null;
   }
@@ -42,11 +115,16 @@ function readUserFromTokenPayload(req) {
   const token = readBearerToken(req);
   if (!token) return null;
 
-  const payload = parseJwtPayload(token);
+  const parsed = parseJwtPayload(token);
+  const payload = parsed?.payload;
   if (!payload || typeof payload !== "object") return null;
 
   const exp = Number(payload.exp || 0);
-  if (exp && exp * 1000 <= Date.now()) return null;
+  const nbf = Number(payload.nbf || 0);
+  const nowSeconds = Math.floor(Date.now() / 1000);
+
+  if (exp && exp <= nowSeconds) return null;
+  if (nbf && nbf > nowSeconds) return null;
 
   const email = normalizeEmail(
     payload.email ||
@@ -62,6 +140,8 @@ function readUserFromTokenPayload(req) {
     email,
     app_metadata: payload.app_metadata || {},
     user_metadata: payload.user_metadata || {},
+    __authSource: "bearer_payload",
+    __tokenVerified: !!parsed.verified,
   };
 }
 
@@ -87,6 +167,12 @@ function splitRoles(value) {
 
 export function getUserRoles(user) {
   if (!user) return [];
+
+  // Roles from an unverified bearer payload are not trusted for admin decisions.
+  // store.js can still promote a user after checking anw_users server-side.
+  const tokenPayloadOnly = user.__authSource === "bearer_payload" && !user.__tokenVerified;
+  if (tokenPayloadOnly) return [];
+
   return Array.from(
     new Set([
       ...splitRoles(user?.app_metadata?.roles),
@@ -101,11 +187,32 @@ export function getUserRoles(user) {
 
 export function readCurrentUser(req, context) {
   const directUser = context?.clientContext?.user;
-  if (directUser?.email) return directUser;
+  if (directUser?.email) {
+    return {
+      ...directUser,
+      email: normalizeEmail(directUser.email),
+      __authSource: "netlify_context",
+      __tokenVerified: true,
+    };
+  }
 
   const netlifyContext = parseNetlifyCustomContext(context);
-  if (netlifyContext?.user?.email) return netlifyContext.user;
-  if (netlifyContext?.identity?.email) return netlifyContext.identity;
+  if (netlifyContext?.user?.email) {
+    return {
+      ...netlifyContext.user,
+      email: normalizeEmail(netlifyContext.user.email),
+      __authSource: "netlify_custom_context",
+      __tokenVerified: true,
+    };
+  }
+  if (netlifyContext?.identity?.email) {
+    return {
+      ...netlifyContext.identity,
+      email: normalizeEmail(netlifyContext.identity.email),
+      __authSource: "netlify_custom_identity",
+      __tokenVerified: true,
+    };
+  }
 
   const tokenUser = readUserFromTokenPayload(req);
   if (tokenUser?.email) return tokenUser;
@@ -180,9 +287,19 @@ export function withSecurity(config, handler) {
         )
       );
 
+      const trustedIdentity = !!user && (
+        user.__tokenVerified === true ||
+        user.__authSource === "netlify_context" ||
+        user.__authSource === "netlify_custom_context" ||
+        user.__authSource === "netlify_custom_identity"
+      );
+
+      const tokenPayloadOnly = !!user && user.__authSource === "bearer_payload" && !user.__tokenVerified;
+
+      // Master owner fallback is preserved for compatibility, but admin roles from
+      // an unverified bearer payload are not trusted here.
       const isOwner = !!user && ownerEmails.includes(normalizeEmail(user?.email));
-      const isAdmin = !!(
-        isOwner ||
+      const isAdminByTrustedRole = trustedIdentity && !!(
         roles.includes("admin") ||
         roles.includes("owner") ||
         roles.includes("platform_support") ||
@@ -190,6 +307,7 @@ export function withSecurity(config, handler) {
         roles.includes("aux_coordinator") ||
         roles.includes("assistant_area_coordinator")
       );
+      const isAdmin = !!(isOwner || isAdminByTrustedRole);
 
       const ctx = {
         user,
@@ -197,6 +315,8 @@ export function withSecurity(config, handler) {
         role: roles[0] || (isOwner ? "owner" : isAdmin ? "admin" : ""),
         isOwner,
         isAdmin,
+        trustedIdentity,
+        tokenPayloadOnly,
       };
 
       return await handler(ctx, req, context);
