@@ -18,3 +18,127 @@
   to = "/login.html"
   status = 301
   force = true
+
+# ------------------------------------------------------------
+# Security: block direct public access to sensitive exports/backups
+# ------------------------------------------------------------
+# These rules do not block Maps, Help Center or Bin Collector folders.
+# They only block direct URL access to files that are normally internal:
+# backups, snapshots, restores, audit exports, user/resident exports,
+# reports exports and parking registry exports.
+
+# Root-level sensitive archives/documents
+[[redirects]]
+  from = "/*.zip"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*.xlsx"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*.docx"
+  to = "/404.html"
+  status = 404
+  force = true
+
+# One-folder-deep sensitive archives/documents
+[[redirects]]
+  from = "/*/*.zip"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*/*.xlsx"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*/*.docx"
+  to = "/404.html"
+  status = 404
+  force = true
+
+# Two-folder-deep sensitive archives/documents
+[[redirects]]
+  from = "/*/*/*.zip"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*/*/*.xlsx"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*/*/*.docx"
+  to = "/404.html"
+  status = 404
+  force = true
+
+# Direct access to common sensitive export names, if ever present in deploy
+[[redirects]]
+  from = "/*backup*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*snapshot*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*restore*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*anw_users*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*residents*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*parking_registry*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*reports*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*audit*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+# Security headers - safe baseline hardening
+[[headers]]
+for = "/*"
+  [headers.values]
+  X-Frame-Options = "DENY"
+  X-Content-Type-Options = "nosniff"
+  Referrer-Policy = "no-referrer"
+  Permissions-Policy = "geolocation=(), camera=(), microphone=()"
+
