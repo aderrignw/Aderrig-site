@@ -258,9 +258,21 @@ const ADMIN_ROLE_NAMES = new Set([
 
 function userHasAdminPrivilegesFromRecord(userRecord) {
   if (!userRecord || typeof userRecord !== "object") return false;
+
   const emails = getUserEmails(userRecord);
+
+  // Owner recognition option 1: master owner email fallback.
   if (emails.includes("claudiosantos1968@gmail.com")) return true;
+
   const roles = getUserRolesNormalized(userRecord);
+
+  // Owner recognition option 2: role/type/access contains owner.
+  if (roles.includes("owner")) return true;
+
+  // Owner recognition option 3: explicit owner flag in anw_users.
+  if (userRecord.isOwner === true) return true;
+
+  // Existing admin role recognition preserved.
   return roles.some((role) => ADMIN_ROLE_NAMES.has(role));
 }
 
