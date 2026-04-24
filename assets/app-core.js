@@ -89,37 +89,9 @@ function anwGetSession() {
 
 const ANW_AUTH_EVENT_KEY = "anw_auth_event";
 const ANW_AUTH_CHANNEL_NAME = "anw_auth_channel";
-const ANW_USERS_VERIFIED_PREFIX = "anw_users_verified__";
-
-function _anwUsersVerifiedKey(email) {
-  return ANW_USERS_VERIFIED_PREFIX + anwNormEmail(email || "");
-}
-
-function _anwMarkUsersVerified(email) {
-  const clean = anwNormEmail(email);
-  if (!clean) return;
-  try { localStorage.setItem(_anwUsersVerifiedKey(clean), String(Date.now())); } catch {}
-}
-
-function _anwHasVerifiedUsers(email) {
-  const clean = anwNormEmail(email);
-  if (!clean) return false;
-  try { return !!localStorage.getItem(_anwUsersVerifiedKey(clean)); } catch { return false; }
-}
-
-function _anwClearUsersVerified(email) {
-  const clean = anwNormEmail(email);
-  if (!clean) return;
-  try { localStorage.removeItem(_anwUsersVerifiedKey(clean)); } catch {}
-}
 
 function anwClearSession() {
-  const previous = anwGetSession();
   try { localStorage.removeItem(ANW_KEYS.SESSION); } catch {}
-  try {
-    const email = previous && previous.email ? previous.email : "";
-    if (email) _anwClearUsersVerified(email);
-  } catch {}
 }
 
 function anwBroadcastAuthEvent(type, extra) {
@@ -139,12 +111,20 @@ function anwBroadcastAuthEvent(type, extra) {
   return payload;
 }
 
-function anwHandleRemoteLogout() {
+function anwBuildLoginUrl(reason) {
+  const cleanReason = String(reason || "").trim();
+  if (!cleanReason) return "login.html";
+  return "login.html?reason=" + encodeURIComponent(cleanReason);
+}
+
+function anwHandleRemoteLogout(payload) {
+  const reason = payload && payload.reason ? String(payload.reason) : "";
   anwClearSession();
-  try { window.dispatchEvent(new CustomEvent("anw:auth-logout", { detail: { at: Date.now() } })); } catch {}
+  try { window.dispatchEvent(new CustomEvent("anw:auth-logout", { detail: { at: Date.now(), reason } })); } catch {}
   const here = String((window.location && window.location.pathname) || "");
   if (/login\.html$/i.test(here)) return;
-  try { window.location.replace("login.html"); } catch { window.location.href = "login.html"; }
+  const target = anwBuildLoginUrl(reason);
+  try { window.location.replace(target); } catch { window.location.href = target; }
 }
 
 function anwGetLoggedEmail() {
@@ -160,15 +140,17 @@ function anwGetLoggedEmail() {
   return "";
 }
 
-async function anwLogout() {
+async function anwLogout(reason) {
+  const cleanReason = String(reason || "").trim();
   anwClearSession();
-  anwBroadcastAuthEvent("logout");
+  anwBroadcastAuthEvent("logout", cleanReason ? { reason: cleanReason } : {});
   try {
     if (window.netlifyIdentity && window.netlifyIdentity.logout) {
       await window.netlifyIdentity.logout();
     }
   } catch {}
-  window.location.href = "login.html";
+  const target = anwBuildLoginUrl(cleanReason);
+  try { window.location.href = target; } catch {}
 }
 
 // ---------------------------
@@ -264,9 +246,6 @@ async function anwLoadUsersFresh(options) {
       if (email && !anwUserRecordPresentForEmail(email, users) && !opts.allowMissing) {
         throw new Error(`Current user ${email} not found in fresh anw_users payload`);
       }
-      if (email && (opts.allowMissing || anwUserRecordPresentForEmail(email, users) || anwIsMasterEmail(email))) {
-        _anwMarkUsersVerified(email);
-      }
       return users;
     }
   } catch (e) {
@@ -276,9 +255,6 @@ async function anwLoadUsersFresh(options) {
     if (opts.throwOnError) throw e;
   }
   const cached = anwLoad(key, []);
-  if (email && !_anwHasVerifiedUsers(email) && !opts.allowMissing && !anwIsMasterEmail(email)) {
-    return [];
-  }
   return Array.isArray(cached) ? cached : [];
 }
 
@@ -286,10 +262,6 @@ function anwGetLoggedProfile() {
   try {
     const email = anwNormEmail(anwGetLoggedEmail());
     if (!email) return null;
-
-    if (!anwIsMasterEmail(email) && !_anwHasVerifiedUsers(email)) {
-      return null;
-    }
 
     const users = anwLoad(ANW_KEYS.USERS, []);
     if (!Array.isArray(users)) return null;
@@ -448,19 +420,14 @@ window.anwSyncFromServer = async function(keys, ttlMs, options){
           throw new Error("Invalid anw_users payload");
         }
         anwSave(k, normalizedUsers);
-        if (!anwUserRecordPresentForEmail(email, normalizedUsers) && !anwIsMasterEmail(email)) {
-          _anwClearUsersVerified(email);
+        if (!anwUserRecordPresentForEmail(email, normalizedUsers)) {
           throw new Error(`Current user ${email} not found in anw_users payload`);
         }
-        _anwMarkUsersVerified(email);
       } else {
         anwSave(k, data);
       }
       _markSynced(k);
     } catch (e) {
-      if (k === ANW_KEYS.USERS) {
-        _anwClearUsersVerified(email);
-      }
       failures.push({ key: k, error: e });
       console.warn(`[anwSyncFromServer] ${e && e.message ? e.message : e}`);
     }
@@ -504,7 +471,7 @@ function anwBindIdentitySync() {
   const onAuthEvent = (payload) => {
     const type = String(payload && payload.type || "").toLowerCase();
     if (type === "logout") {
-      anwHandleRemoteLogout();
+      anwHandleRemoteLogout(payload);
       return;
     }
     if (type === "login" || type === "signup" || type === "refresh" || type === "sync") {
@@ -627,6 +594,104 @@ async function anwFetchStorePost(key, payload) {
 }
 
 // ---------------------------
+// Global idle logout
+// ---------------------------
+const ANW_IDLE_LOGOUT_MS = 10 * 60 * 1000;
+
+function anwHasAuthenticatedSession() {
+  try {
+    if (window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === "function") {
+      if (window.netlifyIdentity.currentUser()) return true;
+    }
+  } catch {}
+
+  try {
+    return !!anwGetLoggedEmail();
+  } catch {
+    return false;
+  }
+}
+
+function anwStartIdleLogout() {
+  if (window.__anwIdleLogoutStarted) return;
+  window.__anwIdleLogoutStarted = true;
+
+  let idleTimer = null;
+  let lastActivityAt = Date.now();
+
+  function clearIdleTimer() {
+    if (idleTimer) {
+      clearTimeout(idleTimer);
+      idleTimer = null;
+    }
+  }
+
+  function doIdleLogout() {
+    clearIdleTimer();
+    if (!anwHasAuthenticatedSession()) return;
+    try {
+      window.dispatchEvent(new CustomEvent("anw:idle-timeout", {
+        detail: { at: Date.now(), idleMs: Date.now() - lastActivityAt }
+      }));
+    } catch {}
+    anwLogout("idle");
+  }
+
+  function scheduleIdleLogout() {
+    clearIdleTimer();
+    if (!anwHasAuthenticatedSession()) return;
+    const elapsed = Date.now() - lastActivityAt;
+    const remaining = Math.max(0, ANW_IDLE_LOGOUT_MS - elapsed);
+    idleTimer = setTimeout(doIdleLogout, remaining);
+  }
+
+  function markActivity() {
+    if (!anwHasAuthenticatedSession()) {
+      clearIdleTimer();
+      return;
+    }
+    lastActivityAt = Date.now();
+    scheduleIdleLogout();
+  }
+
+  const activityEvents = [
+    "click",
+    "keydown",
+    "mousemove",
+    "mousedown",
+    "scroll",
+    "touchstart",
+    "pointerdown"
+  ];
+
+  activityEvents.forEach((eventName) => {
+    try {
+      window.addEventListener(eventName, markActivity, { passive: true, capture: true });
+    } catch {
+      try { window.addEventListener(eventName, markActivity, true); } catch {}
+    }
+  });
+
+  try {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        const elapsed = Date.now() - lastActivityAt;
+        if (anwHasAuthenticatedSession() && elapsed >= ANW_IDLE_LOGOUT_MS) {
+          doIdleLogout();
+        } else {
+          scheduleIdleLogout();
+        }
+      }
+    });
+  } catch {}
+
+  try { window.addEventListener("anw:auth-logout", clearIdleTimer); } catch {}
+  try { window.addEventListener("focus", scheduleIdleLogout); } catch {}
+
+  scheduleIdleLogout();
+}
+
+// ---------------------------
 // Boot
 // ---------------------------
 (function bootAnwCore() {
@@ -638,6 +703,10 @@ async function anwFetchStorePost(key, payload) {
     if (window.netlifyIdentity && typeof window.netlifyIdentity.init === "function") {
       window.netlifyIdentity.init();
     }
+  } catch {}
+
+  try {
+    anwStartIdleLogout();
   } catch {}
 })();
 
@@ -702,18 +771,6 @@ function anwParkingLoadPolicy() {
   return null;
 }
 
-function anwHasVerifiedUserRecord(email) {
-  return _anwHasVerifiedUsers(email || anwGetLoggedEmail());
-}
-
-function anwGetVerifiedUsers() {
-  const email = anwNormEmail(anwGetLoggedEmail());
-  if (!email) return [];
-  if (!anwIsMasterEmail(email) && !_anwHasVerifiedUsers(email)) return [];
-  const users = anwLoad(ANW_KEYS.USERS, []);
-  return Array.isArray(users) ? users : [];
-}
-
 window.anwSave = anwSave;
 window.anwLoad = anwLoad;
 window.anwNormEmail = anwNormEmail;
@@ -728,8 +785,8 @@ window.anwFetchStoreKey = anwFetchStoreKey;
 window.anwGetUserEmails = _anwUserEmails;
 window.anwLoadUsersFresh = anwLoadUsersFresh;
 window.anwGetLoggedProfile = anwGetLoggedProfile;
-window.anwGetVerifiedUsers = anwGetVerifiedUsers;
-window.anwHasVerifiedUserRecord = anwHasVerifiedUserRecord;
 window.anwHasApprovedAccess = anwHasApprovedAccess;
 window.anwWaitForIdentityToken = anwWaitForIdentityToken;
 window.anwInitStore = anwInitStore;
+window.anwLogout = anwLogout;
+window.anwStartIdleLogout = anwStartIdleLogout;
