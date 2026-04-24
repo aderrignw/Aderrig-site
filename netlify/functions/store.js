@@ -595,6 +595,153 @@ function filterParkingRegistryForSelf(data, currentEmail) {
   };
 }
 
+
+function getSubmissionEmails(entry) {
+  if (!entry || typeof entry !== "object") return [];
+  return [
+    entry.email,
+    entry.userEmail,
+    entry.loginEmail,
+    entry.netlifyEmail,
+    entry.residentEmail,
+    entry.reporterEmail,
+    entry.submittedBy,
+    entry.submittedByEmail,
+    entry.createdBy,
+    entry.createdByEmail,
+    entry.ownerEmail,
+  ].map(normalizeEmail).filter(Boolean);
+}
+
+function getSubmissionId(entry) {
+  return String(
+    entry?.id ||
+    entry?.incidentId ||
+    entry?.reportId ||
+    entry?.reference ||
+    entry?.ref ||
+    entry?.submissionId ||
+    entry?.interestId ||
+    entry?.createdAt ||
+    ""
+  ).trim();
+}
+
+function submissionBelongsToEmail(entry, currentEmail) {
+  const email = normalizeEmail(currentEmail || "");
+  if (!email || !entry || typeof entry !== "object") return false;
+  const emails = getSubmissionEmails(entry);
+  if (!emails.length) return true;
+  return emails.includes(email);
+}
+
+function stampSelfSubmission(entry, currentEmail) {
+  const source = entry && typeof entry === "object" ? entry : {};
+  const now = new Date().toISOString();
+  return {
+    ...source,
+    email: source.email || currentEmail,
+    userEmail: source.userEmail || currentEmail,
+    submittedByEmail: source.submittedByEmail || source.submittedBy || currentEmail,
+    updatedAt: now,
+    createdAt: source.createdAt || now,
+  };
+}
+
+function mergeSelfSubmissionArray(currentValue, incomingValue, currentEmail) {
+  const current = Array.isArray(currentValue) ? currentValue.slice() : [];
+  const incoming = (Array.isArray(incomingValue) ? incomingValue : [incomingValue])
+    .filter((entry) => entry && typeof entry === "object")
+    .filter((entry) => submissionBelongsToEmail(entry, currentEmail))
+    .map((entry) => stampSelfSubmission(entry, currentEmail));
+
+  if (!incoming.length) {
+    return { ok: false, error: "self submission write requires own record" };
+  }
+
+  for (const item of incoming) {
+    const itemId = getSubmissionId(item);
+    const idx = current.findIndex((existing) => {
+      if (!existing || typeof existing !== "object") return false;
+      const existingId = getSubmissionId(existing);
+      if (itemId && existingId && itemId === existingId) return true;
+      return getSubmissionEmails(existing).includes(currentEmail) && getSubmissionEmails(item).includes(currentEmail) && itemId && existingId && itemId === existingId;
+    });
+
+    if (idx >= 0) {
+      current[idx] = {
+        ...current[idx],
+        ...item,
+        email: currentEmail,
+        userEmail: currentEmail,
+        updatedAt: new Date().toISOString(),
+      };
+    } else {
+      current.push(item);
+    }
+  }
+
+  return { ok: true, value: current, count: incoming.length };
+}
+
+function mergeSelfSubmissionObject(currentValue, incomingValue, currentEmail) {
+  const current = currentValue && typeof currentValue === "object" && !Array.isArray(currentValue) ? { ...currentValue } : {};
+  const source = incomingValue && typeof incomingValue === "object" && !Array.isArray(incomingValue) ? incomingValue : {};
+
+  if (source.submissions && typeof source.submissions === "object") {
+    const next = {
+      ...current,
+      submissions: current.submissions && typeof current.submissions === "object" ? { ...current.submissions } : {},
+      updatedAt: new Date().toISOString(),
+    };
+
+    const ownEntry = Object.entries(source.submissions).find(([submissionKey, submission]) => {
+      const submissionEmail = normalizeEmail(submission?.residentEmail || submission?.email || submission?.userEmail || submission?.submittedByEmail || "");
+      return normalizeEmail(submissionKey) === currentEmail || submissionEmail === currentEmail;
+    });
+
+    if (!ownEntry) {
+      return { ok: false, error: "self submission write requires own record" };
+    }
+
+    const [, submission] = ownEntry;
+    next.submissions[currentEmail] = stampSelfSubmission(submission, currentEmail);
+    return { ok: true, value: next, count: 1 };
+  }
+
+  if (!submissionBelongsToEmail(source, currentEmail)) {
+    return { ok: false, error: "self submission write requires own record" };
+  }
+
+  const key = currentEmail;
+  const existing = current[key] && typeof current[key] === "object" ? current[key] : {};
+  current[key] = {
+    ...existing,
+    ...stampSelfSubmission(source, currentEmail),
+  };
+  current.updatedAt = new Date().toISOString();
+  return { ok: true, value: current, count: 1 };
+}
+
+async function mergeSelfSubmissionStoreValue(store, key, parsed, currentEmail) {
+  let currentValue;
+  try {
+    const rawCurrent = await store.get(key);
+    currentValue = rawCurrent ? JSON.parse(rawCurrent) : [];
+  } catch {
+    currentValue = [];
+  }
+
+  const mergeResult = Array.isArray(currentValue)
+    ? mergeSelfSubmissionArray(currentValue, parsed, currentEmail)
+    : mergeSelfSubmissionObject(currentValue, parsed, currentEmail);
+
+  if (!mergeResult.ok) return mergeResult;
+
+  await store.set(key, JSON.stringify(mergeResult.value));
+  return mergeResult;
+}
+
 async function getJsonArray(store, key) {
   try {
     const raw = await store.get(key);
@@ -810,6 +957,20 @@ export default withSecurity(
 
             await store.set(key, JSON.stringify(nextRegistry));
             return json({ ok: true, scope: "self", key });
+          }
+
+          if (USER_SUBMISSION_KEYS.has(key) && !secureCtx.isAdmin) {
+            const currentEmail = normalizeEmail(secureCtx?.user?.email);
+            if (!currentEmail) {
+              return json({ error: "unauthorized" }, 401);
+            }
+
+            const mergeResult = await mergeSelfSubmissionStoreValue(store, key, parsed, currentEmail);
+            if (!mergeResult.ok) {
+              return json({ error: mergeResult.error || "self submission write failed" }, 400);
+            }
+
+            return json({ ok: true, scope: "self", key, merged: true, count: mergeResult.count || 0 });
           }
 
           await store.set(key, JSON.stringify(parsed));
