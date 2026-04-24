@@ -196,11 +196,11 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     </div>
     <div class="parking-quick-flag" id="pkQuickDeclareWrap" style="display:none;">
       <div style="font-weight:700; margin-bottom:6px;">No vehicle for this numbered space</div>
-      <div class="tiny muted" style="margin-bottom:10px;">Use this when the resident has a valid numbered parking space available but currently has no own vehicle to register. This declaration is saved for admin reporting.</div>
+      <div class="tiny muted" style="margin-bottom:10px;">Use this only when the residence has a valid numbered parking space, but the resident currently has no own vehicle to register. This is different from No Parking, which means the residence has no designated parking space.</div>
       <button class="btn-line small" id="btnParkingDeclareNoVehicleInline" type="button">Declare no vehicle</button>
     </div>
     <div class="parking-empty-box" id="pkEmptyState">No vehicles registered yet.</div>
-    <div class="parking-empty-box" id="pkNoVehicleState" style="display:none;">This resident has declared that there is currently no vehicle assigned to this numbered parking space. This status is saved for admin reporting.</div>
+    <div class="parking-empty-box" id="pkNoVehicleState" style="display:none;">You have declared that there is currently no vehicle assigned to this numbered parking space. This status is saved for admin reporting. If you get a vehicle later, choose “I now have a vehicle” to register it.</div>
     <div class="parking-table-wrap" id="pkVehiclesWrap" style="display:none;">
       <table style="width:100%;"><thead><tr><th>License Plate</th><th>Vehicle Type</th><th>Brand</th><th>Model</th><th>Colour</th><th>Fuel Type</th><th>Status</th><th>Action</th></tr></thead><tbody id="pkVehiclesBody"></tbody></table>
     </div>
@@ -209,9 +209,9 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       <div class="grid-2" style="gap:1rem;"><div class="field"><label>Brand</label><input id="pkBrand" type="text"></div><div class="field"><label>Model</label><input id="pkModel" type="text"></div></div>
       <div class="grid-2" style="gap:1rem;"><div class="field"><label>Colour</label><input id="pkColour" type="text"></div><div class="field"><label>Fuel Type</label><input id="pkFuel" type="text"></div></div>
       <div class="parking-actions-row" style="justify-content:space-between; align-items:center; margin-top:14px;">
-        <label class="chk parking-check"><input id="pkNoVehicleNow" type="checkbox"> <span>I do not currently have a vehicle and this parking space must remain empty.</span></label>
+        <label class="chk parking-check"><input id="pkNoVehicleNow" type="checkbox"> <span>I confirm that I do not currently have a vehicle and this numbered parking space must remain empty for now.</span></label>
       </div>
-      <p class="tiny muted" id="pkSaveHelp" style="margin-top:8px;">You can register more than one vehicle in the same submission after accepting the policy.</p>
+      <p class="tiny muted" id="pkSaveHelp" style="margin-top:8px;">Register your vehicle details after opening the policy and confirming acceptance.</p>
       <div class="actions profile-actions"><button class="btn-line" id="btnParkingCancel" type="button">Cancel</button><button class="btn" id="btnParkingSave" type="button">Save Registration</button></div>
     </div>
   </section>
@@ -1666,8 +1666,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     });
     if(pkEls.save) pkEls.save.textContent = noVehicle ? 'Save Empty-Space Declaration' : 'Save Registration';
     if(pkEls.saveHelp) pkEls.saveHelp.textContent = noVehicle
-      ? 'This will save that the resident has a numbered parking space available but currently has no vehicle. Admin reporting can use this information.'
-      : 'You can register more than one vehicle in the same submission after accepting the policy.';
+      ? 'This will save that the residence has a numbered parking space available, but the resident currently has no vehicle. You can change this later by registering a vehicle.'
+      : 'Register your vehicle details after opening the policy and confirming acceptance.';
   }
   function pkRender(){
     const profile = currentProfile || {};
@@ -1679,7 +1679,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     pkEls.address.textContent = profile.address || profile.fullAddress || profile.streetAddress || profile.householdAddress || '—';
     pkEls.eircode.textContent = profile.eircode || profile.eir || '—';
     const type = allocation?.type || (allocation?.hasParking === false ? 'No Parking' : 'Single');
-    const noParking = !allocation || allocation.hasParking === false || type === 'No Parking';
+    const noParking = !allocation || allocation.hasParking === false || String(type || '').trim().toLowerCase() === 'no parking';
     const spaceText = noParking ? 'N/A' : (allocation.spaceDisplay || allocation.spaceNo || allocation.space1 || '—');
     pkEls.spaceNo.textContent = spaceText;
     pkEls.typeBadge.textContent = noParking ? 'No Parking' : type;
@@ -1712,7 +1712,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     pkMessage('');
   }
   function pkDeleteVehicle(idx){ const profile = currentProfile || {}; const key = pkResidentKey(profile); const reg = pkRegistry(); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] }; const vehicle = (sub.vehicles || [])[idx]; if(!vehicle) return; vehicle.deletedAt = new Date().toISOString(); vehicle.deletedBy = 'resident'; sub.deletedVehicles = Array.isArray(sub.deletedVehicles) ? sub.deletedVehicles : []; sub.deletedVehicles.push(Object.assign({}, vehicle)); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); }
-  function pkQuickDeclareNoVehicle(){ pkOpenForm(true); pkSaveSubmission(); }
+  function pkQuickDeclareNoVehicle(){ pkOpenForm(true); }
   function pkSaveSubmission(){
     const profile = currentProfile || {}; const allocation = pkFindAllocation(profile); if(!allocation || allocation.hasParking === false){ pkMessage('No parking allocation is available for this residence.','error'); return; }
     const policy = (window.anwParkingLoadPolicy && window.anwParkingLoadPolicy()) || pkRegistry().policy || null;
@@ -1881,8 +1881,8 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     });
     if(pkEls.save) pkEls.save.textContent = noVehicle ? 'Save Empty-Space Declaration' : 'Save Registration';
     if(pkEls.saveHelp) pkEls.saveHelp.textContent = noVehicle
-      ? 'This will save that the resident has a numbered parking space available but currently has no vehicle. Admin reporting can use this information.'
-      : 'You can register more than one vehicle in the same submission after accepting the policy.';
+      ? 'This will save that the residence has a numbered parking space available, but the resident currently has no vehicle. You can change this later by registering a vehicle.'
+      : 'Register your vehicle details after opening the policy and confirming acceptance.';
   }
   function pkRender(){
     const profile = currentProfile || {};
@@ -1894,7 +1894,7 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     pkEls.address.textContent = profile.address || profile.fullAddress || profile.streetAddress || profile.householdAddress || '—';
     pkEls.eircode.textContent = profile.eircode || profile.eir || '—';
     const type = allocation?.type || (allocation?.hasParking === false ? 'No Parking' : 'Single');
-    const noParking = !allocation || allocation.hasParking === false || type === 'No Parking';
+    const noParking = !allocation || allocation.hasParking === false || String(type || '').trim().toLowerCase() === 'no parking';
     const spaceText = noParking ? 'N/A' : (allocation.spaceDisplay || allocation.spaceNo || allocation.space1 || '—');
     pkEls.spaceNo.textContent = spaceText;
     pkEls.typeBadge.textContent = noParking ? 'No Parking' : type;
@@ -1927,7 +1927,7 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     pkMessage('');
   }
   function pkDeleteVehicle(idx){ const profile = currentProfile || {}; const key = pkResidentKey(profile); const reg = pkRegistry(); const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] }; const vehicle = (sub.vehicles || [])[idx]; if(!vehicle) return; vehicle.deletedAt = new Date().toISOString(); vehicle.deletedBy = 'resident'; sub.deletedVehicles = Array.isArray(sub.deletedVehicles) ? sub.deletedVehicles : []; sub.deletedVehicles.push(Object.assign({}, vehicle)); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); }
-  function pkQuickDeclareNoVehicle(){ pkOpenForm(true); pkSaveSubmission(); }
+  function pkQuickDeclareNoVehicle(){ pkOpenForm(true); }
   function pkSaveSubmission(){
     const profile = currentProfile || {}; const allocation = pkFindAllocation(profile); if(!allocation || allocation.hasParking === false){ pkMessage('No parking allocation is available for this residence.','error'); return; }
     const policy = (window.anwParkingLoadPolicy && window.anwParkingLoadPolicy()) || pkRegistry().policy || null;
