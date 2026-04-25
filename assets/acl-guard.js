@@ -2,6 +2,133 @@
 (function () {
   "use strict";
 
+
+  const ACL_AUTH_READY_KEY = "anw_acl_auth_ready";
+  const ACL_AUTH_READY_TTL_MS = 5 * 60 * 1000;
+
+  function getAuthReadyStamp() {
+    try {
+      return Number(sessionStorage.getItem(ACL_AUTH_READY_KEY) || 0);
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function hasRecentAuthReady() {
+    try {
+      const stamp = getAuthReadyStamp();
+      return !!stamp && Date.now() - stamp < ACL_AUTH_READY_TTL_MS;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function markAuthReady() {
+    try {
+      sessionStorage.setItem(ACL_AUTH_READY_KEY, String(Date.now()));
+    } catch (_) {}
+  }
+
+  function clearAuthReady() {
+    try {
+      sessionStorage.removeItem(ACL_AUTH_READY_KEY);
+    } catch (_) {}
+  }
+
+  function isProtectedPageCandidate() {
+    try {
+      if (isPublicMode() || isShellPublicPage()) return false;
+      const key = getPageKey();
+      const builtin = key && Object.prototype.hasOwnProperty.call(BUILTIN_PAGE_RULES, key)
+        ? BUILTIN_PAGE_RULES[key]
+        : "Authenticated";
+      return String(builtin || "").trim().toLowerCase() !== "public";
+    } catch (_) {
+      return true;
+    }
+  }
+
+  function ensureAuthLoadingStyles() {
+    try {
+      if (document.getElementById("anwAclAuthLoadingStyles")) return;
+
+      const style = document.createElement("style");
+      style.id = "anwAclAuthLoadingStyles";
+      style.textContent = [
+        "html[data-acl-loading='true'] body > *:not(#anwAclAuthLoadingOverlay){visibility:hidden!important;}",
+        "#anwAclAuthLoadingOverlay{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at top left,rgba(31,122,92,.13),transparent 34%),linear-gradient(135deg,#f7fafc 0%,#eef4f7 100%);color:#183247;font-family:Arial,Helvetica,sans-serif;}",
+        "#anwAclAuthLoadingOverlay .anw-auth-card{width:min(440px,100%);background:#fff;border:1px solid #dbe5ec;border-radius:22px;box-shadow:0 24px 70px rgba(18,63,95,.16);padding:34px 30px;text-align:center;position:relative;overflow:hidden;}",
+        "#anwAclAuthLoadingOverlay .anw-auth-card:before{content:'';position:absolute;inset:0 0 auto 0;height:6px;background:linear-gradient(90deg,#123f5f,#1f7a5c);}",
+        "#anwAclAuthLoadingOverlay .anw-auth-mark{width:74px;height:74px;margin:0 auto 18px;border-radius:20px;background:#e7f0f6;display:grid;place-items:center;position:relative;}",
+        "#anwAclAuthLoadingOverlay .anw-auth-mark:before{content:'';width:34px;height:42px;border:3px solid #123f5f;border-radius:16px 16px 10px 10px;border-top-width:10px;}",
+        "#anwAclAuthLoadingOverlay .anw-auth-mark:after{content:'';position:absolute;width:18px;height:10px;border:3px solid #123f5f;border-bottom:0;border-radius:12px 12px 0 0;top:19px;}",
+        "#anwAclAuthLoadingOverlay h1{margin:0;color:#123f5f;font-size:1.35rem;letter-spacing:-.02em;font-weight:700;}",
+        "#anwAclAuthLoadingOverlay p{margin:10px auto 24px;max-width:330px;color:#6b7c8f;font-size:.96rem;line-height:1.45;}",
+        "#anwAclAuthLoadingOverlay .anw-auth-status{display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 16px;border-radius:16px;background:#f8fbfc;border:1px solid #dbe5ec;color:#183247;font-size:.95rem;font-weight:700;}",
+        "#anwAclAuthLoadingOverlay .anw-auth-spinner{width:22px;height:22px;border:3px solid #d8e5ec;border-top-color:#1f7a5c;border-radius:50%;animation:anwAclSpin .85s linear infinite;flex:0 0 auto;}",
+        "#anwAclAuthLoadingOverlay .anw-auth-note{margin-top:20px;color:#8a99a8;font-size:.78rem;}",
+        "@keyframes anwAclSpin{to{transform:rotate(360deg);}}"
+      ].join("");
+      document.head.appendChild(style);
+    } catch (_) {}
+  }
+
+  function showAuthLoadingOverlay() {
+    try {
+      if (!document.documentElement) return;
+      document.documentElement.setAttribute("data-acl-loading", "true");
+
+      ensureAuthLoadingStyles();
+
+      if (document.getElementById("anwAclAuthLoadingOverlay")) return;
+
+      const overlay = document.createElement("div");
+      overlay.id = "anwAclAuthLoadingOverlay";
+      overlay.setAttribute("role", "status");
+      overlay.setAttribute("aria-live", "polite");
+      overlay.setAttribute("aria-label", "Validando autenticação");
+      overlay.innerHTML =
+        '<main class="anw-auth-card">' +
+          '<div class="anw-auth-mark" aria-hidden="true"></div>' +
+          '<h1>Validating secure access</h1>' +
+          '<p>We are verifying your session and permissions before opening this protected area.</p>' +
+          '<div class="anw-auth-status">' +
+            '<span class="anw-auth-spinner" aria-hidden="true"></span>' +
+            '<span>Checking authentication and site security…</span>' +
+          '</div>' +
+          '<div class="anw-auth-note">ADERRIG • Protected area</div>' +
+        '</main>';
+
+      document.body.appendChild(overlay);
+    } catch (_) {}
+  }
+
+  function hideAuthLoadingOverlay() {
+    try {
+      const overlay = document.getElementById("anwAclAuthLoadingOverlay");
+      if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    } catch (_) {}
+
+    try {
+      document.documentElement.removeAttribute("data-acl-loading");
+    } catch (_) {}
+
+    try {
+      if (document.body) document.body.removeAttribute("data-acl-loading");
+    } catch (_) {}
+  }
+
+  function shouldShowFullAuthLoading() {
+    try {
+      if (!isProtectedPageCandidate()) return false;
+      if (isLoggedIn() && hasRecentAuthReady()) return false;
+      return true;
+    } catch (_) {
+      return true;
+    }
+  }
+
+
   function getPathName() {
     try {
       return String(location.pathname || "").toLowerCase();
@@ -606,6 +733,7 @@
     const loggedIn = isLoggedIn();
 
     if (!loggedIn) {
+      clearAuthReady();
       location.replace("login.html");
       return true;
     }
@@ -621,6 +749,7 @@
 
     const adminRule = resolveAclRule(acl, "page:admin");
     if (!ruleAllows(adminRule, role)) {
+      clearAuthReady();
       location.replace("dashboard.html");
       return true;
     }
@@ -645,26 +774,31 @@
 
     if (clean.toLowerCase() === "authenticated") {
       if (!isLoggedIn()) {
-        location.replace("login.html");
+        clearAuthReady();
+      location.replace("login.html");
         return;
       }
       if (!hasApprovedAccess()) {
-        location.replace("login.html");
+        clearAuthReady();
+      location.replace("login.html");
       }
       return;
     }
 
     if (!isLoggedIn()) {
+      clearAuthReady();
       location.replace("login.html");
       return;
     }
 
     if (!hasApprovedAccess() && !isMasterOwnerEmail(getLoggedEmail())) {
+      clearAuthReady();
       location.replace("login.html");
       return;
     }
 
     if (!ruleAllows(clean, role)) {
+      clearAuthReady();
       location.replace("dashboard.html");
     }
   }
@@ -695,6 +829,10 @@
 
   document.addEventListener("DOMContentLoaded", async function () {
     try {
+      if (shouldShowFullAuthLoading()) {
+        showAuthLoadingOverlay();
+      }
+
       if (isAdminPath() || getPageKey() === "page:admin") {
         await waitForAdminAuthReady();
       }
@@ -708,24 +846,20 @@
       applyNav(role, acl);
       applyFeatures(role, acl);
       enforcePage(role, acl);
+
+      if (isLoggedIn() && hasApprovedAccess()) {
+        markAuthReady();
+      }
     } catch (e) {
       console.warn("[acl-guard] fallback after error:", e);
     } finally {
-      try {
-        document.body.removeAttribute("data-acl-loading");
-      } catch (_) {}
-      try {
-        document.documentElement.removeAttribute("data-acl-loading");
-      } catch (_) {}
+      hideAuthLoadingOverlay();
     }
   });
 
   window.addEventListener("load", function () {
-    try {
-      document.body.removeAttribute("data-acl-loading");
-    } catch (_) {}
-    try {
-      document.documentElement.removeAttribute("data-acl-loading");
-    } catch (_) {}
+    if (!shouldShowFullAuthLoading()) {
+      hideAuthLoadingOverlay();
+    }
   });
 })();
