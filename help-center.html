@@ -37,7 +37,7 @@
     .hc-quick-btn.active{background:#eef4f1;border-color:#d5e8dc;color:#215b3f}
     .hc-link{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:14px;border:1px solid rgba(17,24,39,.08);background:#fff;color:#23344b;text-decoration:none;font-weight:800}
     .hc-empty{padding:18px;border:1px dashed var(--hc-border);border-radius:16px;color:var(--hc-muted);background:#fbfcfd}
-    .hc-guidance-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+    .hc-guidance-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 14px}
     .hc-guidance-head h3{margin:0;flex:0 0 auto}
     .hc-search{width:min(360px,52%);margin:0;display:grid;gap:4px}
     .hc-search input{width:100%;height:38px;padding:0 12px;border-radius:14px;border:1px solid var(--hc-border);background:#fff;color:var(--hc-text);font-size:.92rem;box-sizing:border-box}
@@ -88,8 +88,8 @@
         <div class="hc-guidance-head">
           <h3>Guidance</h3>
           <div class="hc-search">
-            <input id="hcSearchInput" type="search" autocomplete="off" placeholder="Search guidance..." aria-label="Search guidance" />
-            <div class="hc-search-meta" id="hcSearchMeta">Search by topic or keyword.</div>
+            <input id="hcSearchInput" type="search" autocomplete="off" placeholder="Ultra search: car, parcel, vote, garda..." aria-label="Search guidance" />
+            <div class="hc-search-meta" id="hcSearchMeta">Ultra search understands related terms.</div>
           </div>
         </div>
         <div class="hc-quick-topics" id="hcQuickTopics"></div>
@@ -263,9 +263,287 @@
   let helpData = { sections: [], articles: [] };
   let currentSectionId = '';
   let currentArticleId = '';
+  let currentSearchTerm = '';
+  let searchResults = [];
 
   function articlesForCurrentSection(){
     return helpData.articles.filter(article => article.sectionId === currentSectionId);
+  }
+
+  function normalizeSearchValue(value){
+    return String(value || '')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
+  function getSectionTitle(sectionId){
+    const section = helpData.sections.find(item => item.id === sectionId);
+    return section ? section.title : '';
+  }
+
+  const HELP_SEARCH_INTENTS = [
+    {
+      name: 'parking vehicles',
+      terms: [
+        'parking','park','parkin','car','cars','vehicle','vehicles','van','motorbike','bike','space','spaces','parking space',
+        'spot','bay','slot','permit','permits','garage','driveway','allocation','allocated','registration','register car',
+        'licence plate','license plate','plate','reg','vehicle reg','no parking','no vehicle','empty space','visitor parking',
+        'resident vehicle','parking policy','clamping','apcoa','cpms'
+      ]
+    },
+    {
+      name: 'mail delivery issues',
+      terms: [
+        'mail','post','postal','letter','letters','envelope','parcel','package','delivery','deliveries','delivry','delivered',
+        'missing delivery','missing parcel','missing mail','wrong delivery','wrong address','wrong mail','not received',
+        'lost parcel','lost package','received wrong','an post','courier','dpd','amazon','collection','collected','returned',
+        'return sender','mailbox','postbox','item missing'
+      ]
+    },
+    {
+      name: 'incident reports safety',
+      terms: [
+        'report','reports','incident','incidents','garda','gardai','police','safety','safe','security','crime','suspicious',
+        'theft','stolen','damage','vandalism','noise','complaint','antisocial','anti social','evidence','photo','video',
+        'reference','case','issue','problem','danger','emergency','record incident','my reports','report status'
+      ]
+    },
+    {
+      name: 'elections voting',
+      terms: [
+        'election','elections','vote','voting','voter','owner vote','owners vote','candidate','candidates','nomination',
+        'interest','expression','expression of interest','60','60%','sixty','participation','threshold','valid vote',
+        'eligible owner','eligible','ballot','result','results','standing','committee'
+      ]
+    },
+    {
+      name: 'notices alerts garda safety',
+      terms: [
+        'notice','notices','alert','alerts','community alert','message','messages','warning','urgent','urgency',
+        'announcement','news','update','updates','garda safety','safety notice','push','email alert','sms',
+        'audience','reply to','contacts'
+      ]
+    },
+    {
+      name: 'household residents address',
+      terms: [
+        'household','house','home','address','eircode','eir','street','unit','property','resident','residents','member',
+        'members','family','tenant','owner','management company','benchmark','registered address','profile address'
+      ]
+    },
+    {
+      name: 'profile login account password',
+      terms: [
+        'profile','account','login','log in','password','forgot password','reset password','reset email','email','phone',
+        'mobile','photo','avatar','register','registration','pending','approved','approval','status','resident type',
+        'change details','update profile','personal details'
+      ]
+    },
+    {
+      name: 'access control permissions admin owner',
+      terms: [
+        'access','permission','permissions','role','roles','admin','owner','acl','access control','control','feature',
+        'tab','tabs','open tab','private page','dashboard','tools','backup','restore','audit','audit log','export',
+        'csv','filter','maintenance','security','owner only'
+      ]
+    },
+    {
+      name: 'community projects tasks monitoring',
+      terms: [
+        'project','projects','community project','tasks','task','monitoring','progress','recipient','recipients','tracking',
+        'status','update','planned','active project','delivery','follow up','responsibility'
+      ]
+    },
+    {
+      name: 'help handbook guidance',
+      terms: [
+        'help','handbook','guide','guidance','article','content','section','topic','support','how to','where is',
+        'instructions','manual','documentation','help center','help centre'
+      ]
+    }
+  ];
+
+  const HELP_SEARCH_PHRASES = [
+    { phrase: 'i have no car', add: ['no vehicle','parking','empty space'] },
+    { phrase: 'i do not have a car', add: ['no vehicle','parking','empty space'] },
+    { phrase: 'no car', add: ['no vehicle','parking','empty space'] },
+    { phrase: 'no space', add: ['no parking','parking allocation'] },
+    { phrase: 'no parking space', add: ['no parking','parking allocation'] },
+    { phrase: 'wrong letter', add: ['mail delivery','wrong delivery','letter'] },
+    { phrase: 'wrong parcel', add: ['mail delivery','wrong delivery','parcel'] },
+    { phrase: 'parcel missing', add: ['mail delivery','missing delivery','parcel'] },
+    { phrase: 'did not receive', add: ['missing delivery','mail delivery'] },
+    { phrase: 'didnt receive', add: ['missing delivery','mail delivery'] },
+    { phrase: 'not received', add: ['missing delivery','mail delivery'] },
+    { phrase: 'how to vote', add: ['elections','voting','eligible owner'] },
+    { phrase: 'who can vote', add: ['elections','owner vote','eligible owner'] },
+    { phrase: '60 percent', add: ['elections','60%','participation'] },
+    { phrase: 'sixty percent', add: ['elections','60%','participation'] },
+    { phrase: 'forgot my password', add: ['forgot password','reset password','login'] },
+    { phrase: 'cannot login', add: ['login','account','password'] },
+    { phrase: 'can not login', add: ['login','account','password'] },
+    { phrase: 'make a report', add: ['report','incident','safety'] },
+    { phrase: 'report a problem', add: ['report','incident','safety'] },
+    { phrase: 'contact garda', add: ['garda','safety','report'] },
+    { phrase: 'restore backup', add: ['restore','backup','tools','owner only'] }
+  ];
+
+  function getArticleSearchText(article){
+    return normalizeSearchValue([
+      article.title,
+      article.summary,
+      article.contentMd,
+      article.sectionId,
+      getSectionTitle(article.sectionId),
+      article.roleView
+    ].join(' '));
+  }
+
+  function fuzzyContains(text, term){
+    const haystack = normalizeSearchValue(text);
+    const needle = normalizeSearchValue(term);
+    if(!needle) return false;
+    if(haystack.includes(needle)) return true;
+    if(needle.length <= 3) return false;
+
+    const words = haystack.split(/\s+/).filter(Boolean);
+    return words.some(word => {
+      if(word.includes(needle) || needle.includes(word)) return true;
+      if(Math.abs(word.length - needle.length) > 2) return false;
+
+      let i = 0;
+      let j = 0;
+      let misses = 0;
+      while(i < word.length && j < needle.length){
+        if(word[i] === needle[j]){
+          i += 1;
+          j += 1;
+        }else{
+          misses += 1;
+          if(word.length > needle.length) i += 1;
+          else if(needle.length > word.length) j += 1;
+          else { i += 1; j += 1; }
+        }
+        if(misses > 2) return false;
+      }
+      misses += (word.length - i) + (needle.length - j);
+      return misses <= 2;
+    });
+  }
+
+  function expandSearchTerms(query){
+    const base = normalizeSearchValue(query);
+    const parts = base.split(/\s+/).filter(Boolean);
+    const expanded = new Set(parts);
+
+    HELP_SEARCH_PHRASES.forEach(rule => {
+      const phrase = normalizeSearchValue(rule.phrase);
+      if(phrase && (base.includes(phrase) || fuzzyContains(base, phrase))){
+        (rule.add || []).forEach(term => {
+          normalizeSearchValue(term).split(/\s+/).forEach(v => v && expanded.add(v));
+        });
+      }
+    });
+
+    HELP_SEARCH_INTENTS.forEach(intent => {
+      const normalizedTerms = intent.terms.map(normalizeSearchValue);
+      const matched = normalizedTerms.some(term => {
+        if(!term) return false;
+        return base.includes(term) || parts.some(part => term.includes(part) || part.includes(term) || fuzzyContains(term, part));
+      });
+      if(matched){
+        normalizeSearchValue(intent.name).split(/\s+/).forEach(v => v && expanded.add(v));
+        normalizedTerms.forEach(term => {
+          term.split(/\s+/).forEach(v => v && expanded.add(v));
+        });
+      }
+    });
+
+    return Array.from(expanded).filter(Boolean);
+  }
+
+  function scoreArticleForSearch(article, query, terms){
+    const title = normalizeSearchValue(article.title);
+    const summary = normalizeSearchValue(article.summary);
+    const content = normalizeSearchValue(article.contentMd);
+    const section = normalizeSearchValue(getSectionTitle(article.sectionId) + ' ' + article.sectionId);
+    const all = getArticleSearchText(article);
+    let score = 0;
+
+    if(title.includes(query)) score += 140;
+    if(summary.includes(query)) score += 85;
+    if(section.includes(query)) score += 70;
+    if(content.includes(query)) score += 40;
+
+    terms.forEach(term => {
+      if(!term) return;
+      if(title.includes(term)) score += 55;
+      else if(fuzzyContains(title, term)) score += 34;
+
+      if(summary.includes(term)) score += 32;
+      else if(fuzzyContains(summary, term)) score += 18;
+
+      if(section.includes(term)) score += 28;
+      else if(fuzzyContains(section, term)) score += 16;
+
+      if(content.includes(term)) score += 12;
+      else if(fuzzyContains(content, term)) score += 6;
+
+      if(all.includes(term)) score += 4;
+    });
+
+    HELP_SEARCH_INTENTS.forEach(intent => {
+      const intentTerms = intent.terms.map(normalizeSearchValue);
+      const queryMatchesIntent = intentTerms.some(term => query.includes(term) || terms.includes(term) || fuzzyContains(query, term));
+      if(!queryMatchesIntent) return;
+      const articleMatchesIntent = intentTerms.some(term => all.includes(term) || fuzzyContains(all, term));
+      if(articleMatchesIntent) score += 52;
+    });
+
+    return score;
+  }
+
+  function runHelpSearch(term){
+    const query = normalizeSearchValue(term);
+    if(!query){
+      searchResults = [];
+      return;
+    }
+
+    const terms = expandSearchTerms(query);
+    searchResults = helpData.articles
+      .map(article => ({ article, score: scoreArticleForSearch(article, query, terms) }))
+      .filter(item => item.score > 0)
+      .sort((a,b) => {
+        if(b.score !== a.score) return b.score - a.score;
+        return String(a.article.title || '').localeCompare(String(b.article.title || ''));
+      })
+      .map(item => item.article);
+  }
+
+  function searchIsActive(){
+    return !!normalizeSearchValue(currentSearchTerm);
+  }
+
+  function updateSearchMeta(){
+    const meta = byId('hcSearchMeta');
+    if(!meta) return;
+    if(!searchIsActive()){
+      meta.textContent = 'Ultra search understands related terms.';
+      return;
+    }
+    const count = searchResults.length;
+    meta.textContent = count === 1 ? '1 smart match found.' : count + ' smart matches found.';
+  }
+
+  function clearHelpSearch(){
+    currentSearchTerm = '';
+    searchResults = [];
+    const input = byId('hcSearchInput');
+    if(input) input.value = '';
+    updateSearchMeta();
   }
 
   function renderSections(){
@@ -285,28 +563,44 @@
   function renderQuickTopics(){
     const wrap = byId('hcQuickTopics');
     if(!wrap) return;
-    const sectionArticles = articlesForCurrentSection();
+    const resultsMode = searchIsActive();
+    const sectionArticles = resultsMode ? searchResults : articlesForCurrentSection();
+
     if(!sectionArticles.length){
-      wrap.innerHTML = '';
+      wrap.innerHTML = resultsMode
+        ? '<div class="hc-empty">No guidance found for this search.</div>'
+        : '';
+      updateSearchMeta();
       return;
     }
+
     wrap.innerHTML = sectionArticles.map(article => {
       const active = article.id === currentArticleId;
-      return '<button type="button" class="hc-quick-btn' + (active ? ' active' : '') + '" data-article-id="' + esc(article.id) + '">' + esc(article.title || 'Untitled topic') + '</button>';
+      const label = resultsMode && getSectionTitle(article.sectionId)
+        ? (article.title || 'Untitled topic') + ' · ' + getSectionTitle(article.sectionId)
+        : (article.title || 'Untitled topic');
+      return '<button type="button" class="hc-quick-btn' + (active ? ' active' : '') + '" data-article-id="' + esc(article.id) + '">' + esc(label) + '</button>';
     }).join('');
+    updateSearchMeta();
   }
 
   function renderArticle(){
     const wrap = byId('hcArticleWrap');
     if(!wrap) return;
-    const sectionArticles = articlesForCurrentSection();
-    const article = sectionArticles.find(item => item.id === currentArticleId) || sectionArticles[0] || null;
+    const resultsMode = searchIsActive();
+    const pool = resultsMode ? searchResults : articlesForCurrentSection();
+    const article = pool.find(item => item.id === currentArticleId) || pool[0] || null;
+
     if(!article){
-      wrap.innerHTML = '<div class="hc-empty">Choose a topic to view the guidance.</div>';
+      wrap.innerHTML = resultsMode
+        ? '<div class="hc-empty">No results found. Try another keyword.</div>'
+        : '<div class="hc-empty">Choose a topic to view the guidance.</div>';
       return;
     }
+
     currentSectionId = article.sectionId || currentSectionId;
     currentArticleId = article.id || currentArticleId;
+    renderSections();
     wrap.innerHTML = '<article class="hc-article-card"><div class="hc-article-head"><h3>' + esc(article.title || 'Untitled article') + '</h3>' + (article.summary ? '<p>' + esc(article.summary) + '</p>' : '') + '</div><div class="hc-md">' + markdownToHtml(article.contentMd || '') + '</div>' + (article.linkedPage ? '<div class="hc-actions"><a class="hc-link" href="' + esc(article.linkedPage) + '">Open linked page</a></div>' : '') + '</article>';
   }
 
@@ -327,6 +621,7 @@
         const btn = event.target.closest('[data-section-id]');
         if(!btn) return;
         currentSectionId = btn.getAttribute('data-section-id') || '';
+        clearHelpSearch();
         const first = articlesForCurrentSection()[0];
         currentArticleId = first ? first.id : '';
         renderSections();
@@ -341,9 +636,26 @@
         const btn = event.target.closest('[data-article-id]');
         if(!btn) return;
         const articleId = btn.getAttribute('data-article-id') || '';
-        const article = articlesForCurrentSection().find(item => item.id === articleId);
+        const pool = searchIsActive() ? searchResults : articlesForCurrentSection();
+        const article = pool.find(item => item.id === articleId) || helpData.articles.find(item => item.id === articleId);
         if(!article) return;
+        currentSectionId = article.sectionId || currentSectionId;
         currentArticleId = article.id;
+        renderQuickTopics();
+        renderArticle();
+      });
+    }
+
+    const searchInput = byId('hcSearchInput');
+    if(searchInput){
+      searchInput.addEventListener('input', function(){
+        currentSearchTerm = this.value || '';
+        runHelpSearch(currentSearchTerm);
+        const first = searchResults[0] || null;
+        if(first){
+          currentSectionId = first.sectionId || currentSectionId;
+          currentArticleId = first.id;
+        }
         renderQuickTopics();
         renderArticle();
       });
