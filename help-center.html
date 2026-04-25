@@ -37,6 +37,13 @@
     .hc-quick-btn.active{background:#eef4f1;border-color:#d5e8dc;color:#215b3f}
     .hc-link{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:14px;border:1px solid rgba(17,24,39,.08);background:#fff;color:#23344b;text-decoration:none;font-weight:800}
     .hc-empty{padding:18px;border:1px dashed var(--hc-border);border-radius:16px;color:var(--hc-muted);background:#fbfcfd}
+    .hc-guidance-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+    .hc-guidance-head h3{margin:0;flex:0 0 auto}
+    .hc-search{width:min(360px,52%);margin:0;display:grid;gap:4px}
+    .hc-search input{width:100%;height:38px;padding:0 12px;border-radius:14px;border:1px solid var(--hc-border);background:#fff;color:var(--hc-text);font-size:.92rem;box-sizing:border-box}
+    .hc-search input:focus{outline:none;border-color:#d5e8dc;box-shadow:0 0 0 3px rgba(33,91,63,.10)}
+    .hc-search-meta{min-height:14px;color:var(--hc-muted);font-size:.78rem;line-height:1.2;text-align:right}
+    @media (max-width:680px){.hc-guidance-head{align-items:stretch;flex-direction:column}.hc-search{width:100%}.hc-search-meta{text-align:left}}
     @media (max-width:980px){.hc-hero-grid,.hc-grid{grid-template-columns:1fr}}
   </style>
 </head>
@@ -78,7 +85,13 @@
         <div class="hc-section-list" id="hcSectionList"></div>
       </section>
       <section class="hc-panel">
-        <h3>Guidance</h3>
+        <div class="hc-guidance-head">
+          <h3>Guidance</h3>
+          <div class="hc-search">
+            <input id="hcSearchInput" type="search" autocomplete="off" placeholder="Search guidance..." aria-label="Search guidance" />
+            <div class="hc-search-meta" id="hcSearchMeta">Search by topic or keyword.</div>
+          </div>
+        </div>
         <div class="hc-quick-topics" id="hcQuickTopics"></div>
         <div id="hcArticleWrap"></div>
       </section>
