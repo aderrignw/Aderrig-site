@@ -87,9 +87,9 @@ function collectProfileRoles(user) {
   return out;
 }
 
-function hasBackupAccessRole(user) {
+function hasOwnerAccessRole(user) {
   const roles = collectProfileRoles(user).map(normalizeRoleName);
-  return roles.includes("owner") || roles.includes("admin");
+  return roles.includes("owner") || user?.isOwner === true;
 }
 
 function isApprovedUser(user) {
@@ -123,7 +123,7 @@ async function isBackupAuthorized(ctx, context) {
     return true;
   }
 
-  if (hasBackupAccessRole(currentUser)) {
+  if (hasOwnerAccessRole(currentUser)) {
     return true;
   }
 
@@ -135,7 +135,7 @@ async function isBackupAuthorized(ctx, context) {
     extractCandidateEmails(user).some((email) => currentEmails.includes(email))
   );
 
-  return !!(match && isApprovedUser(match) && hasBackupAccessRole(match));
+  return !!(match && isApprovedUser(match) && hasOwnerAccessRole(match));
 }
 
 function buildBackupListItem(snapshot, extra = {}) {
