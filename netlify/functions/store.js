@@ -926,6 +926,14 @@ export default withSecurity(
         } catch {
           return json({ error: "invalid json" }, 400);
         }
+        // 🔒 OWNER-ONLY RESTORE PROTECTION
+        // Restore can overwrite live production data, so it must be restricted to owner only.
+        if (String(key || "").toLowerCase().includes("restore")) {
+          if (!secureCtx.isOwner) {
+            return json({ error: "restore allowed only for owner" }, 403);
+          }
+        }
+
 
         if (key !== "anw_users") {
           if (key === "anw_parking_registry_v1" && !secureCtx.isAdmin) {
