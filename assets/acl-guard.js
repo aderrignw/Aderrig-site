@@ -35,10 +35,27 @@
     } catch (_) {}
   }
 
+  function isDashboardShellPageKey(key) {
+    try {
+      return String(key || "").trim().toLowerCase() === "page:dashboard";
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function isDashboardShellPath() {
+    try {
+      return isDashboardShellPageKey(getPageKey());
+    } catch (_) {
+      return false;
+    }
+  }
+
   function isProtectedPageCandidate() {
     try {
       if (isPublicMode() || isShellPublicPage()) return false;
       const key = getPageKey();
+      if (isDashboardShellPageKey(key)) return false;
       const builtin = key && Object.prototype.hasOwnProperty.call(BUILTIN_PAGE_RULES, key)
         ? BUILTIN_PAGE_RULES[key]
         : "Authenticated";
@@ -86,7 +103,7 @@
       overlay.id = "anwAclAuthLoadingOverlay";
       overlay.setAttribute("role", "status");
       overlay.setAttribute("aria-live", "polite");
-      overlay.setAttribute("aria-label", "Validando autenticação");
+      overlay.setAttribute("aria-label", "Validating authentication");
       overlay.innerHTML =
         '<main class="anw-auth-card">' +
           '<div class="anw-auth-mark" aria-hidden="true"></div>' +
@@ -715,7 +732,7 @@
     ];
 
     nodes.forEach((el) => {
-      if (isShellPublicPage() && (el.classList.contains("dash-tab") || el.classList.contains("dash-tab-content"))) {
+      if ((isShellPublicPage() || isDashboardShellPath()) && (el.classList.contains("dash-tab") || el.classList.contains("dash-tab-content"))) {
         return;
       }
 
@@ -765,6 +782,7 @@
 
     if (isPublicMode()) return;
     if (isShellPublicPage()) return;
+    if (isDashboardShellPath()) return;
 
     const key = getPageKey();
     const rule = key ? resolveAclRule(acl, key) : "Authenticated";
@@ -803,6 +821,95 @@
     }
   }
 
+
+  function normalizeHrefPath(href) {
+    try {
+      const url = new URL(String(href || ""), location.href);
+      return String(url.pathname || "").toLowerCase();
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function pageKeyFromHref(href) {
+    try {
+      const path = normalizeHrefPath(href);
+      const file = path.split("/").filter(Boolean).pop() || "";
+
+      if (!file || path === "/" || file === "index.html" || file === "home" || file === "home.html") return "page:home";
+      if (file === "about" || file === "about.html") return "page:about";
+      if (file === "handbook" || file === "handbook.html") return "page:handbook";
+      if (file === "login" || file === "login.html") return "page:login";
+      if (file === "privacy" || file === "privacy.html") return "page:privacy";
+      if (file === "dashboard" || file === "dashboard.html") return "page:dashboard";
+      if (file === "report" || file === "report.html") return "page:report";
+      if (file === "household" || file === "household.html") return "page:household";
+      if (file === "alerts" || file === "alerts.html") return "page:alerts";
+      if (file === "projects" || file === "projects.html") return "page:projects";
+      if (file === "help-center" || file === "help-center.html") return "page:help_center";
+      if (file === "admin" || file === "admin.html") return "page:admin";
+    } catch (_) {}
+
+    return null;
+  }
+
+  function isProtectedHref(href) {
+    try {
+      const key = pageKeyFromHref(href);
+      if (!key) return false;
+      if (isDashboardShellPageKey(key)) return false;
+      const rule = Object.prototype.hasOwnProperty.call(BUILTIN_PAGE_RULES, key)
+        ? BUILTIN_PAGE_RULES[key]
+        : "Authenticated";
+      return String(rule || "").trim().toLowerCase() !== "public";
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function buildLoginRedirectUrl(targetHref) {
+    try {
+      const login = new URL("login.html", location.href);
+      const target = new URL(String(targetHref || ""), location.href);
+      login.searchParams.set("redirect", target.pathname.replace(/^\//, "") + target.search + target.hash);
+      return login.href;
+    } catch (_) {
+      return "login.html";
+    }
+  }
+
+  function installDirectLoginGuard() {
+    try {
+      if (window.__anwDirectLoginGuardInstalled) return;
+      window.__anwDirectLoginGuardInstalled = true;
+
+      document.addEventListener("click", function (event) {
+        try {
+          const link = event.target && event.target.closest
+            ? event.target.closest("a[href]")
+            : null;
+
+          if (!link) return;
+
+          const href = link.getAttribute("href") || "";
+          if (!href || href.charAt(0) === "#" || href.indexOf("javascript:") === 0 || href.indexOf("mailto:") === 0 || href.indexOf("tel:") === 0) {
+            return;
+          }
+
+          if (!isProtectedHref(href)) return;
+          if (isLoggedIn()) return;
+
+          event.preventDefault();
+          event.stopPropagation();
+          clearAuthReady();
+
+          location.href = buildLoginRedirectUrl(href);
+        } catch (_) {}
+      }, true);
+    } catch (_) {}
+  }
+
+
   window.anwAclAllows = function (keyOrRule) {
     const acl = loadAcl() || {};
     const role = getRole();
@@ -827,8 +934,12 @@
     return ruleAllows(rule, role);
   };
 
+  installDirectLoginGuard();
+
   document.addEventListener("DOMContentLoaded", async function () {
     try {
+      installDirectLoginGuard();
+
       if (shouldShowFullAuthLoading()) {
         showAuthLoadingOverlay();
       }
