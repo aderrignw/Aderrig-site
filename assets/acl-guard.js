@@ -458,7 +458,7 @@
   const BUILTIN_PAGE_RULES = {
     "page:home": "Public",
     "page:about": "Public",
-    "page:handbook": "Public",
+    "page:handbook": "Authenticated",
     "page:help_center": "Public",
     "page:login": "Public",
     "page:privacy": "Public",
@@ -858,6 +858,7 @@
       const key = pageKeyFromHref(href);
       if (!key) return false;
       if (isDashboardShellPageKey(key)) return false;
+      if (key === "page:handbook") return true;
       const rule = Object.prototype.hasOwnProperty.call(BUILTIN_PAGE_RULES, key)
         ? BUILTIN_PAGE_RULES[key]
         : "Authenticated";
