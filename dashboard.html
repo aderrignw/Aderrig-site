@@ -36,8 +36,8 @@
         }
       } catch (_) {}
 
-      if (!hasIdentityHint && isDashboard) {
-        document.documentElement.classList.add('anw-private-preauth-hide');
+      if (isDashboard) {
+        document.documentElement.classList.add(hasIdentityHint ? 'anw-dashboard-auth-check' : 'anw-dashboard-guest');
         return;
       }
 
@@ -56,6 +56,26 @@
 <style id="anw-private-preauth-style">
   html.anw-private-preauth-hide body > *:not(#anwAclAuthLoadingOverlay){
     visibility:hidden !important;
+  }
+</style>
+<style id="dashboard-public-shell-style">
+  html:not(.anw-dashboard-approved) .dash-tab[data-tab="tabProfile"],
+  html:not(.anw-dashboard-approved) .dash-tab[data-tab="tabParking"],
+  html:not(.anw-dashboard-approved) .dash-tab[data-tab="tabInterest"],
+  html:not(.anw-dashboard-approved) .dash-tab[data-tab="tabElections"],
+  html:not(.anw-dashboard-approved) .dash-tab[data-tab="tabNotices"],
+  html:not(.anw-dashboard-approved) #tabProfile,
+  html:not(.anw-dashboard-approved) #tabParking,
+  html:not(.anw-dashboard-approved) #tabInterest,
+  html:not(.anw-dashboard-approved) #tabElections,
+  html:not(.anw-dashboard-approved) #tabNotices{
+    display:none !important;
+  }
+  html:not(.anw-dashboard-approved) .dash-tab[data-tab="tabGarda"]{
+    display:inline-flex !important;
+  }
+  html:not(.anw-dashboard-approved) #tabGarda{
+    display:block !important;
   }
 </style>
 <style>
@@ -117,7 +137,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   window.addEventListener('load', function(){
     setTimeout(function(){
       try { document.documentElement.classList.remove('anw-private-preauth-hide'); } catch (_) {}
-    }, 3500);
+    }, 100);
   });
 </script>
 </head>
@@ -1811,6 +1831,12 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
   const privateTabs = new Set(['tabProfile','tabParking','tabInterest','tabElections','tabNotices']);
 
   function setPrivateTabsVisible(visible){
+    try{
+      document.documentElement.classList.toggle('anw-dashboard-approved', !!visible);
+      document.documentElement.classList.toggle('anw-dashboard-guest', !visible);
+      document.documentElement.classList.remove('anw-dashboard-auth-check');
+      document.documentElement.classList.remove('anw-private-preauth-hide');
+    }catch(_){}
     tabs.forEach((btn) => {
       const tabId = btn.dataset.tab || '';
       if(!privateTabs.has(tabId)) return;
@@ -1909,6 +1935,7 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
   }
   tabs.forEach((btn) => { btn.addEventListener('click', (event) => { event.preventDefault(); requestTab(btn.dataset.tab || 'tabProfile'); }); });
   setPrivateTabsVisible(false);
+  openPanel('tabGarda');
   window.anwDashboardRequestTab = requestTab; window.openDashboardTab = requestTab;
   document.addEventListener('DOMContentLoaded', async () => {
     const email = getSessionEmail();
