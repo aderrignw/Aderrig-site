@@ -719,10 +719,11 @@
       }
 
       const adminLike = !!(email && (isMasterOwnerEmail(email) || hasAllowedAdminRole(getAdminRolesForEmail(email))));
-      const shouldShowFullMenu = !loggedIn || adminLike || role !== "resident";
       const shouldShowResidentShort = loggedIn && hasApprovedAccess() && !adminLike && role === "resident";
 
-      nav.innerHTML = shouldShowFullMenu ? fullMenuHtml() : residentMenuHtml();
+      // Only approved logged-in residents should receive the short resident menu.
+      // Logged-out visitors, stale sessions and non-approved accounts must see the full public menu.
+      nav.innerHTML = shouldShowResidentShort ? residentMenuHtml() : fullMenuHtml();
 
       const logoutLink = nav.querySelector("#navLogout");
       if (!logoutLink) return;
@@ -749,7 +750,11 @@
 
         clearAllLoginStateForLogout();
 
-        location.href = "index.html";
+        try {
+          location.href = "index.html?logged_out=1";
+        } catch (_) {
+          location.href = "index.html";
+        }
       });
     } catch (e) {
       console.warn("[acl-guard] renderGlobalHeader failed:", e);
