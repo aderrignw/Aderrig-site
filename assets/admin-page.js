@@ -108,12 +108,31 @@
   }
 
   function esc(s){
+    try{
+      if(window.ANW_SECURITY && typeof window.ANW_SECURITY.escapeHtml === 'function'){
+        return window.ANW_SECURITY.escapeHtml(s);
+      }
+    }catch(_){}
     return String(s == null ? '' : s)
       .replaceAll('&','&amp;')
       .replaceAll('<','&lt;')
       .replaceAll('>','&gt;')
       .replaceAll('"','&quot;')
       .replaceAll("'",'&#39;');
+  }
+
+  function safeUrlForAdmin(value){
+    try{
+      if(window.ANW_SECURITY && typeof window.ANW_SECURITY.safeImageUrl === 'function'){
+        return window.ANW_SECURITY.safeImageUrl(value);
+      }
+      const raw = String(value == null ? '' : value).trim();
+      if(!raw) return '';
+      if(/^(javascript|data|vbscript):/i.test(raw)) return '';
+      return raw;
+    }catch(_){
+      return '';
+    }
   }
 
   function fmtDate(v){
@@ -572,7 +591,7 @@
           const phone = m.phone || m.mobile || m.tel || '';
           const email = m.email || m.mail || '';
           const relation = m.relation || m.relationship || m.kinship || '';
-          const photo = m.photo || m.photoUrl || m.photoURL || m.image || '';
+          const photo = safeUrlForAdmin(m.photo || m.photoUrl || m.photoURL || m.image || '');
           const parts = [relation, phone, email].filter(Boolean);
           const photoHtml = photo
             ? `<img class="household-photo" src="${esc(photo)}" alt="">`
@@ -606,7 +625,7 @@
     if(byId('mEirView')) byId('mEirView').textContent = CURRENT_RESIDENT.eircode || '—';
     if(byId('mTypeView')) byId('mTypeView').textContent = residentType || '—';
 
-    const photoUrl = CURRENT_RESIDENT.profilePhoto || CURRENT_RESIDENT.photo || CURRENT_RESIDENT.photoURL || '';
+    const photoUrl = safeUrlForAdmin(CURRENT_RESIDENT.profilePhoto || CURRENT_RESIDENT.photo || CURRENT_RESIDENT.photoURL || '');
     const photoBox = byId('mPhotoPreview');
     if(photoBox){
       if(photoUrl){
