@@ -9,10 +9,8 @@
 <script id="anw-private-page-early-guard">
   (function(){
     try {
-      var path = String(location.pathname || '').toLowerCase();
-      var file = path.split('/').filter(Boolean).pop() || '';
-      var isDashboard = file === 'dashboard.html' || file === 'dashboard';
       var hasIdentityHint = false;
+
       try {
         for (var i = 0; i < localStorage.length; i++) {
           var k = localStorage.key(i) || '';
@@ -23,6 +21,7 @@
           }
         }
       } catch (_) {}
+
       try {
         if (!hasIdentityHint) {
           for (var j = 0; j < sessionStorage.length; j++) {
@@ -36,18 +35,17 @@
         }
       } catch (_) {}
 
-      if (!hasIdentityHint && isDashboard) {
-        document.documentElement.classList.add('anw-private-preauth-hide');
-        return;
-      }
-
       if (!hasIdentityHint) {
         var target = (location.pathname || '').replace(/^\//, '') + (location.search || '') + (location.hash || '');
-        location.replace('login.html?redirect=' + encodeURIComponent(target || file || 'dashboard.html'));
+        location.replace('login.html?redirect=' + encodeURIComponent(target || 'admin.html'));
         return;
       }
 
-      document.documentElement.classList.add('anw-private-preauth-hide');
+      // Logged-in users must see the page immediately.
+      // acl-guard.js still validates role/access after scripts load.
+      document.documentElement.classList.remove('anw-private-preauth-hide');
+      document.documentElement.classList.remove('anw-private-preauth-hide-fast');
+      document.documentElement.classList.remove('anw-admin-preauth-hide');
     } catch (_) {}
   })();
 </script>
@@ -60,12 +58,6 @@
 </script>
 
 <link rel="stylesheet" href="assets/style.css" />
-
-<style id="anw-private-preauth-style">
-  html.anw-private-preauth-hide body > *:not(#anwAclAuthLoadingOverlay){
-    visibility:hidden !important;
-  }
-</style>
 
 <script>document.documentElement.classList.add('admin-js');</script>
 
@@ -1241,13 +1233,6 @@
   @media (max-width:900px){#tabHelpCenterAdmin .hc-grid{grid-template-columns:1fr}}
 </style>
 
-<script id="anw-private-preauth-fallback">
-  window.addEventListener('load', function(){
-    setTimeout(function(){
-      try { document.documentElement.classList.remove('anw-private-preauth-hide'); } catch (_) {}
-    }, 3500);
-  });
-</script>
 </head>
 
 <body>
