@@ -16,10 +16,8 @@
 <script id="anw-private-page-early-guard">
   (function(){
     try {
-      var path = String(location.pathname || '').toLowerCase();
-      var file = path.split('/').filter(Boolean).pop() || '';
-      var isDashboard = file === 'dashboard.html' || file === 'dashboard';
       var hasIdentityHint = false;
+
       try {
         for (var i = 0; i < localStorage.length; i++) {
           var k = localStorage.key(i) || '';
@@ -30,6 +28,7 @@
           }
         }
       } catch (_) {}
+
       try {
         if (!hasIdentityHint) {
           for (var j = 0; j < sessionStorage.length; j++) {
@@ -43,28 +42,21 @@
         }
       } catch (_) {}
 
-      if (!hasIdentityHint && isDashboard) {
-        document.documentElement.classList.add('anw-private-preauth-hide');
-        return;
-      }
-
       if (!hasIdentityHint) {
         var target = (location.pathname || '').replace(/^\//, '') + (location.search || '') + (location.hash || '');
-        location.replace('login.html?redirect=' + encodeURIComponent(target || file || 'dashboard.html'));
+        location.replace('login.html?redirect=' + encodeURIComponent(target || 'household.html'));
         return;
       }
 
-      document.documentElement.classList.add('anw-private-preauth-hide');
+      // Logged-in users must see the page immediately.
+      // acl-guard.js still validates role/access after scripts load.
+      document.documentElement.classList.remove('anw-private-preauth-hide');
+      document.documentElement.classList.remove('anw-private-preauth-hide-fast');
     } catch (_) {}
   })();
 </script>
 
 <link href="assets/style.css" rel="stylesheet"/>
-<style id="anw-private-preauth-style">
-  html.anw-private-preauth-hide body > *:not(#anwAclAuthLoadingOverlay){
-    visibility:hidden !important;
-  }
-</style>
 <style>
     /* Scoped only to this page – does NOT touch header/nav */
     .subtabs { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
@@ -294,13 +286,6 @@
   footer.site-footer { position: relative; text-align: center; }
   footer.site-footer .page-access { position: absolute; left: 0; color: green; font-weight: normal; }
 </style>
-<script id="anw-private-preauth-fallback">
-  window.addEventListener('load', function(){
-    setTimeout(function(){
-      try { document.documentElement.classList.remove('anw-private-preauth-hide'); } catch (_) {}
-    }, 3500);
-  });
-</script>
 </head>
 <body data-acl-loading="true">
 <header class="site-header">
