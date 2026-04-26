@@ -123,12 +123,22 @@
 
   function safeUrlForAdmin(value){
     try{
-      if(window.ANW_SECURITY && typeof window.ANW_SECURITY.safeImageUrl === 'function'){
-        return window.ANW_SECURITY.safeImageUrl(value);
-      }
       const raw = String(value == null ? '' : value).trim();
       if(!raw) return '';
-      if(/^(javascript|data|vbscript):/i.test(raw)) return '';
+
+      // Keep profile photos working while still blocking dangerous data payloads.
+      // Allow only real image data URLs used by resident/profile photo previews.
+      if(/^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,/i.test(raw)){
+        return raw;
+      }
+
+      if(/^(javascript|vbscript):/i.test(raw)) return '';
+      if(/^data:/i.test(raw)) return '';
+
+      if(window.ANW_SECURITY && typeof window.ANW_SECURITY.safeImageUrl === 'function'){
+        return window.ANW_SECURITY.safeImageUrl(raw);
+      }
+
       return raw;
     }catch(_){
       return '';
