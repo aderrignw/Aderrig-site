@@ -267,6 +267,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script src="assets/identity.js"></script>
+<script src="assets/security/safe-html.js"></script>
 <script src="assets/app-core.js"></script>
 <script>
 (async function(){
@@ -1748,6 +1749,33 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
   const tabs = Array.from(document.querySelectorAll('.dash-tab'));
   const panels = Array.from(document.querySelectorAll('.dash-tab-content'));
   const publicTabs = new Set(['tabGarda']);
+  const privateTabs = new Set(['tabProfile','tabParking','tabInterest','tabElections','tabNotices']);
+
+  function setPrivateTabsVisible(visible){
+    tabs.forEach((btn) => {
+      const tabId = btn.dataset.tab || '';
+      if(!privateTabs.has(tabId)) return;
+      btn.style.display = visible ? '' : 'none';
+      btn.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      btn.setAttribute('tabindex', visible ? '0' : '-1');
+      if(!visible){
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+      }
+    });
+
+    panels.forEach((panel) => {
+      const panelId = panel.id || '';
+      if(!privateTabs.has(panelId)) return;
+      if(!visible){
+        panel.style.display = 'none';
+        panel.classList.remove('active');
+        panel.setAttribute('aria-hidden', 'true');
+      }else{
+        panel.removeAttribute('aria-hidden');
+      }
+    });
+  }
   const norm = (s) => String(s || '').toLowerCase().trim();
   const sameEmail = (a, b) => norm(a) === norm(b);
   const getSessionEmail = () => { try{ return typeof window.anwGetLoggedEmail === 'function' ? String(window.anwGetLoggedEmail() || '') : ''; }catch(_){ return ''; } };
@@ -1812,14 +1840,16 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     if(publicTabs.has(target)){ hideNotice(); openPanel(target); return; }
     const identityUser = await getIdentityUser();
     const effectiveEmail = norm(identityUser?.email || email || '');
-    if(!effectiveEmail){ showNotice('Please log in to access this section.'); openPanel('tabGarda'); return; }
+    if(!effectiveEmail){ setPrivateTabsVisible(false); showNotice('Please log in to access this section.'); openPanel('tabGarda'); return; }
     const profile = await getProfile(effectiveEmail);
-    if(!isApprovedProfile(profile, effectiveEmail)){ showNotice('Your account is pending approval. Garda & Safety remains available while private tabs stay locked.'); openPanel('tabGarda'); return; }
+    if(!isApprovedProfile(profile, effectiveEmail)){ setPrivateTabsVisible(false); showNotice('Your account is pending approval. Garda & Safety remains available while private tabs stay locked.'); openPanel('tabGarda'); return; }
+    setPrivateTabsVisible(true);
     hideNotice();
     if(typeof window.anwRefreshDashboardProfile === 'function'){ try{ await window.anwRefreshDashboardProfile(); }catch(_){} }
     openPanel(target);
   }
   tabs.forEach((btn) => { btn.addEventListener('click', (event) => { event.preventDefault(); requestTab(btn.dataset.tab || 'tabProfile'); }); });
+  setPrivateTabsVisible(false);
   window.anwDashboardRequestTab = requestTab; window.openDashboardTab = requestTab;
   document.addEventListener('DOMContentLoaded', async () => {
     const email = getSessionEmail();
@@ -1827,7 +1857,9 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     const effectiveEmail = norm(identityUser?.email || email || '');
     const profile = effectiveEmail ? await getProfile(effectiveEmail) : null;
     if(typeof window.anwRefreshDashboardProfile === 'function'){ try{ await window.anwRefreshDashboardProfile(); }catch(_){} }
-    if(effectiveEmail && isApprovedProfile(profile, effectiveEmail)) await requestTab('tabProfile'); else await requestTab('tabGarda');
+    const dashboardApproved = !!(effectiveEmail && isApprovedProfile(profile, effectiveEmail));
+    setPrivateTabsVisible(dashboardApproved);
+    if(dashboardApproved) await requestTab('tabProfile'); else await requestTab('tabGarda');
     try{ document.body.removeAttribute('data-acl-loading'); }catch(_){}
   }, { once:true });
 
