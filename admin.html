@@ -6,23 +6,66 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Admin Panel — Aderrig NW</title>
 
-<script>
+<script id="anw-private-page-early-guard">
   (function(){
     try {
-      document.documentElement.classList.add('anw-admin-preauth-hide');
-      document.documentElement.classList.remove('anw-preauth-hide');
+      var path = String(location.pathname || '').toLowerCase();
+      var file = path.split('/').filter(Boolean).pop() || '';
+      var isDashboard = file === 'dashboard.html' || file === 'dashboard';
+      var hasIdentityHint = false;
+      try {
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i) || '';
+          var v = localStorage.getItem(k) || '';
+          if (/gotrue|netlify|identity|anw_session|anw_logged/i.test(k) && String(v).trim()) {
+            hasIdentityHint = true;
+            break;
+          }
+        }
+      } catch (_) {}
+      try {
+        if (!hasIdentityHint) {
+          for (var j = 0; j < sessionStorage.length; j++) {
+            var sk = sessionStorage.key(j) || '';
+            var sv = sessionStorage.getItem(sk) || '';
+            if (/gotrue|netlify|identity|anw_session|anw_logged/i.test(sk) && String(sv).trim()) {
+              hasIdentityHint = true;
+              break;
+            }
+          }
+        }
+      } catch (_) {}
+
+      if (!hasIdentityHint && isDashboard) {
+        document.documentElement.classList.add('anw-private-preauth-hide');
+        return;
+      }
+
+      if (!hasIdentityHint) {
+        var target = (location.pathname || '').replace(/^\//, '') + (location.search || '') + (location.hash || '');
+        location.replace('login.html?redirect=' + encodeURIComponent(target || file || 'dashboard.html'));
+        return;
+      }
+
+      document.documentElement.classList.add('anw-private-preauth-hide');
     } catch (_) {}
+  })();
+</script>
+
+
+<script>
+  (function(){
+    try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
   })();
 </script>
 
 <link rel="stylesheet" href="assets/style.css" />
 
-<style id="admin-preauth-anti-flash">
-  html.anw-admin-preauth-hide body > *:not(#anwAclAuthLoadingOverlay){
+<style id="anw-private-preauth-style">
+  html.anw-private-preauth-hide body > *:not(#anwAclAuthLoadingOverlay){
     visibility:hidden !important;
   }
 </style>
-
 
 <script>document.documentElement.classList.add('admin-js');</script>
 
@@ -1198,14 +1241,13 @@
   @media (max-width:900px){#tabHelpCenterAdmin .hc-grid{grid-template-columns:1fr}}
 </style>
 
-<script id="admin-preauth-fallback">
+<script id="anw-private-preauth-fallback">
   window.addEventListener('load', function(){
     setTimeout(function(){
-      try { document.documentElement.classList.remove('anw-admin-preauth-hide'); } catch (_) {}
-    }, 6000);
+      try { document.documentElement.classList.remove('anw-private-preauth-hide'); } catch (_) {}
+    }, 3500);
   });
 </script>
-
 </head>
 
 <body>
