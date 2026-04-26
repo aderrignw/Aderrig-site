@@ -618,6 +618,45 @@
     return roleAllows(clean, role);
   }
 
+
+  function clearAllLoginStateForLogout() {
+    try {
+      clearAuthReady();
+    } catch (_) {}
+
+    try {
+      const keys = window.ANW_KEYS || {};
+      [
+        keys.SESSION,
+        "anw_session",
+        "anw_logged",
+        "anw_user",
+        "anw_profile",
+        "anw_current_user",
+        "anw_current_profile"
+      ].filter(Boolean).forEach(function (key) {
+        try { localStorage.removeItem(key); } catch (_) {}
+        try { sessionStorage.removeItem(key); } catch (_) {}
+      });
+    } catch (_) {}
+
+    try {
+      Object.keys(localStorage).forEach(function (key) {
+        if (/gotrue|netlify|identity|anw_session|anw_logged/i.test(key)) {
+          try { localStorage.removeItem(key); } catch (_) {}
+        }
+      });
+    } catch (_) {}
+
+    try {
+      Object.keys(sessionStorage).forEach(function (key) {
+        if (/gotrue|netlify|identity|anw_session|anw_logged/i.test(key)) {
+          try { sessionStorage.removeItem(key); } catch (_) {}
+        }
+      });
+    } catch (_) {}
+  }
+
   function renderGlobalHeader(role, acl) {
     try {
       if (isAdminPath()) return;
@@ -707,6 +746,8 @@
               : "anw_session";
           localStorage.removeItem(key);
         } catch (_) {}
+
+        clearAllLoginStateForLogout();
 
         location.href = "index.html";
       });
@@ -917,7 +958,7 @@
       if (!isDashboardShellPath()) return;
       if (isLoggedIn()) return;
 
-      const privateTabTargets = [
+      const privateTabIds = [
         "tabProfile",
         "tabParking",
         "tabInterest",
@@ -925,33 +966,43 @@
         "tabNotices"
       ];
 
-      privateTabTargets.forEach(function (target) {
-        const button = document.querySelector('.dash-tab[data-tab="' + target + '"]');
-        if (button) {
-          button.style.display = "none";
-          button.classList.remove("active");
-          button.setAttribute("aria-hidden", "true");
-          button.setAttribute("aria-selected", "false");
-          button.setAttribute("tabindex", "-1");
-        }
+      const privatePanelIds = [
+        "panelProfile",
+        "panelParking",
+        "panelInterest",
+        "panelElections",
+        "panelNotices"
+      ];
 
-        const panel = document.getElementById(target);
-        if (panel) {
-          panel.style.display = "none";
-          panel.classList.remove("active");
-          panel.setAttribute("aria-hidden", "true");
+      privateTabIds.forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.style.display = "none";
+          el.classList.remove("active");
+          el.setAttribute("aria-hidden", "true");
+          el.setAttribute("aria-selected", "false");
+          el.setAttribute("tabindex", "-1");
         }
       });
 
-      const gardaButton = document.querySelector('.dash-tab[data-tab="tabGarda"]');
-      const gardaPanel = document.getElementById("tabGarda");
+      privatePanelIds.forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.style.display = "none";
+          el.classList.remove("active");
+          el.setAttribute("aria-hidden", "true");
+        }
+      });
 
-      if (gardaButton) {
-        gardaButton.style.display = "";
-        gardaButton.classList.add("active");
-        gardaButton.setAttribute("aria-selected", "true");
-        gardaButton.removeAttribute("aria-hidden");
-        gardaButton.removeAttribute("tabindex");
+      const gardaTab = document.getElementById("tabGarda");
+      const gardaPanel = document.getElementById("panelGarda");
+
+      if (gardaTab) {
+        gardaTab.style.display = "";
+        gardaTab.classList.add("active");
+        gardaTab.setAttribute("aria-selected", "true");
+        gardaTab.removeAttribute("aria-hidden");
+        gardaTab.removeAttribute("tabindex");
       }
 
       if (gardaPanel) {
@@ -959,15 +1010,11 @@
         gardaPanel.classList.add("active");
         gardaPanel.removeAttribute("aria-hidden");
       }
-
-      const accessNotice = document.getElementById("anwAccessNotice");
-      if (accessNotice) {
-        accessNotice.style.display = "none";
-      }
     } catch (e) {
       console.warn("[acl-guard] dashboard public shell protection failed:", e);
     }
   }
+
 
   window.anwAclAllows = function (keyOrRule) {
     const acl = loadAcl() || {};
