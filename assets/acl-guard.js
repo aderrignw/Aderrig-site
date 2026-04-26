@@ -911,6 +911,70 @@
   }
 
 
+
+  function protectDashboardPublicShellForGuest() {
+    try {
+      if (!isDashboardShellPath()) return;
+      if (isLoggedIn()) return;
+
+      const privateTabIds = [
+        "tabProfile",
+        "tabParking",
+        "tabInterest",
+        "tabElections",
+        "tabNotices"
+      ];
+
+      const privatePanelIds = [
+        "panelProfile",
+        "panelParking",
+        "panelInterest",
+        "panelElections",
+        "panelNotices"
+      ];
+
+      privateTabIds.forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.style.display = "none";
+          el.classList.remove("active");
+          el.setAttribute("aria-hidden", "true");
+          el.setAttribute("aria-selected", "false");
+          el.setAttribute("tabindex", "-1");
+        }
+      });
+
+      privatePanelIds.forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.style.display = "none";
+          el.classList.remove("active");
+          el.setAttribute("aria-hidden", "true");
+        }
+      });
+
+      const gardaTab = document.getElementById("tabGarda");
+      const gardaPanel = document.getElementById("panelGarda");
+
+      if (gardaTab) {
+        gardaTab.style.display = "";
+        gardaTab.classList.add("active");
+        gardaTab.setAttribute("aria-selected", "true");
+        gardaTab.removeAttribute("aria-hidden");
+        gardaTab.removeAttribute("tabindex");
+      }
+
+      if (gardaPanel) {
+        gardaPanel.style.display = "";
+        gardaPanel.classList.add("active");
+        gardaPanel.removeAttribute("aria-hidden");
+      }
+    } catch (e) {
+      console.warn("[acl-guard] dashboard public shell protection failed:", e);
+    }
+  }
+
+
   window.anwAclAllows = function (keyOrRule) {
     const acl = loadAcl() || {};
     const role = getRole();
@@ -957,6 +1021,7 @@
       renderGlobalHeader(role, acl);
       applyNav(role, acl);
       applyFeatures(role, acl);
+      protectDashboardPublicShellForGuest();
       enforcePage(role, acl);
 
       if (isLoggedIn() && hasApprovedAccess()) {
@@ -970,6 +1035,7 @@
   });
 
   window.addEventListener("load", function () {
+    protectDashboardPublicShellForGuest();
     if (!shouldShowFullAuthLoading()) {
       hideAuthLoadingOverlay();
     }
