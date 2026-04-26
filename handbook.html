@@ -5,7 +5,60 @@
   <meta name="anw-acl-key" content="page:handbook" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Handbook — Aderrig NW</title>
+
+<script id="anw-private-page-early-guard">
+  (function(){
+    try {
+      var path = String(location.pathname || '').toLowerCase();
+      var file = path.split('/').filter(Boolean).pop() || '';
+      var isDashboard = file === 'dashboard.html' || file === 'dashboard';
+      var hasIdentityHint = false;
+      try {
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i) || '';
+          var v = localStorage.getItem(k) || '';
+          if (/gotrue|netlify|identity|anw_session|anw_logged/i.test(k) && String(v).trim()) {
+            hasIdentityHint = true;
+            break;
+          }
+        }
+      } catch (_) {}
+      try {
+        if (!hasIdentityHint) {
+          for (var j = 0; j < sessionStorage.length; j++) {
+            var sk = sessionStorage.key(j) || '';
+            var sv = sessionStorage.getItem(sk) || '';
+            if (/gotrue|netlify|identity|anw_session|anw_logged/i.test(sk) && String(sv).trim()) {
+              hasIdentityHint = true;
+              break;
+            }
+          }
+        }
+      } catch (_) {}
+
+      if (!hasIdentityHint && isDashboard) {
+        document.documentElement.classList.add('anw-private-preauth-hide');
+        return;
+      }
+
+      if (!hasIdentityHint) {
+        var target = (location.pathname || '').replace(/^\//, '') + (location.search || '') + (location.hash || '');
+        location.replace('login.html?redirect=' + encodeURIComponent(target || file || 'dashboard.html'));
+        return;
+      }
+
+      document.documentElement.classList.add('anw-private-preauth-hide');
+    } catch (_) {}
+  })();
+</script>
+
   <link rel="stylesheet" href="assets/style.css" />
+
+<style id="anw-private-preauth-style">
+  html.anw-private-preauth-hide body > *:not(#anwAclAuthLoadingOverlay){
+    visibility:hidden !important;
+  }
+</style>
   <style>
     html.anw-preauth-hide body{visibility:hidden}
     :root{--hb-border:rgba(17,24,39,.08);--hb-text:#23344b;--hb-muted:#6a7b90;--hb-soft:#f8fafc;--hb-accent:#edf5ef}
@@ -69,6 +122,13 @@
       .hb-item-head{grid-template-columns:1fr}
     }
   </style>
+<script id="anw-private-preauth-fallback">
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      try { document.documentElement.classList.remove('anw-private-preauth-hide'); } catch (_) {}
+    }, 3500);
+  });
+</script>
 </head>
 <body class="page-handbook" data-acl-loading="true">
 <header class="site-header">
@@ -123,6 +183,7 @@
 
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script src="assets/identity.js"></script>
+<script src="assets/security/safe-html.js"></script>
 <script src="assets/app-core.js"></script>
 <script src="assets/handbook.js"></script>
 <script src="assets/acl-guard.js"></script>
