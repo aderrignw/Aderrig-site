@@ -143,3 +143,13 @@ for = "/*"
   Referrer-Policy = "no-referrer"
   Permissions-Policy = "geolocation=(), camera=(), microphone=()"
 
+# Block direct public access to Bin Collector operational files
+[[redirects]]
+  from = "/Bin Collector/*"
+  to = "/404.html"
+  status = 404
+
+[[redirects]]
+  from = "/Bin%20Collector/*"
+  to = "/404.html"
+  status = 404
