@@ -8,11 +8,21 @@
 
 <script>
   (function(){
-    try { document.documentElement.classList.remove('anw-preauth-hide'); } catch (_) {}
+    try {
+      document.documentElement.classList.add('anw-admin-preauth-hide');
+      document.documentElement.classList.remove('anw-preauth-hide');
+    } catch (_) {}
   })();
 </script>
 
 <link rel="stylesheet" href="assets/style.css" />
+
+<style id="admin-preauth-anti-flash">
+  html.anw-admin-preauth-hide body > *:not(#anwAclAuthLoadingOverlay){
+    visibility:hidden !important;
+  }
+</style>
+
 
 <script>document.documentElement.classList.add('admin-js');</script>
 
@@ -1187,6 +1197,14 @@
   #tabHelpCenterAdmin .hc-pill{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:#eef7f1;border:1px solid rgba(52,92,73,.18);color:#2f6d50;font-size:.82rem;font-weight:800}
   @media (max-width:900px){#tabHelpCenterAdmin .hc-grid{grid-template-columns:1fr}}
 </style>
+
+<script id="admin-preauth-fallback">
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      try { document.documentElement.classList.remove('anw-admin-preauth-hide'); } catch (_) {}
+    }, 6000);
+  });
+</script>
 
 </head>
 
