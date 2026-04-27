@@ -285,6 +285,16 @@ function findUserRecordByEmail(users, email) {
 async function enrichSecurityContext(baseCtx, store) {
   if (!baseCtx?.user || baseCtx?.isAdmin) return baseCtx;
 
+  // Do not promote admin/owner privileges from an unverified bearer payload.
+  // The anw_users record may still be used for normal self-service flows, but
+  // admin elevation requires a Netlify trusted identity or verified JWT.
+  if (!baseCtx?.trustedIdentity) {
+    return {
+      ...baseCtx,
+      currentUserRecord: null,
+    };
+  }
+
   try {
     const users = await getJsonArray(store, "anw_users");
     const currentUserRecord = findUserRecordByEmail(users, baseCtx?.user?.email);
