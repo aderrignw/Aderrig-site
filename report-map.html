@@ -731,5 +731,27 @@
 })();
 </script>
 <script src="assets/acl-guard.js"></script>
+<script id="report-map-active-nav-fix">
+  window.addEventListener('load', function(){
+    try {
+      document.querySelectorAll('.nav a').forEach(function(link){
+        var href = String(link.getAttribute('href') || '').trim();
+        if (href === 'report.html') {
+          link.classList.add('active');
+          link.setAttribute('aria-current', 'page');
+        } else {
+          link.classList.remove('active');
+          link.removeAttribute('aria-current');
+        }
+      });
+
+      var btnMap = document.getElementById('btnTabMap');
+      if (btnMap) {
+        btnMap.classList.add('active');
+        btnMap.setAttribute('aria-current', 'page');
+      }
+    } catch (_) {}
+  });
+</script>
 </body>
 </html>
