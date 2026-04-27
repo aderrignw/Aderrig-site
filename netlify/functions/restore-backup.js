@@ -116,6 +116,10 @@ async function isBackupAuthorized(ctx, context) {
   const currentUser = ctx?.user;
   if (!currentUser) return false;
 
+  // Backup/restore access is highly sensitive and must require a trusted identity.
+  // Never allow master-email or role fallback from an unverified bearer payload.
+  if (!ctx?.trustedIdentity) return false;
+
   const currentEmails = extractCandidateEmails(currentUser);
   if (!currentEmails.length) return false;
 
