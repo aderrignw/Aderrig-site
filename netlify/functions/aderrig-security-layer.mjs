@@ -296,9 +296,10 @@ export function withSecurity(config, handler) {
 
       const tokenPayloadOnly = !!user && user.__authSource === "bearer_payload" && !user.__tokenVerified;
 
-      // Master owner fallback is preserved for compatibility, but admin roles from
-      // an unverified bearer payload are not trusted here.
-      const isOwner = !!user && ownerEmails.includes(normalizeEmail(user?.email));
+      // Owner/admin privileges must only be granted from a trusted identity.
+      // A decoded-but-unverified bearer token may identify a normal user for
+      // compatibility, but it must never promote someone to owner/admin.
+      const isOwner = trustedIdentity && !!user && ownerEmails.includes(normalizeEmail(user?.email));
       const isAdminByTrustedRole = trustedIdentity && !!(
         roles.includes("admin") ||
         roles.includes("owner") ||
