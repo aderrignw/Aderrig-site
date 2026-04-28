@@ -31,9 +31,6 @@ async function safeGetJson(store, key, fallback = null) {
   }
 }
 
-const MASTER_EMAIL = String(
-  process?.env?.MASTER_EMAIL || "claudiosantos1968@gmail.com"
-).trim().toLowerCase();
 
 function normalizeRoleName(value) {
   const raw = String(value || "").trim().toLowerCase();
@@ -119,13 +116,7 @@ async function isBackupAuthorized(ctx, context) {
   const currentEmails = extractCandidateEmails(currentUser);
   if (!currentEmails.length) return false;
 
-  if (MASTER_EMAIL && currentEmails.includes(MASTER_EMAIL)) {
-    return true;
-  }
-
-  if (hasBackupAccessRole(currentUser)) {
-    return true;
-  }
+  // Backup/restore authorization comes from the verified anw_users profile only.
 
   const store = getCentralStore(context);
   const users = (await safeGetJson(store, "anw_users", [])) ?? [];
