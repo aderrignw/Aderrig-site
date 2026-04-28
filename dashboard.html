@@ -340,7 +340,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
   const KEY_USERS = ANW_KEYS.USERS;
   const KEY_ELECTIONS = ANW_KEYS.ELECTIONS;
   const KEY_NOTICES = ANW_KEYS.NOTICES || 'anw_notices';
-  const OWNER_EMAIL = String(window.ANW_MASTER_EMAIL || 'claudiosantos1968@gmail.com').trim().toLowerCase();
   const LOCAL_WRITE_TS_KEY = 'anw_users_last_local_write';
 
   let users = [];
@@ -485,9 +484,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     ].filter(Boolean)));
   }
 
-  function isOwnerEmail(email){
-    return normEmail(email) === OWNER_EMAIL;
-  }
 
   function scoreProfileRecord(u, targetEmail){
     const normTarget = normEmail(targetEmail || '');
@@ -497,7 +493,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const local = emails.some(e => (e.split('@')[0] || '') === localTarget);
     const status = String(u?.status || u?.accountStatus || u?.registrationStatus || '').trim().toLowerCase();
     const approved = !!(u?.approved === true || u?.active === true || status === 'active' || status === 'approved');
-    const ownerish = !!(emails.includes(OWNER_EMAIL) || [u?.role,u?.type,u?.residentType,u?.access].map(v => String(v || '').toLowerCase()).some(v => ['owner','admin'].includes(v)));
+    const ownerish = !!([u?.role,u?.type,u?.residentType,u?.access].map(v => String(v || '').toLowerCase()).some(v => ['owner','admin'].includes(v)) || u?.isOwner === true);
     const richness = [u?.name,u?.fullName,u?.address,u?.fullAddress,u?.eircode,u?.eir,u?.managementCompany,u?.regId,u?.regNo,u?.registrationNo,u?.type,u?.residentType,u?.phone,u?.mobile].filter(v => String(v || '').trim()).length;
     const updated = Date.parse(u?.updatedAt || u?.modifiedAt || u?.createdAt || 0) || 0;
     return (exact ? 1000 : 0) + (local ? 200 : 0) + (approved ? 120 : 0) + (ownerish ? 80 : 0) + (richness * 2) + Math.floor(updated / 1000);
@@ -531,20 +527,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   function ensureOwnerFlags(target){
     if(!target) return target;
-    const ownerEmail = normEmail(target.email || target.userEmail || currentEmail || OWNER_EMAIL);
-    if(isOwnerEmail(ownerEmail)){
-      target.email = target.email || ownerEmail;
-      target.userEmail = target.userEmail || ownerEmail;
-      target.loginEmail = target.loginEmail || ownerEmail;
-      target.netlifyEmail = target.netlifyEmail || ownerEmail;
-      target.role = 'owner';
-      target.access = 'owner';
-      target.type = target.type || 'owner';
-      target.residentType = target.residentType || 'Owner';
-      target.active = true;
-      target.approved = true;
-      target.status = 'active';
-    }
     return target;
   }
 
@@ -857,9 +839,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       if(currentProfile[key]) row[key] = currentProfile[key];
     });
 
-    if(isOwnerEmail(currentEmail || currentProfile.email || row.email || row.userEmail)){
-      ensureOwnerFlags(row);
-    }
 
     row.updatedAt = new Date().toISOString();
     currentProfileIndexes = index >= 0 ? [index] : [];
@@ -896,7 +875,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 
   function statusFromUser(u){
     if(!u) return 'pending';
-    if(isOwnerEmail(currentEmail || u.email || u.userEmail)) return 'active';
     const raw = String(u.status || u.accountStatus || u.registrationStatus || '').trim().toLowerCase();
     if(raw) return raw;
     if(u.active === true || u.approved === true) return 'active';
@@ -1040,14 +1018,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       currentEmail = email;
       currentProfile = email ? findExactUserByEmail(email) : null;
 
-      if(isOwnerEmail(email)){
-        if(!currentProfile) currentProfile = {};
-        currentProfile.email = currentProfile.email || normEmail(email);
-        currentProfile.userEmail = currentProfile.userEmail || normEmail(email);
-        currentProfile.loginEmail = currentProfile.loginEmail || normEmail(email);
-        currentProfile.netlifyEmail = currentProfile.netlifyEmail || normEmail(email);
-        ensureOwnerFlags(currentProfile);
-      }
 
       if(!currentProfile && users.length === 1){
         const only = users[0];
@@ -1802,7 +1772,6 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
 
 <script>
 (function(){
-  const OWNER_EMAIL = String(window.ANW_MASTER_EMAIL || 'claudiosantos1968@gmail.com').trim().toLowerCase();
   const notice = document.getElementById('anwAccessNotice');
   const tabs = Array.from(document.querySelectorAll('.dash-tab'));
   const panels = Array.from(document.querySelectorAll('.dash-tab-content'));
@@ -1885,7 +1854,6 @@ document.addEventListener('DOMContentLoaded', () => { const label = document.get
     }catch(_){ return null; }
   };
   const isApprovedProfile = (profile, email) => {
-    if(sameEmail(email, OWNER_EMAIL)) return true;
     if(typeof window.anwIsApprovedDashboardProfile === 'function'){
       try{ return !!window.anwIsApprovedDashboardProfile(profile); }catch(_){}
     }
