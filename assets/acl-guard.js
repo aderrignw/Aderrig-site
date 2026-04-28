@@ -246,20 +246,6 @@
     return "";
   }
 
-  function isMasterOwnerEmail(email) {
-    try {
-      const configured = String(window.ANW_MASTER_EMAIL || "").trim().toLowerCase();
-      if (configured) {
-        return String(email || "").trim().toLowerCase() === configured;
-      }
-    } catch (_) {}
-
-    try {
-      return String(email || "").trim().toLowerCase() === "claudiosantos1968@gmail.com";
-    } catch (_) {
-      return false;
-    }
-  }
 
   function normalizeRoleName(value) {
     try {
@@ -370,7 +356,6 @@
     try {
       const email = getLoggedEmail();
       if (!email) return false;
-      if (isMasterOwnerEmail(email)) return true;
       if (typeof window.anwHasApprovedAccess === "function") {
         return !!window.anwHasApprovedAccess();
       }
@@ -388,8 +373,6 @@
   function getRole() {
     try {
       const email = getLoggedEmail();
-      if (email && isMasterOwnerEmail(email)) return "owner";
-
       if (isAdminPath() && email) {
         const roles = getAdminRolesForEmail(email);
         if (hasAllowedAdminRole(roles)) {
@@ -614,7 +597,7 @@
     const clean = normalizeRule(rule);
     if (clean.toLowerCase() === "public") return true;
     if (clean.toLowerCase() === "authenticated") return isLoggedIn() && hasApprovedAccess();
-    if (!hasApprovedAccess() && !isMasterOwnerEmail(getLoggedEmail())) return false;
+    if (!hasApprovedAccess()) return false;
     return roleAllows(clean, role);
   }
 
@@ -718,7 +701,7 @@
         return html + '<a href="#" id="navLogout">Logout</a>' + '<a' + (pageKey === 'page:help_center' ? ' class="active"' : '') + ' href="help-center.html">Help</a>';
       }
 
-      const adminLike = !!(email && (isMasterOwnerEmail(email) || hasAllowedAdminRole(getAdminRolesForEmail(email))));
+      const adminLike = !!(email && hasAllowedAdminRole(getAdminRolesForEmail(email)));
       const shouldShowResidentShort = loggedIn && hasApprovedAccess() && !adminLike && role === "resident";
 
       // Only approved logged-in residents should receive the short resident menu.
@@ -801,7 +784,7 @@
       return true;
     }
 
-    if (role === "owner" || isMasterOwnerEmail(email)) {
+    if (role === "owner") {
       return false;
     }
 
@@ -855,7 +838,7 @@
       return;
     }
 
-    if (!hasApprovedAccess() && !isMasterOwnerEmail(getLoggedEmail())) {
+    if (!hasApprovedAccess()) {
       clearAuthReady();
       location.replace("login.html");
       return;
@@ -1027,7 +1010,6 @@
 
     if (key === "page:admin" || isAdminPath()) {
       const email = getLoggedEmail();
-      if (email && isMasterOwnerEmail(email)) return true;
       if (hasAllowedAdminRole(getAdminRolesForEmail(email))) return true;
     }
 
