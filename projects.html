@@ -1402,7 +1402,6 @@ async function loadStore(){
       monitoring: document.getElementById('paneMonitoring')
     };
 
-    const OWNER_EMAIL = 'claudiosantos1968@gmail.com';
 
     const showNotice = (html) => {
       if (!notice) return;
@@ -1423,7 +1422,6 @@ async function loadStore(){
         .replace(/[^a-z0-9@. ]/g, '')
         .trim();
 
-    const sameEmail = (a, b) => norm(a) === norm(b);
 
     const inferTabKey = (btn) => {
       const t = norm(btn && btn.textContent);
@@ -1476,10 +1474,6 @@ async function loadStore(){
         pushAny(profile.title);
         pushAny(profile.access);
         pushAny(profile.residentType);
-      }
-
-      if (sameEmail(email, OWNER_EMAIL)) {
-        out.push('owner');
       }
 
       return out.map(norm).filter(Boolean);
@@ -1547,7 +1541,6 @@ async function loadStore(){
     };
 
     const isApproved = (profile, email) => {
-      if (sameEmail(email, OWNER_EMAIL)) return true;
       if (!profile) return false;
 
       const status = String(
@@ -1589,7 +1582,6 @@ async function loadStore(){
 
     const canOpen = (tabKey, profile, email, acl) => {
       if (window.ANW_PUBLIC_MODE) return true;
-      if (sameEmail(email, OWNER_EMAIL)) return true;
       if (!email) return false;
       if (!profile || !isApproved(profile, email)) return false;
 
