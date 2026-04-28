@@ -18,13 +18,11 @@ window.ANW_KEYS = window.ANW_KEYS || {
 };
 
 // ---------------------------
-// Temporary public mode + master owner
+// Temporary public mode
 // ---------------------------
 // Production mode: private areas must stay protected.
 window.ANW_PUBLIC_MODE = false;
 
-// Master email (always treated as owner)
-window.ANW_MASTER_EMAIL = "claudiosantos1968@gmail.com";
 
 // ---------------------------
 // Storage helpers
@@ -48,13 +46,6 @@ function anwNormEmail(v) {
   return String(v || "").trim().toLowerCase();
 }
 
-function anwIsMasterEmail(email) {
-  try {
-    return anwNormEmail(email) === anwNormEmail(window.ANW_MASTER_EMAIL);
-  } catch {
-    return false;
-  }
-}
 
 function anwIsApproved(user) {
   try {
@@ -276,7 +267,6 @@ function anwHasApprovedAccess() {
   try {
     const email = anwNormEmail(anwGetLoggedEmail());
     if (!email) return false;
-    if (anwIsMasterEmail(email)) return true;
 
     const me = anwGetLoggedProfile();
     return anwIsApproved(me);
@@ -290,7 +280,6 @@ function anwGetLoggedRole() {
     const email = anwNormEmail(anwGetLoggedEmail());
     if (!email) return "resident";
 
-    if (anwIsMasterEmail(email)) return "owner";
 
     const me = anwGetLoggedProfile();
     if (!me || !anwIsApproved(me)) return "resident";
