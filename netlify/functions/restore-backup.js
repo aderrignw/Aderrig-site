@@ -35,9 +35,6 @@ async function safeSetJson(store, key, value, options = {}) {
   return store.set(key, JSON.stringify(value), options);
 }
 
-const MASTER_EMAIL = String(
-  process?.env?.MASTER_EMAIL || "claudiosantos1968@gmail.com"
-).trim().toLowerCase();
 
 function normalizeRoleName(value) {
   const raw = String(value || "").trim().toLowerCase();
@@ -117,19 +114,13 @@ async function isBackupAuthorized(ctx, context) {
   if (!currentUser) return false;
 
   // Backup/restore access is highly sensitive and must require a trusted identity.
-  // Never allow master-email or role fallback from an unverified bearer payload.
+  // Never allow role fallback from an unverified bearer payload.
   if (!ctx?.trustedIdentity) return false;
 
   const currentEmails = extractCandidateEmails(currentUser);
   if (!currentEmails.length) return false;
 
-  if (MASTER_EMAIL && currentEmails.includes(MASTER_EMAIL)) {
-    return true;
-  }
-
-  if (hasOwnerAccessRole(currentUser)) {
-    return true;
-  }
+  // Restore authorization comes from the verified owner profile in anw_users only.
 
   const store = getCentralStore(context);
   const users = (await safeGetJson(store, "anw_users", [])) ?? [];
