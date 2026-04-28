@@ -17,7 +17,6 @@
   const byId = id => document.getElementById(id);
 
   const ADMIN_ALLOWED_ROLES = ['admin','owner','platform_support','area_coordinator','aux_coordinator','assistant_area_coordinator'];
-  const OWNER_EMAIL = 'claudiosantos1968@gmail.com';
 
   function hasAllowedAdminRole(roles){
     const list = Array.isArray(roles) ? roles : [roles];
@@ -396,11 +395,7 @@
 
       if(currentUser && currentUser.email){
         const email = String(currentUser.email || '').trim().toLowerCase();
-        if(email === OWNER_EMAIL.toLowerCase()){
-          allowed = true;
-          role = 'owner';
-        }else{
-          const users = await anwLoadSafe(KEY_USERS, []);
+        const users = await anwLoadSafe(KEY_USERS, []);
           const row = users.find(u => {
             const emails = [u && u.email, u && u.userEmail, u && u.loginEmail, u && u.netlifyEmail]
               .map(v => String(v || '').trim().toLowerCase())
@@ -418,7 +413,6 @@
             allowed = hasAllowedAdminRole(roles);
             role = (typeof window.anwGetCanonicalRole === 'function') ? window.anwGetCanonicalRole(row, email) : (roles[0] || '');
           }
-        }
       }
 
       adminApplyRoleVisibility(role);
