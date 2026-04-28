@@ -215,7 +215,7 @@ export function readCurrentUser(req, context) {
   }
 
   const tokenUser = readUserFromTokenPayload(req);
-  if (tokenUser?.email) return tokenUser;
+  if (tokenUser?.email && tokenUser.__tokenVerified === true) return tokenUser;
 
   return null;
 }
@@ -277,16 +277,6 @@ export function withSecurity(config, handler) {
 
       const user = readCurrentUser(req, context);
       const roles = getUserRoles(user);
-      const ownerEmails = Array.from(
-        new Set(
-          []
-            .concat(process.env.OWNER_EMAILS ? process.env.OWNER_EMAILS.split(",") : [])
-            .concat(["claudiosantos1968@gmail.com"])
-            .map((v) => normalizeEmail(v))
-            .filter(Boolean)
-        )
-      );
-
       const trustedIdentity = !!user && (
         user.__tokenVerified === true ||
         user.__authSource === "netlify_context" ||
@@ -299,7 +289,9 @@ export function withSecurity(config, handler) {
       // Owner/admin privileges must only be granted from a trusted identity.
       // A decoded-but-unverified bearer token may identify a normal user for
       // compatibility, but it must never promote someone to owner/admin.
-      const isOwner = trustedIdentity && !!user && ownerEmails.includes(normalizeEmail(user?.email));
+      // Owner access is not granted here by email or environment variable.
+      // The production source of truth is the verified anw_users record checked by each sensitive function.
+      const isOwner = false;
       const isAdminByTrustedRole = trustedIdentity && !!(
         roles.includes("admin") ||
         roles.includes("owner") ||
