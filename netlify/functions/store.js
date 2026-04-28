@@ -259,11 +259,6 @@ const ADMIN_ROLE_NAMES = new Set([
 function userHasAdminPrivilegesFromRecord(userRecord) {
   if (!userRecord || typeof userRecord !== "object") return false;
 
-  const emails = getUserEmails(userRecord);
-
-  // Owner recognition option 1: master owner email fallback.
-  if (emails.includes("claudiosantos1968@gmail.com")) return true;
-
   const roles = getUserRolesNormalized(userRecord);
 
   // Owner recognition option 2: role/type/access contains owner.
@@ -283,7 +278,7 @@ function findUserRecordByEmail(users, email) {
 }
 
 async function enrichSecurityContext(baseCtx, store) {
-  if (!baseCtx?.user || baseCtx?.isAdmin) return baseCtx;
+  if (!baseCtx?.user) return baseCtx;
 
   // Balanced production rule:
   // Trusted Netlify identity is accepted directly.
@@ -291,7 +286,7 @@ async function enrichSecurityContext(baseCtx, store) {
   // do not trust roles from the token itself. Instead, check the server-side anw_users record.
   // Admin elevation still requires a matching approved owner/admin profile stored on the backend.
   const hasAuthenticatedEmail = !!normalizeEmail(baseCtx?.user?.email || baseCtx?.user?.user_metadata?.email || "");
-  if (!baseCtx?.trustedIdentity && !hasAuthenticatedEmail) {
+  if (!baseCtx?.trustedIdentity || !hasAuthenticatedEmail) {
     return {
       ...baseCtx,
       currentUserRecord: null,
@@ -304,6 +299,10 @@ async function enrichSecurityContext(baseCtx, store) {
     if (!currentUserRecord || !userHasAdminPrivilegesFromRecord(currentUserRecord)) {
       return {
         ...baseCtx,
+        roles: [],
+        role: "",
+        isAdmin: false,
+        isOwner: false,
         currentUserRecord: currentUserRecord || null,
       };
     }
@@ -316,9 +315,9 @@ async function enrichSecurityContext(baseCtx, store) {
     return {
       ...baseCtx,
       roles: mergedRoles,
-      role: baseCtx.role || mergedRoles[0] || "admin",
+      role: mergedRoles[0] || "admin",
       isAdmin: true,
-      isOwner: baseCtx.isOwner || mergedRoles.includes("owner") || getUserEmails(currentUserRecord).includes("claudiosantos1968@gmail.com"),
+      isOwner: mergedRoles.includes("owner") || currentUserRecord?.isOwner === true,
       currentUserRecord,
     };
   } catch {
