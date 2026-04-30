@@ -249,9 +249,14 @@
 
       async function getTokenIfLogged() {
         try {
+          if (typeof window.anwWaitForIdentityToken === 'function') {
+            const waitedToken = await window.anwWaitForIdentityToken(8000);
+            if (waitedToken) return waitedToken;
+          }
+
           if (!window.netlifyIdentity) return null;
           const u = window.netlifyIdentity.currentUser();
-          if (!u) return null;
+          if (!u || typeof u.jwt !== 'function') return null;
           return await u.jwt();
         } catch {
           return null;
@@ -314,11 +319,17 @@
             if (addr) addrInput.value = addr;
           }
 
+          const approvedViewer = !!(
+            window.anwHasApprovedAccess &&
+            typeof window.anwHasApprovedAccess === 'function' &&
+            window.anwHasApprovedAccess()
+          );
+
           if (data.mode !== 'details') {
             out.innerHTML = `
               <div class="support-summary">Nearby support:</div>
               <div>${c} street coordinator(s) and ${v} volunteer(s) near your Eircode.</div>
-              <small class="support-login-note">Login or register to see names and email addresses.</small>
+              <small class="support-login-note">${approvedViewer ? 'Your login is approved, but private contact details were not returned by the server for this lookup. Please try again in a few seconds.' : 'Login or register to see names and email addresses.'}</small>
             `;
             return false;
           }
