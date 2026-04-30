@@ -998,7 +998,14 @@
 
         const authSnapshot = await loadUsersForAuthenticatedLogin(email);
         const users = Array.isArray(authSnapshot && authSnapshot.users) ? authSnapshot.users : [];
-        const me = authSnapshot && authSnapshot.me ? authSnapshot.me : findUserByEmail(users, email);
+        let me = authSnapshot && authSnapshot.me ? authSnapshot.me : findUserByEmail(users, email);
+
+        if(!me){
+          try{
+            const localUsers = typeof anwLoad === 'function' ? anwLoad(KEY_USERS, []) : [];
+            me = findUserByEmail(Array.isArray(localUsers) ? localUsers : [], email);
+          }catch(_){ }
+        }
 
         if(!me){
           try{ window.netlifyIdentity.logout(); } catch {}
