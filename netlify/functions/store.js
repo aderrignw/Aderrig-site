@@ -285,7 +285,7 @@ async function enrichSecurityContext(baseCtx, store) {
   // If the platform only provides a bearer payload and JWT secret verification is not available,
   // do not trust roles from the token itself. Instead, check the server-side anw_users record.
   // Admin elevation still requires a matching approved owner/admin profile stored on the backend.
-  const hasAuthenticatedEmail = !!normalizeEmail(baseCtx?.user?.email || baseCtx?.user?.user_metadata?.email || "");
+  const hasAuthenticatedEmail = getIdentityEmails(baseCtx?.user).length > 0;
   if (!baseCtx?.trustedIdentity || !hasAuthenticatedEmail) {
     return {
       ...baseCtx,
@@ -295,7 +295,7 @@ async function enrichSecurityContext(baseCtx, store) {
 
   try {
     const users = await getJsonArray(store, "anw_users");
-    const currentUserRecord = findUserRecordByEmail(users, baseCtx?.user?.email);
+    const currentUserRecord = findUserRecordByIdentity(users, baseCtx?.user);
     if (!currentUserRecord || !userHasAdminPrivilegesFromRecord(currentUserRecord)) {
       return {
         ...baseCtx,
@@ -508,7 +508,33 @@ function getUserEmails(user) {
     normalizeEmail(user?.userEmail),
     normalizeEmail(user?.loginEmail),
     normalizeEmail(user?.netlifyEmail),
+    normalizeEmail(user?.user_metadata?.email),
+    normalizeEmail(user?.app_metadata?.email),
   ].filter(Boolean);
+}
+
+function uniqueEmails(values) {
+  return Array.from(new Set((Array.isArray(values) ? values : [])
+    .map((value) => normalizeEmail(value))
+    .filter(Boolean)));
+}
+
+function getIdentityEmails(identityUser) {
+  if (!identityUser || typeof identityUser !== "object") return [];
+  return uniqueEmails(getUserEmails(identityUser));
+}
+
+function getPrimaryIdentityEmail(identityUser) {
+  return getIdentityEmails(identityUser)[0] || "";
+}
+
+function findUserRecordByIdentity(users, identityUser) {
+  const identityEmails = getIdentityEmails(identityUser);
+  if (!identityEmails.length) return null;
+  return (Array.isArray(users) ? users : []).find((user) => {
+    const emails = getUserEmails(user);
+    return emails.some((email) => identityEmails.includes(email));
+  }) || null;
 }
 
 function getUserReg(user) {
@@ -805,10 +831,9 @@ export default withSecurity(
         const users = await getJsonArray(store, "anw_users");
         const activeUsers = users.filter((u) => isActiveStatus(u?.status));
 
-        const currentUserEmail = normalizeEmail(ctx?.user?.email || ctx?.user?.user_metadata?.email || "");
-        const currentUserRecord = currentUserEmail
-          ? users.find((u) => normalizeEmail(u?.email) === currentUserEmail) || null
-          : null;
+        const currentIdentityEmails = getIdentityEmails(ctx?.user);
+        const currentUserEmail = currentIdentityEmails[0] || "";
+        const currentUserRecord = findUserRecordByIdentity(users, ctx?.user);
 
         const targetStreet = resolveTargetStreet({
           users: activeUsers,
@@ -909,12 +934,12 @@ export default withSecurity(
           const data = JSON.parse(raw);
 
           if (key === "anw_users" && !secureCtx.isAdmin) {
-            const currentEmail = normalizeEmail(secureCtx?.user?.email);
+            const currentEmail = getPrimaryIdentityEmail(secureCtx?.user);
             return json(filterUsersForSelf(data, currentEmail));
           }
 
           if (key === "anw_parking_registry_v1" && !secureCtx.isAdmin) {
-            const currentEmail = normalizeEmail(secureCtx?.user?.email);
+            const currentEmail = getPrimaryIdentityEmail(secureCtx?.user);
             return json(filterParkingRegistryForSelf(data, currentEmail));
           }
 
@@ -949,7 +974,7 @@ export default withSecurity(
 
         if (key !== "anw_users") {
           if (key === "anw_parking_registry_v1" && !secureCtx.isAdmin) {
-            const currentEmail = normalizeEmail(secureCtx?.user?.email);
+            const currentEmail = getPrimaryIdentityEmail(secureCtx?.user);
             if (!currentEmail) {
               return json({ error: "unauthorized" }, 401);
             }
@@ -992,7 +1017,7 @@ export default withSecurity(
           }
 
           if (USER_SUBMISSION_KEYS.has(key) && !secureCtx.isAdmin) {
-            const currentEmail = normalizeEmail(secureCtx?.user?.email);
+            const currentEmail = getPrimaryIdentityEmail(secureCtx?.user);
             if (!currentEmail) {
               return json({ error: "unauthorized" }, 401);
             }
@@ -1041,7 +1066,7 @@ export default withSecurity(
           return json({ ok: true, merged: true, scope: "admin" });
         }
 
-        const currentEmail = normalizeEmail(secureCtx?.user?.email);
+        const currentEmail = getPrimaryIdentityEmail(secureCtx?.user);
         if (!currentEmail) {
           return json({ error: "unauthorized" }, 401);
         }
