@@ -6,6 +6,144 @@ function json(data, status = 200, extraHeaders = {}) {
   return jsonResponse(data, status, extraHeaders);
 }
 
+
+function getCentralStore(context) {
+  const configuredName = String(
+    process.env.CENTRAL_STORE_NAME ||
+    process.env.NETLIFY_BLOBS_STORE_NAME ||
+    process.env.STORE_NAME ||
+    ""
+  ).trim();
+
+  // Keep the original production store as fallback, but prefer the Netlify
+  // environment variable when it is configured. This avoids reading an empty
+  // store when production data lives in CENTRAL_STORE_NAME.
+  return getStore(configuredName || "aderrig-nw");
+}
+
+function readBearerToken(req) {
+  const auth = String(req?.headers?.get("authorization") || "").trim();
+  const match = auth.match(/^Bearer\s+(.+)$/i);
+  return match ? match[1].trim() : "";
+}
+
+function decodeJwtSegmentUnsafe(segment) {
+  try {
+    const normalized = String(segment || "").replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized + "=".repeat((4 - (normalized.length % 4 || 4)) % 4);
+    return JSON.parse(Buffer.from(padded, "base64").toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function readEmailFromBearerPayload(req) {
+  const token = readBearerToken(req);
+  if (!token) return "";
+  const parts = String(token).split(".");
+  if (parts.length < 2) return "";
+  const payload = decodeJwtSegmentUnsafe(parts[1]);
+  if (!payload || typeof payload !== "object") return "";
+
+  const exp = Number(payload.exp || 0);
+  const nbf = Number(payload.nbf || 0);
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (exp && exp <= nowSeconds) return "";
+  if (nbf && nbf > nowSeconds) return "";
+
+  return normalizeEmail(
+    payload.email ||
+    payload?.user_metadata?.email ||
+    payload?.app_metadata?.email ||
+    ""
+  );
+}
+
+function getIdentityValidationUrls(req) {
+  const urls = [];
+  const configured = String(process.env.URL || process.env.DEPLOY_URL || process.env.SITE_URL || "").trim();
+  const origin = String(req?.headers?.get("origin") || "").trim();
+  const host = String(req?.headers?.get("host") || "").trim();
+
+  for (const base of [configured, origin, host ? `https://${host}` : ""]) {
+    const clean = String(base || "").replace(/\/$/, "");
+    if (!clean) continue;
+    urls.push(`${clean}/.netlify/identity/user`);
+    urls.push(`${clean}/.netlify/identity/userinfo`);
+  }
+
+  return Array.from(new Set(urls));
+}
+
+async function validateNetlifyIdentityUser(req) {
+  const token = readBearerToken(req);
+  if (!token || typeof fetch !== "function") return null;
+
+  for (const url of getIdentityValidationUrls(req)) {
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) continue;
+      const data = await res.json().catch(() => null);
+      const email = normalizeEmail(
+        data?.email ||
+        data?.user?.email ||
+        data?.user_metadata?.email ||
+        data?.app_metadata?.email ||
+        ""
+      );
+      if (!email) continue;
+      return {
+        ...(data && typeof data === "object" ? data : {}),
+        email,
+        app_metadata: data?.app_metadata || {},
+        user_metadata: data?.user_metadata || {},
+        __authSource: "netlify_identity_user_endpoint",
+        __tokenVerified: true,
+      };
+    } catch {}
+  }
+
+  return null;
+}
+
+async function resolveAuthenticatedUser(ctx, req) {
+  if (ctx?.user?.email) return ctx.user;
+
+  // Preferred fallback: ask Netlify Identity to validate the bearer token.
+  const validated = await validateNetlifyIdentityUser(req);
+  if (validated?.email) return validated;
+
+  // Last-resort compatibility fallback for self-service reads/writes only.
+  // This never grants owner/admin privileges. It simply lets the function look
+  // for a matching anw_users row when Netlify context is unavailable.
+  const email = readEmailFromBearerPayload(req);
+  if (!email) return null;
+  return {
+    email,
+    app_metadata: {},
+    user_metadata: {},
+    __authSource: "bearer_payload_self_lookup_only",
+    __tokenVerified: false,
+  };
+}
+
+function withResolvedUser(ctx, user) {
+  if (ctx?.user?.email || !user?.email) return ctx;
+  return {
+    ...ctx,
+    user,
+    roles: [],
+    role: "",
+    isAdmin: false,
+    isOwner: false,
+    trustedIdentity: user.__tokenVerified === true,
+    tokenPayloadOnly: user.__tokenVerified !== true,
+  };
+}
+
 function normalizeEircode(value) {
   return String(value || "").toUpperCase().replace(/\s+/g, "").trim();
 }
@@ -508,6 +646,10 @@ function getUserEmails(user) {
     normalizeEmail(user?.userEmail),
     normalizeEmail(user?.loginEmail),
     normalizeEmail(user?.netlifyEmail),
+    normalizeEmail(user?.ownerEmail),
+    normalizeEmail(user?.primaryEmail),
+    normalizeEmail(user?.accountEmail),
+    normalizeEmail(user?.residentEmail),
     normalizeEmail(user?.user_metadata?.email),
     normalizeEmail(user?.app_metadata?.email),
   ].filter(Boolean);
@@ -815,8 +957,10 @@ export default withSecurity(
       return json({ error: "missing key" }, 400);
     }
 
-    const store = getStore("aderrig-nw");
-    const secureCtx = await enrichSecurityContext(ctx, store);
+    const store = getCentralStore(ctx);
+    const resolvedUser = await resolveAuthenticatedUser(ctx, req);
+    const baseCtx = withResolvedUser(ctx, resolvedUser);
+    const secureCtx = await enrichSecurityContext(baseCtx, store);
 
     try {
       if (key === "nearby_support" && req.method === "POST") {
@@ -831,9 +975,9 @@ export default withSecurity(
         const users = await getJsonArray(store, "anw_users");
         const activeUsers = users.filter((u) => isActiveStatus(u?.status));
 
-        const currentIdentityEmails = getIdentityEmails(ctx?.user);
+        const currentIdentityEmails = getIdentityEmails(secureCtx?.user);
         const currentUserEmail = currentIdentityEmails[0] || "";
-        const currentUserRecord = findUserRecordByIdentity(users, ctx?.user);
+        const currentUserRecord = findUserRecordByIdentity(users, secureCtx?.user);
 
         const targetStreet = resolveTargetStreet({
           users: activeUsers,
