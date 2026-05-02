@@ -394,6 +394,7 @@
 <a href="dashboard.html">Dashboard</a>
 <a href="household.html">Household</a>
 <a href="admin.html">Admin</a>
+<a href="help-center.html">Help</a>
 </nav>
 </header>
 
@@ -704,7 +705,12 @@
       user && user.email,
       user && user.userEmail,
       user && user.loginEmail,
-      user && user.netlifyEmail
+      user && user.netlifyEmail,
+      user && user.ownerEmail,
+      user && user.primaryEmail,
+      user && user.accountEmail,
+      user && user.user_metadata && user.user_metadata.email,
+      user && user.app_metadata && user.app_metadata.email
     ].map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
   }
 
@@ -915,37 +921,130 @@
   }
 
 
-  async function loadUsersForAuthenticatedLogin(email){
+  function normalizeUsersPayload(data){
+    if(Array.isArray(data)) return data;
+    if(data && Array.isArray(data.users)) return data.users;
+    if(data && data.me && typeof data.me === 'object') return [data.me];
+    if(data && data.user && typeof data.user === 'object') return [data.user];
+    return [];
+  }
+
+  function saveSessionEmailImmediately(email){
+    try{
+      const clean = String(email || '').trim().toLowerCase();
+      if(!clean) return;
+      const sKey = (window.ANW_KEYS && ANW_KEYS.SESSION) ? ANW_KEYS.SESSION : 'anw_session';
+      localStorage.setItem(sKey, JSON.stringify({ email: clean, loginAt: new Date().toISOString() }));
+    }catch(_){ }
+  }
+
+  async function waitForNetlifyCurrentUser(email, loginUser, timeoutMs){
+    const clean = String(email || '').trim().toLowerCase();
+    const started = Date.now();
+    const limit = Number(timeoutMs || 10000);
+
+    while(Date.now() - started < limit){
+      try{
+        const current = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function'
+          ? window.netlifyIdentity.currentUser()
+          : null;
+        if(current){
+          const emails = getUserEmails(current);
+          if(!clean || emails.includes(clean) || String(current.email || '').trim().toLowerCase() === clean){
+            return current;
+          }
+        }
+      }catch(_){ }
+
+      try{ if(window.netlifyIdentity && typeof window.netlifyIdentity.init === 'function') window.netlifyIdentity.init(); }catch(_){ }
+      await new Promise(resolve => setTimeout(resolve, 125));
+    }
+
+    return loginUser || null;
+  }
+
+  async function getJwtFromAuthenticatedLoginUser(loginUser){
+    try{
+      if(loginUser && typeof loginUser.jwt === 'function'){
+        const token = await loginUser.jwt();
+        if(token) return token;
+      }
+    }catch(_){ }
+
+    try{
+      const tokenObj = loginUser && loginUser.token;
+      const accessToken = tokenObj && (tokenObj.access_token || tokenObj.accessToken || tokenObj.token);
+      if(accessToken) return accessToken;
+    }catch(_){ }
+
+    try{
+      const current = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function'
+        ? window.netlifyIdentity.currentUser()
+        : null;
+      if(current && typeof current.jwt === 'function'){
+        const token = await current.jwt();
+        if(token) return token;
+      }
+    }catch(_){ }
+
+    try{
+      if(typeof window.anwWaitForIdentityToken === 'function'){
+        const token = await window.anwWaitForIdentityToken(10000);
+        if(token) return token;
+      }
+    }catch(_){ }
+
+    return null;
+  }
+
+  async function fetchUsersDirectlyAfterLogin(loginUser, email){
     const norm = String(email || '').trim().toLowerCase();
-    let latest = [];
+    saveSessionEmailImmediately(norm);
 
+    const readyUser = await waitForNetlifyCurrentUser(norm, loginUser, 10000);
+    const token = await getJwtFromAuthenticatedLoginUser(readyUser || loginUser);
+
+    if(!token){
+      return { ok:false, reason:'missing-token', users:[], me:null };
+    }
+
+    let res;
     try{
-      if(typeof window.anwInitStore === 'function'){
-        await window.anwInitStore({ force:true });
-      }
-    }catch(_){ }
+      res = await fetch('/.netlify/functions/store?key=' + encodeURIComponent(KEY_USERS), {
+        method: 'GET',
+        cache: 'no-store',
+        headers: { Authorization: 'Bearer ' + token }
+      });
+    }catch(_){
+      return { ok:false, reason:'network-error', users:[], me:null };
+    }
 
-    try{
-      if(typeof window.anwFetchStoreKey === 'function'){
-        const data = await window.anwFetchStoreKey(KEY_USERS);
-        latest = Array.isArray(data) ? data : [];
-        try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, latest); }catch(_){ }
-        const direct = findUserByEmail(latest, norm);
-        if(direct) return { users: latest, me: direct };
-      }
-    }catch(_){ }
+    if(!res || !res.ok){
+      return { ok:false, reason:'store-' + (res ? res.status : 'no-response'), users:[], me:null };
+    }
 
-    try{
-      if(typeof window.anwGetCurrentUserProfileFresh === 'function'){
-        const me = await window.anwGetCurrentUserProfileFresh({ allowMissing:true });
-        const users = Array.isArray(latest) && latest.length ? latest : (Array.isArray(anwLoad(KEY_USERS, [])) ? anwLoad(KEY_USERS, []) : []);
-        return { users, me: me || findUserByEmail(users, norm) || null };
-      }
-    }catch(_){ }
+    let data = null;
+    try{ data = await res.json(); }catch(_){ data = []; }
 
-    const cached = anwLoad(KEY_USERS, []);
-    const users = Array.isArray(cached) ? cached : [];
-    return { users, me: findUserByEmail(users, norm) || null };
+    const users = normalizeUsersPayload(data);
+    const me = findUserByEmail(users, norm);
+
+    try{ if(typeof window.anwSave === 'function') window.anwSave(KEY_USERS, users); }catch(_){ }
+
+    return { ok:true, reason:'', users, me: me || null };
+  }
+
+  async function loadUsersForAuthenticatedLogin(email, loginUser){
+    // Final production login rule:
+    // After Netlify authenticates the password, use the fresh JWT to ask the secure backend
+    // for the current user's anw_users record. This avoids stale localStorage and avoids
+    // the race where netlifyIdentity.currentUser() is not ready immediately after login.
+    const direct = await fetchUsersDirectlyAfterLogin(loginUser, email);
+    if(direct && direct.ok && direct.me){
+      return direct;
+    }
+
+    return direct || { ok:false, reason:'not-found', users:[], me:null };
   }
 
   if(btnLogin){
@@ -993,23 +1092,20 @@
             : reject(new Error('Netlify Identity not ready'));
         });
 
-        await window.netlifyIdentity.gotrue.login(email, pass, true);
+        const loginUser = await window.netlifyIdentity.gotrue.login(email, pass, true);
         clearAttemptState(email, eir);
 
-        const authSnapshot = await loadUsersForAuthenticatedLogin(email);
-        const users = Array.isArray(authSnapshot && authSnapshot.users) ? authSnapshot.users : [];
-        let me = authSnapshot && authSnapshot.me ? authSnapshot.me : findUserByEmail(users, email);
-
-        if(!me){
-          try{
-            const localUsers = typeof anwLoad === 'function' ? anwLoad(KEY_USERS, []) : [];
-            me = findUserByEmail(Array.isArray(localUsers) ? localUsers : [], email);
-          }catch(_){ }
-        }
+        const authSnapshot = await loadUsersForAuthenticatedLogin(email, loginUser);
+        const me = authSnapshot && authSnapshot.me ? authSnapshot.me : null;
 
         if(!me){
           try{ window.netlifyIdentity.logout(); } catch {}
-          setMsg(loginMsg, 'Your profile is not registered. Please create an account first.', 'error');
+          const reason = String((authSnapshot && authSnapshot.reason) || 'not-found');
+          if(reason && reason !== 'not-found' && reason !== ''){
+            setMsg(loginMsg, 'Login was accepted, but your secure profile could not be verified right now. Please reload and try again.', 'error');
+          }else{
+            setMsg(loginMsg, 'Your profile is not registered in anw_users for this email. Please contact an ANW admin.', 'error');
+          }
           return;
         }
 
