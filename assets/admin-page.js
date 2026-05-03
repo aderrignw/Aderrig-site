@@ -26,6 +26,53 @@
     return normalized.some(v => ADMIN_ALLOWED_ROLES.includes(v));
   }
 
+
+  function getUserEmailsForAdmin(user){
+    try{
+      if(typeof window.anwGetUserEmails === 'function'){
+        const emails = window.anwGetUserEmails(user) || [];
+        if(Array.isArray(emails) && emails.length){
+          return emails.map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
+        }
+      }
+    }catch(_){ }
+
+    return [
+      user && user.email,
+      user && user.userEmail,
+      user && user.loginEmail,
+      user && user.netlifyEmail,
+      user && user.ownerEmail,
+      user && user.primaryEmail,
+      user && user.accountEmail,
+      user && user.residentEmail,
+      user && user.user_metadata && user.user_metadata.email,
+      user && user.app_metadata && user.app_metadata.email
+    ].map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
+  }
+
+  function getAdminRolesFromUserRecord(row){
+    if(!row || typeof row !== 'object') return [];
+    const roles = []
+      .concat(row.isOwner === true ? ['owner'] : [])
+      .concat(row.isAdmin === true ? ['admin'] : [])
+      .concat(normList(row.type))
+      .concat(normList(row.role))
+      .concat(normList(row.roles))
+      .concat(normList(row.userRole))
+      .concat(normList(row.userRoles))
+      .concat(normList(row.access))
+      .concat(normList(row.permissions))
+      .concat(normList(row.adminRole))
+      .concat(normList(row.adminRoles))
+      .concat(normList(row.residentType));
+
+    return Array.from(new Set(roles.map(v => {
+      try{ return (typeof window.anwGetCanonicalRole === 'function') ? window.anwGetCanonicalRole({ role:v }, '') : String(v || '').toLowerCase(); }
+      catch(_){ return String(v || '').toLowerCase(); }
+    }).filter(Boolean)));
+  }
+
   async function getIdentityToken(){
     try{
       const user = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function'
@@ -396,22 +443,12 @@
       if(currentUser && currentUser.email){
         const email = String(currentUser.email || '').trim().toLowerCase();
         const users = await anwLoadSafe(KEY_USERS, []);
-          const row = users.find(u => {
-            const emails = [u && u.email, u && u.userEmail, u && u.loginEmail, u && u.netlifyEmail]
-              .map(v => String(v || '').trim().toLowerCase())
-              .filter(Boolean);
-            return emails.includes(email);
-          });
+          const row = users.find(u => getUserEmailsForAdmin(u).includes(email));
           if(row){
-            const roles = []
-              .concat(normList(row.type))
-              .concat(normList(row.role))
-              .concat(normList(row.roles))
-              .concat(normList(row.userRole))
-              .concat(normList(row.userRoles))
-              .concat(normList(row.residentType));
+            const roles = getAdminRolesFromUserRecord(row);
             allowed = hasAllowedAdminRole(roles);
             role = (typeof window.anwGetCanonicalRole === 'function') ? window.anwGetCanonicalRole(row, email) : (roles[0] || '');
+            if(!role && roles.length) role = roles[0];
           }
       }
 
