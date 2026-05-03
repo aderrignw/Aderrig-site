@@ -398,12 +398,18 @@
       const currentUser = getNetlifyCurrentUser();
       const aclReady = typeof window.anwAclAllows === 'function';
 
-      if(aclReady && currentUser && window.anwAclAllows('page:admin')){
-        return 'allow';
-      }
+      if(currentUser){
+        if(aclReady && window.anwAclAllows('page:admin')){
+          return 'allow';
+        }
 
-      if(aclReady && currentUser && !window.anwAclAllows('page:admin')){
-        return 'deny-dashboard';
+        // Final production protection:
+        // Never redirect an authenticated user to Dashboard just because ACL
+        // is not synced yet. First verify the approved admin/owner role
+        // directly from anw_users.
+        if(await hasDirectAdminProfileAccess(currentUser)){
+          return 'allow';
+        }
       }
 
       if(aclReady && !currentUser && !hadSessionHint){
@@ -420,6 +426,11 @@
           return 'allow';
         }
       }catch(_){}
+
+      if(await hasDirectAdminProfileAccess(currentUser)){
+        return 'allow';
+      }
+
       return 'deny-dashboard';
     }
 
@@ -429,6 +440,28 @@
   function adminMarkReady(){
     document.documentElement.classList.remove('admin-booting');
     document.body.classList.remove('admin-booting');
+  }
+
+  async function hasDirectAdminProfileAccess(currentUser){
+    try{
+      if(!currentUser || !currentUser.email) return false;
+      const email = String(currentUser.email || '').trim().toLowerCase();
+      if(!email) return false;
+
+      const users = await anwLoadSafe(KEY_USERS, []);
+      const list = Array.isArray(users) ? users : [];
+      const row = list.find(u => getUserEmailsForAdmin(u).includes(email));
+      if(!row) return false;
+
+      const status = String(row.status || row.accountStatus || row.registrationStatus || '').trim().toLowerCase();
+      const approved = row.approved === true || row.active === true || status === 'approved' || status === 'active';
+      if(!approved) return false;
+
+      const roles = getAdminRolesFromUserRecord(row);
+      return hasAllowedAdminRole(roles);
+    }catch(_){
+      return false;
+    }
   }
 
   async function runAdminGate(){
@@ -443,13 +476,18 @@
       if(currentUser && currentUser.email){
         const email = String(currentUser.email || '').trim().toLowerCase();
         const users = await anwLoadSafe(KEY_USERS, []);
-          const row = users.find(u => getUserEmailsForAdmin(u).includes(email));
-          if(row){
-            const roles = getAdminRolesFromUserRecord(row);
-            allowed = hasAllowedAdminRole(roles);
-            role = (typeof window.anwGetCanonicalRole === 'function') ? window.anwGetCanonicalRole(row, email) : (roles[0] || '');
-            if(!role && roles.length) role = roles[0];
-          }
+        const list = Array.isArray(users) ? users : [];
+        const row = list.find(u => getUserEmailsForAdmin(u).includes(email));
+
+        if(row){
+          const status = String(row.status || row.accountStatus || row.registrationStatus || '').trim().toLowerCase();
+          const approved = row.approved === true || row.active === true || status === 'approved' || status === 'active';
+
+          const roles = getAdminRolesFromUserRecord(row);
+          allowed = approved && hasAllowedAdminRole(roles);
+          role = (typeof window.anwGetCanonicalRole === 'function') ? window.anwGetCanonicalRole(row, email) : (roles[0] || '');
+          if(!role && roles.length) role = roles[0];
+        }
       }
 
       adminApplyRoleVisibility(role);
