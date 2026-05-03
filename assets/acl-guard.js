@@ -246,10 +246,6 @@
     return "";
   }
 
-  function isMasterOwnerEmail(email) {
-    // Owner access is now read from the approved anw_users profile, not from a hardcoded email.
-    return false;
-  }
 
   function normalizeRoleName(value) {
     try {
@@ -307,13 +303,7 @@
       user && user.email,
       user && user.userEmail,
       user && user.loginEmail,
-      user && user.netlifyEmail,
-      user && user.ownerEmail,
-      user && user.primaryEmail,
-      user && user.accountEmail,
-      user && user.residentEmail,
-      user && user.user_metadata && user.user_metadata.email,
-      user && user.app_metadata && user.app_metadata.email
+      user && user.netlifyEmail
     ].map((v) => String(v || "").trim().toLowerCase()).filter(Boolean);
   }
 
@@ -322,12 +312,36 @@
     if (!cleanEmail) return [];
 
     let users = [];
+
     try {
       if (typeof window.anwGetVerifiedUsers === "function") {
         users = window.anwGetVerifiedUsers() || [];
       }
     } catch (_) {
       users = [];
+    }
+
+    // Critical production fallback:
+    // On admin pages, anwGetVerifiedUsers may not exist yet. Do not deny admin
+    // access only because that helper is missing. Use the locally synced anw_users
+    // cache as the fallback source of truth for role resolution.
+    if (!Array.isArray(users) || !users.length) {
+      try {
+        if (typeof window.anwLoad === "function") {
+          users = window.anwLoad(getUsersKey(), []) || [];
+        }
+      } catch (_) {
+        users = [];
+      }
+    }
+
+    if (!Array.isArray(users) || !users.length) {
+      try {
+        const raw = localStorage.getItem(getUsersKey());
+        users = raw ? JSON.parse(raw) : [];
+      } catch (_) {
+        users = [];
+      }
     }
 
     const row = Array.isArray(users)
@@ -372,7 +386,6 @@
     try {
       const email = getLoggedEmail();
       if (!email) return false;
-      if (isMasterOwnerEmail(email)) return true;
       if (typeof window.anwHasApprovedAccess === "function") {
         return !!window.anwHasApprovedAccess();
       }
@@ -614,7 +627,7 @@
     const clean = normalizeRule(rule);
     if (clean.toLowerCase() === "public") return true;
     if (clean.toLowerCase() === "authenticated") return isLoggedIn() && hasApprovedAccess();
-    if (!hasApprovedAccess() && !isMasterOwnerEmail(getLoggedEmail())) return false;
+    if (!hasApprovedAccess()) return false;
     return roleAllows(clean, role);
   }
 
@@ -718,7 +731,7 @@
         return html + '<a href="#" id="navLogout">Logout</a>' + '<a' + (pageKey === 'page:help_center' ? ' class="active"' : '') + ' href="help-center.html">Help</a>';
       }
 
-      const adminLike = !!(email && (isMasterOwnerEmail(email) || hasAllowedAdminRole(getAdminRolesForEmail(email))));
+      const adminLike = !!(email && hasAllowedAdminRole(getAdminRolesForEmail(email)));
       const shouldShowResidentShort = loggedIn && hasApprovedAccess() && !adminLike && role === "resident";
 
       // Only approved logged-in residents should receive the short resident menu.
@@ -855,7 +868,7 @@
       return;
     }
 
-    if (!hasApprovedAccess() && !isMasterOwnerEmail(getLoggedEmail())) {
+    if (!hasApprovedAccess()) {
       clearAuthReady();
       location.replace("login.html");
       return;
