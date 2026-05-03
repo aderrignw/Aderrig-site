@@ -246,6 +246,10 @@
     return "";
   }
 
+  function isMasterOwnerEmail(email) {
+    // Owner access is now read from the approved anw_users profile, not from a hardcoded email.
+    return false;
+  }
 
   function normalizeRoleName(value) {
     try {
@@ -303,7 +307,13 @@
       user && user.email,
       user && user.userEmail,
       user && user.loginEmail,
-      user && user.netlifyEmail
+      user && user.netlifyEmail,
+      user && user.ownerEmail,
+      user && user.primaryEmail,
+      user && user.accountEmail,
+      user && user.residentEmail,
+      user && user.user_metadata && user.user_metadata.email,
+      user && user.app_metadata && user.app_metadata.email
     ].map((v) => String(v || "").trim().toLowerCase()).filter(Boolean);
   }
 
@@ -327,11 +337,17 @@
     if (!row || typeof row !== "object") return [];
 
     const roles = []
+      .concat(row.isOwner === true ? ["owner"] : [])
+      .concat(row.isAdmin === true ? ["admin"] : [])
       .concat(normRoleList(row.type))
       .concat(normRoleList(row.role))
       .concat(normRoleList(row.roles))
       .concat(normRoleList(row.userRole))
       .concat(normRoleList(row.userRoles))
+      .concat(normRoleList(row.access))
+      .concat(normRoleList(row.permissions))
+      .concat(normRoleList(row.adminRole))
+      .concat(normRoleList(row.adminRoles))
       .concat(normRoleList(row.residentType));
 
     return Array.from(new Set(roles.map(canonicalAdminRole).filter(Boolean)));
@@ -356,6 +372,7 @@
     try {
       const email = getLoggedEmail();
       if (!email) return false;
+      if (isMasterOwnerEmail(email)) return true;
       if (typeof window.anwHasApprovedAccess === "function") {
         return !!window.anwHasApprovedAccess();
       }
@@ -597,7 +614,7 @@
     const clean = normalizeRule(rule);
     if (clean.toLowerCase() === "public") return true;
     if (clean.toLowerCase() === "authenticated") return isLoggedIn() && hasApprovedAccess();
-    if (!hasApprovedAccess()) return false;
+    if (!hasApprovedAccess() && !isMasterOwnerEmail(getLoggedEmail())) return false;
     return roleAllows(clean, role);
   }
 
@@ -701,7 +718,7 @@
         return html + '<a href="#" id="navLogout">Logout</a>' + '<a' + (pageKey === 'page:help_center' ? ' class="active"' : '') + ' href="help-center.html">Help</a>';
       }
 
-      const adminLike = !!(email && hasAllowedAdminRole(getAdminRolesForEmail(email)));
+      const adminLike = !!(email && (isMasterOwnerEmail(email) || hasAllowedAdminRole(getAdminRolesForEmail(email))));
       const shouldShowResidentShort = loggedIn && hasApprovedAccess() && !adminLike && role === "resident";
 
       // Only approved logged-in residents should receive the short resident menu.
@@ -838,7 +855,7 @@
       return;
     }
 
-    if (!hasApprovedAccess()) {
+    if (!hasApprovedAccess() && !isMasterOwnerEmail(getLoggedEmail())) {
       clearAuthReady();
       location.replace("login.html");
       return;
