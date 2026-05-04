@@ -202,7 +202,7 @@
 <h2>Community Projects</h2>
 <p class="muted" style="margin-bottom:.5rem;">Build a project, confirm its delivery to recipients, then track updates over time.</p>
 <div class="tiny muted" id="anwAccessNotice" style="margin-top:12px; display:none;">
-      Checking your project access…
+      You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to continue.
     </div>
 <div class="actions proj-tabs" style="justify-content:flex-start; margin-top:.25rem;">
 <button class="proj-tab active" data-target="paneBuilder" type="button">Build project</button>
@@ -347,6 +347,7 @@
 <button class="btn btn-danger" id="btnConfirmDelete" type="button">Delete</button>
 </div>
 </div>
+</div>
 
 <section class="proj-pane" id="paneSend">
 <section class="card">
@@ -402,7 +403,7 @@
 </div>
 </div>
 </section>
-</div></section>
+</section>
 <!-- ============================ MONITORING ============================ -->
 <section class="proj-pane" id="paneMonitoring">
 <section class="card">
@@ -479,6 +480,19 @@
 (async function(){
   'use strict';
   try { await window.anwInitStore?.({ force: true }); } catch(_) {}
+
+  try {
+    window.__anwProjectOwnerAdminAllowed = (typeof window.anwProjectOwnerAdminAllowed === 'function') ? await window.anwProjectOwnerAdminAllowed() : false;
+    if (window.__anwProjectOwnerAdminAllowed) {
+      document.documentElement.classList.remove('anw-private-preauth-hide');
+      document.documentElement.classList.remove('anw-private-preauth-hide-fast');
+      var notice = document.getElementById('anwAccessNotice');
+      if (notice) notice.style.display = 'none';
+    }
+  } catch (_) {
+    window.__anwProjectOwnerAdminAllowed = false;
+  }
+
 
   // ===== Keys =====
   const PROJECTS_KEY = (window.ANW_KEYS && window.ANW_KEYS.PROJECTS) ? window.ANW_KEYS.PROJECTS : 'anw_projects';
@@ -600,40 +614,11 @@
       var profile = await anwProjectGetCurrentProfile();
       if(!profile || !anwProjectIsApproved(profile)) return false;
       var roles = anwProjectRoleList(profile);
-      return roles.indexOf('owner') >= 0 || roles.indexOf('admin') >= 0 || roles.indexOf('projects') >= 0 || roles.indexOf('area_coordinator') >= 0;
+      return roles.indexOf('owner') >= 0 || roles.indexOf('admin') >= 0;
     } catch (_) {
-      return false;
-    }
-  };
-
-  async function anwProjectApplyAccessUnlock(){
-    try {
-      window.__anwProjectOwnerAdminAllowed = await window.anwProjectOwnerAdminAllowed();
-
-      if (!window.__anwProjectOwnerAdminAllowed) return false;
-
-      var notice = document.getElementById('anwAccessNotice');
-      if (notice) {
-        notice.style.display = 'none';
-        notice.textContent = '';
-      }
-
-      document.documentElement.classList.remove('anw-private-preauth-hide');
-      document.documentElement.classList.remove('anw-private-preauth-hide-fast');
-      document.documentElement.removeAttribute('data-acl-loading');
-
-      if (document.body) {
-        document.body.removeAttribute('data-acl-loading');
-      }
-
-      return true;
-    } catch (_) {
-      window.__anwProjectOwnerAdminAllowed = false;
       return false;
     }
   }
-
-  await anwProjectApplyAccessUnlock();
 
 
   // ===== Toast =====
@@ -1507,294 +1492,203 @@ async function loadStore(){
 </div>
 
 <script>
-// --- Community Projects tabs + ACL gating (owner-safe / no layout changes) ---
-(function () {
-  function bootProjectsAcl() {
-    const notice = document.getElementById('anwAccessNotice');
-    const tabButtons = Array.from(document.querySelectorAll('button.proj-tab'));
-    const panesById = {
-      builder: document.getElementById('paneBuilder'),
-      send: document.getElementById('paneSend'),
-      monitoring: document.getElementById('paneMonitoring')
-    };
+// --- Community Projects ACL handled by final production guard below. ---
+</script>
+<script src="assets/acl-guard.js"></script>
 
+<script id="anwProjectProductionOwnerGuard">
+(async function anwProjectProductionOwnerGuard(){
+  'use strict';
 
-    const showNotice = (html) => {
-      if (!notice) return;
-      notice.style.display = 'block';
-      notice.innerHTML = html;
-    };
+  function norm(v){
+    return String(v || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s\-]+/g, '_');
+  }
 
-    const hideNotice = () => {
-      if (!notice) return;
-      notice.style.display = 'none';
-      notice.innerHTML = '';
-    };
+  function candidateEmails(user){
+    return [
+      user && user.email,
+      user && user.userEmail,
+      user && user.loginEmail,
+      user && user.netlifyEmail,
+      user && user.ownerEmail,
+      user && user.primaryEmail,
+      user && user.accountEmail,
+      user && user.residentEmail,
+      user && user.user_metadata && user.user_metadata.email,
+      user && user.app_metadata && user.app_metadata.email
+    ].map(function(v){ return String(v || '').trim().toLowerCase(); }).filter(Boolean);
+  }
 
-    const norm = (s) =>
-      String(s || '')
-        .toLowerCase()
-        .replace(/[\s\-_]+/g, ' ')
-        .replace(/[^a-z0-9@. ]/g, '')
-        .trim();
+  function pushRoles(out, value){
+    if (value == null || value === '') return;
+    if (Array.isArray(value)) { value.forEach(function(v){ pushRoles(out, v); }); return; }
+    if (typeof value === 'string' && /[;,|]/.test(value)) {
+      value.split(/[;,|]/).forEach(function(v){ pushRoles(out, v); });
+      return;
+    }
+    out.push(norm(value));
+  }
 
+  function roleList(profile){
+    var out = [];
+    if (!profile || typeof profile !== 'object') return out;
+    if (profile.isOwner === true) out.push('owner');
+    if (profile.isAdmin === true) out.push('admin');
+    pushRoles(out, profile.type);
+    pushRoles(out, profile.role);
+    pushRoles(out, profile.roles);
+    pushRoles(out, profile.userRole);
+    pushRoles(out, profile.userRoles);
+    pushRoles(out, profile.adminRole);
+    pushRoles(out, profile.adminRoles);
+    pushRoles(out, profile.permissions);
+    pushRoles(out, profile.position);
+    pushRoles(out, profile.title);
+    pushRoles(out, profile.access);
+    pushRoles(out, profile.residentType);
+    return Array.from(new Set(out.filter(Boolean)));
+  }
 
-    const inferTabKey = (btn) => {
-      const t = norm(btn && btn.textContent);
-      if (t.indexOf('build') >= 0) return 'builder';
-      if (t.indexOf('confirm') >= 0) return 'send';
-      if (t.indexOf('monitor') >= 0) return 'monitoring';
-      return (btn && btn.getAttribute('data-tab-key')) || 'builder';
-    };
+  function isApproved(profile){
+    if (!profile || typeof profile !== 'object') return false;
+    if (profile.approved === true || profile.active === true || profile.enabled === true) return true;
+    var status = String(profile.status || profile.accountStatus || profile.registrationStatus || '').trim().toLowerCase();
+    return status === 'approved' || status === 'active' || status === 'enabled';
+  }
 
-    const featureFor = (tabKey) => {
-      if (tabKey === 'builder') return 'projects:tab_builder';
-      if (tabKey === 'send') return 'projects:tab_published';
-      if (tabKey === 'monitoring') return 'projects:tab_monitoring';
-      return 'projects:tab_builder';
-    };
-
-    const getAclSync = () => {
-      try {
-        return (window.anwGetAclSync && window.anwGetAclSync()) || null;
-      } catch (e) {
-        return null;
-      }
-    };
-
-    const getDefaultAcl = () => {
-      try {
-        return window.ANW_ACL_DEFAULT || null;
-      } catch (e) {
-        return null;
-      }
-    };
-
-    const extractRoles = (profile, email) => {
-      const out = [];
-
-      const pushAny = (v) => {
-        if (!v) return;
-        if (Array.isArray(v)) {
-          v.forEach(pushAny);
-          return;
-        }
-        out.push(String(v));
-      };
-
-      if (profile) {
-        pushAny(profile.type);
-        pushAny(profile.role);
-        pushAny(profile.roles);
-        pushAny(profile.position);
-        pushAny(profile.title);
-        pushAny(profile.access);
-        pushAny(profile.residentType);
-      }
-
-      return out.map(norm).filter(Boolean);
-    };
-
-    const hasAnyRole = (profile, email, allowed) => {
-      const mine = extractRoles(profile, email);
-      const allow = (allowed || []).map(norm);
-
-      if (allow.indexOf('public') >= 0) return true;
-
-      return mine.some(function (r) {
-        return allow.some(function (a) {
-          return r === a || r.indexOf(a) >= 0 || a.indexOf(r) >= 0;
-        });
-      });
-    };
-
-    const ensureUser = async () => {
-      if (!window.netlifyIdentity) return null;
-
-      return await new Promise((resolve) => {
-        let done = false;
-        const finish = (u) => {
-          if (done) return;
-          done = true;
-          resolve(u || null);
-        };
-
-        try {
-          window.netlifyIdentity.on('init', function (u) { finish(u); });
-          window.netlifyIdentity.init();
-        } catch (e) {}
-
-        setTimeout(() => {
-          try {
-            finish(window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser());
-          } catch (e) {
-            finish(null);
-          }
-        }, 300);
-      });
-    };
-
-    const getProfile = async (userEmail) => {
-      try {
-        if (typeof window.anwInitStore === 'function') {
-          await window.anwInitStore();
-        }
-      } catch (e) {}
-
-      try {
-        const users = (window.anwLoad && window.ANW_KEYS)
-          ? window.anwLoad(window.ANW_KEYS.USERS, [])
-          : [];
-
-        const email = String(userEmail || '').toLowerCase().trim();
-
-        return (Array.isArray(users) ? users : []).find(function (u) {
-          return String((u && u.email) || '').toLowerCase().trim() === email;
-        }) || null;
-      } catch (e) {
-        return null;
-      }
-    };
-
-    const isApproved = (profile, email) => {
-      if (!profile) return false;
-
-      const status = String(
-        profile.status ||
-        profile.accountStatus ||
-        profile.registrationStatus ||
-        ''
-      ).toLowerCase().trim();
-
-      return (
-        profile.approved === true ||
-        profile.active === true ||
-        status === 'active' ||
-        status === 'approved'
-      );
-    };
-
-    const setActive = (tabKey) => {
-      tabButtons.forEach(function (b) {
-        const k = inferTabKey(b);
-        const isActive = (k === tabKey);
-        b.classList.toggle('active', isActive);
-        b.setAttribute('aria-selected', isActive ? 'true' : 'false');
-      });
-
-      Object.keys(panesById).forEach(function (k) {
-        const pane = panesById[k];
-        if (!pane) return;
-        pane.style.display = (k === tabKey) ? '' : 'none';
-      });
-    };
-
-    const hideAllPanes = () => {
-      Object.keys(panesById).forEach(function (k) {
-        const pane = panesById[k];
-        if (pane) pane.style.display = 'none';
-      });
-    };
-
-    const canOpen = (tabKey, profile, email, acl) => {
-      if (window.ANW_PUBLIC_MODE) return true;
-      if (!email) return false;
-      if (!profile || !isApproved(profile, email)) return false;
-
-      const feature = featureFor(tabKey);
-      const allowed = (acl && acl[feature]) || [];
-      return hasAnyRole(profile, email, allowed);
-    };
-
-    (async function () {
-      const user = await ensureUser();
-      const fallbackEmail =
-        (typeof window.anwGetLoggedEmail === 'function')
-          ? String(window.anwGetLoggedEmail() || '')
-          : '';
-
-      const email = String((user && user.email) || fallbackEmail || '').toLowerCase().trim();
-      const profile = email ? await getProfile(email) : null;
-      const acl = getAclSync() || getDefaultAcl() || {};
-
-      let initial = 'builder';
-      const marked = tabButtons.find(function (b) {
-        return b.classList.contains('active') || b.getAttribute('aria-selected') === 'true';
-      });
-      if (marked) initial = inferTabKey(marked);
-
-      if (!email) {
-        hideAllPanes();
-        showNotice('Exclusive area. Please <a href="login.html">log in</a> to continue.');
-      } else if (!canOpen(initial, profile, email, acl)) {
-        hideAllPanes();
-        showNotice('Exclusive area. Please <a href="login.html">log in</a> to continue.');
-      } else {
-        hideNotice();
-        setActive(initial);
-      }
-
-      tabButtons.forEach(function (btn) {
-        btn.addEventListener('click', function (ev) {
-          const tabKey = inferTabKey(btn);
-
-          if (!canOpen(tabKey, profile, email, acl)) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            hideAllPanes();
-            showNotice('Exclusive area. Please <a href="login.html">log in</a> to continue.');
-            return;
-          }
-
-          hideNotice();
-          setActive(tabKey);
-        });
-      });
-    })().catch(function () {
-      try { document.body.removeAttribute('data-acl-loading'); } catch (e) {}
+  function isOwnerOrAdmin(profile){
+    if (!profile || !isApproved(profile)) return false;
+    var roles = roleList(profile);
+    return roles.some(function(r){
+      return r === 'owner' || r.indexOf('owner') >= 0 || r === 'admin' || r.indexOf('admin') >= 0;
     });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootProjectsAcl);
-  } else {
-    bootProjectsAcl();
+  async function currentIdentityEmail(){
+    var email = '';
+    try {
+      if (typeof window.anwGetLoggedEmail === 'function') {
+        email = String(window.anwGetLoggedEmail() || '').trim().toLowerCase();
+      }
+    } catch (_) {}
+
+    try {
+      if (!email && window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function') {
+        var u = window.netlifyIdentity.currentUser();
+        if (u && u.email) email = String(u.email || '').trim().toLowerCase();
+      }
+    } catch (_) {}
+
+    if (email) return email;
+
+    try {
+      if (window.netlifyIdentity && typeof window.netlifyIdentity.init === 'function') {
+        await new Promise(function(resolve){
+          var done = false;
+          function finish(u){
+            if (done) return;
+            done = true;
+            if (u && u.email) email = String(u.email || '').trim().toLowerCase();
+            resolve();
+          }
+          try { window.netlifyIdentity.on('init', finish); } catch (_) {}
+          try { window.netlifyIdentity.init(); } catch (_) {}
+          setTimeout(function(){
+            try { finish(window.netlifyIdentity.currentUser && window.netlifyIdentity.currentUser()); }
+            catch (_) { finish(null); }
+          }, 500);
+        });
+      }
+    } catch (_) {}
+
+    return email;
   }
-})();
-</script>
-<script src="assets/acl-guard.js"></script>
-<script id="anwProjectFinalOwnerOverride">
-(async function anwProjectFinalOwnerOverride(){
-  try {
-    var started = Date.now();
 
-    while (Date.now() - started < 8000) {
-      if (typeof window.anwProjectOwnerAdminAllowed === 'function') break;
-      await new Promise(function(resolve){ setTimeout(resolve, 100); });
-    }
+  async function currentProfile(){
+    try { if (typeof window.anwInitStore === 'function') await window.anwInitStore({ force: true }); } catch (_) {}
+    var email = await currentIdentityEmail();
+    if (!email) return { email: '', profile: null };
 
-    if (typeof window.anwProjectOwnerAdminAllowed !== 'function') return;
+    var users = [];
+    try {
+      if (typeof window.anwLoad === 'function') {
+        users = window.anwLoad((window.ANW_KEYS && window.ANW_KEYS.USERS) || 'anw_users', []);
+      }
+    } catch (_) { users = []; }
+    if (!Array.isArray(users)) users = [];
 
-    var allowed = await window.anwProjectOwnerAdminAllowed();
-    if (!allowed) return;
+    var profile = users.find(function(u){ return candidateEmails(u).indexOf(email) >= 0; }) || null;
+    return { email: email, profile: profile };
+  }
 
+  function setAccessAllowed(){
     window.__anwProjectOwnerAdminAllowed = true;
+    document.documentElement.classList.remove('anw-private-preauth-hide');
+    document.documentElement.classList.remove('anw-private-preauth-hide-fast');
+    var main = document.getElementById('projectsMain');
+    if (main) main.style.display = '';
+    var notice = document.getElementById('anwAccessNotice');
+    if (notice) { notice.style.display = 'none'; notice.innerHTML = ''; }
+    var modal = document.getElementById('anwGateModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function setAccessDenied(hasEmail){
+    window.__anwProjectOwnerAdminAllowed = false;
+    var main = document.getElementById('projectsMain');
+    if (main) main.style.display = 'none';
 
     var notice = document.getElementById('anwAccessNotice');
     if (notice) {
-      notice.style.display = 'none';
-      notice.textContent = '';
+      notice.style.display = 'block';
+      notice.innerHTML = hasEmail
+        ? 'Access restricted. This page is available only to approved Owner/Admin accounts.'
+        : 'Exclusive area. Please <a href="login.html">log in</a> to continue.';
     }
 
-    document.documentElement.classList.remove('anw-private-preauth-hide');
-    document.documentElement.classList.remove('anw-private-preauth-hide-fast');
-    document.documentElement.removeAttribute('data-acl-loading');
-
-    if (document.body) {
-      document.body.removeAttribute('data-acl-loading');
+    var modal = document.getElementById('anwGateModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      var p = modal.querySelector('p');
+      if (p) p.textContent = hasEmail
+        ? 'Access restricted. This page is available only to approved Owner/Admin accounts.'
+        : 'This page is restricted. Please log in or register to continue.';
+      var login = document.getElementById('anwGateLogin');
+      var signup = document.getElementById('anwGateSignup');
+      if (login) login.style.display = hasEmail ? 'none' : 'inline-flex';
+      if (signup) signup.style.display = hasEmail ? 'none' : 'inline-flex';
     }
+  }
+
+  window.anwProjectOwnerAdminAllowed = async function anwProjectOwnerAdminAllowed(){
+    try {
+      var ctx = await currentProfile();
+      return !!(ctx.email && isOwnerOrAdmin(ctx.profile));
+    } catch (_) {
+      return false;
+    }
+  };
+
+  try {
+    var ctx = await currentProfile();
+    if (ctx.email && isOwnerOrAdmin(ctx.profile)) setAccessAllowed();
+    else setAccessDenied(!!ctx.email);
+  } catch (_) {
+    setAccessDenied(false);
+  }
+
+  try {
+    var close = document.getElementById('anwGateClose');
+    if (close) close.addEventListener('click', function(){
+      var modal = document.getElementById('anwGateModal');
+      if (modal) modal.style.display = 'none';
+    });
   } catch (_) {}
 })();
 </script>
+
 </body>
 </html>
