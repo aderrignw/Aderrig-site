@@ -202,7 +202,7 @@
 <h2>Community Projects</h2>
 <p class="muted" style="margin-bottom:.5rem;">Build a project, confirm its delivery to recipients, then track updates over time.</p>
 <div class="tiny muted" id="anwAccessNotice" style="margin-top:12px; display:none;">
-      You are not logged in. Please <a href="login.html">log in</a> or <a href="login.html#signup">register</a> to continue.
+      Checking your project access…
     </div>
 <div class="actions proj-tabs" style="justify-content:flex-start; margin-top:.25rem;">
 <button class="proj-tab active" data-target="paneBuilder" type="button">Build project</button>
@@ -480,27 +480,6 @@
   'use strict';
   try { await window.anwInitStore?.({ force: true }); } catch(_) {}
 
-  try {
-    window.__anwProjectOwnerAdminAllowed = typeof window.anwProjectOwnerAdminAllowed === 'function'
-      ? await window.anwProjectOwnerAdminAllowed()
-      : false;
-
-    if (window.__anwProjectOwnerAdminAllowed) {
-      var notice = document.getElementById('anwAccessNotice');
-      if (notice) {
-        notice.style.display = 'none';
-        notice.textContent = '';
-      }
-      document.documentElement.classList.remove('anw-private-preauth-hide');
-      document.documentElement.classList.remove('anw-private-preauth-hide-fast');
-      document.documentElement.removeAttribute('data-acl-loading');
-      document.body && document.body.removeAttribute('data-acl-loading');
-    }
-  } catch (_) {
-    window.__anwProjectOwnerAdminAllowed = false;
-  }
-
-
   // ===== Keys =====
   const PROJECTS_KEY = (window.ANW_KEYS && window.ANW_KEYS.PROJECTS) ? window.ANW_KEYS.PROJECTS : 'anw_projects';
   const PROJECTS_KEY_V = PROJECTS_KEY;
@@ -626,6 +605,35 @@
       return false;
     }
   };
+
+  async function anwProjectApplyAccessUnlock(){
+    try {
+      window.__anwProjectOwnerAdminAllowed = await window.anwProjectOwnerAdminAllowed();
+
+      if (!window.__anwProjectOwnerAdminAllowed) return false;
+
+      var notice = document.getElementById('anwAccessNotice');
+      if (notice) {
+        notice.style.display = 'none';
+        notice.textContent = '';
+      }
+
+      document.documentElement.classList.remove('anw-private-preauth-hide');
+      document.documentElement.classList.remove('anw-private-preauth-hide-fast');
+      document.documentElement.removeAttribute('data-acl-loading');
+
+      if (document.body) {
+        document.body.removeAttribute('data-acl-loading');
+      }
+
+      return true;
+    } catch (_) {
+      window.__anwProjectOwnerAdminAllowed = false;
+      return false;
+    }
+  }
+
+  await anwProjectApplyAccessUnlock();
 
 
   // ===== Toast =====
@@ -1755,11 +1763,18 @@ async function loadStore(){
 })();
 </script>
 <script src="assets/acl-guard.js"></script>
-
 <script id="anwProjectFinalOwnerOverride">
 (async function anwProjectFinalOwnerOverride(){
   try {
+    var started = Date.now();
+
+    while (Date.now() - started < 8000) {
+      if (typeof window.anwProjectOwnerAdminAllowed === 'function') break;
+      await new Promise(function(resolve){ setTimeout(resolve, 100); });
+    }
+
     if (typeof window.anwProjectOwnerAdminAllowed !== 'function') return;
+
     var allowed = await window.anwProjectOwnerAdminAllowed();
     if (!allowed) return;
 
@@ -1781,6 +1796,5 @@ async function loadStore(){
   } catch (_) {}
 })();
 </script>
-
 </body>
 </html>
