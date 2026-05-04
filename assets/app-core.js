@@ -163,7 +163,12 @@ function anwCollectProfileRoles(user) {
     pushAny(user.position);
     pushAny(user.title);
     pushAny(user.access);
-    return out;
+    
+    pushAny(user.permissions);
+    pushAny(user.adminRole);
+    pushAny(user.adminRoles);
+    pushAny(user.userRole);
+    pushAny(user.userRoles);return out;
   } catch {
     return [];
   }
@@ -219,7 +224,13 @@ function _anwUserEmails(user) {
     user && user.email,
     user && user.userEmail,
     user && user.loginEmail,
-    user && user.netlifyEmail
+    user && user.netlifyEmail,
+    user && user.ownerEmail,
+    user && user.primaryEmail,
+    user && user.accountEmail,
+    user && user.residentEmail,
+    user && user.user_metadata && user.user_metadata.email,
+    user && user.app_metadata && user.app_metadata.email
   ].map(anwNormEmail).filter(Boolean);
 }
 
