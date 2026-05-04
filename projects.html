@@ -194,6 +194,7 @@
 <a href="dashboard.html">Dashboard</a>
 <a href="household.html">Household</a>
 <a href="admin.html">Admin</a>
+<a href="help-center.html">Help</a>
 </nav>
 </header>
 <main class="wrap" id="projectsMain">
@@ -477,7 +478,20 @@
 <script>
 (async function(){
   'use strict';
-  try { await window.anwInitStore?.(); } catch(_) {}
+  try { await window.anwInitStore?.({ force: true }); } catch(_) {}
+
+  try {
+    window.__anwProjectOwnerAdminAllowed = await anwProjectOwnerAdminAllowed();
+    if (window.__anwProjectOwnerAdminAllowed) {
+      document.documentElement.classList.remove('anw-private-preauth-hide');
+      document.documentElement.classList.remove('anw-private-preauth-hide-fast');
+      var notice = document.getElementById('anwAccessNotice');
+      if (notice) notice.style.display = 'none';
+    }
+  } catch (_) {
+    window.__anwProjectOwnerAdminAllowed = false;
+  }
+
 
   // ===== Keys =====
   const PROJECTS_KEY = (window.ANW_KEYS && window.ANW_KEYS.PROJECTS) ? window.ANW_KEYS.PROJECTS : 'anw_projects';
@@ -519,6 +533,92 @@
   function getCreatorEmail(){
     return (window.anwGetLoggedEmail ? window.anwGetLoggedEmail() : '') || '—';
   }
+
+  function anwProjectCandidateEmails(user){
+    return [
+      user && user.email,
+      user && user.userEmail,
+      user && user.loginEmail,
+      user && user.netlifyEmail,
+      user && user.ownerEmail,
+      user && user.primaryEmail,
+      user && user.accountEmail,
+      user && user.residentEmail,
+      user && user.user_metadata && user.user_metadata.email,
+      user && user.app_metadata && user.app_metadata.email
+    ].map(function(v){ return String(v || '').trim().toLowerCase(); }).filter(Boolean);
+  }
+
+  function anwProjectRoleList(user){
+    var out = [];
+    function pushAny(value){
+      if(value == null || value === '') return;
+      if(Array.isArray(value)){ value.forEach(pushAny); return; }
+      if(typeof value === 'string' && /[;,|]/.test(value)){ value.split(/[;,|]/).forEach(pushAny); return; }
+      out.push(String(value).trim().toLowerCase().replace(/[\s\-]+/g, '_'));
+    }
+    if(!user || typeof user !== 'object') return out;
+    if(user.isOwner === true) out.push('owner');
+    if(user.isAdmin === true) out.push('admin');
+    pushAny(user.type);
+    pushAny(user.role);
+    pushAny(user.roles);
+    pushAny(user.userRole);
+    pushAny(user.userRoles);
+    pushAny(user.access);
+    pushAny(user.permissions);
+    pushAny(user.adminRole);
+    pushAny(user.adminRoles);
+    pushAny(user.residentType);
+    return Array.from(new Set(out));
+  }
+
+  function anwProjectIsApproved(user){
+    if(!user || typeof user !== 'object') return false;
+    if(user.approved === true || user.active === true) return true;
+    var status = String(user.status || user.accountStatus || user.registrationStatus || '').trim().toLowerCase();
+    return status === 'approved' || status === 'active' || status === 'enabled';
+  }
+
+  async function anwProjectGetCurrentProfile(){
+    try {
+      if (typeof window.anwInitStore === 'function') {
+        await window.anwInitStore({ force: true });
+      }
+    } catch (_) {}
+
+    try {
+      var email = String(window.anwGetLoggedEmail ? window.anwGetLoggedEmail() : '').trim().toLowerCase();
+
+      if(!email && window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function'){
+        var identityUser = window.netlifyIdentity.currentUser();
+        if(identityUser && identityUser.email) email = String(identityUser.email || '').trim().toLowerCase();
+      }
+
+      if(!email) return null;
+
+      var users = window.anwLoad ? window.anwLoad('anw_users', []) : [];
+      if(!Array.isArray(users)) users = [];
+
+      return users.find(function(u){
+        return anwProjectCandidateEmails(u).indexOf(email) >= 0;
+      }) || null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  window.anwProjectOwnerAdminAllowed = async function anwProjectOwnerAdminAllowed(){
+    try {
+      var profile = await anwProjectGetCurrentProfile();
+      if(!profile || !anwProjectIsApproved(profile)) return false;
+      var roles = anwProjectRoleList(profile);
+      return roles.indexOf('owner') >= 0 || roles.indexOf('admin') >= 0;
+    } catch (_) {
+      return false;
+    }
+  }
+
 
   // ===== Toast =====
   let toastTimer = null;
@@ -1647,5 +1747,24 @@ async function loadStore(){
 })();
 </script>
 <script src="assets/acl-guard.js"></script>
+
+<script id="anwProjectFinalOwnerOverride">
+(async function anwProjectFinalOwnerOverride(){
+  try {
+    if (typeof window.anwProjectOwnerAdminAllowed === 'function') {
+      var allowed = await window.anwProjectOwnerAdminAllowed();
+      if (allowed) {
+        var main = document.getElementById('projectsMain');
+        if (main) main.style.display = '';
+        var notice = document.getElementById('anwAccessNotice');
+        if (notice) notice.style.display = 'none';
+        document.documentElement.classList.remove('anw-private-preauth-hide');
+        document.documentElement.classList.remove('anw-private-preauth-hide-fast');
+      }
+    }
+  } catch (_) {}
+})();
+</script>
+
 </body>
 </html>
