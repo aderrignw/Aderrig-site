@@ -111,7 +111,74 @@ function readBearerToken(req) {
   return match ? match[1].trim() : "";
 }
 
-function readUserFromTokenPayload(req) {
+function getIdentityVerifyOrigins(req) {
+  const origins = [];
+
+  try {
+    const requestUrl = new URL(req?.url || "");
+    if (requestUrl.origin) origins.push(requestUrl.origin);
+  } catch {}
+
+  [
+    process.env.URL,
+    process.env.SITE_URL,
+    process.env.DEPLOY_URL,
+  ].forEach((value) => {
+    const clean = String(value || "").trim();
+    if (clean) origins.push(clean.replace(/\/+$/, ""));
+  });
+
+  return Array.from(new Set(origins.filter(Boolean)));
+}
+
+async function verifyBearerWithNetlifyIdentity(req, token, tokenPayload) {
+  if (!token) return null;
+
+  const origins = getIdentityVerifyOrigins(req);
+  for (const origin of origins) {
+    try {
+      const res = await fetch(`${origin.replace(/\/+$/, "")}/.netlify/identity/user`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+
+      if (!res.ok) continue;
+
+      const identityUser = await res.json().catch(() => null);
+      const email = normalizeEmail(
+        identityUser?.email ||
+        identityUser?.user_metadata?.email ||
+        tokenPayload?.email ||
+        ""
+      );
+
+      if (!email) continue;
+
+      return {
+        ...(tokenPayload && typeof tokenPayload === "object" ? tokenPayload : {}),
+        ...(identityUser && typeof identityUser === "object" ? identityUser : {}),
+        email,
+        app_metadata: {
+          ...(tokenPayload?.app_metadata || {}),
+          ...(identityUser?.app_metadata || {}),
+        },
+        user_metadata: {
+          ...(tokenPayload?.user_metadata || {}),
+          ...(identityUser?.user_metadata || {}),
+        },
+        __authSource: "netlify_identity_user_api",
+        __tokenVerified: true,
+      };
+    } catch {}
+  }
+
+  return null;
+}
+
+async function readUserFromTokenPayload(req) {
   const token = readBearerToken(req);
   if (!token) return null;
 
@@ -135,14 +202,30 @@ function readUserFromTokenPayload(req) {
 
   if (!email) return null;
 
-  return {
+  if (parsed.verified === true) {
+    return {
+      ...payload,
+      email,
+      app_metadata: payload.app_metadata || {},
+      user_metadata: payload.user_metadata || {},
+      __authSource: "bearer_payload_verified",
+      __tokenVerified: true,
+    };
+  }
+
+  // Secure fallback for production:
+  // If local JWT secret is missing/wrong, verify the bearer token directly with
+  // Netlify Identity before treating it as trusted.
+  const verifiedByIdentity = await verifyBearerWithNetlifyIdentity(req, token, {
     ...payload,
     email,
     app_metadata: payload.app_metadata || {},
     user_metadata: payload.user_metadata || {},
-    __authSource: "bearer_payload",
-    __tokenVerified: !!parsed.verified,
-  };
+  });
+
+  if (verifiedByIdentity?.email) return verifiedByIdentity;
+
+  return null;
 }
 
 function parseNetlifyCustomContext(context) {
@@ -185,7 +268,7 @@ export function getUserRoles(user) {
   );
 }
 
-export function readCurrentUser(req, context) {
+export async function readCurrentUser(req, context) {
   const directUser = context?.clientContext?.user;
   if (directUser?.email) {
     return {
@@ -214,7 +297,7 @@ export function readCurrentUser(req, context) {
     };
   }
 
-  const tokenUser = readUserFromTokenPayload(req);
+  const tokenUser = await readUserFromTokenPayload(req);
   if (tokenUser?.email && tokenUser.__tokenVerified === true) return tokenUser;
 
   return null;
@@ -275,13 +358,15 @@ export function withSecurity(config, handler) {
         return jsonResponse({ error: "payload too large" }, 413);
       }
 
-      const user = readCurrentUser(req, context);
+      const user = await readCurrentUser(req, context);
       const roles = getUserRoles(user);
       const trustedIdentity = !!user && (
         user.__tokenVerified === true ||
         user.__authSource === "netlify_context" ||
         user.__authSource === "netlify_custom_context" ||
-        user.__authSource === "netlify_custom_identity"
+        user.__authSource === "netlify_custom_identity" ||
+        user.__authSource === "netlify_identity_user_api" ||
+        user.__authSource === "bearer_payload_verified"
       );
 
       const tokenPayloadOnly = !!user && user.__authSource === "bearer_payload" && !user.__tokenVerified;
