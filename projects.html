@@ -481,12 +481,20 @@
   try { await window.anwInitStore?.({ force: true }); } catch(_) {}
 
   try {
-    window.__anwProjectOwnerAdminAllowed = await anwProjectOwnerAdminAllowed();
+    window.__anwProjectOwnerAdminAllowed = typeof window.anwProjectOwnerAdminAllowed === 'function'
+      ? await window.anwProjectOwnerAdminAllowed()
+      : false;
+
     if (window.__anwProjectOwnerAdminAllowed) {
+      var notice = document.getElementById('anwAccessNotice');
+      if (notice) {
+        notice.style.display = 'none';
+        notice.textContent = '';
+      }
       document.documentElement.classList.remove('anw-private-preauth-hide');
       document.documentElement.classList.remove('anw-private-preauth-hide-fast');
-      var notice = document.getElementById('anwAccessNotice');
-      if (notice) notice.style.display = 'none';
+      document.documentElement.removeAttribute('data-acl-loading');
+      document.body && document.body.removeAttribute('data-acl-loading');
     }
   } catch (_) {
     window.__anwProjectOwnerAdminAllowed = false;
@@ -613,11 +621,11 @@
       var profile = await anwProjectGetCurrentProfile();
       if(!profile || !anwProjectIsApproved(profile)) return false;
       var roles = anwProjectRoleList(profile);
-      return roles.indexOf('owner') >= 0 || roles.indexOf('admin') >= 0;
+      return roles.indexOf('owner') >= 0 || roles.indexOf('admin') >= 0 || roles.indexOf('projects') >= 0 || roles.indexOf('area_coordinator') >= 0;
     } catch (_) {
       return false;
     }
-  }
+  };
 
 
   // ===== Toast =====
@@ -1751,16 +1759,24 @@ async function loadStore(){
 <script id="anwProjectFinalOwnerOverride">
 (async function anwProjectFinalOwnerOverride(){
   try {
-    if (typeof window.anwProjectOwnerAdminAllowed === 'function') {
-      var allowed = await window.anwProjectOwnerAdminAllowed();
-      if (allowed) {
-        var main = document.getElementById('projectsMain');
-        if (main) main.style.display = '';
-        var notice = document.getElementById('anwAccessNotice');
-        if (notice) notice.style.display = 'none';
-        document.documentElement.classList.remove('anw-private-preauth-hide');
-        document.documentElement.classList.remove('anw-private-preauth-hide-fast');
-      }
+    if (typeof window.anwProjectOwnerAdminAllowed !== 'function') return;
+    var allowed = await window.anwProjectOwnerAdminAllowed();
+    if (!allowed) return;
+
+    window.__anwProjectOwnerAdminAllowed = true;
+
+    var notice = document.getElementById('anwAccessNotice');
+    if (notice) {
+      notice.style.display = 'none';
+      notice.textContent = '';
+    }
+
+    document.documentElement.classList.remove('anw-private-preauth-hide');
+    document.documentElement.classList.remove('anw-private-preauth-hide-fast');
+    document.documentElement.removeAttribute('data-acl-loading');
+
+    if (document.body) {
+      document.body.removeAttribute('data-acl-loading');
     }
   } catch (_) {}
 })();
