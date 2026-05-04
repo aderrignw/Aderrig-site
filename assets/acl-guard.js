@@ -303,7 +303,13 @@
       user && user.email,
       user && user.userEmail,
       user && user.loginEmail,
-      user && user.netlifyEmail
+      user && user.netlifyEmail,
+      user && user.ownerEmail,
+      user && user.primaryEmail,
+      user && user.accountEmail,
+      user && user.residentEmail,
+      user && user.user_metadata && user.user_metadata.email,
+      user && user.app_metadata && user.app_metadata.email
     ].map((v) => String(v || "").trim().toLowerCase()).filter(Boolean);
   }
 
