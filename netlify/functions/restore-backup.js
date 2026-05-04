@@ -85,8 +85,9 @@ function collectProfileRoles(user) {
 }
 
 function hasOwnerAccessRole(user) {
+  if (user?.isOwner === true) return true;
   const roles = collectProfileRoles(user).map(normalizeRoleName);
-  return roles.includes("owner") || user?.isOwner === true;
+  return roles.includes("owner");
 }
 
 function isApprovedUser(user) {
@@ -102,9 +103,14 @@ function extractCandidateEmails(user) {
   const values = [
     user?.email,
     user?.user_metadata?.email,
+    user?.app_metadata?.email,
     user?.userEmail,
     user?.loginEmail,
     user?.netlifyEmail,
+    user?.ownerEmail,
+    user?.primaryEmail,
+    user?.accountEmail,
+    user?.residentEmail,
   ];
   return [...new Set(values.map(normalizeEmail).filter(Boolean))];
 }
