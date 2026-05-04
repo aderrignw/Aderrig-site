@@ -46,6 +46,16 @@
     @media (max-width:680px){.hc-guidance-head{align-items:stretch;flex-direction:column}.hc-search{width:100%}.hc-search-meta{text-align:left}}
     @media (max-width:980px){.hc-hero-grid,.hc-grid{grid-template-columns:1fr}}
   </style>
+
+  <style id="help-hide-duplicate-title">
+    /* Hide only the small top badge inside the Help hero. Keep the main H1/H2 title. */
+    body.page-help .hc-hero #hcBadge{
+      display:none !important;
+    }
+    body.page-help .hc-hero h2#hcTitle{
+      margin-top:0;
+    }
+  </style>
 </head>
 <body class="page-help" data-acl-loading="true">
 <header class="site-header">
