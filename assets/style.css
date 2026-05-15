@@ -2539,3 +2539,211 @@ body.page-handbook .hb-category-list{
     padding-right:0 !important;
   }
 }
+
+
+
+/* =========================================================
+   HOME SMART NOTICE PROPORTIONAL SPACING FIX
+   More breathing room, centered bin date tile and better proportional layout.
+   ========================================================= */
+
+#homeNoticesSection .smart-board{
+  grid-template-columns:minmax(0, 1.45fr) minmax(430px, .95fr) !important;
+  gap:32px !important;
+  align-items:center !important;
+  padding:26px 28px !important;
+  min-height:245px !important;
+}
+
+#homeNoticesSection .smart-board-feature{
+  grid-template-columns:150px minmax(0,1fr) !important;
+  gap:22px !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding-right:28px !important;
+  min-height:185px !important;
+}
+
+#homeNoticesSection .smart-board-photo,
+#homeNoticesSection .smart-board-date{
+  width:138px !important;
+  height:118px !important;
+  justify-self:center !important;
+  align-self:center !important;
+  margin:0 auto !important;
+}
+
+#homeNoticesSection .smart-board-date{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  padding:12px 10px !important;
+  border-radius:16px !important;
+}
+
+#homeNoticesSection .smart-board-date__dow{
+  font-size:.82rem !important;
+  line-height:1 !important;
+}
+
+#homeNoticesSection .smart-board-date__day{
+  font-size:2.55rem !important;
+  line-height:.95 !important;
+  margin:7px 0 5px !important;
+  display:block !important;
+  width:100% !important;
+  text-align:center !important;
+}
+
+#homeNoticesSection .smart-board-date__month{
+  font-size:.95rem !important;
+  line-height:1 !important;
+}
+
+#homeNoticesSection .smart-board-copy{
+  max-width:620px !important;
+}
+
+#homeNoticesSection .smart-board-title{
+  font-size:1.42rem !important;
+  line-height:1.14 !important;
+  margin-bottom:8px !important;
+}
+
+#homeNoticesSection .smart-board-message{
+  max-width:64ch !important;
+  font-size:.95rem !important;
+  line-height:1.5 !important;
+  margin-bottom:12px !important;
+}
+
+#homeNoticesSection .smart-board-btn{
+  margin-top:2px !important;
+}
+
+#homeNoticesSection .smart-board-next{
+  padding-left:28px !important;
+  min-height:175px !important;
+  justify-content:center !important;
+}
+
+#homeNoticesSection .smart-board-next-grid{
+  grid-template-columns:repeat(2, minmax(150px, 1fr)) !important;
+  gap:18px !important;
+}
+
+#homeNoticesSection .smart-board button.smart-board-mini,
+#homeNoticesSection .smart-board .smart-board-mini{
+  grid-template-columns:38px minmax(0,1fr) !important;
+  gap:12px !important;
+  padding:0 16px 0 0 !important;
+  min-height:96px !important;
+}
+
+#homeNoticesSection .smart-board-mini:nth-child(2){
+  border-right:0 !important;
+  padding-right:0 !important;
+}
+
+#homeNoticesSection .smart-board-mini:nth-child(n+3){
+  display:none !important;
+}
+
+#homeNoticesSection .smart-board-mini-icon{
+  width:36px !important;
+  height:36px !important;
+}
+
+#homeNoticesSection .smart-board-mini strong{
+  font-size:.86rem !important;
+  line-height:1.25 !important;
+  margin-bottom:7px !important;
+}
+
+#homeNoticesSection .smart-board-mini-copy > span{
+  font-size:.80rem !important;
+  line-height:1.45 !important;
+}
+
+@media (max-width:1080px){
+  #homeNoticesSection .smart-board{
+    grid-template-columns:1fr !important;
+    min-height:0 !important;
+  }
+
+  #homeNoticesSection .smart-board-feature{
+    padding-right:0 !important;
+  }
+
+  #homeNoticesSection .smart-board-next{
+    min-height:0 !important;
+    padding-left:0 !important;
+  }
+
+  #homeNoticesSection .smart-board-next-grid{
+    grid-template-columns:repeat(3, minmax(0,1fr)) !important;
+  }
+
+  #homeNoticesSection .smart-board-mini:nth-child(n+3){
+    display:grid !important;
+  }
+
+  #homeNoticesSection .smart-board-mini:nth-child(2){
+    border-right:1px solid #E6EEE9 !important;
+    padding-right:16px !important;
+  }
+
+  #homeNoticesSection .smart-board-mini:last-child{
+    border-right:0 !important;
+    padding-right:0 !important;
+  }
+}
+
+@media (max-width:720px){
+  #homeNoticesSection .smart-board{
+    padding:15px !important;
+  }
+
+  #homeNoticesSection .smart-board-feature{
+    grid-template-columns:90px 1fr !important;
+    gap:13px !important;
+    min-height:0 !important;
+  }
+
+  #homeNoticesSection .smart-board-photo,
+  #homeNoticesSection .smart-board-date{
+    width:86px !important;
+    height:78px !important;
+  }
+
+  #homeNoticesSection .smart-board-date__day{
+    font-size:1.75rem !important;
+    margin:3px 0 !important;
+  }
+
+  #homeNoticesSection .smart-board-title{
+    font-size:1.08rem !important;
+  }
+
+  #homeNoticesSection .smart-board-message{
+    font-size:.86rem !important;
+  }
+
+  #homeNoticesSection .smart-board-next-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  #homeNoticesSection .smart-board-mini:nth-child(n+3){
+    display:grid !important;
+  }
+
+  #homeNoticesSection .smart-board-mini,
+  #homeNoticesSection .smart-board-mini:nth-child(2),
+  #homeNoticesSection .smart-board-mini:last-child{
+    border-right:0 !important;
+    padding-right:0 !important;
+    min-height:0 !important;
+  }
+}
