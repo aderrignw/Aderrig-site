@@ -35,8 +35,58 @@ main p {
   text-align: justify;
 }
 </style>
+
+<style id="about-team-linklike-fix">
+/* About/Team table: remove heavy green pills from generated buttons */
+.team-table button.linklike,
+.team-table td button.linklike,
+#teamTableBody button.linklike{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  display:inline !important;
+  width:auto !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  background:transparent !important;
+  background-image:none !important;
+  color:#2F6F57 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  filter:none !important;
+  padding:0 !important;
+  margin:0 !important;
+  text-align:left !important;
+  text-decoration:underline !important;
+  text-decoration-thickness:1px !important;
+  text-underline-offset:3px !important;
+  cursor:pointer !important;
+  font:inherit !important;
+  font-weight:700 !important;
+  line-height:1.35 !important;
+  white-space:normal !important;
+}
+
+.team-table button.linklike:hover,
+.team-table td button.linklike:hover,
+#teamTableBody button.linklike:hover{
+  background:transparent !important;
+  background-image:none !important;
+  color:#3E7C66 !important;
+  box-shadow:none !important;
+  filter:none !important;
+  text-decoration-thickness:2px !important;
+}
+
+.team-table td,
+.team-table th{
+  vertical-align:top !important;
+}
+</style>
+
 </head>
-<body data-acl-shell-public="true" data-acl-loading="true">
+<body data-acl-shell-public="true" data-acl-loading="true" class="page-about">
 <header class="site-header">
 <div class="brand">
 <a class="site-logo" href="index.html">
