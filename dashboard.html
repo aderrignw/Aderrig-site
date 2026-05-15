@@ -302,6 +302,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       <div class="field"><label>Vehicle license plate *</label><input id="pkWrongPlate" type="text" placeholder="Example: 221-D-12345"></div>
       <div class="field"><label>Vehicle brand / make *</label><input id="pkWrongBrand" type="text" placeholder="Example: Toyota"></div>
       <div class="field"><label>Vehicle colour *</label><input id="pkWrongColour" type="text" placeholder="Example: Silver"></div>
+      <div class="field"><label>Street name / location *</label><input id="pkWrongStreet" type="text" placeholder="Example: Aderrig Park"></div>
       <div class="field"><label>Apartment / unit number of space owner *</label><input id="pkWrongOwnerApt" type="text" placeholder="Example: Apt 12"></div>
     </div>
 
@@ -313,8 +314,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     </div>
 
     <div class="field">
-      <label>Removal message</label>
-      <textarea id="pkWrongMessage" rows="3">Please remove this vehicle. It is parked in an allocated private parking space.</textarea>
+      <label>Automatic notice message</label>
+      <textarea id="pkWrongMessage" rows="3" readonly>Please remove this vehicle. It is parked in an allocated private parking space.</textarea>
     </div>
 
     <div class="actions profile-actions">
@@ -1770,6 +1771,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     wrongPlate: document.getElementById('pkWrongPlate'),
     wrongBrand: document.getElementById('pkWrongBrand'),
     wrongColour: document.getElementById('pkWrongColour'),
+    wrongStreet: document.getElementById('pkWrongStreet'),
     wrongOwnerApt: document.getElementById('pkWrongOwnerApt'),
     wrongPhoto: document.getElementById('pkWrongPhoto'),
     wrongPhotoPreview: document.getElementById('pkWrongPhotoPreview'),
@@ -1813,9 +1815,10 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     if(pkEls.wrongPlate) pkEls.wrongPlate.value = '';
     if(pkEls.wrongBrand) pkEls.wrongBrand.value = '';
     if(pkEls.wrongColour) pkEls.wrongColour.value = '';
+    if(pkEls.wrongStreet) pkEls.wrongStreet.value = '';
     if(pkEls.wrongOwnerApt) pkEls.wrongOwnerApt.value = '';
     if(pkEls.wrongPhoto) pkEls.wrongPhoto.value = '';
-    if(pkEls.wrongMessage) pkEls.wrongMessage.value = 'Please remove this vehicle. It is parked in an allocated private parking space.';
+    pkSyncWrongMessage();
     if(pkEls.wrongPhotoPreview){ pkEls.wrongPhotoPreview.style.display = 'none'; pkEls.wrongPhotoPreview.innerHTML = ''; }
     pkWrongStatus('');
   }
@@ -1849,6 +1852,26 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       other_parking_issue:'Other parking issue'
     };
     return map[String(value || '')] || 'Parking issue';
+  }
+
+  function pkIssueDefaultMessage(value){
+    const map = {
+      vehicle_in_my_space:'Please remove this vehicle. It is parked in an allocated private parking space.',
+      inappropriate_street_parking:'This vehicle is parked in an inappropriate street location and may obstruct traffic or visibility.',
+      footpath_parking:'This vehicle is parked on the footpath / sidewalk and may obstruct pedestrians.',
+      outside_own_space:'This vehicle appears to be parked outside its own allocated space.',
+      blocking_access:'This vehicle is blocking access, a driveway, an entrance or an exit.',
+      disabled_space:'This vehicle is parked in a disabled parking space. Disabled parking bays are reserved for valid permit holders only.',
+      visitor_space_abuse:'This vehicle appears to be using visitor parking incorrectly.',
+      other_parking_issue:'A parking issue has been reported for this vehicle.'
+    };
+    return map[String(value || '')] || map.vehicle_in_my_space;
+  }
+
+  function pkSyncWrongMessage(){
+    if(!pkEls.wrongMessage) return;
+    const issueType = String(pkEls.wrongIssueType?.value || 'vehicle_in_my_space');
+    pkEls.wrongMessage.value = pkIssueDefaultMessage(issueType);
   }
 
   function pkMaskPlate(plate){
@@ -1950,11 +1973,13 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       const plate = String(pkEls.wrongPlate?.value || '').trim().toUpperCase();
       const brand = String(pkEls.wrongBrand?.value || '').trim();
       const colour = String(pkEls.wrongColour?.value || '').trim();
+      const street = String(pkEls.wrongStreet?.value || '').trim();
       const ownerApt = String(pkEls.wrongOwnerApt?.value || '').trim();
-      const message = String(pkEls.wrongMessage?.value || '').trim();
+      pkSyncWrongMessage();
+      const message = String(pkEls.wrongMessage?.value || pkIssueDefaultMessage(issueType)).trim();
 
-      if(!plate || !brand || !colour || !ownerApt){
-        pkWrongStatus('Please choose an issue type and complete plate, brand, colour and owner apartment/unit number.', 'error');
+      if(!plate || !brand || !colour || !street || !ownerApt){
+        pkWrongStatus('Please choose an issue type and complete plate, brand, colour, street name and owner apartment/unit number.', 'error');
         return;
       }
       if(!(pkEls.wrongPhoto && pkEls.wrongPhoto.files && pkEls.wrongPhoto.files.length)){
@@ -1988,6 +2013,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         plate,
         brand,
         colour,
+        street,
         ownerApt,
         reporterEmail: currentEmail || '',
         reporterName: sub.residentName || '',
@@ -2006,7 +2032,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         id:'parking-public-' + Date.now(),
         category:'parking',
         title: issueLabel,
-        message:`${brand} ${colour} vehicle ${pkMaskPlate(plate)} reported. Please move the vehicle if it is yours.`,
+        message:`${issueLabel}. ${colour} ${brand} vehicle ${pkMaskPlate(plate)} reported on ${street}. ${message}`,
         createdAt: now,
         expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
         home:{ enabled:true, visibility:'public' },
@@ -2016,6 +2042,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
           plateMasked: pkMaskPlate(plate),
           brand,
           colour,
+          street,
           issueType,
           issueLabel,
           photoDataUrl: photo ? photo.dataUrl : ''
@@ -2085,6 +2112,8 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const vehicle = { plate: pkEls.plate.value.trim().toUpperCase(), type: pkEls.type.value.trim(), brand: pkEls.brand.value.trim(), model: pkEls.model.value.trim(), colour: pkEls.colour.value.trim(), fuel: pkEls.fuel.value.trim(), status:'Active', createdAt: now };
     if(!vehicle.plate){ pkMessage('License plate is required.','error'); return; }
     sub.noVehicleDeclared = false; sub.noVehicleDeclaredAt = ''; sub.parkingOccupancyStatus = 'vehicle_registered'; sub.adminReportFlag = ''; sub.vehicles = Array.isArray(sub.vehicles) ? sub.vehicles : []; sub.vehicles.push(vehicle); sub.acceptanceHistory = Array.isArray(sub.acceptanceHistory) ? sub.acceptanceHistory : []; sub.acceptanceHistory.push({ acceptedAt: now, mode:'vehicle_registration', vehicleCount:1, vehicles:[vehicle.plate] }); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); pkMessage('Vehicle registration saved.'); }
+  pkEls.wrongIssueType?.addEventListener('change', pkSyncWrongMessage);
+  pkSyncWrongMessage();
   pkEls.wrongSave?.addEventListener('click', pkSaveWrongParkingReport);
   pkEls.wrongClear?.addEventListener('click', pkWrongClearForm);
   pkEls.wrongPhoto?.addEventListener('change', () => {
