@@ -1983,7 +1983,6 @@
           eircode: r.eircode || sub.eircode || '',
           parkingSpace: r.spaceDisplay || sub.spaceDisplay || '',
           street: r.street || '',
-          ownerApt: r.ownerApt || '',
           issueType: r.issueLabel || r.issueType || '',
           plate: r.plate || '',
           brand: r.brand || '',
@@ -1998,9 +1997,9 @@
 
     rows.sort((a,b) => String(b.createdAt).localeCompare(String(a.createdAt)));
 
-    const head = ['Date / Time','Reporter Name','Reporter Email','Address','Eircode','Parking Space','Street','Owner Apt','Issue Type','Plate','Brand','Colour','Message','Photo Name','Photo Size','Photo Type'];
+    const head = ['Date / Time','Reporter Name','Reporter Email','Address','Eircode','Parking Space','Street','Issue Type','Plate','Brand','Colour','Message','Photo Name','Photo Size','Photo Type'];
     const csv = [head.join(',')].concat(rows.map((r) => [
-      r.createdAt,r.reporterName,r.reporterEmail,r.address,r.eircode,r.parkingSpace,r.street,r.ownerApt,r.issueType,r.plate,r.brand,r.colour,r.message,r.photoName,r.photoSize,r.photoType
+      r.createdAt,r.reporterName,r.reporterEmail,r.address,r.eircode,r.parkingSpace,r.street,r.issueType,r.plate,r.brand,r.colour,r.message,r.photoName,r.photoSize,r.photoType
     ].map(v => `"${String(v == null ? '' : v).replace(/"/g,'""')}"`).join(','))).join('\n');
 
     downloadText('parking-issue-history.csv', csv, 'text/csv');
