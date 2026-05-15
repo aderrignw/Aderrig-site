@@ -1937,10 +1937,6 @@ body.page-help .hc-quick-btn{
   display:block !important;
 }
 
-.home-notices-list.smart-notice-list > *:not(.smart-notice-card){
-  display:none !important;
-}
-
 .smart-notice-card{
   max-width:100%;
 }
@@ -1948,17 +1944,132 @@ body.page-help .hc-quick-btn{
 
 
 /* =========================================================
-   HOME SMART NOTICE BOARD — MOCKUP MATCH
-   Featured notice on the left + compact Next up notices on the right.
+   HANDBOOK RESTORE
+   Protects Handbook internal layout from global button/tab styling.
+   Keeps category buttons, item title buttons and action buttons light/clean.
    ========================================================= */
+
+body.page-handbook .hb-cat-btn{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  width:100% !important;
+  display:flex !important;
+  justify-content:space-between !important;
+  align-items:center !important;
+  gap:12px !important;
+  padding:12px 14px !important;
+  border:1px solid var(--hb-border, rgba(17,24,39,.08)) !important;
+  border-radius:16px !important;
+  background:#FFFFFF !important;
+  color:var(--hb-text, #23344b) !important;
+  box-shadow:none !important;
+  filter:none !important;
+  font:inherit !important;
+  font-weight:700 !important;
+  text-align:left !important;
+  white-space:normal !important;
+  min-height:0 !important;
+}
+
+body.page-handbook .hb-cat-btn:hover{
+  background:#fbfcfd !important;
+}
+
+body.page-handbook .hb-cat-btn.is-active{
+  background:var(--hb-accent, #edf5ef) !important;
+  border-color:rgba(33,91,63,.18) !important;
+  color:var(--hb-text, #23344b) !important;
+}
+
+body.page-handbook .hb-item-title-btn{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  display:inline !important;
+  background:transparent !important;
+  border:0 !important;
+  border-radius:0 !important;
+  color:inherit !important;
+  box-shadow:none !important;
+  filter:none !important;
+  padding:0 !important;
+  margin:0 !important;
+  font:inherit !important;
+  font-weight:inherit !important;
+  line-height:inherit !important;
+  text-align:left !important;
+  text-decoration:none !important;
+  cursor:pointer !important;
+  white-space:normal !important;
+}
+
+body.page-handbook .hb-item-title-btn:hover{
+  background:transparent !important;
+  text-decoration:underline !important;
+}
+
+body.page-handbook .hb-more-btn,
+body.page-handbook .hb-download,
+body.page-handbook .hb-close-btn{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-height:38px !important;
+  padding:0 14px !important;
+  border-radius:999px !important;
+  border:1px solid var(--hb-border, rgba(17,24,39,.08)) !important;
+  background:#FFFFFF !important;
+  color:var(--hb-text, #23344b) !important;
+  box-shadow:none !important;
+  filter:none !important;
+  text-decoration:none !important;
+  font:inherit !important;
+  font-weight:700 !important;
+  font-size:.92rem !important;
+  cursor:pointer !important;
+  white-space:nowrap !important;
+}
+
+body.page-handbook .hb-more-btn:hover,
+body.page-handbook .hb-download:hover,
+body.page-handbook .hb-close-btn:hover{
+  background:#fbfcfd !important;
+  color:var(--hb-text, #23344b) !important;
+  text-decoration:none !important;
+}
+
+body.page-handbook .hb-pill,
+body.page-handbook .hb-count{
+  box-shadow:none !important;
+  filter:none !important;
+}
+
+body.page-handbook .hb-feed,
+body.page-handbook .hb-category-list{
+  align-items:stretch !important;
+}
+
+
+
+/* =========================================================
+   HOME SMART NOTICE BOARD — FINAL STABLE VERSION
+   Featured notice/image on the left + compact Next up notices on the right.
+   Prevents the Home notices area from appearing blank.
+   ========================================================= */
+
+.home-notices-section{
+  overflow:hidden;
+}
 
 .home-notices-list.smart-notice-list{
   display:block !important;
+  min-height:0 !important;
 }
 
 .smart-board{
   display:grid;
-  grid-template-columns:minmax(0, 1.25fr) minmax(300px, .95fr);
+  grid-template-columns:minmax(0, 1.15fr) minmax(300px, .95fr);
   gap:20px;
   align-items:stretch;
   padding:18px;
@@ -2010,13 +2121,28 @@ body.page-help .hc-quick-btn{
   gap:7px;
   padding:4px 10px;
   border-radius:999px;
-  background:#FFE9EA;
-  color:#D72638;
+  background:#EAF3EE;
+  color:#2F6F57;
   font-size:12px;
   font-weight:900;
   text-transform:uppercase;
   letter-spacing:.02em;
   margin-bottom:8px;
+}
+
+.smart-board-kicker--parking{
+  background:#FFE9EA;
+  color:#D72638;
+}
+
+.smart-board-kicker--safety{
+  background:#EAF3EE;
+  color:#2F6F57;
+}
+
+.smart-board-kicker--waste{
+  background:#EDF7F0;
+  color:#23764E;
 }
 
 .smart-board-title{
@@ -2040,7 +2166,7 @@ body.page-help .hc-quick-btn{
   color:#6B7280;
   font-size:.84rem;
   font-weight:700;
-  margin:8px 0 12px;
+  margin:8px 0 0;
 }
 
 .smart-board-details span{
@@ -2053,16 +2179,6 @@ body.page-help .hc-quick-btn{
   content:'•';
   color:#3E7C66;
   margin-right:6px;
-}
-
-.smart-board-btn{
-  min-height:38px;
-  padding:0 18px;
-  border-radius:9px;
-  background:#0B6B3A;
-  color:#FFFFFF;
-  font-weight:800;
-  box-shadow:0 6px 16px rgba(11,107,58,.18);
 }
 
 .smart-board-next{
@@ -2111,6 +2227,21 @@ body.page-help .hc-quick-btn{
   background:#EAF3EE;
   color:#2F6F57;
   font-size:1.1rem;
+}
+
+.smart-board-mini-icon--parking{
+  background:#E9F2FF;
+  color:#1D4ED8;
+}
+
+.smart-board-mini-icon--safety{
+  background:#EAF3EE;
+  color:#2F6F57;
+}
+
+.smart-board-mini-icon--waste{
+  background:#F1F7F3;
+  color:#23764E;
 }
 
 .smart-board-mini strong{
