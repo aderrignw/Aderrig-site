@@ -1,3 +1,4 @@
+
 /* Unified site header */
 .site-header{
   position: sticky;
@@ -106,14 +107,35 @@ body{
 /* -------------------- Tokens -------------------- */
 :root{
   --container:1100px;
-  --brand:#1f6f4a;
-  --brand-soft:rgba(31,111,74,.12);
-  --border:rgba(17,24,39,.10);
-  --shadow:0 8px 22px rgba(17,24,39,.06);
+
+  /* ADERRIGNW — SOFT CLEAN PREMIUM PALETTE */
+  --bg:#F6F8F5;
+  --bg-main:#F6F8F5;
+  --bg-soft:#F9FBF8;
+  --card:#FFFFFF;
+
+  --brand:#3E7C66;
+  --brand-600:#3E7C66;
+  --brand-hover:#4C9277;
+  --brand-soft:#EAF3EE;
+  --brand-very-soft:#F1F7F3;
+
+  --text:#1F2937;
+  --muted:#6B7280;
+  --muted-2:#87908A;
+
+  --border:#E7ECE8;
+  --border-soft:#DCE5DF;
+
+  --shadow:0 10px 28px rgba(15,23,20,.045);
+  --shadow-sm:0 4px 14px rgba(15,23,20,.035);
+
   --radius:18px;
   --radius-sm:12px;
-  --card:#ffffff;
-  --muted:#6b7280;
+
+  --footer-bg:#F8FAF8;
+  --footer-text:#6B7280;
+  --footer-link:#3E7C66;
 }
 
 /* Utilities */
@@ -1297,4 +1319,557 @@ nav a .anw-nav-badge{
     overflow-x:auto;
     justify-content:flex-start;
   }
+}
+
+
+
+/* =========================================================
+   ADERRIGNW — SOFT CLEAN PREMIUM FINAL THEME
+   Green is now an accent color, not a heavy background.
+   ========================================================= */
+
+html,
+body{
+  background:var(--bg-main) !important;
+  color:var(--text) !important;
+}
+
+body{
+  font-family:system-ui, -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+}
+
+/* Header stays light and elegant */
+.site-header,
+header,
+.navbar{
+  background:rgba(255,255,255,.94) !important;
+  border-bottom:1px solid var(--border) !important;
+  box-shadow:0 2px 10px rgba(15,23,20,.035) !important;
+  backdrop-filter:blur(10px);
+}
+
+/* Navigation */
+nav a,
+.site-header a,
+.navbar a{
+  color:var(--brand) !important;
+}
+
+nav a:hover,
+.site-header a:hover,
+.navbar a:hover{
+  color:var(--brand-hover) !important;
+}
+
+nav a.active,
+.site-header a.active,
+.navbar a.active{
+  background:var(--brand-soft) !important;
+  color:var(--brand) !important;
+  border-radius:999px;
+}
+
+/* Main surfaces */
+main,
+.page,
+.container-wrap,
+.content-wrap{
+  background:transparent !important;
+}
+
+.card,
+.panel,
+.notice-card,
+.quick-link,
+.lookup-card,
+.resource-card,
+.section-card,
+.dashboard-card,
+.tile,
+.box{
+  background:var(--card) !important;
+  border:1px solid var(--border) !important;
+  border-radius:18px !important;
+  box-shadow:var(--shadow) !important;
+}
+
+/* Softer informational blocks */
+.notice,
+.alert,
+.alert-box,
+.info-box,
+.support-box{
+  background:var(--bg-soft) !important;
+  border:1px solid var(--border-soft) !important;
+  color:var(--text) !important;
+}
+
+/* Buttons */
+button,
+.btn,
+.primary-btn,
+.button,
+input[type="submit"]{
+  background:var(--brand) !important;
+  color:#FFFFFF !important;
+  border:1px solid var(--brand) !important;
+  border-radius:999px !important;
+  box-shadow:0 6px 14px rgba(62,124,102,.16) !important;
+  transition:all .2s ease;
+}
+
+button:hover,
+.btn:hover,
+.primary-btn:hover,
+.button:hover,
+input[type="submit"]:hover{
+  background:var(--brand-hover) !important;
+  border-color:var(--brand-hover) !important;
+  transform:translateY(-1px);
+}
+
+.btn-secondary,
+.secondary-btn,
+button.secondary{
+  background:#FFFFFF !important;
+  color:var(--brand) !important;
+  border:1px solid var(--border-soft) !important;
+  box-shadow:var(--shadow-sm) !important;
+}
+
+/* Forms */
+input,
+select,
+textarea{
+  background:#FFFFFF !important;
+  color:var(--text) !important;
+  border:1px solid var(--border-soft) !important;
+  border-radius:14px !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+  outline:none !important;
+  border-color:var(--brand) !important;
+  box-shadow:0 0 0 4px rgba(62,124,102,.10) !important;
+}
+
+/* Links and text */
+a{
+  color:var(--brand);
+}
+
+a:hover{
+  color:var(--brand-hover);
+}
+
+p,
+small,
+.meta,
+.muted,
+.subtitle,
+.description{
+  color:var(--muted);
+}
+
+h1,h2,h3,h4,h5,h6{
+  color:var(--text);
+}
+
+/* Footer fixed: no dark green block */
+footer,
+.site-footer,
+.footer{
+  background:var(--footer-bg) !important;
+  color:var(--footer-text) !important;
+  border-top:1px solid var(--border) !important;
+  box-shadow:none !important;
+}
+
+footer *,
+.site-footer *,
+.footer *{
+  color:var(--footer-text) !important;
+}
+
+footer a,
+.site-footer a,
+.footer a{
+  color:var(--footer-link) !important;
+  font-weight:600;
+}
+
+footer a:hover,
+.site-footer a:hover,
+.footer a:hover{
+  color:var(--brand-hover) !important;
+}
+
+/* Remove heavy green backgrounds from broad layout areas */
+[style*="background: var(--navbar-gradient)"],
+[style*="background:var(--navbar-gradient)"]{
+  background:var(--footer-bg) !important;
+}
+
+/* Tables */
+table{
+  background:#FFFFFF !important;
+  border:1px solid var(--border) !important;
+  border-radius:16px !important;
+  overflow:hidden;
+}
+
+th{
+  background:var(--brand-very-soft) !important;
+  color:var(--text) !important;
+}
+
+/* Badges */
+.badge,
+.tag,
+.pill{
+  background:var(--brand-soft) !important;
+  color:var(--brand) !important;
+  border:1px solid var(--border-soft) !important;
+}
+
+
+
+
+/* =========================================================
+   HEADER FIX — LIGHT PREMIUM HEADER
+   ========================================================= */
+
+.site-header,
+header,
+.navbar,
+.topbar{
+    background: #FFFFFF !important;
+    border-bottom: 1px solid #E7ECE8 !important;
+    box-shadow: 0 2px 10px rgba(15,23,20,.03) !important;
+    backdrop-filter: blur(10px);
+}
+
+/* Logo visibility */
+.site-header img,
+.navbar img,
+.logo img{
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+/* Navigation text */
+.site-header a,
+.navbar a,
+.topbar a,
+nav a{
+    color: #3E7C66 !important;
+    font-weight: 600;
+}
+
+/* Hover */
+.site-header a:hover,
+.navbar a:hover,
+.topbar a:hover,
+nav a:hover{
+    color: #4C9277 !important;
+}
+
+/* Active menu item — scoped only to the TOP HEADER */
+.site-header nav a.active,
+.site-header .nav a.active,
+header nav a.active,
+.navbar nav a.active,
+.topbar nav a.active{
+    background: #EAF3EE !important;
+    color: #3E7C66 !important;
+    border-radius: 999px;
+    padding: 10px 16px;
+}
+
+
+
+
+/* Header remains independent */
+.site-header nav a,
+header nav a,
+.navbar nav a,
+.topbar nav a{
+    display:inline-flex;
+    align-items:center;
+    white-space:nowrap;
+}
+
+
+/* =========================================================
+   ABOUT PAGE ONLY — ROLE LABEL REFINEMENT
+   This is intentionally limited to about.html.
+   It will NOT affect Dashboard / Garda / Security sub tabs.
+   ========================================================= */
+
+body.about-page main table a,
+body.about-page .roles-table a,
+body.about-page .team-table a,
+body.about-page .volunteers-table a{
+    display:inline-flex;
+    align-items:center;
+    max-width:100%;
+    min-height:0;
+    padding:4px 9px !important;
+    font-size:13px !important;
+    line-height:1.25 !important;
+    font-weight:650 !important;
+    border-radius:999px !important;
+    background:#EAF3EE !important;
+    color:#3E7C66 !important;
+    border:1px solid #DCE5DF !important;
+    box-shadow:none !important;
+    text-decoration:none !important;
+    white-space:normal !important;
+}
+
+body.about-page main table a:hover,
+body.about-page .roles-table a:hover,
+body.about-page .team-table a:hover,
+body.about-page .volunteers-table a:hover{
+    background:#F1F7F3 !important;
+    color:#4C9277 !important;
+}
+
+/* Dashboard / Garda / Security tabs protected */
+body:not(.about-page) main table a,
+body:not(.about-page) .subtab a,
+body:not(.about-page) .tab a,
+body:not(.about-page) .tabs a,
+body:not(.about-page) .dashboard-tabs a{
+    box-shadow:revert-layer;
+}
+
+
+/* =========================================================
+   TOP NAV ACTIVE STATE — SITE-WIDE CHECKED
+   Shows clearly which tab/page the resident is viewing.
+   Scoped only to the top navigation links.
+   ========================================================= */
+
+.site-header nav a.active,
+header nav a.active,
+.navbar nav a.active,
+.topbar nav a.active,
+.site-header a[aria-current="page"],
+header a[aria-current="page"],
+.navbar a[aria-current="page"],
+.topbar a[aria-current="page"]{
+  background:#EAF3EE !important;
+  color:#2F6F57 !important;
+  border:1px solid #DCE5DF !important;
+  border-radius:999px !important;
+  box-shadow:0 3px 10px rgba(62,124,102,.08) !important;
+  font-weight:700 !important;
+}
+
+.site-header nav a.active:hover,
+header nav a.active:hover,
+.navbar nav a.active:hover,
+.topbar nav a.active:hover,
+.site-header a[aria-current="page"]:hover,
+header a[aria-current="page"]:hover,
+.navbar a[aria-current="page"]:hover,
+.topbar a[aria-current="page"]:hover{
+  background:#F1F7F3 !important;
+  color:#3E7C66 !important;
+}
+
+
+
+/* =========================================================
+   PARKING — WRONG VEHICLE REPORT
+   Resident report form for vehicle parked in allocated space.
+   ========================================================= */
+
+#pkWrongParkingCard{
+  background:#FFFFFF !important;
+}
+
+.wrong-parking-banner{
+  background:#F9FBF8 !important;
+  border-color:#DCE5DF !important;
+}
+
+.wrong-parking-preview{
+  margin-top:10px;
+  border:1px solid #E7ECE8;
+  border-radius:14px;
+  background:#F9FBF8;
+  padding:10px;
+  max-width:360px;
+}
+
+.wrong-parking-preview img{
+  display:block;
+  width:100%;
+  max-height:240px;
+  object-fit:cover;
+  border-radius:12px;
+}
+
+#pkWrongHistoryWrap table td,
+#pkWrongHistoryWrap table th{
+  font-size:13px;
+}
+
+@media (max-width: 760px){
+  .wrong-parking-grid{
+    grid-template-columns:1fr !important;
+  }
+}
+
+
+
+/* =========================================================
+   HOME — SMART NOTICE ROTATION
+   Compact, one notice at a time. Prevents duplicated/heavy blocks.
+   ========================================================= */
+
+.home-notices-section .home-notices-title{
+  margin-bottom:12px;
+}
+
+.smart-notice-list{
+  display:block !important;
+  min-height:126px;
+}
+
+.smart-notice-card{
+  grid-template-columns:112px 1fr;
+  align-items:center;
+  gap:16px;
+  padding:14px;
+  border:1px solid #E7ECE8;
+  border-radius:18px;
+  background:#FFFFFF;
+  box-shadow:0 8px 22px rgba(15,23,20,.045);
+  animation:smartNoticeFade .32s ease both;
+}
+
+.smart-notice-card.has-photo{
+  grid-template-columns:132px 1fr;
+}
+
+.smart-notice-media{
+  width:112px;
+  height:92px;
+  border-radius:16px;
+  background:#F1F7F3;
+  border:1px solid #DCE5DF;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  color:#3E7C66;
+}
+
+.smart-notice-card.has-photo .smart-notice-media{
+  width:132px;
+}
+
+.smart-notice-media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.smart-notice-media span{
+  font-size:1.6rem;
+}
+
+.smart-notice-body{
+  min-width:0;
+}
+
+.smart-notice-topline{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:4px;
+}
+
+.smart-notice-kicker{
+  display:inline-flex;
+  padding:3px 9px;
+  border-radius:999px;
+  background:#EAF3EE;
+  color:#3E7C66;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+}
+
+.smart-notice-count{
+  color:#87908A;
+  font-size:12px;
+  font-weight:700;
+}
+
+.smart-notice-title{
+  margin:0 0 4px;
+  color:#1F2937;
+  font-size:1.02rem;
+  line-height:1.25;
+}
+
+.smart-notice-message{
+  color:#4B5563;
+  font-size:.92rem;
+  line-height:1.45;
+}
+
+.smart-notice-meta{
+  margin-top:6px;
+  color:#6B7280;
+  font-size:12px;
+  font-weight:650;
+}
+
+@keyframes smartNoticeFade{
+  from{ opacity:0; transform:translateY(4px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+
+@media (max-width: 640px){
+  .smart-notice-card,
+  .smart-notice-card.has-photo{
+    grid-template-columns:86px 1fr;
+    gap:12px;
+    padding:12px;
+  }
+  .smart-notice-media,
+  .smart-notice-card.has-photo .smart-notice-media{
+    width:86px;
+    height:74px;
+    border-radius:14px;
+  }
+  .smart-notice-title{
+    font-size:.96rem;
+  }
+  .smart-notice-message{
+    font-size:.86rem;
+  }
+}
+
+/* Parking report form refinements */
+#pkWrongIssueType{
+  min-height:44px;
+}
+
+#pkWrongParkingCard .wrong-parking-preview{
+  max-width:280px;
+}
+
+#pkWrongParkingCard .wrong-parking-preview img{
+  max-height:180px;
 }
