@@ -1378,12 +1378,22 @@
     return String(it?.vehicle?.photoDataUrl || it?.photoDataUrl || it?.image || '').trim();
   }
 
-  function compactNoticeHtml(it, idx, total){
-    if (it?._displayCustomHtml && !it?.parkingAutoNotice) return it._displayCustomHtml;
+  function smartNoticeTitle(it){
+    if(String(it?.id || '') === 'misdelivered_mail_board') return 'Mail Delivery Issues';
+    return String(it?.title || 'Notice');
+  }
 
+  function smartNoticeMessage(it){
+    if(String(it?.id || '') === 'misdelivered_mail_board'){
+      return 'Report either misdelivered mail received at your address or mail you expected but did not receive.';
+    }
+    return String(it?.message || it?.text || '');
+  }
+
+  function compactNoticeHtml(it, idx, total){
     const variant = it?._displayVariant || pickVariant(it);
-    const title = esc(it?.title || 'Notice');
-    const msgHtml = it?._displayMessageHtml || esc(it?.message || it?.text || '');
+    const title = esc(smartNoticeTitle(it));
+    const msgHtml = it?._displayMessageHtml || esc(smartNoticeMessage(it));
     const meta = String(it?._displayMeta || '').trim();
     const photo = parkingNoticeImage(it);
     const isParking = !!it?.parkingAutoNotice || normalizeText(it?.category) === 'parking' || /parking/i.test(String(it?.title || it?.message || ''));
@@ -1425,7 +1435,30 @@
     }, 6500);
   }
 
+  function dedupeSmartNotices(items){
+    const out = [];
+    let disabledSeen = false;
+    const seenIds = new Set();
+
+    (Array.isArray(items) ? items : []).forEach((it) => {
+      const id = String(it?.id || '').trim();
+      if(id && seenIds.has(id)) return;
+      if(id) seenIds.add(id);
+
+      const blob = String((it?.title || '') + ' ' + (it?.message || it?.text || '')).toLowerCase();
+      const isDisabledParking = /disabled\s+parking|disabled\s+parking\s+bay|accessible\s+parking/.test(blob);
+      if(isDisabledParking){
+        if(disabledSeen) return;
+        disabledSeen = true;
+      }
+      out.push(it);
+    });
+
+    return out;
+  }
+
   function render(items){
+    items = dedupeSmartNotices(items);
     if (!Array.isArray(items) || !items.length) {
       renderPlaceholder();
       return;
@@ -1656,7 +1689,7 @@
         ...(mailBoard ? [mailBoard] : [])
       ];
 
-      const hasDisabledParking = merged.some((it) => /disabled\s+parking|disabled\s+parking\s+bay|accessible\s+parking/i.test(String((it && (it.title || it.message || it.text)) || '')));
+      const hasDisabledParking = merged.some((it) => /disabled\s+parking|disabled\s+parking\s+bay|accessible\s+parking|permit\s+holders/i.test(String((it && ((it.title || '') + ' ' + (it.message || it.text || ''))) || '')));
       if(!hasDisabledParking){
         merged.splice(Math.min(1, merged.length), 0, disabledParkingFallback);
       }
