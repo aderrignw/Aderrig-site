@@ -1403,13 +1403,23 @@
     return String(it?._displayMessageHtml ? stripHtml(it._displayMessageHtml) : (it?.message || it?.text || it?.description || ''));
   }
 
+  function isBinSmartNotice(it){
+    const blob = String((it?.id || '') + ' ' + (it?.category || '') + ' ' + smartNoticeTitle(it) + ' ' + smartNoticeMessage(it)).toLowerCase();
+    return blob.includes('bin_summary') || blob.includes(' bin') || blob.includes('waste') || blob.includes('recycling') || blob.includes('panda');
+  }
+
+  function isParkingSmartNotice(it){
+    const blob = String((it?.category || '') + ' ' + smartNoticeTitle(it) + ' ' + smartNoticeMessage(it)).toLowerCase();
+    return !!it?.parkingAutoNotice || blob.includes('parking') || blob.includes('vehicle');
+  }
+
   function smartNoticeIcon(it){
     const blob = String((it?.category || '') + ' ' + smartNoticeTitle(it) + ' ' + smartNoticeMessage(it)).toLowerCase();
-    if(!!it?.parkingAutoNotice || blob.includes('parking')) return '🅿️';
+    if(isParkingSmartNotice(it)) return '🅿️';
     if(blob.includes('disabled') || blob.includes('accessible') || blob.includes('permit holder')) return '♿';
     if(blob.includes('garda') || blob.includes('safety') || blob.includes('crime')) return '🛡️';
     if(blob.includes('mail') || blob.includes('parcel') || blob.includes('delivery')) return '📬';
-    if(blob.includes('bin') || blob.includes('waste') || blob.includes('recycling')) return '♻️';
+    if(isBinSmartNotice(it)) return '♻️';
     if(blob.includes('clean') || blob.includes('community')) return '👥';
     return '📢';
   }
@@ -1417,9 +1427,9 @@
   function smartNoticeKicker(it){
     const blob = String((it?.category || '') + ' ' + smartNoticeTitle(it) + ' ' + smartNoticeMessage(it)).toLowerCase();
     if(!!it?.parkingAutoNotice) return 'Parking Alert';
-    if(blob.includes('parking')) return 'Parking Notice';
+    if(isParkingSmartNotice(it)) return 'Parking Notice';
     if(blob.includes('disabled') || blob.includes('accessible')) return 'Parking Reminder';
-    if(blob.includes('bin') || blob.includes('waste')) return 'Waste Notice';
+    if(isBinSmartNotice(it)) return 'Waste Notice';
     if(blob.includes('garda') || blob.includes('safety')) return 'Garda Safety Notice';
     if(blob.includes('mail') || blob.includes('delivery')) return 'Mail Notice';
     return 'Live Update';
@@ -1427,10 +1437,47 @@
 
   function smartNoticeTone(it){
     const blob = String((it?.category || '') + ' ' + smartNoticeTitle(it) + ' ' + smartNoticeMessage(it)).toLowerCase();
-    if(!!it?.parkingAutoNotice || blob.includes('parking')) return 'parking';
+    if(isParkingSmartNotice(it)) return 'parking';
     if(blob.includes('garda') || blob.includes('safety')) return 'safety';
-    if(blob.includes('bin') || blob.includes('waste')) return 'waste';
+    if(isBinSmartNotice(it)) return 'waste';
     return 'default';
+  }
+
+  function smartNoticeCta(it){
+    const id = String(it?.id || '');
+    if(id === 'misdelivered_mail_board') return { label:'+ Add mail issue', attrs:'data-mail-action="add"' };
+    if(isParkingSmartNotice(it)) return { label:'View details', attrs:`data-smart-details="${esc(id)}"` };
+    if(isBinSmartNotice(it)) return { label:'View collection details', attrs:`data-smart-details="${esc(id)}"` };
+    return { label:'Read notice', attrs:`data-smart-details="${esc(id)}"` };
+  }
+
+  function dateFromNotice(it){
+    const raw = it?._sortTs || it?.date || it?.collectionDate || it?.createdAt || it?.startsAt || '';
+    const d = raw && !Number.isNaN(Number(raw)) ? new Date(Number(raw)) : parseDateValue(raw);
+    return d && !Number.isNaN(d.getTime()) ? d : new Date();
+  }
+
+  function smartBoardMediaHtml(it){
+    const photo = parkingNoticeImage(it);
+    if(photo){
+      return `<div class="smart-board-photo smart-board-photo--image" aria-hidden="true"><img src="${esc(photo)}" alt=""></div>`;
+    }
+
+    if(isBinSmartNotice(it)){
+      const d = dateFromNotice(it);
+      const dow = esc(d.toLocaleDateString('en-IE', { weekday:'short' }));
+      const day = esc(String(d.getDate()));
+      const month = esc(d.toLocaleDateString('en-IE', { month:'short' }));
+      return `
+        <div class="smart-board-date" aria-hidden="true">
+          <div class="smart-board-date__dow">${dow}</div>
+          <div class="smart-board-date__day">${day}</div>
+          <div class="smart-board-date__month">${month}</div>
+        </div>
+      `;
+    }
+
+    return `<div class="smart-board-photo smart-board-photo--icon" aria-hidden="true"><span>${smartNoticeIcon(it)}</span></div>`;
   }
 
   function dedupeSmartNotices(items){
@@ -1449,7 +1496,6 @@
         if(disabledSeen) return;
         disabledSeen = true;
       }
-
       out.push(it);
     });
 
@@ -1480,15 +1526,15 @@
 
   function smartNoticeFeaturedHtml(it, idx, total){
     const tone = esc(smartNoticeTone(it));
-    const title = esc(shortText(smartNoticeTitle(it), 80));
-    const msg = esc(shortText(smartNoticeMessage(it), 170));
-    const photo = parkingNoticeImage(it);
+    const title = esc(shortText(smartNoticeTitle(it), 82));
+    const msg = esc(shortText(smartNoticeMessage(it), isParkingSmartNotice(it) ? 150 : 190));
     const icon = smartNoticeIcon(it);
     const kicker = esc(smartNoticeKicker(it));
     const vehicle = it?.vehicle || {};
     const meta = String(it?._displayMeta || '').trim();
+    const cta = smartNoticeCta(it);
 
-    const vehicleLine = vehicle && (vehicle.brand || vehicle.colour || vehicle.plateMasked)
+    const detailLine = vehicle && (vehicle.brand || vehicle.colour || vehicle.plateMasked || vehicle.street)
       ? `<div class="smart-board-details">
           <span>${esc([vehicle.colour, vehicle.brand].filter(Boolean).join(' ') || 'Vehicle')}</span>
           ${vehicle.plateMasked ? `<span>${esc(vehicle.plateMasked)}</span>` : ''}
@@ -1499,14 +1545,13 @@
 
     return `
       <div class="smart-board-feature smart-board-feature--${tone}">
-        <div class="smart-board-photo" aria-hidden="true">
-          ${photo ? `<img src="${esc(photo)}" alt="">` : `<span>${icon}</span>`}
-        </div>
+        ${smartBoardMediaHtml(it)}
         <div class="smart-board-copy">
           <div class="smart-board-kicker smart-board-kicker--${tone}"><span aria-hidden="true">${icon}</span>${kicker}</div>
           <h4 class="smart-board-title">${title}</h4>
           <p class="smart-board-message">${msg}</p>
-          ${vehicleLine}
+          ${detailLine}
+          <button type="button" class="smart-board-btn" ${cta.attrs}>${esc(cta.label)}</button>
         </div>
       </div>
     `;
@@ -1527,18 +1572,40 @@
       <div class="smart-board-next">
         <div class="smart-board-next-title">Next up</div>
         <div class="smart-board-next-grid">
-          ${next.map((it) => `
-            <div class="smart-board-mini">
-              <div class="smart-board-mini-icon smart-board-mini-icon--${esc(smartNoticeTone(it))}" aria-hidden="true">${smartNoticeIcon(it)}</div>
-              <div>
-                <strong>${esc(shortText(smartNoticeTitle(it), 42))}</strong>
-                <p>${esc(shortText(smartNoticeMessage(it), 78))}</p>
-              </div>
-            </div>
+          ${next.map((it, nidx) => `
+            <button type="button" class="smart-board-mini" data-smart-jump="${nidx + 1}">
+              <span class="smart-board-mini-icon smart-board-mini-icon--${esc(smartNoticeTone(it))}" aria-hidden="true">${smartNoticeIcon(it)}</span>
+              <span class="smart-board-mini-copy">
+                <strong>${esc(shortText(smartNoticeTitle(it), 44))}</strong>
+                <span>${esc(shortText(smartNoticeMessage(it), 72))}</span>
+              </span>
+            </button>
           `).join('')}
         </div>
       </div>
     `;
+  }
+
+  function bindSmartBoardControls(){
+    listEl.querySelectorAll('[data-smart-jump]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const offset = Number(btn.getAttribute('data-smart-jump') || 1);
+        if(!smartNoticeItems.length) return;
+        smartNoticeIndex = (smartNoticeIndex + offset) % smartNoticeItems.length;
+        renderSmartNoticeBoard();
+      });
+    });
+
+    listEl.querySelectorAll('[data-smart-details]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = String(btn.getAttribute('data-smart-details') || '');
+        const found = smartNoticeItems.find((it) => String(it?.id || '') === target) || smartNoticeItems[smartNoticeIndex];
+        const title = smartNoticeTitle(found);
+        const msg = smartNoticeMessage(found);
+        if (window.anwAlert) window.anwAlert(`<strong>${esc(title)}</strong><br>${esc(msg)}`, 'Notice');
+        else alert(`${title}\n\n${msg}`);
+      });
+    });
   }
 
   function renderSmartNoticeBoard(){
@@ -1555,6 +1622,7 @@
         ${items.slice(0, Math.min(items.length, 6)).map((_, i) => `<span class="${i === smartNoticeIndex ? 'active' : ''}"></span>`).join('')}
       </div>
     `;
+    bindSmartBoardControls();
   }
 
   function renderPlaceholder(){
@@ -1571,7 +1639,7 @@
     smartNoticeTimer = setInterval(() => {
       smartNoticeIndex = (smartNoticeIndex + 1) % smartNoticeItems.length;
       renderSmartNoticeBoard();
-    }, 6500);
+    }, 7000);
   }
 
   function render(items){
