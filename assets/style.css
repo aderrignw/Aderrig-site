@@ -1948,45 +1948,240 @@ body.page-help .hc-quick-btn{
 
 
 /* =========================================================
-   ABOUT / TEAM TABLE FIX
-   Removes the heavy green pill/border style from Name and Role links.
-   Keeps the table clean, readable and professional.
+   HOME SMART NOTICE BOARD — MOCKUP MATCH
+   Featured notice on the left + compact Next up notices on the right.
    ========================================================= */
 
-body.page-about table a,
-body.page-about .team-table a,
-body.page-about .roles-table a,
-body.page-about td a{
-  display:inline !important;
-  background:transparent !important;
-  color:#2F6F57 !important;
-  border:0 !important;
-  border-radius:0 !important;
-  padding:0 !important;
-  box-shadow:none !important;
-  text-decoration:underline !important;
-  text-decoration-thickness:1px !important;
-  text-underline-offset:3px !important;
-  font-weight:700 !important;
-  line-height:1.35 !important;
-  white-space:normal !important;
+.home-notices-list.smart-notice-list{
+  display:block !important;
 }
 
-body.page-about table a:hover,
-body.page-about .team-table a:hover,
-body.page-about .roles-table a:hover,
-body.page-about td a:hover{
-  color:#3E7C66 !important;
-  background:transparent !important;
-  text-decoration-thickness:2px !important;
+.smart-board{
+  display:grid;
+  grid-template-columns:minmax(0, 1.25fr) minmax(300px, .95fr);
+  gap:20px;
+  align-items:stretch;
+  padding:18px;
+  border:1px solid #DCE5DF;
+  border-radius:22px;
+  background:linear-gradient(180deg,#FFFFFF 0%,#F8FCF9 100%);
+  box-shadow:0 10px 28px rgba(15,23,20,.045);
 }
 
-body.page-about table td,
-body.page-about table th{
-  vertical-align:top !important;
+.smart-board-feature{
+  display:grid;
+  grid-template-columns:150px minmax(0, 1fr);
+  gap:18px;
+  align-items:center;
+  min-width:0;
 }
 
-body.page-about table{
-  border-collapse:separate !important;
-  border-spacing:0 !important;
+.smart-board-photo{
+  width:150px;
+  height:136px;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid #DCE5DF;
+  background:#F1F7F3;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#2F6F57;
+}
+
+.smart-board-photo img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.smart-board-photo span{
+  font-size:2rem;
+}
+
+.smart-board-copy{
+  min-width:0;
+}
+
+.smart-board-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:4px 10px;
+  border-radius:999px;
+  background:#FFE9EA;
+  color:#D72638;
+  font-size:12px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.02em;
+  margin-bottom:8px;
+}
+
+.smart-board-title{
+  margin:0 0 8px;
+  font-size:1.45rem;
+  line-height:1.15;
+  color:#1F2937;
+}
+
+.smart-board-message{
+  margin:0 0 10px;
+  color:#4B5563;
+  line-height:1.45;
+  font-size:.95rem;
+}
+
+.smart-board-details{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 14px;
+  color:#6B7280;
+  font-size:.84rem;
+  font-weight:700;
+  margin:8px 0 12px;
+}
+
+.smart-board-details span{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+
+.smart-board-details span + span::before{
+  content:'•';
+  color:#3E7C66;
+  margin-right:6px;
+}
+
+.smart-board-btn{
+  min-height:38px;
+  padding:0 18px;
+  border-radius:9px;
+  background:#0B6B3A;
+  color:#FFFFFF;
+  font-weight:800;
+  box-shadow:0 6px 16px rgba(11,107,58,.18);
+}
+
+.smart-board-next{
+  border-left:1px solid #E7ECE8;
+  padding-left:22px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.smart-board-next-title{
+  color:#0B6B3A;
+  font-weight:900;
+  font-size:.9rem;
+  margin-bottom:14px;
+}
+
+.smart-board-next-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:12px;
+}
+
+.smart-board-mini{
+  display:grid;
+  grid-template-columns:42px minmax(0, 1fr);
+  gap:10px;
+  align-items:start;
+  padding-right:12px;
+  border-right:1px solid #E7ECE8;
+  min-width:0;
+}
+
+.smart-board-mini:last-child{
+  border-right:0;
+  padding-right:0;
+}
+
+.smart-board-mini-icon{
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#EAF3EE;
+  color:#2F6F57;
+  font-size:1.1rem;
+}
+
+.smart-board-mini strong{
+  display:block;
+  color:#1F2937;
+  font-size:.86rem;
+  line-height:1.25;
+  margin-bottom:6px;
+}
+
+.smart-board-mini p{
+  margin:0;
+  color:#6B7280;
+  font-size:.8rem;
+  line-height:1.4;
+}
+
+.smart-board-dots{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  margin-top:14px;
+}
+
+.smart-board-dots span{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background:#D1D5DB;
+}
+
+.smart-board-dots span.active{
+  background:#0B6B3A;
+}
+
+@media (max-width: 980px){
+  .smart-board{
+    grid-template-columns:1fr;
+  }
+  .smart-board-next{
+    border-left:0;
+    border-top:1px solid #E7ECE8;
+    padding-left:0;
+    padding-top:16px;
+  }
+}
+
+@media (max-width: 680px){
+  .smart-board{
+    padding:14px;
+  }
+  .smart-board-feature{
+    grid-template-columns:92px 1fr;
+    gap:12px;
+  }
+  .smart-board-photo{
+    width:92px;
+    height:82px;
+    border-radius:14px;
+  }
+  .smart-board-title{
+    font-size:1.08rem;
+  }
+  .smart-board-message{
+    font-size:.86rem;
+  }
+  .smart-board-next-grid{
+    grid-template-columns:1fr;
+  }
+  .smart-board-mini{
+    border-right:0;
+    padding-right:0;
+  }
 }
