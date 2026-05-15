@@ -1926,3 +1926,67 @@ body.page-help .hc-quick-btn{
   color:#4B5563;
   cursor:not-allowed;
 }
+
+
+
+/* =========================================================
+   HOME SMART NOTICE FIX
+   Keeps Community Notices compact and prevents old fixed cards/duplicates.
+   ========================================================= */
+.home-notices-list.smart-notice-list{
+  display:block !important;
+}
+
+.home-notices-list.smart-notice-list > *:not(.smart-notice-card){
+  display:none !important;
+}
+
+.smart-notice-card{
+  max-width:100%;
+}
+
+
+
+/* =========================================================
+   ABOUT / TEAM TABLE FIX
+   Removes the heavy green pill/border style from Name and Role links.
+   Keeps the table clean, readable and professional.
+   ========================================================= */
+
+body.page-about table a,
+body.page-about .team-table a,
+body.page-about .roles-table a,
+body.page-about td a{
+  display:inline !important;
+  background:transparent !important;
+  color:#2F6F57 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  padding:0 !important;
+  box-shadow:none !important;
+  text-decoration:underline !important;
+  text-decoration-thickness:1px !important;
+  text-underline-offset:3px !important;
+  font-weight:700 !important;
+  line-height:1.35 !important;
+  white-space:normal !important;
+}
+
+body.page-about table a:hover,
+body.page-about .team-table a:hover,
+body.page-about .roles-table a:hover,
+body.page-about td a:hover{
+  color:#3E7C66 !important;
+  background:transparent !important;
+  text-decoration-thickness:2px !important;
+}
+
+body.page-about table td,
+body.page-about table th{
+  vertical-align:top !important;
+}
+
+body.page-about table{
+  border-collapse:separate !important;
+  border-spacing:0 !important;
+}
