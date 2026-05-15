@@ -1373,6 +1373,7 @@
 
   let smartNoticeTimer = null;
   let smartNoticeIndex = 0;
+  let smartNoticeItems = [];
 
   function parkingNoticeImage(it){
     return String(it?.vehicle?.photoDataUrl || it?.photoDataUrl || it?.image || '').trim();
@@ -1390,49 +1391,33 @@
     return String(it?.message || it?.text || '');
   }
 
-  function compactNoticeHtml(it, idx, total){
-    const variant = it?._displayVariant || pickVariant(it);
-    const title = esc(smartNoticeTitle(it));
-    const msgHtml = it?._displayMessageHtml || esc(smartNoticeMessage(it));
-    const meta = String(it?._displayMeta || '').trim();
-    const photo = parkingNoticeImage(it);
-    const isParking = !!it?.parkingAutoNotice || normalizeText(it?.category) === 'parking' || /parking/i.test(String(it?.title || it?.message || ''));
-
-    return `
-      <article class="smart-notice-card smart-notice-card--${variant} ${photo ? 'has-photo' : ''}" data-smart-notice="${idx}">
-        <div class="smart-notice-media" aria-hidden="true">
-          ${photo ? `<img src="${esc(photo)}" alt="">` : `<span>${isParking ? '🅿️' : (ICONS[variant] || ICONS.info)}</span>`}
-        </div>
-        <div class="smart-notice-body">
-          <div class="smart-notice-topline">
-            <span class="smart-notice-kicker">${isParking ? 'Parking notice' : 'Community notice'}</span>
-            <span class="smart-notice-count">${idx + 1}/${total}</span>
-          </div>
-          <h4 class="smart-notice-title">${title}</h4>
-          <div class="smart-notice-message">${msgHtml}</div>
-          ${meta ? `<div class="smart-notice-meta">${esc(meta)}</div>` : ''}
-        </div>
-      </article>
-    `;
+  function smartNoticeIcon(it){
+    const title = String((it?.title || '') + ' ' + (it?.message || it?.text || '')).toLowerCase();
+    const cat = normalizeText(it?.category);
+    if(!!it?.parkingAutoNotice || cat === 'parking' || title.includes('parking')) return '🅿️';
+    if(title.includes('disabled') || title.includes('accessible')) return '♿';
+    if(title.includes('garda') || title.includes('safety')) return '🛡️';
+    if(title.includes('mail')) return '📬';
+    if(title.includes('bin') || title.includes('waste')) return '♻️';
+    if(title.includes('community') || title.includes('clean')) return '👥';
+    return '📢';
   }
 
-  function startSmartNoticeRotation(items){
-    if(smartNoticeTimer) clearInterval(smartNoticeTimer);
-    const cards = Array.from(listEl.querySelectorAll('[data-smart-notice]'));
-    if(cards.length <= 1) return;
+  function smartNoticeKicker(it){
+    const title = String((it?.title || '') + ' ' + (it?.message || it?.text || '')).toLowerCase();
+    const cat = normalizeText(it?.category);
+    if(!!it?.parkingAutoNotice) return 'Parking Alert';
+    if(cat === 'parking' || title.includes('parking')) return 'Parking Notice';
+    if(title.includes('garda') || title.includes('safety')) return 'Garda Safety Notice';
+    if(title.includes('mail')) return 'Mail Notice';
+    if(title.includes('bin') || title.includes('waste')) return 'Waste Notice';
+    return 'Live Update';
+  }
 
-    cards.forEach((card, index) => {
-      card.style.display = index === smartNoticeIndex ? 'grid' : 'none';
-      card.classList.toggle('is-active', index === smartNoticeIndex);
-    });
-
-    smartNoticeTimer = setInterval(() => {
-      smartNoticeIndex = (smartNoticeIndex + 1) % cards.length;
-      cards.forEach((card, index) => {
-        card.style.display = index === smartNoticeIndex ? 'grid' : 'none';
-        card.classList.toggle('is-active', index === smartNoticeIndex);
-      });
-    }, 6500);
+  function shortMessage(s, max){
+    const raw = String(s || '').replace(/\s+/g, ' ').trim();
+    if(raw.length <= max) return raw;
+    return raw.slice(0, Math.max(0, max - 1)).trim() + '…';
   }
 
   function dedupeSmartNotices(items){
@@ -1446,7 +1431,7 @@
       if(id) seenIds.add(id);
 
       const blob = String((it?.title || '') + ' ' + (it?.message || it?.text || '')).toLowerCase();
-      const isDisabledParking = /disabled\s+parking|disabled\s+parking\s+bay|accessible\s+parking/.test(blob);
+      const isDisabledParking = /disabled\s+parking|disabled\s+parking\s+bay|accessible\s+parking|permit\s+holders/.test(blob);
       if(isDisabledParking){
         if(disabledSeen) return;
         disabledSeen = true;
@@ -1457,6 +1442,97 @@
     return out;
   }
 
+  function smartNoticeFeaturedHtml(it, idx, total){
+    const variant = it?._displayVariant || pickVariant(it);
+    const title = esc(smartNoticeTitle(it));
+    const msg = esc(shortMessage(it?._displayMessageHtml ? it._displayMessageHtml.replace(/<[^>]*>/g, ' ') : smartNoticeMessage(it), 165));
+    const meta = String(it?._displayMeta || '').trim();
+    const photo = parkingNoticeImage(it);
+    const icon = smartNoticeIcon(it);
+    const kicker = esc(smartNoticeKicker(it));
+    const vehicle = it?.vehicle || {};
+    const details = vehicle && (vehicle.brand || vehicle.colour || vehicle.plateMasked)
+      ? `<div class="smart-board-details">
+          <span>${esc([vehicle.colour, vehicle.brand].filter(Boolean).join(' ') || 'Vehicle')}</span>
+          ${vehicle.plateMasked ? `<span>${esc(vehicle.plateMasked)}</span>` : ''}
+          <span>Reported recently</span>
+        </div>`
+      : (meta ? `<div class="smart-board-details"><span>${esc(meta)}</span></div>` : '');
+
+    return `
+      <div class="smart-board-feature smart-board-feature--${variant}">
+        <div class="smart-board-photo" aria-hidden="true">
+          ${photo ? `<img src="${esc(photo)}" alt="">` : `<span>${icon}</span>`}
+        </div>
+        <div class="smart-board-copy">
+          <div class="smart-board-kicker"><span aria-hidden="true">${icon}</span>${kicker}</div>
+          <h4 class="smart-board-title">${title}</h4>
+          <p class="smart-board-message">${msg}</p>
+          ${details}
+          <button type="button" class="smart-board-btn" data-smart-details="${idx}">View Details</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function smartNoticeNextHtml(items, activeIndex){
+    if(!items.length) return '';
+    const next = [];
+    for(let i = 1; i <= Math.min(3, items.length - 1); i++){
+      next.push(items[(activeIndex + i) % items.length]);
+    }
+    if(!next.length) return '';
+
+    return `
+      <div class="smart-board-next">
+        <div class="smart-board-next-title">Next up</div>
+        <div class="smart-board-next-grid">
+          ${next.map((it) => `
+            <div class="smart-board-mini">
+              <div class="smart-board-mini-icon" aria-hidden="true">${smartNoticeIcon(it)}</div>
+              <div>
+                <strong>${esc(shortMessage(smartNoticeTitle(it), 38))}</strong>
+                <p>${esc(shortMessage(smartNoticeMessage(it), 72))}</p>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSmartNoticeBoard(){
+    const items = smartNoticeItems;
+    if(!items.length){
+      renderPlaceholder();
+      return;
+    }
+    if(smartNoticeIndex >= items.length) smartNoticeIndex = 0;
+    const active = items[smartNoticeIndex];
+
+    listEl.classList.add('smart-notice-list');
+    listEl.innerHTML = `
+      <div class="smart-board" aria-label="Community notice rotation">
+        ${smartNoticeFeaturedHtml(active, smartNoticeIndex, items.length)}
+        ${smartNoticeNextHtml(items, smartNoticeIndex)}
+      </div>
+      <div class="smart-board-dots" aria-hidden="true">
+        ${items.slice(0, Math.min(items.length, 6)).map((_, i) => `<span class="${i === smartNoticeIndex ? 'active' : ''}"></span>`).join('')}
+      </div>
+    `;
+  }
+
+  function startSmartNoticeRotation(){
+    if(smartNoticeTimer) clearInterval(smartNoticeTimer);
+    renderSmartNoticeBoard();
+    if(smartNoticeItems.length <= 1) return;
+
+    smartNoticeTimer = setInterval(() => {
+      smartNoticeIndex = (smartNoticeIndex + 1) % smartNoticeItems.length;
+      renderSmartNoticeBoard();
+    }, 6500);
+  }
+
   function render(items){
     items = dedupeSmartNotices(items);
     if (!Array.isArray(items) || !items.length) {
@@ -1464,12 +1540,9 @@
       return;
     }
 
-    const compactItems = items.slice(0, 8);
-    if(smartNoticeIndex >= compactItems.length) smartNoticeIndex = 0;
-
-    listEl.classList.add('smart-notice-list');
-    listEl.innerHTML = compactItems.map((it, idx) => compactNoticeHtml(it, idx, compactItems.length)).join('');
-    startSmartNoticeRotation(compactItems);
+    smartNoticeItems = items.slice(0, 8);
+    if(smartNoticeIndex >= smartNoticeItems.length) smartNoticeIndex = 0;
+    startSmartNoticeRotation();
   }
   async function getIdentityToken() {
     if (!window.netlifyIdentity) return null;
