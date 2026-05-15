@@ -2052,10 +2052,13 @@ body.page-handbook .hb-category-list{
 
 
 
+
+
+
 /* =========================================================
-   HOME SMART NOTICE BOARD — FINAL STABLE VERSION
-   Featured notice/image on the left + compact Next up notices on the right.
-   Prevents the Home notices area from appearing blank.
+   HOME SMART NOTICE BOARD — POLISHED PRODUCTION VERSION
+   Matches the approved prototype: strong featured card, date tile for bins,
+   clear action buttons and spacious Next up items.
    ========================================================= */
 
 .home-notices-section{
@@ -2069,10 +2072,10 @@ body.page-handbook .hb-category-list{
 
 .smart-board{
   display:grid;
-  grid-template-columns:minmax(0, 1.15fr) minmax(300px, .95fr);
-  gap:20px;
+  grid-template-columns:minmax(0, 1.25fr) minmax(420px, .95fr);
+  gap:26px;
   align-items:stretch;
-  padding:18px;
+  padding:24px;
   border:1px solid #DCE5DF;
   border-radius:22px;
   background:linear-gradient(180deg,#FFFFFF 0%,#F8FCF9 100%);
@@ -2081,16 +2084,18 @@ body.page-handbook .hb-category-list{
 
 .smart-board-feature{
   display:grid;
-  grid-template-columns:150px minmax(0, 1fr);
-  gap:18px;
+  grid-template-columns:160px minmax(0, 1fr);
+  gap:20px;
   align-items:center;
   min-width:0;
+  padding-right:10px;
 }
 
-.smart-board-photo{
-  width:150px;
-  height:136px;
-  border-radius:16px;
+.smart-board-photo,
+.smart-board-date{
+  width:160px;
+  height:142px;
+  border-radius:17px;
   overflow:hidden;
   border:1px solid #DCE5DF;
   background:#F1F7F3;
@@ -2098,17 +2103,47 @@ body.page-handbook .hb-category-list{
   align-items:center;
   justify-content:center;
   color:#2F6F57;
+  box-shadow:0 8px 18px rgba(15,23,20,.035);
 }
 
-.smart-board-photo img{
+.smart-board-photo--image img{
   width:100%;
   height:100%;
   object-fit:cover;
   display:block;
 }
 
-.smart-board-photo span{
-  font-size:2rem;
+.smart-board-photo--icon span{
+  font-size:2.35rem;
+}
+
+.smart-board-date{
+  flex-direction:column;
+  background:#17324D;
+  color:#FFFFFF;
+  border-color:#17324D;
+  text-align:center;
+}
+
+.smart-board-date__dow{
+  font-size:.86rem;
+  font-weight:900;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  opacity:.92;
+}
+
+.smart-board-date__day{
+  font-size:2.7rem;
+  line-height:1;
+  font-weight:950;
+  margin:8px 0 4px;
+}
+
+.smart-board-date__month{
+  font-size:1rem;
+  font-weight:800;
+  opacity:.96;
 }
 
 .smart-board-copy{
@@ -2119,15 +2154,15 @@ body.page-handbook .hb-category-list{
   display:inline-flex;
   align-items:center;
   gap:7px;
-  padding:4px 10px;
+  padding:4px 11px;
   border-radius:999px;
   background:#EAF3EE;
   color:#2F6F57;
   font-size:12px;
-  font-weight:900;
+  font-weight:950;
   text-transform:uppercase;
   letter-spacing:.02em;
-  margin-bottom:8px;
+  margin-bottom:9px;
 }
 
 .smart-board-kicker--parking{
@@ -2135,28 +2170,25 @@ body.page-handbook .hb-category-list{
   color:#D72638;
 }
 
-.smart-board-kicker--safety{
-  background:#EAF3EE;
-  color:#2F6F57;
-}
-
 .smart-board-kicker--waste{
-  background:#EDF7F0;
-  color:#23764E;
+  background:#EAF3EE;
+  color:#0B6B3A;
 }
 
 .smart-board-title{
-  margin:0 0 8px;
-  font-size:1.45rem;
-  line-height:1.15;
+  margin:0 0 9px;
+  font-size:1.55rem;
+  line-height:1.12;
   color:#1F2937;
+  letter-spacing:-.02em;
 }
 
 .smart-board-message{
   margin:0 0 10px;
   color:#4B5563;
-  line-height:1.45;
-  font-size:.95rem;
+  line-height:1.48;
+  font-size:.98rem;
+  max-width:56ch;
 }
 
 .smart-board-details{
@@ -2164,9 +2196,9 @@ body.page-handbook .hb-category-list{
   flex-wrap:wrap;
   gap:8px 14px;
   color:#6B7280;
-  font-size:.84rem;
-  font-weight:700;
-  margin:8px 0 0;
+  font-size:.85rem;
+  font-weight:750;
+  margin:9px 0 13px;
 }
 
 .smart-board-details span{
@@ -2181,40 +2213,70 @@ body.page-handbook .hb-category-list{
   margin-right:6px;
 }
 
+.smart-board-btn{
+  min-height:40px;
+  padding:0 18px;
+  border-radius:10px;
+  background:#0B6B3A;
+  color:#FFFFFF;
+  font-weight:850;
+  box-shadow:0 8px 18px rgba(11,107,58,.18);
+}
+
+.smart-board-btn:hover{
+  filter:brightness(.98);
+  transform:translateY(-1px);
+}
+
 .smart-board-next{
   border-left:1px solid #E7ECE8;
-  padding-left:22px;
+  padding-left:24px;
   display:flex;
   flex-direction:column;
   justify-content:center;
+  min-width:0;
 }
 
 .smart-board-next-title{
   color:#0B6B3A;
-  font-weight:900;
-  font-size:.9rem;
-  margin-bottom:14px;
+  font-weight:950;
+  font-size:.95rem;
+  margin-bottom:15px;
 }
 
 .smart-board-next-grid{
   display:grid;
-  grid-template-columns:repeat(3, minmax(0, 1fr));
-  gap:12px;
+  grid-template-columns:repeat(3, minmax(118px, 1fr));
+  gap:14px;
 }
 
 .smart-board-mini{
+  appearance:none;
+  -webkit-appearance:none;
   display:grid;
-  grid-template-columns:42px minmax(0, 1fr);
+  grid-template-columns:40px minmax(0, 1fr);
   gap:10px;
   align-items:start;
-  padding-right:12px;
-  border-right:1px solid #E7ECE8;
   min-width:0;
+  padding:0 12px 0 0;
+  border:0;
+  border-right:1px solid #E7ECE8;
+  border-radius:0;
+  background:transparent;
+  color:inherit;
+  text-align:left;
+  box-shadow:none;
+  cursor:pointer;
 }
 
 .smart-board-mini:last-child{
   border-right:0;
   padding-right:0;
+}
+
+.smart-board-mini:hover{
+  background:transparent;
+  filter:none;
 }
 
 .smart-board-mini-icon{
@@ -2227,6 +2289,7 @@ body.page-handbook .hb-category-list{
   background:#EAF3EE;
   color:#2F6F57;
   font-size:1.1rem;
+  flex:0 0 auto;
 }
 
 .smart-board-mini-icon--parking{
@@ -2244,19 +2307,28 @@ body.page-handbook .hb-category-list{
   color:#23764E;
 }
 
+.smart-board-mini-copy{
+  display:block;
+  min-width:0;
+}
+
 .smart-board-mini strong{
   display:block;
   color:#1F2937;
-  font-size:.86rem;
+  font-size:.88rem;
   line-height:1.25;
-  margin-bottom:6px;
+  margin-bottom:7px;
+  overflow-wrap:anywhere;
 }
 
-.smart-board-mini p{
+.smart-board-mini span span,
+.smart-board-mini-copy > span{
+  display:block;
   margin:0;
   color:#6B7280;
-  font-size:.8rem;
-  line-height:1.4;
+  font-size:.82rem;
+  line-height:1.42;
+  overflow-wrap:anywhere;
 }
 
 .smart-board-dots{
@@ -2277,40 +2349,54 @@ body.page-handbook .hb-category-list{
   background:#0B6B3A;
 }
 
-@media (max-width: 980px){
+@media (max-width: 1080px){
   .smart-board{
     grid-template-columns:1fr;
   }
+
   .smart-board-next{
     border-left:0;
     border-top:1px solid #E7ECE8;
     padding-left:0;
-    padding-top:16px;
+    padding-top:18px;
   }
 }
 
-@media (max-width: 680px){
+@media (max-width: 720px){
   .smart-board{
-    padding:14px;
+    padding:15px;
   }
+
   .smart-board-feature{
-    grid-template-columns:92px 1fr;
-    gap:12px;
+    grid-template-columns:96px 1fr;
+    gap:13px;
+    padding-right:0;
   }
-  .smart-board-photo{
-    width:92px;
-    height:82px;
+
+  .smart-board-photo,
+  .smart-board-date{
+    width:96px;
+    height:86px;
     border-radius:14px;
   }
+
+  .smart-board-date__day{
+    font-size:1.75rem;
+    margin:3px 0;
+  }
+
   .smart-board-title{
-    font-size:1.08rem;
+    font-size:1.1rem;
   }
+
   .smart-board-message{
-    font-size:.86rem;
+    font-size:.88rem;
   }
+
   .smart-board-next-grid{
     grid-template-columns:1fr;
   }
+
   .smart-board-mini{
     border-right:0;
     padding-right:0;
