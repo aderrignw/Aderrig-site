@@ -1413,42 +1413,81 @@
     return !!it?.parkingAutoNotice || blob.includes('parking') || blob.includes('vehicle');
   }
 
-  function smartNoticeIcon(it){
+  function smartNoticeTopic(it){
     const blob = String((it?.category || '') + ' ' + smartNoticeTitle(it) + ' ' + smartNoticeMessage(it)).toLowerCase();
-    if(isParkingSmartNotice(it)) return '🅿️';
-    if(blob.includes('disabled') || blob.includes('accessible') || blob.includes('permit holder')) return '♿';
-    if(blob.includes('garda') || blob.includes('safety') || blob.includes('crime')) return '🛡️';
-    if(blob.includes('mail') || blob.includes('parcel') || blob.includes('delivery')) return '📬';
-    if(isBinSmartNotice(it)) return '♻️';
-    if(blob.includes('clean') || blob.includes('community')) return '👥';
-    return '📢';
+    if(String(it?.id || '') === 'misdelivered_mail_board' || blob.includes('mail') || blob.includes('parcel') || blob.includes('delivery')) return 'mail';
+    if(isParkingSmartNotice(it)) return 'parking';
+    if(blob.includes('disabled') || blob.includes('accessible') || blob.includes('permit holder')) return 'accessible';
+    if(isBinSmartNotice(it)) return 'waste';
+    if(blob.includes('garda') || blob.includes('safety') || blob.includes('crime') || blob.includes('security')) return 'safety';
+    if(blob.includes('light') || blob.includes('lamp') || blob.includes('public lighting')) return 'lighting';
+    if(blob.includes('weather') || blob.includes('ice') || blob.includes('wind') || blob.includes('rain')) return 'weather';
+    if(blob.includes('road') || blob.includes('footpath') || blob.includes('maintenance') || blob.includes('works')) return 'maintenance';
+    if(blob.includes('dog') || blob.includes('pet') || blob.includes('fouling')) return 'pet';
+    if(blob.includes('noise')) return 'noise';
+    if(blob.includes('event')) return 'event';
+    if(blob.includes('water') || blob.includes('electric') || blob.includes('utility')) return 'utility';
+    if(blob.includes('clean') || blob.includes('community')) return 'community';
+    return 'default';
+  }
+
+  function smartNoticeIcon(it){
+    const topic = smartNoticeTopic(it);
+    const icons = {
+      mail:'📬',
+      parking:'🅿️',
+      accessible:'♿',
+      waste:'♻️',
+      safety:'🛡️',
+      lighting:'💡',
+      weather:'🌧️',
+      maintenance:'🚧',
+      pet:'🐕',
+      noise:'🔇',
+      event:'🎉',
+      utility:'⚡',
+      community:'👥',
+      default:'📢'
+    };
+    return icons[topic] || icons.default;
   }
 
   function smartNoticeKicker(it){
-    const blob = String((it?.category || '') + ' ' + smartNoticeTitle(it) + ' ' + smartNoticeMessage(it)).toLowerCase();
+    const topic = smartNoticeTopic(it);
     if(!!it?.parkingAutoNotice) return 'Parking Alert';
-    if(isParkingSmartNotice(it)) return 'Parking Notice';
-    if(blob.includes('disabled') || blob.includes('accessible')) return 'Parking Reminder';
-    if(isBinSmartNotice(it)) return 'Waste Notice';
-    if(blob.includes('garda') || blob.includes('safety')) return 'Garda Safety Notice';
-    if(blob.includes('mail') || blob.includes('delivery')) return 'Mail Notice';
-    return 'Live Update';
+    const labels = {
+      mail:'Mail Delivery Issues',
+      parking:'Parking Notice',
+      accessible:'Parking Reminder',
+      waste:'Waste Notice',
+      safety:'Safety Notice',
+      lighting:'Lighting Issue',
+      weather:'Weather Advisory',
+      maintenance:'Maintenance Notice',
+      pet:'Pet Reminder',
+      noise:'Noise Reminder',
+      event:'Community Event',
+      utility:'Utility Notice',
+      community:'Community Notice',
+      default:'Live Update'
+    };
+    return labels[topic] || labels.default;
   }
 
   function smartNoticeTone(it){
-    const blob = String((it?.category || '') + ' ' + smartNoticeTitle(it) + ' ' + smartNoticeMessage(it)).toLowerCase();
-    if(isParkingSmartNotice(it)) return 'parking';
-    if(blob.includes('garda') || blob.includes('safety')) return 'safety';
-    if(isBinSmartNotice(it)) return 'waste';
+    const topic = smartNoticeTopic(it);
+    if(topic === 'parking' || topic === 'accessible') return 'parking';
+    if(topic === 'safety') return 'safety';
+    if(topic === 'waste') return 'waste';
+    if(['lighting','weather','maintenance','utility'].includes(topic)) return 'warning';
+    if(['mail','event','community','pet','noise'].includes(topic)) return 'soft';
     return 'default';
   }
 
   function smartNoticeCta(it){
     const id = String(it?.id || '');
-    if(id === 'misdelivered_mail_board') return { label:'+ Add mail issue', attrs:'data-mail-action="add"' };
-    if(isParkingSmartNotice(it)) return { label:'View details', attrs:`data-smart-details="${esc(id)}"` };
-    if(isBinSmartNotice(it)) return { label:'View collection details', attrs:`data-smart-details="${esc(id)}"` };
-    return { label:'Read notice', attrs:`data-smart-details="${esc(id)}"` };
+    if(id === 'misdelivered_mail_board' || smartNoticeTopic(it) === 'mail') return { label:'Open mail report', attrs:'data-mail-action="add"', show:true };
+    return { label:'', attrs:'', show:false };
   }
 
   function dateFromNotice(it){
@@ -1551,7 +1590,7 @@
           <h4 class="smart-board-title">${title}</h4>
           <p class="smart-board-message">${msg}</p>
           ${detailLine}
-          <button type="button" class="smart-board-btn" ${cta.attrs}>${esc(cta.label)}</button>
+          ${cta && cta.show ? `<button type="button" class="smart-board-btn" ${cta.attrs}>${esc(cta.label)}</button>` : ''}
         </div>
       </div>
     `;
@@ -1560,7 +1599,7 @@
   function smartNoticeNextHtml(items, activeIndex){
     if(!items.length) return '';
     const next = [];
-    for(let i = 1; i <= Math.min(3, items.length - 1); i++){
+    for(let i = 1; i <= Math.min(2, items.length - 1); i++){
       next.push(items[(activeIndex + i) % items.length]);
     }
 
@@ -1639,7 +1678,7 @@
     smartNoticeTimer = setInterval(() => {
       smartNoticeIndex = (smartNoticeIndex + 1) % smartNoticeItems.length;
       renderSmartNoticeBoard();
-    }, 7000);
+    }, 10000);
   }
 
   function render(items){
