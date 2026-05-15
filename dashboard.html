@@ -127,7 +127,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
 <div class="brand-text"><h1>Aderrig NW</h1><p class="muted">Adamstown</p></div>
 </div>
 <nav class="nav">
-<a href="index.html">Home</a><a href="about.html">About</a><a href="handbook.html">Handbook</a><a href="report.html">Report</a><a href="alerts.html">Community Alerts</a><a href="projects.html">Community Projects</a><a class="nav-login" href="login.html">Login / Register</a><a class="active" href="dashboard.html">Dashboard</a><a href="household.html">Household</a><a href="admin.html">Admin</a>
+<a href="index.html">Home</a><a href="about.html">About</a><a href="handbook.html">Handbook</a><a href="report.html">Report</a><a href="alerts.html">Community Alerts</a><a href="projects.html">Community Projects</a><a class="nav-login" href="login.html">Login / Register</a><a href="dashboard.html" class="active" aria-current="page">Dashboard</a><a href="household.html">Household</a><a href="admin.html">Admin</a>
 
 <a href="help-center.html">Help</a></nav>
 </header>
@@ -273,6 +273,65 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       <p class="tiny muted" id="pkSaveHelp" style="margin-top:8px;">Register your vehicle details after opening the policy and confirming acceptance.</p>
       <div class="actions profile-actions"><button class="btn-line" id="btnParkingCancel" type="button">Cancel</button><button class="btn" id="btnParkingSave" type="button">Save Registration</button></div>
     </div>
+  </section>
+
+  <section class="parking-card parking-span-2" id="pkWrongParkingCard">
+    <div class="parking-card-head">
+      <div>
+        <h4 style="margin:0;">Vehicle Parked in My Space</h4>
+        <p class="tiny muted" style="margin:6px 0 0;">Report a vehicle parked in your allocated parking space and keep a resident history.</p>
+      </div>
+      <span class="parking-chip">Owner space</span>
+    </div>
+
+    <div class="parking-owner-banner wrong-parking-banner">
+      Use this when another vehicle is parked in your allocated space and must be removed. Date and time are recorded automatically.
+    </div>
+
+    <div class="grid-2 wrong-parking-grid" style="gap:1rem;">
+      <div class="field"><label>Issue type *</label><select id="pkWrongIssueType">
+        <option value="vehicle_in_my_space">Vehicle parked in my allocated space</option>
+        <option value="inappropriate_street_parking">Vehicle parked in an inappropriate street location</option>
+        <option value="footpath_parking">Vehicle parked on the footpath / sidewalk</option>
+        <option value="outside_own_space">Vehicle parked outside its own allocated space</option>
+        <option value="blocking_access">Vehicle blocking access / driveway / entrance</option>
+        <option value="disabled_space">Vehicle parked in disabled parking space</option>
+        <option value="visitor_space_abuse">Vehicle using visitor parking incorrectly</option>
+        <option value="other_parking_issue">Other parking issue</option>
+      </select></div>
+      <div class="field"><label>Vehicle license plate *</label><input id="pkWrongPlate" type="text" placeholder="Example: 221-D-12345"></div>
+      <div class="field"><label>Vehicle brand / make *</label><input id="pkWrongBrand" type="text" placeholder="Example: Toyota"></div>
+      <div class="field"><label>Vehicle colour *</label><input id="pkWrongColour" type="text" placeholder="Example: Silver"></div>
+      <div class="field"><label>Apartment / unit number of space owner *</label><input id="pkWrongOwnerApt" type="text" placeholder="Example: Apt 12"></div>
+    </div>
+
+    <div class="field">
+      <label>Photo of vehicle in the space *</label>
+      <input id="pkWrongPhoto" type="file" accept="image/png,image/jpeg,image/webp">
+      <p class="tiny muted" style="margin:6px 0 0;">Upload 1 photo only. JPG, PNG or WEBP only. Videos are not allowed. The image will be resized and compressed automatically.</p>
+      <div id="pkWrongPhotoPreview" class="wrong-parking-preview" style="display:none;"></div>
+    </div>
+
+    <div class="field">
+      <label>Removal message</label>
+      <textarea id="pkWrongMessage" rows="3">Please remove this vehicle. It is parked in an allocated private parking space.</textarea>
+    </div>
+
+    <div class="actions profile-actions">
+      <button class="btn-line" id="btnWrongParkingClear" type="button">Clear</button>
+      <button class="btn" id="btnWrongParkingSave" type="button">Submit Report</button>
+    </div>
+
+    <p class="tiny muted" id="pkWrongStatus"></p>
+
+    <div class="parking-table-wrap" id="pkWrongHistoryWrap" style="display:none; margin-top:14px;">
+      <h4 style="margin:0 0 10px;">History for My Space</h4>
+      <table style="width:100%;">
+        <thead><tr><th>Date / Time</th><th>Plate</th><th>Brand</th><th>Colour</th><th>Owner Apt</th><th>Photo</th></tr></thead>
+        <tbody id="pkWrongHistoryBody"></tbody>
+      </table>
+    </div>
+    <div class="parking-empty-box" id="pkWrongEmptyHistory">No wrong-parking reports recorded yet.</div>
   </section>
 </div>
 <p class="tiny muted" id="pkMessage"></p>
@@ -1706,7 +1765,21 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     cancel: document.getElementById('btnParkingCancel'),
     noVehicleNow: document.getElementById('pkNoVehicleNow'),
     saveHelp: document.getElementById('pkSaveHelp'),
-    plate: document.getElementById('pkPlate'), type: document.getElementById('pkVehicleType'), brand: document.getElementById('pkBrand'), model: document.getElementById('pkModel'), colour: document.getElementById('pkColour'), fuel: document.getElementById('pkFuel')
+    plate: document.getElementById('pkPlate'), type: document.getElementById('pkVehicleType'), brand: document.getElementById('pkBrand'), model: document.getElementById('pkModel'), colour: document.getElementById('pkColour'), fuel: document.getElementById('pkFuel'),
+    wrongIssueType: document.getElementById('pkWrongIssueType'),
+    wrongPlate: document.getElementById('pkWrongPlate'),
+    wrongBrand: document.getElementById('pkWrongBrand'),
+    wrongColour: document.getElementById('pkWrongColour'),
+    wrongOwnerApt: document.getElementById('pkWrongOwnerApt'),
+    wrongPhoto: document.getElementById('pkWrongPhoto'),
+    wrongPhotoPreview: document.getElementById('pkWrongPhotoPreview'),
+    wrongMessage: document.getElementById('pkWrongMessage'),
+    wrongStatus: document.getElementById('pkWrongStatus'),
+    wrongSave: document.getElementById('btnWrongParkingSave'),
+    wrongClear: document.getElementById('btnWrongParkingClear'),
+    wrongHistoryWrap: document.getElementById('pkWrongHistoryWrap'),
+    wrongHistoryBody: document.getElementById('pkWrongHistoryBody'),
+    wrongEmptyHistory: document.getElementById('pkWrongEmptyHistory')
   };
   let pkPolicyOpened = false;
 
@@ -1729,6 +1802,234 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       ? 'This will save that the residence has a numbered parking space available, but the resident currently has no vehicle. You can change this later by registering a vehicle.'
       : 'Register your vehicle details after opening the policy and confirming acceptance.';
   }
+
+  function pkWrongStatus(msg, kind){
+    if(!pkEls.wrongStatus) return;
+    pkEls.wrongStatus.textContent = msg || '';
+    pkEls.wrongStatus.style.color = kind === 'error' ? '#9a4a3f' : '';
+  }
+
+  function pkWrongClearForm(){
+    if(pkEls.wrongPlate) pkEls.wrongPlate.value = '';
+    if(pkEls.wrongBrand) pkEls.wrongBrand.value = '';
+    if(pkEls.wrongColour) pkEls.wrongColour.value = '';
+    if(pkEls.wrongOwnerApt) pkEls.wrongOwnerApt.value = '';
+    if(pkEls.wrongPhoto) pkEls.wrongPhoto.value = '';
+    if(pkEls.wrongMessage) pkEls.wrongMessage.value = 'Please remove this vehicle. It is parked in an allocated private parking space.';
+    if(pkEls.wrongPhotoPreview){ pkEls.wrongPhotoPreview.style.display = 'none'; pkEls.wrongPhotoPreview.innerHTML = ''; }
+    pkWrongStatus('');
+  }
+
+  function pkWrongReportsFor(profile){
+    const sub = pkSubmission(profile || currentProfile || {}) || {};
+    return Array.isArray(sub.wrongParkingReports) ? sub.wrongParkingReports.filter(r => !r.deletedAt) : [];
+  }
+
+  function pkRenderWrongParkingHistory(){
+    if(!pkEls.wrongHistoryBody) return;
+    const reports = pkWrongReportsFor(currentProfile || {});
+    pkEls.wrongHistoryBody.innerHTML = reports.map((r) => {
+      const when = r.createdAt ? new Date(r.createdAt).toLocaleString() : '—';
+      const photo = r.photoDataUrl ? `<a href="${r.photoDataUrl}" target="_blank" rel="noopener">View</a>` : '—';
+      return `<tr><td>${esc(when)}</td><td>${esc(r.plate || '')}</td><td>${esc(r.brand || '')}</td><td>${esc(r.colour || '')}</td><td>${esc(r.ownerApt || '')}</td><td>${photo}</td></tr>`;
+    }).join('');
+    if(pkEls.wrongHistoryWrap) pkEls.wrongHistoryWrap.style.display = reports.length ? 'block' : 'none';
+    if(pkEls.wrongEmptyHistory) pkEls.wrongEmptyHistory.style.display = reports.length ? 'none' : 'block';
+  }
+
+  function pkIssueTypeLabel(value){
+    const map = {
+      vehicle_in_my_space:'Vehicle parked in my allocated space',
+      inappropriate_street_parking:'Vehicle parked in an inappropriate street location',
+      footpath_parking:'Vehicle parked on the footpath / sidewalk',
+      outside_own_space:'Vehicle parked outside its own allocated space',
+      blocking_access:'Vehicle blocking access / driveway / entrance',
+      disabled_space:'Vehicle parked in disabled parking space',
+      visitor_space_abuse:'Vehicle using visitor parking incorrectly',
+      other_parking_issue:'Other parking issue'
+    };
+    return map[String(value || '')] || 'Parking issue';
+  }
+
+  function pkMaskPlate(plate){
+    const clean = String(plate || '').trim().toUpperCase();
+    if(clean.length <= 4) return clean;
+    return clean.slice(0, Math.max(2, clean.length - 3)) + '•••';
+  }
+
+  function pkLoadNoticesLocal(){
+    try{
+      const data = JSON.parse(localStorage.getItem(KEY_NOTICES) || '[]');
+      return Array.isArray(data) ? data : [];
+    }catch(_){ return []; }
+  }
+
+  async function pkSaveNoticePublic(notice){
+    const current = pkLoadNoticesLocal();
+    const filtered = current.filter(n => String(n && n.id || '') !== String(notice && notice.id || ''));
+    const next = [notice, ...filtered].slice(0, 250);
+    try{ localStorage.setItem(KEY_NOTICES, JSON.stringify(next)); }catch(_){}
+    try{
+      if(typeof window.anwFetchStorePost === 'function'){
+        await window.anwFetchStorePost(KEY_NOTICES, next);
+      }
+    }catch(err){
+      console.warn('Could not publish parking notice to store', err);
+    }
+  }
+
+  function pkCompressImageFile(file){
+    return new Promise((resolve, reject) => {
+      if(!file){ resolve(null); return; }
+      if(!/^image\/(png|jpeg|webp)$/i.test(file.type || '')){
+        reject(new Error('Please upload one JPG, PNG or WEBP photo only. Videos are not allowed.'));
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Could not read the uploaded photo.'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('Could not process this image. Please choose another photo.'));
+        img.onload = () => {
+          const maxSide = 1280;
+          let width = img.naturalWidth || img.width;
+          let height = img.naturalHeight || img.height;
+
+          if(width > height && width > maxSide){
+            height = Math.round(height * (maxSide / width));
+            width = maxSide;
+          } else if(height >= width && height > maxSide){
+            width = Math.round(width * (maxSide / height));
+            height = maxSide;
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, width);
+          canvas.height = Math.max(1, height);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          const dataUrl = canvas.toDataURL('image/webp', 0.72);
+          resolve({
+            name: String(file.name || 'vehicle-photo').replace(/\.[^.]+$/, '') + '.webp',
+            type: 'image/webp',
+            originalType: file.type || '',
+            originalSize: file.size || 0,
+            size: Math.round((dataUrl.length * 3) / 4),
+            width: canvas.width,
+            height: canvas.height,
+            dataUrl
+          });
+        };
+        img.src = String(reader.result || '');
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function pkReadWrongPhoto(){
+    const files = pkEls.wrongPhoto && pkEls.wrongPhoto.files;
+    if(files && files.length > 1){
+      return Promise.reject(new Error('Please upload only one photo.'));
+    }
+    return pkCompressImageFile(files && files[0]);
+  }
+
+  async function pkSaveWrongParkingReport(){
+    try{
+      const profile = currentProfile || {};
+      const allocation = pkFindAllocation(profile);
+      if(!allocation || allocation.hasParking === false){
+        pkWrongStatus('No parking allocation is available for this residence.', 'error');
+        return;
+      }
+
+      const issueType = String(pkEls.wrongIssueType?.value || 'vehicle_in_my_space').trim();
+      const issueLabel = pkIssueTypeLabel(issueType);
+      const plate = String(pkEls.wrongPlate?.value || '').trim().toUpperCase();
+      const brand = String(pkEls.wrongBrand?.value || '').trim();
+      const colour = String(pkEls.wrongColour?.value || '').trim();
+      const ownerApt = String(pkEls.wrongOwnerApt?.value || '').trim();
+      const message = String(pkEls.wrongMessage?.value || '').trim();
+
+      if(!plate || !brand || !colour || !ownerApt){
+        pkWrongStatus('Please choose an issue type and complete plate, brand, colour and owner apartment/unit number.', 'error');
+        return;
+      }
+      if(!(pkEls.wrongPhoto && pkEls.wrongPhoto.files && pkEls.wrongPhoto.files.length)){
+        pkWrongStatus('Please upload one photo of the vehicle in the parking space.', 'error');
+        return;
+      }
+
+      const photo = await pkReadWrongPhoto();
+      const reg = pkRegistry();
+      const key = pkResidentKey(profile);
+      const sub = reg.submissions[key] || { vehicles:[], acceptanceHistory:[], deletedVehicles:[] };
+      const now = new Date().toISOString();
+      const spaceText = allocation.spaceDisplay || allocation.spaceNo || allocation.space1 || '';
+
+      sub.residentEmail = currentEmail || profile.email || profile.userEmail || '';
+      sub.residentName = (typeof fullNameFromUser === 'function' ? fullNameFromUser(profile) : profile.name || profile.fullName || 'Resident');
+      sub.eircode = profile.eircode || profile.eir || '';
+      sub.address = profile.address || profile.fullAddress || profile.streetAddress || profile.householdAddress || '';
+      sub.spaceDisplay = sub.spaceDisplay || spaceText;
+      sub.wrongParkingReports = Array.isArray(sub.wrongParkingReports) ? sub.wrongParkingReports : [];
+      sub.wrongParkingReports.unshift({
+        id:'wrong-parking-' + Date.now(),
+        createdAt: now,
+        reportedByEmail: currentEmail || '',
+        residentName: sub.residentName,
+        address: sub.address,
+        eircode: sub.eircode,
+        spaceDisplay: spaceText,
+        issueType,
+        issueLabel,
+        plate,
+        brand,
+        colour,
+        ownerApt,
+        reporterEmail: currentEmail || '',
+        reporterName: sub.residentName || '',
+        removalMessage: message || 'Please remove this vehicle. It is parked in an allocated private parking space.',
+        photoName: photo ? photo.name : '',
+        photoType: photo ? photo.type : '',
+        photoSize: photo ? photo.size : 0,
+        photoDataUrl: photo ? photo.dataUrl : ''
+      });
+      sub.lastWrongParkingReportAt = now;
+      sub.lastUpdatedAt = now;
+      reg.submissions[key] = sub;
+      pkSaveRegistry(reg);
+
+      await pkSaveNoticePublic({
+        id:'parking-public-' + Date.now(),
+        category:'parking',
+        title: issueLabel,
+        message:`${brand} ${colour} vehicle ${pkMaskPlate(plate)} reported. Please move the vehicle if it is yours.`,
+        createdAt: now,
+        expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+        home:{ enabled:true, visibility:'public' },
+        parkingAutoNotice:true,
+        _displayVariant:'warning',
+        vehicle:{
+          plateMasked: pkMaskPlate(plate),
+          brand,
+          colour,
+          issueType,
+          issueLabel,
+          photoDataUrl: photo ? photo.dataUrl : ''
+        }
+      });
+
+      pkWrongClearForm();
+      pkRenderWrongParkingHistory();
+      pkWrongStatus('Wrong-parking report saved and published to Community Notices.');
+    }catch(err){
+      pkWrongStatus(err && err.message ? err.message : 'Could not save the report.', 'error');
+    }
+  }
+
   function pkRender(){
     const profile = currentProfile || {};
     const allocation = pkFindAllocation(profile);
@@ -1763,7 +2064,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     pkEls.emptyState.style.display = (!vehicles.length && !submission.noVehicleDeclared) ? 'block' : 'none';
     pkEls.noVehicleState.style.display = submission.noVehicleDeclared ? 'block' : 'none';
     Array.from(pkEls.body.querySelectorAll('[data-pk-del]')).forEach(btn => btn.addEventListener('click', () => pkDeleteVehicle(Number(btn.getAttribute('data-pk-del')))));
-    pkEls.form.style.display = 'none'; pkEls.noVehicleNow.checked = false; ['plate','type','brand','model','colour','fuel'].forEach(k=>{ if(pkEls[k]) pkEls[k].value=''; }); pkToggleVehicleInputs();
+    pkEls.form.style.display = 'none'; pkEls.noVehicleNow.checked = false; ['plate','type','brand','model','colour','fuel'].forEach(k=>{ if(pkEls[k]) pkEls[k].value=''; }); pkToggleVehicleInputs(); pkRenderWrongParkingHistory();
   }
   function pkOpenForm(forceNoVehicle){
     pkEls.form.style.display = 'block';
@@ -1784,6 +2085,25 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     const vehicle = { plate: pkEls.plate.value.trim().toUpperCase(), type: pkEls.type.value.trim(), brand: pkEls.brand.value.trim(), model: pkEls.model.value.trim(), colour: pkEls.colour.value.trim(), fuel: pkEls.fuel.value.trim(), status:'Active', createdAt: now };
     if(!vehicle.plate){ pkMessage('License plate is required.','error'); return; }
     sub.noVehicleDeclared = false; sub.noVehicleDeclaredAt = ''; sub.parkingOccupancyStatus = 'vehicle_registered'; sub.adminReportFlag = ''; sub.vehicles = Array.isArray(sub.vehicles) ? sub.vehicles : []; sub.vehicles.push(vehicle); sub.acceptanceHistory = Array.isArray(sub.acceptanceHistory) ? sub.acceptanceHistory : []; sub.acceptanceHistory.push({ acceptedAt: now, mode:'vehicle_registration', vehicleCount:1, vehicles:[vehicle.plate] }); reg.submissions[key] = sub; pkSaveRegistry(reg); pkRender(); pkMessage('Vehicle registration saved.'); }
+  pkEls.wrongSave?.addEventListener('click', pkSaveWrongParkingReport);
+  pkEls.wrongClear?.addEventListener('click', pkWrongClearForm);
+  pkEls.wrongPhoto?.addEventListener('change', () => {
+    const file = pkEls.wrongPhoto && pkEls.wrongPhoto.files && pkEls.wrongPhoto.files[0];
+    if(!pkEls.wrongPhotoPreview) return;
+    if(!file){ pkEls.wrongPhotoPreview.style.display='none'; pkEls.wrongPhotoPreview.innerHTML=''; return; }
+    if(!/^image\/(png|jpeg|webp)$/i.test(file.type || '')){
+      pkEls.wrongPhotoPreview.style.display='block';
+      pkEls.wrongPhotoPreview.textContent='Please choose a PNG, JPG or WEBP image.';
+      return;
+    }
+    pkCompressImageFile(file).then((photo) => {
+      pkEls.wrongPhotoPreview.style.display='block';
+      pkEls.wrongPhotoPreview.innerHTML = `<img src="${String(photo && photo.dataUrl || '')}" alt="Vehicle photo preview"><div class="tiny muted" style="margin-top:6px;">Optimized automatically to WEBP.</div>`;
+    }).catch((err) => {
+      pkEls.wrongPhotoPreview.style.display='block';
+      pkEls.wrongPhotoPreview.textContent = err && err.message ? err.message : 'Could not preview this image.';
+    });
+  });
   pkEls.openPolicy?.addEventListener('click', ()=>{ const policy = (window.anwParkingLoadPolicy && window.anwParkingLoadPolicy()) || pkRegistry().policy || null; if(!(policy && policy.dataUrl)){ pkMessage('Parking policy file is not available yet.','error'); return; } window.open(policy.dataUrl, '_blank'); pkPolicyOpened = true; pkEls.policyAccepted.disabled = false; pkEls.ownerConfirmed.disabled = false; pkEls.policyMeta.textContent = 'Acceptance will be recorded with date and time for this submission.'; });
   pkEls.addVehicle?.addEventListener('click', ()=>pkOpenForm(false)); pkEls.declareNoVehicle?.addEventListener('click', pkQuickDeclareNoVehicle); pkEls.declareNoVehicleInline?.addEventListener('click', pkQuickDeclareNoVehicle); pkEls.noVehicleNow?.addEventListener('change', pkToggleVehicleInputs); pkEls.cancel?.addEventListener('click', ()=>{ pkEls.form.style.display='none'; pkEls.noVehicleNow.checked = false; pkToggleVehicleInputs(); pkMessage(''); }); pkEls.save?.addEventListener('click', pkSaveSubmission);
   const oldRefresh = window.anwRefreshDashboardProfile;
