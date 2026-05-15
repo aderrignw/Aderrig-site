@@ -1386,7 +1386,7 @@
     const msgHtml = it?._displayMessageHtml || esc(it?.message || it?.text || '');
     const meta = String(it?._displayMeta || '').trim();
     const photo = parkingNoticeImage(it);
-    const isParking = !!it?.parkingAutoNotice || normalizeText(it?.category) === 'parking';
+    const isParking = !!it?.parkingAutoNotice || normalizeText(it?.category) === 'parking' || /parking/i.test(String(it?.title || it?.message || ''));
 
     return `
       <article class="smart-notice-card smart-notice-card--${variant} ${photo ? 'has-photo' : ''}" data-smart-notice="${idx}">
@@ -1622,6 +1622,17 @@
       const binSummary = buildBinSummary(publicBinItems);
       const mailBoard = buildMisdeliveredMailBoard(privateMailItems);
 
+      const disabledParkingFallback = {
+        id:'disabled_parking_awareness_default',
+        title:'Unauthorised use of disabled parking bay',
+        message:'Disabled parking bays are strictly reserved for valid permit holders only. Please respect accessible parking spaces.',
+        category:'parking',
+        createdAt:new Date().toISOString(),
+        home:{ enabled:true, visibility:'public' },
+        _displayVariant:'info',
+        _displayMeta:'Parking awareness'
+      };
+
       const seen = new Set();
       const regularItems = [
         ...publicRegularItems,
@@ -1639,11 +1650,16 @@
       const reservedForMail = mailBoard ? 1 : 0;
       const maxRegularItems = Math.max(0, 8 - binSummary.length - reservedForMail);
 
-      const merged = [
+      let merged = [
         ...binSummary,
         ...regularItems.slice(0, maxRegularItems),
         ...(mailBoard ? [mailBoard] : [])
       ];
+
+      const hasDisabledParking = merged.some((it) => /disabled\s+parking|disabled\s+parking\s+bay|accessible\s+parking/i.test(String((it && (it.title || it.message || it.text)) || '')));
+      if(!hasDisabledParking){
+        merged.splice(Math.min(1, merged.length), 0, disabledParkingFallback);
+      }
 
       render(merged);
     } catch (err) {
