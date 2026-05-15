@@ -1375,101 +1375,138 @@
   let smartNoticeIndex = 0;
   let smartNoticeItems = [];
 
+  function stripHtml(s){
+    const div = document.createElement('div');
+    div.innerHTML = String(s || '');
+    return (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function shortText(s, max){
+    const raw = String(s || '').replace(/\s+/g, ' ').trim();
+    if(raw.length <= max) return raw;
+    return raw.slice(0, Math.max(0, max - 1)).trim() + '…';
+  }
+
   function parkingNoticeImage(it){
-    return String(it?.vehicle?.photoDataUrl || it?.photoDataUrl || it?.image || '').trim();
+    return String(it?.vehicle?.photoDataUrl || it?.photoDataUrl || it?.image || it?.photo || '').trim();
   }
 
   function smartNoticeTitle(it){
     if(String(it?.id || '') === 'misdelivered_mail_board') return 'Mail Delivery Issues';
-    return String(it?.title || 'Notice');
+    return String(it?.title || it?.name || 'Community Notice');
   }
 
   function smartNoticeMessage(it){
     if(String(it?.id || '') === 'misdelivered_mail_board'){
       return 'Report either misdelivered mail received at your address or mail you expected but did not receive.';
     }
-    return String(it?.message || it?.text || '');
+    return String(it?._displayMessageHtml ? stripHtml(it._displayMessageHtml) : (it?.message || it?.text || it?.description || ''));
   }
 
   function smartNoticeIcon(it){
-    const title = String((it?.title || '') + ' ' + (it?.message || it?.text || '')).toLowerCase();
-    const cat = normalizeText(it?.category);
-    if(!!it?.parkingAutoNotice || cat === 'parking' || title.includes('parking')) return '🅿️';
-    if(title.includes('disabled') || title.includes('accessible')) return '♿';
-    if(title.includes('garda') || title.includes('safety')) return '🛡️';
-    if(title.includes('mail')) return '📬';
-    if(title.includes('bin') || title.includes('waste')) return '♻️';
-    if(title.includes('community') || title.includes('clean')) return '👥';
+    const blob = String((it?.category || '') + ' ' + smartNoticeTitle(it) + ' ' + smartNoticeMessage(it)).toLowerCase();
+    if(!!it?.parkingAutoNotice || blob.includes('parking')) return '🅿️';
+    if(blob.includes('disabled') || blob.includes('accessible') || blob.includes('permit holder')) return '♿';
+    if(blob.includes('garda') || blob.includes('safety') || blob.includes('crime')) return '🛡️';
+    if(blob.includes('mail') || blob.includes('parcel') || blob.includes('delivery')) return '📬';
+    if(blob.includes('bin') || blob.includes('waste') || blob.includes('recycling')) return '♻️';
+    if(blob.includes('clean') || blob.includes('community')) return '👥';
     return '📢';
   }
 
   function smartNoticeKicker(it){
-    const title = String((it?.title || '') + ' ' + (it?.message || it?.text || '')).toLowerCase();
-    const cat = normalizeText(it?.category);
+    const blob = String((it?.category || '') + ' ' + smartNoticeTitle(it) + ' ' + smartNoticeMessage(it)).toLowerCase();
     if(!!it?.parkingAutoNotice) return 'Parking Alert';
-    if(cat === 'parking' || title.includes('parking')) return 'Parking Notice';
-    if(title.includes('garda') || title.includes('safety')) return 'Garda Safety Notice';
-    if(title.includes('mail')) return 'Mail Notice';
-    if(title.includes('bin') || title.includes('waste')) return 'Waste Notice';
+    if(blob.includes('parking')) return 'Parking Notice';
+    if(blob.includes('disabled') || blob.includes('accessible')) return 'Parking Reminder';
+    if(blob.includes('bin') || blob.includes('waste')) return 'Waste Notice';
+    if(blob.includes('garda') || blob.includes('safety')) return 'Garda Safety Notice';
+    if(blob.includes('mail') || blob.includes('delivery')) return 'Mail Notice';
     return 'Live Update';
   }
 
-  function shortMessage(s, max){
-    const raw = String(s || '').replace(/\s+/g, ' ').trim();
-    if(raw.length <= max) return raw;
-    return raw.slice(0, Math.max(0, max - 1)).trim() + '…';
+  function smartNoticeTone(it){
+    const blob = String((it?.category || '') + ' ' + smartNoticeTitle(it) + ' ' + smartNoticeMessage(it)).toLowerCase();
+    if(!!it?.parkingAutoNotice || blob.includes('parking')) return 'parking';
+    if(blob.includes('garda') || blob.includes('safety')) return 'safety';
+    if(blob.includes('bin') || blob.includes('waste')) return 'waste';
+    return 'default';
   }
 
   function dedupeSmartNotices(items){
     const out = [];
-    let disabledSeen = false;
     const seenIds = new Set();
+    let disabledSeen = false;
 
     (Array.isArray(items) ? items : []).forEach((it) => {
       const id = String(it?.id || '').trim();
       if(id && seenIds.has(id)) return;
       if(id) seenIds.add(id);
 
-      const blob = String((it?.title || '') + ' ' + (it?.message || it?.text || '')).toLowerCase();
+      const blob = String(smartNoticeTitle(it) + ' ' + smartNoticeMessage(it)).toLowerCase();
       const isDisabledParking = /disabled\s+parking|disabled\s+parking\s+bay|accessible\s+parking|permit\s+holders/.test(blob);
       if(isDisabledParking){
         if(disabledSeen) return;
         disabledSeen = true;
       }
+
       out.push(it);
     });
 
     return out;
   }
 
+  function defaultPublicNotice(){
+    return {
+      id:'disabled_parking_awareness_default',
+      title:'Disabled Parking Reminder',
+      message:'Please respect accessible parking spaces. Disabled parking bays are reserved for valid permit holders only.',
+      category:'parking',
+      createdAt:new Date().toISOString(),
+      home:{ enabled:true, visibility:'public' },
+      _displayVariant:'info',
+      _displayMeta:'Public reminder'
+    };
+  }
+
+  function ensurePublicDefaults(items){
+    const list = Array.isArray(items) ? items.slice() : [];
+    const hasDisabled = list.some((it) => /disabled\s+parking|accessible\s+parking|permit\s+holders/i.test(String(smartNoticeTitle(it) + ' ' + smartNoticeMessage(it))));
+    if(!hasDisabled){
+      list.splice(Math.min(1, list.length), 0, defaultPublicNotice());
+    }
+    return list;
+  }
+
   function smartNoticeFeaturedHtml(it, idx, total){
-    const variant = it?._displayVariant || pickVariant(it);
-    const title = esc(smartNoticeTitle(it));
-    const msg = esc(shortMessage(it?._displayMessageHtml ? it._displayMessageHtml.replace(/<[^>]*>/g, ' ') : smartNoticeMessage(it), 165));
-    const meta = String(it?._displayMeta || '').trim();
+    const tone = esc(smartNoticeTone(it));
+    const title = esc(shortText(smartNoticeTitle(it), 80));
+    const msg = esc(shortText(smartNoticeMessage(it), 170));
     const photo = parkingNoticeImage(it);
     const icon = smartNoticeIcon(it);
     const kicker = esc(smartNoticeKicker(it));
     const vehicle = it?.vehicle || {};
-    const details = vehicle && (vehicle.brand || vehicle.colour || vehicle.plateMasked)
+    const meta = String(it?._displayMeta || '').trim();
+
+    const vehicleLine = vehicle && (vehicle.brand || vehicle.colour || vehicle.plateMasked)
       ? `<div class="smart-board-details">
           <span>${esc([vehicle.colour, vehicle.brand].filter(Boolean).join(' ') || 'Vehicle')}</span>
           ${vehicle.plateMasked ? `<span>${esc(vehicle.plateMasked)}</span>` : ''}
+          ${vehicle.street ? `<span>${esc(vehicle.street)}</span>` : ''}
           <span>Reported recently</span>
         </div>`
       : (meta ? `<div class="smart-board-details"><span>${esc(meta)}</span></div>` : '');
 
     return `
-      <div class="smart-board-feature smart-board-feature--${variant}">
+      <div class="smart-board-feature smart-board-feature--${tone}">
         <div class="smart-board-photo" aria-hidden="true">
           ${photo ? `<img src="${esc(photo)}" alt="">` : `<span>${icon}</span>`}
         </div>
         <div class="smart-board-copy">
-          <div class="smart-board-kicker"><span aria-hidden="true">${icon}</span>${kicker}</div>
+          <div class="smart-board-kicker smart-board-kicker--${tone}"><span aria-hidden="true">${icon}</span>${kicker}</div>
           <h4 class="smart-board-title">${title}</h4>
           <p class="smart-board-message">${msg}</p>
-          ${details}
-          <button type="button" class="smart-board-btn" data-smart-details="${idx}">View Details</button>
+          ${vehicleLine}
         </div>
       </div>
     `;
@@ -1481,7 +1518,10 @@
     for(let i = 1; i <= Math.min(3, items.length - 1); i++){
       next.push(items[(activeIndex + i) % items.length]);
     }
-    if(!next.length) return '';
+
+    if(!next.length){
+      next.push(defaultPublicNotice());
+    }
 
     return `
       <div class="smart-board-next">
@@ -1489,10 +1529,10 @@
         <div class="smart-board-next-grid">
           ${next.map((it) => `
             <div class="smart-board-mini">
-              <div class="smart-board-mini-icon" aria-hidden="true">${smartNoticeIcon(it)}</div>
+              <div class="smart-board-mini-icon smart-board-mini-icon--${esc(smartNoticeTone(it))}" aria-hidden="true">${smartNoticeIcon(it)}</div>
               <div>
-                <strong>${esc(shortMessage(smartNoticeTitle(it), 38))}</strong>
-                <p>${esc(shortMessage(smartNoticeMessage(it), 72))}</p>
+                <strong>${esc(shortText(smartNoticeTitle(it), 42))}</strong>
+                <p>${esc(shortText(smartNoticeMessage(it), 78))}</p>
               </div>
             </div>
           `).join('')}
@@ -1502,18 +1542,13 @@
   }
 
   function renderSmartNoticeBoard(){
-    const items = smartNoticeItems;
-    if(!items.length){
-      renderPlaceholder();
-      return;
-    }
+    const items = smartNoticeItems.length ? smartNoticeItems : [defaultPublicNotice()];
     if(smartNoticeIndex >= items.length) smartNoticeIndex = 0;
-    const active = items[smartNoticeIndex];
 
     listEl.classList.add('smart-notice-list');
     listEl.innerHTML = `
-      <div class="smart-board" aria-label="Community notice rotation">
-        ${smartNoticeFeaturedHtml(active, smartNoticeIndex, items.length)}
+      <div class="smart-board" aria-label="Community notices">
+        ${smartNoticeFeaturedHtml(items[smartNoticeIndex], smartNoticeIndex, items.length)}
         ${smartNoticeNextHtml(items, smartNoticeIndex)}
       </div>
       <div class="smart-board-dots" aria-hidden="true">
@@ -1522,11 +1557,17 @@
     `;
   }
 
+  function renderPlaceholder(){
+    smartNoticeItems = [defaultPublicNotice()];
+    smartNoticeIndex = 0;
+    renderSmartNoticeBoard();
+  }
+
   function startSmartNoticeRotation(){
     if(smartNoticeTimer) clearInterval(smartNoticeTimer);
     renderSmartNoticeBoard();
-    if(smartNoticeItems.length <= 1) return;
 
+    if(smartNoticeItems.length <= 1) return;
     smartNoticeTimer = setInterval(() => {
       smartNoticeIndex = (smartNoticeIndex + 1) % smartNoticeItems.length;
       renderSmartNoticeBoard();
@@ -1534,13 +1575,8 @@
   }
 
   function render(items){
-    items = dedupeSmartNotices(items);
-    if (!Array.isArray(items) || !items.length) {
-      renderPlaceholder();
-      return;
-    }
-
-    smartNoticeItems = items.slice(0, 8);
+    items = ensurePublicDefaults(dedupeSmartNotices(items));
+    smartNoticeItems = (Array.isArray(items) && items.length ? items : [defaultPublicNotice()]).slice(0, 8);
     if(smartNoticeIndex >= smartNoticeItems.length) smartNoticeIndex = 0;
     startSmartNoticeRotation();
   }
