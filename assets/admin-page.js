@@ -1592,6 +1592,7 @@
   byId('btnExportNotices')?.addEventListener('click', async () => downloadText('notices.json', JSON.stringify(await loadNoticesFresh(), null, 2)));
   byId('btnExportReports')?.addEventListener('click', async () => downloadText('reports.json', JSON.stringify(await anwLoadSafe(KEY_REPORTS, []), null, 2)));
   byId('btnExportProjects')?.addEventListener('click', async () => downloadText('projects.json', JSON.stringify(await anwLoadSafe(KEY_PROJECTS, []), null, 2)));
+  byId('btnExportWrongParkingHistory')?.addEventListener('click', parkingExportWrongParkingHistory);
 
   
   async function getAdminAuthHeaders(extra){
@@ -1965,6 +1966,45 @@
   async function parkingHandlePolicy(file){ const dataUrl = await new Promise((resolve,reject)=>{ const reader=new FileReader(); reader.onload=()=>resolve(reader.result); reader.onerror=()=>reject(reader.error||new Error('Failed to read file')); reader.readAsDataURL(file); }); const reg = parkingRegistryLoad(); reg.policy = { name:file.name, type:file.type || 'application/octet-stream', dataUrl, updatedAt:new Date().toISOString() }; parkingRegistrySave(reg); parkingRenderAdmin(); }
   function parkingClearImport(){ const reg = parkingRegistryLoad(); reg.allocations = []; reg.importMeta = null; parkingRegistrySave(reg); parkingRenderAdmin(); }
   function parkingRemovePolicy(){ const reg = parkingRegistryLoad(); reg.policy = null; parkingRegistrySave(reg); try{ localStorage.removeItem(window.ANW_KEYS.PARKING_POLICY); }catch(_){} parkingRenderAdmin(); }
+  function parkingExportWrongParkingHistory(){
+    const reg = parkingRegistryLoad();
+    const submissions = reg && reg.submissions && typeof reg.submissions === 'object' ? reg.submissions : {};
+    const rows = [];
+
+    Object.keys(submissions).forEach((key) => {
+      const sub = submissions[key] || {};
+      const reports = Array.isArray(sub.wrongParkingReports) ? sub.wrongParkingReports : [];
+      reports.forEach((r) => {
+        rows.push({
+          createdAt: r.createdAt || '',
+          reporterName: r.reporterName || sub.residentName || '',
+          reporterEmail: r.reporterEmail || sub.residentEmail || key || '',
+          address: r.address || sub.address || '',
+          eircode: r.eircode || sub.eircode || '',
+          parkingSpace: r.spaceDisplay || sub.spaceDisplay || '',
+          street: r.street || '',
+          ownerApt: r.ownerApt || '',
+          issueType: r.issueLabel || r.issueType || '',
+          plate: r.plate || '',
+          brand: r.brand || '',
+          colour: r.colour || '',
+          message: r.removalMessage || '',
+          photoName: r.photoName || '',
+          photoSize: r.photoSize || '',
+          photoType: r.photoType || ''
+        });
+      });
+    });
+
+    rows.sort((a,b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+
+    const head = ['Date / Time','Reporter Name','Reporter Email','Address','Eircode','Parking Space','Street','Owner Apt','Issue Type','Plate','Brand','Colour','Message','Photo Name','Photo Size','Photo Type'];
+    const csv = [head.join(',')].concat(rows.map((r) => [
+      r.createdAt,r.reporterName,r.reporterEmail,r.address,r.eircode,r.parkingSpace,r.street,r.ownerApt,r.issueType,r.plate,r.brand,r.colour,r.message,r.photoName,r.photoSize,r.photoType
+    ].map(v => `"${String(v == null ? '' : v).replace(/"/g,'""')}"`).join(','))).join('\n');
+
+    downloadText('parking-issue-history.csv', csv, 'text/csv');
+  }
   function parkingExportCsv(){ const rows = parkingFilterRows(parkingBuildRows()); const head = ['Resident','Address','Eircode','Parking Space No.','Type','Status','Vehicles','Owner Check','Policy','Updated']; const lines = [head.join(',')].concat(rows.map(r=>[r.resident,r.address,r.eircode,r.space,r.type,r.status,r.vehicles,r.ownerCheck,r.policy,r.updated].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','))); downloadText('parking-registry.csv', lines.join('\n')); }
   function parkingExportPdf(){ const rows = parkingFilterRows(parkingBuildRows()); const win = window.open('', '_blank'); if(!win) return; win.document.write('<html><head><title>Parking Registry</title><style>body{font-family:Arial,sans-serif;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}h1{font-size:20px}</style></head><body><h1>Parking & Vehicles Report</h1><table><thead><tr><th>Resident</th><th>Address</th><th>Eircode</th><th>Parking Space No.</th><th>Type</th><th>Status</th><th>Vehicles</th><th>Owner Check</th><th>Updated</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.resident)}</td><td>${esc(r.address)}</td><td>${esc(r.eircode)}</td><td>${esc(r.space)}</td><td>${esc(r.type)}</td><td>${esc(r.status)}</td><td>${esc(r.vehicles)}</td><td>${esc(r.ownerCheck)}</td><td>${esc(r.updated)}</td></tr>`).join('')+'</tbody></table></body></html>'); win.document.close(); win.focus(); setTimeout(()=>win.print(), 300); }
 
