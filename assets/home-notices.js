@@ -1599,7 +1599,7 @@
   function smartNoticeNextHtml(items, activeIndex){
     if(!items.length) return '';
     const next = [];
-    for(let i = 1; i <= Math.min(2, items.length - 1); i++){
+    for(let i = 1; i <= Math.min(4, items.length - 1); i++){
       next.push(items[(activeIndex + i) % items.length]);
     }
 
