@@ -303,7 +303,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       <div class="field"><label>Vehicle brand / make *</label><input id="pkWrongBrand" type="text" placeholder="Example: Toyota"></div>
       <div class="field"><label>Vehicle colour *</label><input id="pkWrongColour" type="text" placeholder="Example: Silver"></div>
       <div class="field"><label>Street name / location *</label><input id="pkWrongStreet" type="text" placeholder="Example: Aderrig Park"></div>
-      <div class="field"><label>Apartment / unit number of space owner *</label><input id="pkWrongOwnerApt" type="text" placeholder="Example: Apt 12"></div>
     </div>
 
     <div class="field">
@@ -328,7 +327,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     <div class="parking-table-wrap" id="pkWrongHistoryWrap" style="display:none; margin-top:14px;">
       <h4 style="margin:0 0 10px;">History for My Space</h4>
       <table style="width:100%;">
-        <thead><tr><th>Date / Time</th><th>Plate</th><th>Brand</th><th>Colour</th><th>Owner Apt</th><th>Photo</th></tr></thead>
+        <thead><tr><th>Date / Time</th><th>Plate</th><th>Brand</th><th>Colour</th><th>Street / Location</th><th>Photo</th></tr></thead>
         <tbody id="pkWrongHistoryBody"></tbody>
       </table>
     </div>
@@ -1772,7 +1771,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     wrongBrand: document.getElementById('pkWrongBrand'),
     wrongColour: document.getElementById('pkWrongColour'),
     wrongStreet: document.getElementById('pkWrongStreet'),
-    wrongOwnerApt: document.getElementById('pkWrongOwnerApt'),
     wrongPhoto: document.getElementById('pkWrongPhoto'),
     wrongPhotoPreview: document.getElementById('pkWrongPhotoPreview'),
     wrongMessage: document.getElementById('pkWrongMessage'),
@@ -1816,7 +1814,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     if(pkEls.wrongBrand) pkEls.wrongBrand.value = '';
     if(pkEls.wrongColour) pkEls.wrongColour.value = '';
     if(pkEls.wrongStreet) pkEls.wrongStreet.value = '';
-    if(pkEls.wrongOwnerApt) pkEls.wrongOwnerApt.value = '';
     if(pkEls.wrongPhoto) pkEls.wrongPhoto.value = '';
     pkSyncWrongMessage();
     if(pkEls.wrongPhotoPreview){ pkEls.wrongPhotoPreview.style.display = 'none'; pkEls.wrongPhotoPreview.innerHTML = ''; }
@@ -1834,7 +1831,7 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
     pkEls.wrongHistoryBody.innerHTML = reports.map((r) => {
       const when = r.createdAt ? new Date(r.createdAt).toLocaleString() : '—';
       const photo = r.photoDataUrl ? `<a href="${r.photoDataUrl}" target="_blank" rel="noopener">View</a>` : '—';
-      return `<tr><td>${esc(when)}</td><td>${esc(r.plate || '')}</td><td>${esc(r.brand || '')}</td><td>${esc(r.colour || '')}</td><td>${esc(r.ownerApt || '')}</td><td>${photo}</td></tr>`;
+      return `<tr><td>${esc(when)}</td><td>${esc(r.plate || '')}</td><td>${esc(r.brand || '')}</td><td>${esc(r.colour || '')}</td><td>${esc(r.street || '')}</td><td>${photo}</td></tr>`;
     }).join('');
     if(pkEls.wrongHistoryWrap) pkEls.wrongHistoryWrap.style.display = reports.length ? 'block' : 'none';
     if(pkEls.wrongEmptyHistory) pkEls.wrongEmptyHistory.style.display = reports.length ? 'none' : 'block';
@@ -1974,12 +1971,11 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
       const brand = String(pkEls.wrongBrand?.value || '').trim();
       const colour = String(pkEls.wrongColour?.value || '').trim();
       const street = String(pkEls.wrongStreet?.value || '').trim();
-      const ownerApt = String(pkEls.wrongOwnerApt?.value || '').trim();
       pkSyncWrongMessage();
       const message = String(pkEls.wrongMessage?.value || pkIssueDefaultMessage(issueType)).trim();
 
-      if(!plate || !brand || !colour || !street || !ownerApt){
-        pkWrongStatus('Please choose an issue type and complete plate, brand, colour, street name and owner apartment/unit number.', 'error');
+      if(!plate || !brand || !colour || !street){
+        pkWrongStatus('Please choose an issue type and complete plate, brand, colour and street name/location.', 'error');
         return;
       }
       if(!(pkEls.wrongPhoto && pkEls.wrongPhoto.files && pkEls.wrongPhoto.files.length)){
@@ -2014,7 +2010,6 @@ footer.site-footer{position:relative}footer.site-footer .page-access{position:st
         brand,
         colour,
         street,
-        ownerApt,
         reporterEmail: currentEmail || '',
         reporterName: sub.residentName || '',
         removalMessage: message || 'Please remove this vehicle. It is parked in an allocated private parking space.',
