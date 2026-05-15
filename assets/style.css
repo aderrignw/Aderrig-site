@@ -2747,3 +2747,467 @@ body.page-handbook .hb-category-list{
     min-height:0 !important;
   }
 }
+
+
+
+/* =========================================================
+   HOME SMART NOTICE PREMIUM FINAL
+   Final Home board polish:
+   - more space for reading
+   - no buttons except interactive mail notice
+   - centered bin date/photo
+   - calm premium colours
+   - two clean Next up items on desktop
+   ========================================================= */
+
+#homeNoticesSection{
+  background:#FFFFFF !important;
+}
+
+#homeNoticesSection .smart-board{
+  display:grid !important;
+  grid-template-columns:minmax(0, 1.55fr) minmax(340px, .82fr) !important;
+  gap:34px !important;
+  align-items:center !important;
+  padding:28px 30px !important;
+  min-height:238px !important;
+  border:1px solid #DDE8E1 !important;
+  border-radius:22px !important;
+  background:linear-gradient(180deg,#FFFFFF 0%,#F9FCFA 100%) !important;
+  box-shadow:0 8px 24px rgba(15,23,20,.035) !important;
+}
+
+#homeNoticesSection .smart-board-feature{
+  display:grid !important;
+  grid-template-columns:148px minmax(0,1fr) !important;
+  gap:24px !important;
+  align-items:center !important;
+  padding-right:28px !important;
+  min-height:176px !important;
+}
+
+#homeNoticesSection .smart-board-photo,
+#homeNoticesSection .smart-board-date{
+  width:138px !important;
+  height:118px !important;
+  justify-self:center !important;
+  align-self:center !important;
+  margin:0 auto !important;
+  border-radius:16px !important;
+  overflow:hidden !important;
+  border:1px solid #DCE5DF !important;
+  box-shadow:none !important;
+}
+
+#homeNoticesSection .smart-board-photo img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  display:block !important;
+}
+
+#homeNoticesSection .smart-board-date{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  background:#17324D !important;
+  color:#FFFFFF !important;
+  padding:12px 10px !important;
+}
+
+#homeNoticesSection .smart-board-date__dow{
+  font-size:.82rem !important;
+  font-weight:850 !important;
+  line-height:1 !important;
+}
+
+#homeNoticesSection .smart-board-date__day{
+  display:block !important;
+  width:100% !important;
+  text-align:center !important;
+  font-size:2.55rem !important;
+  line-height:.95 !important;
+  margin:7px 0 5px !important;
+}
+
+#homeNoticesSection .smart-board-date__month{
+  font-size:.95rem !important;
+  font-weight:800 !important;
+  line-height:1 !important;
+}
+
+#homeNoticesSection .smart-board-copy{
+  max-width:670px !important;
+  min-width:0 !important;
+}
+
+#homeNoticesSection .smart-board-kicker{
+  padding:4px 10px !important;
+  font-size:11px !important;
+  font-weight:850 !important;
+  box-shadow:none !important;
+  background:#EAF3EE !important;
+  color:#2F6F57 !important;
+}
+
+#homeNoticesSection .smart-board-kicker--parking{
+  background:#FDEEEF !important;
+  color:#C92A3A !important;
+}
+
+#homeNoticesSection .smart-board-kicker--waste{
+  background:#EAF3EE !important;
+  color:#0B6B3A !important;
+}
+
+#homeNoticesSection .smart-board-kicker--warning{
+  background:#FFF7E6 !important;
+  color:#9A5B00 !important;
+}
+
+#homeNoticesSection .smart-board-kicker--soft{
+  background:#EEF4F8 !important;
+  color:#315B74 !important;
+}
+
+#homeNoticesSection .smart-board-title{
+  color:#1F2937 !important;
+  font-size:1.42rem !important;
+  line-height:1.14 !important;
+  margin:0 0 8px !important;
+  letter-spacing:-.01em !important;
+}
+
+#homeNoticesSection .smart-board-message{
+  max-width:66ch !important;
+  color:#4B5563 !important;
+  font-size:.95rem !important;
+  line-height:1.52 !important;
+  margin:0 0 12px !important;
+}
+
+#homeNoticesSection .smart-board-details{
+  margin:8px 0 0 !important;
+  color:#6B7280 !important;
+  font-size:.82rem !important;
+  font-weight:650 !important;
+}
+
+#homeNoticesSection .smart-board-btn{
+  min-height:34px !important;
+  height:34px !important;
+  padding:0 14px !important;
+  border:0 !important;
+  border-radius:8px !important;
+  background:#0B6B3A !important;
+  color:#FFFFFF !important;
+  font-size:.84rem !important;
+  font-weight:750 !important;
+  line-height:1 !important;
+  box-shadow:0 5px 13px rgba(11,107,58,.15) !important;
+  transform:none !important;
+  margin-top:4px !important;
+}
+
+#homeNoticesSection .smart-board-next{
+  border-left:1px solid #E6EEE9 !important;
+  padding-left:28px !important;
+  min-height:170px !important;
+  justify-content:center !important;
+}
+
+#homeNoticesSection .smart-board-next-title{
+  color:#0B6B3A !important;
+  font-size:.9rem !important;
+  font-weight:850 !important;
+  margin:0 0 15px !important;
+}
+
+#homeNoticesSection .smart-board-next-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2, minmax(150px, 1fr)) !important;
+  gap:18px !important;
+  align-items:start !important;
+}
+
+#homeNoticesSection .smart-board button.smart-board-mini,
+#homeNoticesSection .smart-board .smart-board-mini{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  display:grid !important;
+  grid-template-columns:38px minmax(0,1fr) !important;
+  align-items:start !important;
+  gap:12px !important;
+  width:auto !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:88px !important;
+  padding:0 16px 0 0 !important;
+  margin:0 !important;
+  border:0 !important;
+  border-right:1px solid #E6EEE9 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  color:inherit !important;
+  box-shadow:none !important;
+  filter:none !important;
+  text-align:left !important;
+  white-space:normal !important;
+  line-height:1.35 !important;
+  cursor:pointer !important;
+  overflow:visible !important;
+}
+
+#homeNoticesSection .smart-board button.smart-board-mini:nth-child(2),
+#homeNoticesSection .smart-board .smart-board-mini:nth-child(2),
+#homeNoticesSection .smart-board button.smart-board-mini:last-child,
+#homeNoticesSection .smart-board .smart-board-mini:last-child{
+  border-right:0 !important;
+  padding-right:0 !important;
+}
+
+#homeNoticesSection .smart-board-mini-icon{
+  width:36px !important;
+  height:36px !important;
+  border-radius:10px !important;
+  background:#EAF3EE !important;
+  color:#2F6F57 !important;
+  font-size:1rem !important;
+  box-shadow:none !important;
+}
+
+#homeNoticesSection .smart-board-mini-icon--parking{
+  background:#E9F2FF !important;
+  color:#1D4ED8 !important;
+}
+
+#homeNoticesSection .smart-board-mini-icon--warning{
+  background:#FFF7E6 !important;
+  color:#9A5B00 !important;
+}
+
+#homeNoticesSection .smart-board-mini-icon--soft{
+  background:#EEF4F8 !important;
+  color:#315B74 !important;
+}
+
+#homeNoticesSection .smart-board-mini strong{
+  display:block !important;
+  color:#1F2937 !important;
+  font-size:.86rem !important;
+  font-weight:800 !important;
+  line-height:1.25 !important;
+  margin:0 0 7px !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+#homeNoticesSection .smart-board-mini-copy > span{
+  display:block !important;
+  color:#6B7280 !important;
+  font-size:.80rem !important;
+  font-weight:500 !important;
+  line-height:1.45 !important;
+  margin:0 !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+@media (max-width:1080px){
+  #homeNoticesSection .smart-board{
+    grid-template-columns:1fr !important;
+    min-height:0 !important;
+  }
+  #homeNoticesSection .smart-board-feature{
+    padding-right:0 !important;
+  }
+  #homeNoticesSection .smart-board-next{
+    border-left:0 !important;
+    border-top:1px solid #E6EEE9 !important;
+    padding-left:0 !important;
+    padding-top:18px !important;
+    min-height:0 !important;
+  }
+  #homeNoticesSection .smart-board-next-grid{
+    grid-template-columns:repeat(2, minmax(0,1fr)) !important;
+  }
+}
+
+@media (max-width:720px){
+  #homeNoticesSection .smart-board{
+    padding:15px !important;
+  }
+  #homeNoticesSection .smart-board-feature{
+    grid-template-columns:88px 1fr !important;
+    gap:13px !important;
+    min-height:0 !important;
+  }
+  #homeNoticesSection .smart-board-photo,
+  #homeNoticesSection .smart-board-date{
+    width:86px !important;
+    height:78px !important;
+    border-radius:13px !important;
+  }
+  #homeNoticesSection .smart-board-date__day{
+    font-size:1.75rem !important;
+    margin:3px 0 !important;
+  }
+  #homeNoticesSection .smart-board-title{
+    font-size:1.08rem !important;
+  }
+  #homeNoticesSection .smart-board-message{
+    font-size:.86rem !important;
+  }
+  #homeNoticesSection .smart-board-next-grid{
+    grid-template-columns:1fr !important;
+  }
+  #homeNoticesSection .smart-board button.smart-board-mini,
+  #homeNoticesSection .smart-board .smart-board-mini{
+    border-right:0 !important;
+    padding-right:0 !important;
+    min-height:0 !important;
+  }
+}
+
+
+
+/* =========================================================
+   ADMIN VISUAL REFINEMENT — light and uniform
+   Prevents oversized green pills / heavy bold text in Admin.
+   ========================================================= */
+body.page-admin main.wrap .card,
+body.page-admin .panel,
+body.page-admin .parking-admin-card,
+body.page-admin .admin-review-card{
+  background:#FFFFFF !important;
+  border:1px solid #E7ECE8 !important;
+  box-shadow:0 6px 18px rgba(15,23,20,.035) !important;
+}
+
+body.page-admin main.wrap h2{
+  font-size:1.35rem !important;
+  font-weight:750 !important;
+  color:#1F2937 !important;
+}
+
+body.page-admin main.wrap h3{
+  font-size:1.05rem !important;
+  font-weight:750 !important;
+  color:#1F2937 !important;
+}
+
+body.page-admin main.wrap h4{
+  font-size:.98rem !important;
+  font-weight:720 !important;
+  color:#1F2937 !important;
+}
+
+body.page-admin main.wrap p,
+body.page-admin main.wrap li,
+body.page-admin main.wrap .muted,
+body.page-admin main.wrap small{
+  color:#6B7280 !important;
+  font-weight:400 !important;
+}
+
+body.page-admin main.wrap button,
+body.page-admin main.wrap .btn,
+body.page-admin main.wrap input[type="submit"]{
+  min-height:36px !important;
+  padding:0 13px !important;
+  border-radius:999px !important;
+  font-size:.86rem !important;
+  font-weight:700 !important;
+  box-shadow:none !important;
+}
+
+body.page-admin main.wrap .btn-line,
+body.page-admin main.wrap button.btn-line,
+body.page-admin main.wrap .secondary,
+body.page-admin main.wrap button.secondary{
+  background:#FFFFFF !important;
+  color:#3E7C66 !important;
+  border:1px solid #DCE5DF !important;
+  box-shadow:none !important;
+}
+
+body.page-admin main.wrap .btn-line:hover,
+body.page-admin main.wrap button.btn-line:hover,
+body.page-admin main.wrap .secondary:hover,
+body.page-admin main.wrap button.secondary:hover{
+  background:#F6FAF7 !important;
+  color:#2F6F57 !important;
+}
+
+body.page-admin .admin-tabs button,
+body.page-admin button.admin-tab,
+body.page-admin a.admin-tab,
+body.page-admin .elect-subtab,
+body.page-admin button.elect-subtab{
+  min-height:34px !important;
+  padding:0 12px !important;
+  font-size:.84rem !important;
+  font-weight:650 !important;
+  background:#FFFFFF !important;
+  color:#3E7C66 !important;
+  border:1px solid #DCE5DF !important;
+  box-shadow:none !important;
+}
+
+body.page-admin .admin-tabs button.active,
+body.page-admin button.admin-tab.active,
+body.page-admin a.admin-tab.active,
+body.page-admin .elect-subtab.active,
+body.page-admin button.elect-subtab.active{
+  background:#EAF3EE !important;
+  color:#2F6F57 !important;
+  border-color:#DCE5DF !important;
+  box-shadow:none !important;
+}
+
+body.page-admin .tag,
+body.page-admin .notice-chip,
+body.page-admin .parking-admin-pill,
+body.page-admin .resident-badge,
+body.page-admin .role-chip{
+  min-height:0 !important;
+  padding:4px 9px !important;
+  border-radius:999px !important;
+  font-size:.78rem !important;
+  font-weight:650 !important;
+  background:#F6FAF7 !important;
+  color:#3E7C66 !important;
+  border:1px solid #DCE5DF !important;
+  box-shadow:none !important;
+}
+
+body.page-admin .parking-stat{
+  background:#FFFFFF !important;
+  border:1px solid #E7ECE8 !important;
+  box-shadow:none !important;
+}
+
+body.page-admin table th{
+  background:#F6FAF7 !important;
+  color:#374151 !important;
+  font-weight:700 !important;
+}
+
+body.page-admin table td{
+  color:#374151 !important;
+  font-weight:400 !important;
+}
+
+body.page-admin .smart-notice-standards-card{
+  background:#F9FBF8 !important;
+  border:1px solid #E7ECE8 !important;
+  box-shadow:none !important;
+}
