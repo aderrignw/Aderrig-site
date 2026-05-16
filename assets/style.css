@@ -3214,233 +3214,116 @@ body.page-admin .smart-notice-standards-card{
 
 
 
+
+
+
 /* =========================================================
-   HOME SMART NOTICE IMAGE 2 FINAL
-   Final layout approved by user:
-   - large featured notice on the left
-   - compact icon cards on the right
-   - no squeezed text columns
-   - clean, light, premium look
+   HOME SMART NOTICE NEXTUP LINE LIST FINAL
+   Next up in horizontal lines, not columns:
+   icon + title/message in one row, compact and readable.
    ========================================================= */
-
-#homeNoticesSection{
-  background:#FFFFFF !important;
-}
-
-#homeNoticesSection .home-notices-title{
-  display:flex !important;
-  align-items:center !important;
-  gap:8px !important;
-  margin-bottom:14px !important;
-}
 
 #homeNoticesSection .smart-board{
   display:grid !important;
-  grid-template-columns:minmax(0, 1.05fr) minmax(430px, .95fr) !important;
-  gap:30px !important;
-  align-items:center !important;
-  padding:28px 30px !important;
-  min-height:260px !important;
+  grid-template-columns:1fr !important;
+  gap:20px !important;
+  padding:26px 28px !important;
   border:1px solid #DDE8E1 !important;
   border-radius:22px !important;
   background:linear-gradient(180deg,#FFFFFF 0%,#F9FCFA 100%) !important;
   box-shadow:0 8px 24px rgba(15,23,20,.035) !important;
+  min-height:0 !important;
 }
 
 #homeNoticesSection .smart-board-feature{
   display:grid !important;
-  grid-template-columns:150px minmax(0,1fr) !important;
+  grid-template-columns:145px minmax(0,1fr) !important;
   gap:24px !important;
   align-items:center !important;
   padding:0 !important;
-  min-height:170px !important;
-  max-width:none !important;
+  min-height:132px !important;
+  max-width:920px !important;
 }
 
 #homeNoticesSection .smart-board-photo,
 #homeNoticesSection .smart-board-date{
-  width:140px !important;
-  height:140px !important;
+  width:132px !important;
+  height:118px !important;
   justify-self:center !important;
   align-self:center !important;
-  margin:0 !important;
-  border-radius:18px !important;
-  overflow:hidden !important;
-  border:1px solid #E1EAE4 !important;
-  background:#F1F7F3 !important;
-  box-shadow:0 8px 20px rgba(15,23,20,.035) !important;
-}
-
-#homeNoticesSection .smart-board-photo img{
-  width:100% !important;
-  height:100% !important;
-  object-fit:cover !important;
-  display:block !important;
-}
-
-#homeNoticesSection .smart-board-photo--icon span{
-  font-size:2.3rem !important;
-}
-
-#homeNoticesSection .smart-board-date{
-  display:flex !important;
-  flex-direction:column !important;
-  align-items:center !important;
-  justify-content:center !important;
-  text-align:center !important;
-  background:#17324D !important;
-  color:#FFFFFF !important;
-  padding:12px 10px !important;
-}
-
-#homeNoticesSection .smart-board-date__dow{
-  font-size:.82rem !important;
-  font-weight:850 !important;
-  line-height:1 !important;
-  opacity:.92 !important;
-}
-
-#homeNoticesSection .smart-board-date__day{
-  display:block !important;
-  width:100% !important;
-  text-align:center !important;
-  font-size:2.65rem !important;
-  line-height:.95 !important;
-  margin:8px 0 5px !important;
-}
-
-#homeNoticesSection .smart-board-date__month{
-  font-size:.96rem !important;
-  font-weight:800 !important;
-  line-height:1 !important;
+  border-radius:16px !important;
 }
 
 #homeNoticesSection .smart-board-copy{
-  min-width:0 !important;
-  max-width:620px !important;
-}
-
-#homeNoticesSection .smart-board-kicker{
-  display:inline-flex !important;
-  align-items:center !important;
-  gap:6px !important;
-  padding:5px 11px !important;
-  border-radius:999px !important;
-  background:#EEF4F8 !important;
-  color:#315B74 !important;
-  font-size:11px !important;
-  font-weight:850 !important;
-  line-height:1.2 !important;
-  letter-spacing:.02em !important;
-  text-transform:uppercase !important;
-  margin-bottom:10px !important;
-  box-shadow:none !important;
-}
-
-#homeNoticesSection .smart-board-kicker--parking{
-  background:#FDEEEF !important;
-  color:#C92A3A !important;
-}
-
-#homeNoticesSection .smart-board-kicker--waste{
-  background:#EAF3EE !important;
-  color:#0B6B3A !important;
-}
-
-#homeNoticesSection .smart-board-kicker--warning{
-  background:#FFF7E6 !important;
-  color:#9A5B00 !important;
+  max-width:760px !important;
 }
 
 #homeNoticesSection .smart-board-title{
-  color:#1F2937 !important;
-  font-size:1.46rem !important;
-  line-height:1.14 !important;
-  margin:0 0 9px !important;
-  letter-spacing:-.012em !important;
+  font-size:1.38rem !important;
+  line-height:1.15 !important;
+  margin:0 0 8px !important;
 }
 
 #homeNoticesSection .smart-board-message{
-  max-width:58ch !important;
-  color:#4B5563 !important;
-  font-size:.97rem !important;
-  line-height:1.52 !important;
-  margin:0 0 14px !important;
+  max-width:74ch !important;
+  font-size:.96rem !important;
+  line-height:1.5 !important;
+  margin:0 0 10px !important;
 }
 
-#homeNoticesSection .smart-board-details{
-  margin:8px 0 0 !important;
-  color:#6B7280 !important;
-  font-size:.82rem !important;
-  font-weight:650 !important;
-}
-
-#homeNoticesSection .smart-board-btn{
-  min-height:38px !important;
-  height:38px !important;
-  padding:0 16px !important;
-  border:0 !important;
-  border-radius:9px !important;
-  background:#0B6B3A !important;
-  color:#FFFFFF !important;
-  font-size:.86rem !important;
-  font-weight:760 !important;
-  line-height:1 !important;
-  box-shadow:0 6px 14px rgba(11,107,58,.15) !important;
-  transform:none !important;
-  margin-top:2px !important;
-}
-
+/* NEXT UP AREA: list of horizontal rows */
 #homeNoticesSection .smart-board-next{
-  border-left:1px solid #E6EEE9 !important;
-  border-top:0 !important;
-  padding-left:28px !important;
-  padding-top:0 !important;
-  min-height:170px !important;
-  justify-content:center !important;
+  border-left:0 !important;
+  border-top:1px solid #E6EEE9 !important;
+  padding-left:0 !important;
+  padding-top:16px !important;
+  min-height:0 !important;
+  width:100% !important;
 }
 
 #homeNoticesSection .smart-board-next-title{
+  margin:0 0 10px !important;
   color:#0B6B3A !important;
-  font-size:.95rem !important;
+  font-size:.9rem !important;
   font-weight:850 !important;
-  margin:0 0 16px !important;
 }
 
 #homeNoticesSection .smart-board-next-grid{
   display:grid !important;
-  grid-template-columns:repeat(4, minmax(92px, 1fr)) !important;
-  gap:14px !important;
+  grid-template-columns:1fr !important;
+  gap:9px !important;
   align-items:stretch !important;
+  width:100% !important;
 }
 
+/* Each next item is ONE HORIZONTAL LINE, never a vertical column */
 #homeNoticesSection .smart-board button.smart-board-mini,
 #homeNoticesSection .smart-board .smart-board-mini{
   appearance:none !important;
   -webkit-appearance:none !important;
   display:grid !important;
-  grid-template-columns:1fr !important;
-  grid-template-rows:auto auto auto !important;
-  justify-items:center !important;
-  align-items:start !important;
-  gap:8px !important;
+  grid-template-columns:42px minmax(0,1fr) !important;
+  grid-template-rows:1fr !important;
+  align-items:center !important;
+  justify-items:stretch !important;
+  gap:12px !important;
   width:100% !important;
   min-width:0 !important;
+  min-height:58px !important;
   height:auto !important;
-  min-height:154px !important;
-  padding:14px 12px !important;
+  padding:10px 12px !important;
   margin:0 !important;
   border:1px solid #E6EEE9 !important;
-  border-radius:18px !important;
+  border-radius:15px !important;
   background:#FFFFFF !important;
   background-color:#FFFFFF !important;
   background-image:none !important;
   color:inherit !important;
-  box-shadow:0 6px 18px rgba(15,23,20,.035) !important;
+  box-shadow:0 4px 12px rgba(15,23,20,.025) !important;
   filter:none !important;
-  text-align:center !important;
+  text-align:left !important;
   white-space:normal !important;
-  line-height:1.35 !important;
+  line-height:1.32 !important;
   cursor:pointer !important;
   overflow:hidden !important;
 }
@@ -3448,52 +3331,28 @@ body.page-admin .smart-notice-standards-card{
 #homeNoticesSection .smart-board button.smart-board-mini:hover,
 #homeNoticesSection .smart-board .smart-board-mini:hover{
   background:#F9FCFA !important;
-  box-shadow:0 8px 22px rgba(15,23,20,.045) !important;
+  box-shadow:0 5px 14px rgba(15,23,20,.035) !important;
   transform:none !important;
   filter:none !important;
 }
 
 #homeNoticesSection .smart-board-mini-icon{
-  width:54px !important;
-  height:54px !important;
-  border-radius:15px !important;
+  width:36px !important;
+  height:36px !important;
+  border-radius:11px !important;
   display:flex !important;
   align-items:center !important;
   justify-content:center !important;
-  background:#EAF3EE !important;
-  color:#2F6F57 !important;
-  font-size:1.45rem !important;
-  box-shadow:none !important;
-  margin:0 auto 2px !important;
-}
-
-#homeNoticesSection .smart-board-mini-icon--parking{
-  background:#E9F2FF !important;
-  color:#1D4ED8 !important;
-}
-
-#homeNoticesSection .smart-board-mini-icon--waste{
-  background:#EAF3EE !important;
-  color:#0B6B3A !important;
-}
-
-#homeNoticesSection .smart-board-mini-icon--safety{
-  background:#EAF3EE !important;
-  color:#2F6F57 !important;
-}
-
-#homeNoticesSection .smart-board-mini-icon--warning{
-  background:#FFF7E6 !important;
-  color:#9A5B00 !important;
-}
-
-#homeNoticesSection .smart-board-mini-icon--soft{
-  background:#EEF4F8 !important;
-  color:#315B74 !important;
+  font-size:1.05rem !important;
+  margin:0 !important;
+  flex:0 0 auto !important;
 }
 
 #homeNoticesSection .smart-board-mini-copy{
-  display:block !important;
+  display:grid !important;
+  grid-template-columns:minmax(170px,.35fr) minmax(0,1fr) !important;
+  align-items:center !important;
+  gap:12px !important;
   min-width:0 !important;
   width:100% !important;
 }
@@ -3501,15 +3360,18 @@ body.page-admin .smart-notice-standards-card{
 #homeNoticesSection .smart-board-mini strong{
   display:block !important;
   color:#1F2937 !important;
-  font-size:.86rem !important;
+  font-size:.88rem !important;
   font-weight:800 !important;
-  line-height:1.23 !important;
-  margin:0 0 7px !important;
+  line-height:1.22 !important;
+  margin:0 !important;
   padding:0 !important;
   background:transparent !important;
   border:0 !important;
   box-shadow:none !important;
-  text-align:center !important;
+  text-align:left !important;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
   word-break:normal !important;
   overflow-wrap:normal !important;
 }
@@ -3517,56 +3379,27 @@ body.page-admin .smart-notice-standards-card{
 #homeNoticesSection .smart-board-mini-copy > span{
   display:block !important;
   color:#6B7280 !important;
-  font-size:.78rem !important;
+  font-size:.82rem !important;
   font-weight:500 !important;
-  line-height:1.38 !important;
+  line-height:1.35 !important;
   margin:0 !important;
   padding:0 !important;
   background:transparent !important;
   border:0 !important;
   box-shadow:none !important;
-  text-align:center !important;
+  text-align:left !important;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
   word-break:normal !important;
   overflow-wrap:normal !important;
 }
 
 #homeNoticesSection .smart-board-dots{
-  display:flex !important;
-  justify-content:center !important;
-  gap:12px !important;
-  margin-top:16px !important;
+  margin-top:14px !important;
 }
 
-#homeNoticesSection .smart-board-dots span{
-  width:10px !important;
-  height:10px !important;
-  border-radius:999px !important;
-  background:#D1D5DB !important;
-}
-
-#homeNoticesSection .smart-board-dots span.active{
-  background:#0B6B3A !important;
-}
-
-@media (max-width:1080px){
-  #homeNoticesSection .smart-board{
-    grid-template-columns:1fr !important;
-    min-height:0 !important;
-  }
-
-  #homeNoticesSection .smart-board-next{
-    border-left:0 !important;
-    border-top:1px solid #E6EEE9 !important;
-    padding-left:0 !important;
-    padding-top:18px !important;
-    min-height:0 !important;
-  }
-
-  #homeNoticesSection .smart-board-next-grid{
-    grid-template-columns:repeat(2, minmax(0,1fr)) !important;
-  }
-}
-
+/* On smaller screens, still rows, but title above text inside each row */
 @media (max-width:720px){
   #homeNoticesSection .smart-board{
     padding:15px !important;
@@ -3582,12 +3415,6 @@ body.page-admin .smart-notice-standards-card{
   #homeNoticesSection .smart-board-date{
     width:86px !important;
     height:78px !important;
-    border-radius:13px !important;
-  }
-
-  #homeNoticesSection .smart-board-date__day{
-    font-size:1.75rem !important;
-    margin:3px 0 !important;
   }
 
   #homeNoticesSection .smart-board-title{
@@ -3598,12 +3425,20 @@ body.page-admin .smart-notice-standards-card{
     font-size:.86rem !important;
   }
 
-  #homeNoticesSection .smart-board-next-grid{
-    grid-template-columns:1fr 1fr !important;
-  }
-
   #homeNoticesSection .smart-board button.smart-board-mini,
   #homeNoticesSection .smart-board .smart-board-mini{
-    min-height:136px !important;
+    grid-template-columns:40px minmax(0,1fr) !important;
+    min-height:64px !important;
+    padding:10px !important;
+  }
+
+  #homeNoticesSection .smart-board-mini-icon{
+    width:34px !important;
+    height:34px !important;
+  }
+
+  #homeNoticesSection .smart-board-mini-copy{
+    grid-template-columns:1fr !important;
+    gap:3px !important;
   }
 }
