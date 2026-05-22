@@ -82,6 +82,39 @@
 #tabGarda .garda-cat.is-active{background:var(--brand,#1f7a3f);border-color:var(--brand,#1f7a3f)}
 #tabGarda .garda-cat.is-active .label{color:#fff}#tabGarda .garda-cat.is-active .icon{background:rgba(255,255,255,.18)}#tabGarda .garda-cat.is-active .icon svg{stroke:#fff}
 
+/* Dashboard Garda colour refinement: keep inactive category cards readable and active card high-contrast. */
+#tabGarda .garda-cat{
+  background:#fff !important;
+  color:#1f2937 !important;
+  border-color:#d9e7dd !important;
+}
+#tabGarda .garda-cat:hover{
+  background:#f1f7f3 !important;
+}
+#tabGarda .garda-cat .label{
+  color:#1f2937 !important;
+}
+#tabGarda .garda-cat .icon{
+  background:#eaf3ee !important;
+}
+#tabGarda .garda-cat .icon svg{
+  stroke:#3E7C66 !important;
+}
+#tabGarda .garda-cat.is-active{
+  background:#4C9277 !important;
+  border-color:#4C9277 !important;
+  color:#fff !important;
+}
+#tabGarda .garda-cat.is-active .label{
+  color:#fff !important;
+}
+#tabGarda .garda-cat.is-active .icon{
+  background:rgba(255,255,255,.22) !important;
+}
+#tabGarda .garda-cat.is-active .icon svg{
+  stroke:#fff !important;
+}
+
 .profile-head{display:grid;grid-template-columns:minmax(0,1fr) 160px;align-items:start;gap:24px;margin-bottom:18px}
 .profile-overview{min-width:0}
 .profile-title{margin:0 0 4px}
