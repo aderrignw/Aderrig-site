@@ -947,7 +947,7 @@ async function getJsonArray(store, key) {
 export default withSecurity(
   {
     methods: ["GET", "POST"],
-    maxBodyBytes: 1024 * 1024 * 2,
+    maxBodyBytes: 1024 * 1024 * 25,
   },
   async (ctx, req) => {
     const url = new URL(req.url);
