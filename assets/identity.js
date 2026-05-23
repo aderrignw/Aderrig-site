@@ -5,6 +5,7 @@
   const STORAGE_KEY = "lastActivity";
   const PRESENCE_KEY = "anw_online_presence";
   let lastPresenceWrite = 0;
+  let pendingPresenceWrite = false;
 
   function getCurrentUser() {
     try {
@@ -15,8 +16,30 @@
     return null;
   }
 
-  async function getAuthHeaders() {
+  function getUserEmail() {
     const user = getCurrentUser();
+    return String((user && user.email) || "").trim().toLowerCase();
+  }
+
+  function getUserName() {
+    const user = getCurrentUser();
+    const meta = (user && (user.user_metadata || user.userMetadata || {})) || {};
+    return String(meta.full_name || meta.name || meta.displayName || (user && user.email) || "").trim();
+  }
+
+  async function waitForCurrentUser(timeoutMs) {
+    const started = Date.now();
+    const limit = Number(timeoutMs || 8000);
+    while ((Date.now() - started) < limit) {
+      const user = getCurrentUser();
+      if (user && user.email && typeof user.jwt === "function") return user;
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+    return getCurrentUser();
+  }
+
+  async function getAuthHeaders() {
+    const user = getCurrentUser() || await waitForCurrentUser(8000);
     if (!user || typeof user.jwt !== "function") return null;
     try {
       const token = await user.jwt();
@@ -25,11 +48,6 @@
     } catch (e) {
       return null;
     }
-  }
-
-  function getUserEmail() {
-    const user = getCurrentUser();
-    return String((user && user.email) || "").trim().toLowerCase();
   }
 
   async function loadPresence() {
@@ -50,32 +68,44 @@
 
   async function savePresence(data) {
     const headers = await getAuthHeaders();
-    if (!headers) return;
+    if (!headers) return false;
     try {
-      await fetch("/.netlify/functions/store?key=" + encodeURIComponent(PRESENCE_KEY), {
+      const res = await fetch("/.netlify/functions/store?key=" + encodeURIComponent(PRESENCE_KEY), {
         method: "POST",
         headers: headers,
         body: JSON.stringify(data || {})
       });
-    } catch (e) {}
+      return !!(res && res.ok);
+    } catch (e) {
+      return false;
+    }
   }
 
   async function markOnline(force) {
     const now = Date.now();
     if (!force && now - lastPresenceWrite < 30000) return;
-    lastPresenceWrite = now;
+    if (pendingPresenceWrite) return;
+    pendingPresenceWrite = true;
 
-    const email = getUserEmail();
-    if (!email) return;
+    try {
+      const user = getCurrentUser() || await waitForCurrentUser(8000);
+      const email = String((user && user.email) || "").trim().toLowerCase();
+      if (!email) return;
 
-    const presence = await loadPresence();
-    presence[email] = {
-      email: email,
-      status: "on",
-      lastSeen: new Date().toISOString(),
-      path: location.pathname || ""
-    };
-    await savePresence(presence);
+      const presence = await loadPresence();
+      presence[email] = {
+        email: email,
+        name: getUserName(),
+        status: "on",
+        lastSeen: new Date().toISOString(),
+        path: location.pathname || ""
+      };
+
+      const saved = await savePresence(presence);
+      if (saved) lastPresenceWrite = Date.now();
+    } finally {
+      pendingPresenceWrite = false;
+    }
   }
 
   async function markOffline() {
@@ -129,6 +159,10 @@
     }
   }
 
+  function startPresence() {
+    if (!checkTimeout()) markOnline(true);
+  }
+
   ["click", "mousemove", "keydown", "scroll", "touchstart"].forEach((event) => {
     document.addEventListener(event, updateActivity, true);
   });
@@ -147,6 +181,17 @@
     try { markOffline(); } catch (e) {}
   });
 
+  try {
+    if (window.netlifyIdentity && typeof window.netlifyIdentity.on === "function") {
+      window.netlifyIdentity.on("init", startPresence);
+      window.netlifyIdentity.on("login", startPresence);
+      window.netlifyIdentity.on("logout", () => { markOffline(); });
+    }
+  } catch (e) {}
+
+  setTimeout(startPresence, 500);
+  setTimeout(startPresence, 2000);
+  setTimeout(startPresence, 5000);
   setInterval(checkTimeout, 10000);
   setInterval(() => { if (!checkTimeout()) markOnline(false); }, 30000);
 
