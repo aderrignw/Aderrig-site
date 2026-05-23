@@ -1211,6 +1211,56 @@
     });
   }
 
+
+  async function notifyAdminNewResident(user){
+    try{
+      const resident = user && typeof user === 'object' ? user : {};
+      let token = '';
+
+      try{
+        const current = window.netlifyIdentity && typeof window.netlifyIdentity.currentUser === 'function'
+          ? window.netlifyIdentity.currentUser()
+          : null;
+        if(current && typeof current.jwt === 'function') token = await current.jwt();
+      }catch(_){ }
+
+      try{
+        if(!token && typeof window.anwWaitForIdentityToken === 'function'){
+          token = await window.anwWaitForIdentityToken(8000);
+        }
+      }catch(_){ }
+
+      const headers = { 'Content-Type': 'application/json' };
+      if(token) headers.Authorization = 'Bearer ' + token;
+
+      const res = await fetch('/.netlify/functions/notify-new-resident', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          name: resident.name || '',
+          email: resident.email || '',
+          eircode: resident.eircode || '',
+          address: resident.address || '',
+          phone: resident.phone || '',
+          residentType: resident.residentType || '',
+          managementCompany: resident.managementCompany || '',
+          createdAt: resident.createdAt || new Date().toISOString()
+        })
+      });
+
+      if(!res.ok){
+        let details = '';
+        try{ details = await res.text(); }catch(_){ }
+        console.warn('New resident admin email was not sent', res.status, details);
+        return false;
+      }
+      return true;
+    }catch(err){
+      console.warn('New resident admin email failed', err);
+      return false;
+    }
+  }
+
   if(btnRegister){
     btnRegister.addEventListener('click', async () => {
       setMsg(regMsg, '', '');
@@ -1346,6 +1396,10 @@
           try{ window.netlifyIdentity.logout(); } catch {}
           return;
         }
+
+        // Notify admin after the resident was safely saved as pending.
+        // Email failure must never block or undo the resident registration.
+        await notifyAdminNewResident(newUser);
 
         setMsg(regMsg, 'Registration created. Your account is pending admin approval.', 'ok');
         modal('Registration submitted. Your account is pending admin approval.', 'Success');
