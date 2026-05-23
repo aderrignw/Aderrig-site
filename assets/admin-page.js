@@ -11,6 +11,7 @@
   const KEY_ACCESS = KEYS.ACL || KEYS.ACCESS || 'acl';
   const KEY_TASKS = KEYS.TASKS || 'anw_tasks';
   const KEY_NOTICES = window.getNoticesKey();
+  const KEY_ONLINE_PRESENCE = (KEYS.ONLINE_PRESENCE || KEYS.PRESENCE || 'anw_online_presence');
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -285,6 +286,7 @@
 
   const ADMIN_TAB_ACL = {
     tabResidents: 'admin:tab_residents',
+    tabOnlineResidents: 'admin:tab_residents',
     tabTasks: 'admin:tab_tasks',
     tabElections: 'admin:tab_elections',
     tabParkingAdmin: 'admin:tab_parking',
@@ -309,7 +311,7 @@
   }
 
   function firstAllowedAdminTab(){
-    const ordered = ['tabResidents','tabTasks','tabElections','tabParkingAdmin','tabReports','tabNotices','tabHandbook','tabHelpCenterAdmin','tabProjects','tabAccessControl','tabTools'];
+    const ordered = ['tabResidents','tabOnlineResidents','tabTasks','tabElections','tabParkingAdmin','tabReports','tabNotices','tabHandbook','tabHelpCenterAdmin','tabProjects','tabAccessControl','tabTools'];
     return ordered.find(canOpenAdminTab) || 'tabResidents';
   }
 
@@ -319,6 +321,7 @@
     closeResidentModal();
     $$('.admin-tab').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === target));
     $$('.admin-tab-content').forEach(p => { p.style.display = (p.id === target) ? 'block' : 'none'; });
+    if(target === 'tabOnlineResidents') renderOnlineResidents();
   }
 
   function showResidentSubtab(id){
@@ -512,6 +515,98 @@
       return false;
     }
   }
+
+  // ---------- Residents Online ----------
+  const ONLINE_LIMIT_MS = 10 * 60 * 1000;
+
+  function getOnlineResidentEmail(row){
+    const emails = getUserEmailsForAdmin(row);
+    return emails.length ? emails[0] : '';
+  }
+
+  function getResidentStreet(row){
+    const direct = String(row && (row.street || row.streetName || row.road || row.roadName) || '').trim();
+    if(direct) return direct;
+    const address = String(row && (row.address || row.fullAddress || row.propertyAddress) || '').trim();
+    if(!address) return '—';
+    return address.split(',')[0].trim() || address;
+  }
+
+  function initialsFromName(name){
+    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if(!parts.length) return '👤';
+    return parts.slice(0, 2).map(p => p.charAt(0).toUpperCase()).join('');
+  }
+
+  function formatActiveAgo(lastSeen){
+    const t = Date.parse(lastSeen || '');
+    if(Number.isNaN(t)) return '—';
+    const diff = Math.max(0, Date.now() - t);
+    if(diff < 60000) return Math.max(1, Math.floor(diff / 1000)) + 's ago';
+    return Math.floor(diff / 60000) + 'm ago';
+  }
+
+  async function renderOnlineResidents(){
+    const body = byId('onlineResidentsBody');
+    const empty = byId('onlineResidentsEmpty');
+    const count = byId('onlineResidentsCount');
+    if(!body) return;
+
+    try{
+      const usersRaw = await anwLoadSafe(KEY_USERS, []);
+      const presenceRaw = await anwLoadSafe(KEY_ONLINE_PRESENCE, {});
+      const users = Array.isArray(usersRaw) ? usersRaw : [];
+      const presence = presenceRaw && typeof presenceRaw === 'object' ? presenceRaw : {};
+      const now = Date.now();
+
+      const rows = users
+        .map(user => {
+          const emails = getUserEmailsForAdmin(user);
+          const matchedEmail = emails.find(email => presence[email] && presence[email].lastSeen) || emails[0] || '';
+          const online = matchedEmail ? presence[matchedEmail] : null;
+          const lastSeenTime = online && online.lastSeen ? Date.parse(online.lastSeen) : NaN;
+          return { user, email: matchedEmail, online, lastSeenTime, street: getResidentStreet(user) };
+        })
+        .filter(row => row.online && !Number.isNaN(row.lastSeenTime) && (now - row.lastSeenTime) < ONLINE_LIMIT_MS)
+        .sort((a, b) => {
+          const streetCompare = String(a.street || '').localeCompare(String(b.street || ''), undefined, { sensitivity:'base' });
+          if(streetCompare) return streetCompare;
+          return String(a.user && a.user.name || '').localeCompare(String(b.user && b.user.name || ''), undefined, { sensitivity:'base' });
+        });
+
+      body.innerHTML = rows.map(row => {
+        const u = row.user || {};
+        const name = u.name || u.fullName || u.displayName || row.email || 'Resident';
+        const photo = safeUrlForAdmin(u.profilePhoto || u.photo || u.photoURL || u.avatar || '');
+        const avatar = photo
+          ? `<img class="online-avatar" src="${esc(photo)}" alt="">`
+          : `<span class="online-avatar">${esc(initialsFromName(name))}</span>`;
+        return `
+          <tr>
+            <td>${avatar}</td>
+            <td title="${esc(name)}">${esc(name)}</td>
+            <td title="${esc(row.street)}">${esc(row.street)}</td>
+            <td title="${esc(u.phone || u.mobile || u.telephone || '')}">${esc(u.phone || u.mobile || u.telephone || '—')}</td>
+            <td title="${esc(u.eircode || '')}">${esc(u.eircode || '—')}</td>
+            <td title="${esc(u.address || u.fullAddress || u.propertyAddress || '')}">${esc(u.address || u.fullAddress || u.propertyAddress || '—')}</td>
+            <td><span class="online-status"><span class="online-dot"></span> ON</span></td>
+            <td>${esc(formatActiveAgo(row.online.lastSeen))}</td>
+          </tr>`;
+      }).join('');
+
+      if(count) count.textContent = `🟢 Residents ON: ${rows.length}`;
+      if(empty) empty.style.display = rows.length ? 'none' : 'block';
+    }catch(err){
+      console.error(err);
+      body.innerHTML = '';
+      if(count) count.textContent = '🟢 Residents ON: 0';
+      if(empty){
+        empty.style.display = 'block';
+        empty.textContent = 'Unable to load online residents right now.';
+      }
+    }
+  }
+
   // ---------- Residents ----------
   let RESIDENTS_CACHE = [];
   let CURRENT_RESIDENT = null;
@@ -2046,6 +2141,7 @@
 
       await Promise.all([
         loadResidents(),
+        renderOnlineResidents(),
         renderNoticesList(),
         loadReports(),
         loadProjects(),
@@ -2055,6 +2151,7 @@
 
       parkingBindAdmin();
       parkingRenderAdmin();
+      setInterval(() => { if(getCurrentAdminTabId() === 'tabOnlineResidents') renderOnlineResidents(); }, 30000);
 
       adminGuardPending(false);
       adminMarkReady();
