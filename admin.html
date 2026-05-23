@@ -63,6 +63,29 @@
 
 <style id="admin-first-paint-fix">
   .admin-tab-content{display:none;}
+  /* Residents Online tab */
+  .online-users-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:.5rem;margin-bottom:.75rem;}
+  .online-users-count{font-weight:700;color:#1f6f54;background:#e8f3ee;border:1px solid #d8e8e0;border-radius:999px;padding:.45rem .8rem;}
+  .online-users-table-wrap{overflow-x:auto;margin-top:.75rem;}
+  .online-users-table{width:100%;border-collapse:collapse;min-width:1080px;table-layout:fixed;}
+  .online-users-table th,.online-users-table td{padding:.65rem .7rem;text-align:left;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .online-users-table thead th{background:#f2f8f5;color:#263242;font-weight:800;}
+  .online-users-table tbody tr{border-bottom:1px solid #edf2ef;}
+  .online-users-table tbody tr:hover{background:#fbfdfc;}
+  .online-avatar{width:38px;height:38px;border-radius:999px;object-fit:cover;background:#dfece6;display:inline-flex;align-items:center;justify-content:center;font-weight:800;color:#1f6f54;}
+  .online-status{display:inline-flex;align-items:center;gap:6px;font-weight:800;color:#13784f;}
+  .online-dot{width:9px;height:9px;border-radius:999px;background:#16a34a;box-shadow:0 0 0 4px rgba(22,163,74,.12);}
+  .online-users-table th:nth-child(1),.online-users-table td:nth-child(1){width:70px;}
+  .online-users-table th:nth-child(2),.online-users-table td:nth-child(2){width:170px;}
+  .online-users-table th:nth-child(3),.online-users-table td:nth-child(3){width:150px;}
+  .online-users-table th:nth-child(4),.online-users-table td:nth-child(4){width:140px;}
+  .online-users-table th:nth-child(5),.online-users-table td:nth-child(5){width:110px;}
+  .online-users-table th:nth-child(6),.online-users-table td:nth-child(6){width:280px;}
+  .online-users-table th:nth-child(7),.online-users-table td:nth-child(7){width:90px;text-align:center;}
+  .online-users-table th:nth-child(8),.online-users-table td:nth-child(8){width:110px;text-align:center;}
+  .online-users-table td:nth-child(7) .online-status{justify-content:center;}
+
+
   #tabResidents{display:block;}
   .elect-subtab{display:none;}
   #subManage{display:block;}
@@ -1270,6 +1293,7 @@
 
     <div class="actions admin-tabs" style="margin-top:0.5rem;">
       <button type="button" class="btn small admin-tab active" data-tab="tabResidents" data-acl-feature="admin:tab_residents">Residents</button>
+      <button type="button" class="btn small admin-tab" data-tab="tabOnlineResidents" data-acl-feature="admin:tab_residents">Residents Online</button>
       <button type="button" class="btn small admin-tab" data-tab="tabTasks" data-acl-feature="admin:tab_tasks">Volunteer tasks</button>
       <button type="button" class="btn small admin-tab" data-tab="tabElections" data-acl-feature="admin:tab_elections">Elections</button>
       <button type="button" class="btn small admin-tab" data-tab="tabParkingAdmin" data-acl-feature="admin:tab_parking">Parking &amp; Vehicles</button>
@@ -1313,6 +1337,38 @@
     </div>
 
     <p id="resEmpty" class="tiny muted" style="display:none; margin-top:0.5rem;">No residents found.</p>
+  </section>
+
+
+
+  <!-- ================= RESIDENTS ON ================= -->
+  <section class="card admin-tab-content" id="tabOnlineResidents" data-acl-feature="admin:tab_residents" style="display:none;">
+    <h3>Residents Online</h3>
+    <p class="tiny muted" style="margin-top:0;">Shows only residents currently online. Ordered by street so residents from the same street stay together.</p>
+
+    <div class="online-users-toolbar">
+      <div class="online-users-count" id="onlineResidentsCount">🟢 Residents ON: 0</div>
+      <div class="tiny muted">Auto logout after 10 minutes without activity</div>
+    </div>
+
+    <div class="online-users-table-wrap">
+      <table class="online-users-table">
+        <thead>
+          <tr>
+            <th>Photo</th>
+            <th>Name</th>
+            <th>Street</th>
+            <th>Phone</th>
+            <th>Eircode</th>
+            <th>Address</th>
+            <th>Status</th>
+            <th>Active</th>
+          </tr>
+        </thead>
+        <tbody id="onlineResidentsBody"></tbody>
+      </table>
+    </div>
+    <p id="onlineResidentsEmpty" class="tiny muted" style="display:block; margin-top:0.5rem;">No residents online right now.</p>
   </section>
 
   <section class="card admin-tab-content" id="tabParkingAdmin" data-acl-feature="admin:tab_parking" style="display:none;">
