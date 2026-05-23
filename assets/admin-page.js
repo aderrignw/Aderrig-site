@@ -524,12 +524,71 @@
     return emails.length ? emails[0] : '';
   }
 
-  function getResidentStreet(row){
-    const direct = String(row && (row.street || row.streetName || row.road || row.roadName) || '').trim();
+  function cleanResidentValue(value){
+    return String(value == null ? '' : value).trim();
+  }
+
+  function pickResidentField(row, fields){
+    const source = row && typeof row === 'object' ? row : {};
+    for(const key of fields){
+      const value = cleanResidentValue(source[key]);
+      if(value) return value;
+    }
+    return '';
+  }
+
+  function getResidentName(row){
+    const direct = pickResidentField(row, ['name','fullName','displayName','residentName','memberName','ownerName','accountName','primaryName']);
     if(direct) return direct;
-    const address = String(row && (row.address || row.fullAddress || row.propertyAddress) || '').trim();
+    const first = pickResidentField(row, ['firstName','firstname','givenName']);
+    const last = pickResidentField(row, ['lastName','lastname','surname','familyName']);
+    return [first, last].filter(Boolean).join(' ').trim();
+  }
+
+  function getResidentPhone(row){
+    return pickResidentField(row, ['phone','mobile','telephone','tel','phoneNumber','mobileNumber','contactNumber','contactPhone','phoneNo','mobilePhone','residentPhone','primaryPhone','whatsapp','whatsApp']);
+  }
+
+  function getResidentEircode(row){
+    return pickResidentField(row, ['eircode','eir','eirCode','Eircode','EIRCODE','postCode','postcode','postalCode','eircodeValue']);
+  }
+
+  function getResidentAddress(row){
+    const direct = pickResidentField(row, ['address','fullAddress','propertyAddress','streetAddress','householdAddress','homeAddress','registeredAddress','residentAddress','addressLine','addressLine1','line1']);
+    if(direct) return direct;
+    const unit = pickResidentField(row, ['apartment','apartmentNo','apt','unit','unitNo','houseNumber','houseNo','number']);
+    const street = pickResidentField(row, ['street','streetName','road','roadName']);
+    const area = pickResidentField(row, ['area','estate','development','city','town']);
+    return [unit, street, area].filter(Boolean).join(', ').trim();
+  }
+
+  function getResidentStreet(row){
+    const direct = pickResidentField(row, ['street','streetName','road','roadName']);
+    if(direct) return direct;
+    const address = getResidentAddress(row);
     if(!address) return '—';
     return address.split(',')[0].trim() || address;
+  }
+
+  function normResidentText(value){
+    return String(value || '').toLowerCase().trim().replace(/\s+/g, ' ');
+  }
+
+  function findResidentProfileForPresence(users, presenceEmail, presenceName){
+    const email = String(presenceEmail || '').trim().toLowerCase();
+    const name = normResidentText(presenceName || '');
+    const list = Array.isArray(users) ? users : [];
+    if(email){
+      const byEmail = list.find(u => getUserEmailsForAdmin(u).includes(email));
+      if(byEmail) return byEmail;
+      const byLooseEmail = list.find(u => JSON.stringify(u || {}).toLowerCase().includes(email));
+      if(byLooseEmail) return byLooseEmail;
+    }
+    if(name){
+      const byName = list.find(u => normResidentText(getResidentName(u)) === name);
+      if(byName) return byName;
+    }
+    return null;
   }
 
   function initialsFromName(name){
@@ -583,8 +642,18 @@
         const currentEmail = String((current && current.email) || '').trim().toLowerCase();
         if(currentEmail && !rows.some(row => String(row.email || '').toLowerCase() === currentEmail)){
           const meta = (current && (current.user_metadata || current.userMetadata || current.app_metadata)) || {};
+          const currentName = meta.full_name || meta.fullName || meta.name || meta.displayName || currentEmail;
+          const profile = findResidentProfileForPresence(users, currentEmail, currentName) || {
+            email: currentEmail,
+            name: currentName,
+            phone: meta.phone || meta.mobile || '',
+            eircode: meta.eircode || meta.eir || '',
+            address: meta.address || meta.streetAddress || meta.householdAddress || '',
+            street: meta.street || ''
+          };
           const online = presence[currentEmail] || {
             email: currentEmail,
+            name: currentName,
             status: 'on',
             lastSeen: new Date().toISOString(),
             path: location.pathname || ''
@@ -592,18 +661,11 @@
           const lastSeenTime = Date.parse(online.lastSeen || '');
           if(!Number.isNaN(lastSeenTime) && (now - lastSeenTime) < ONLINE_LIMIT_MS){
             rows.push({
-              user: {
-                email: currentEmail,
-                name: meta.full_name || meta.fullName || meta.name || currentEmail,
-                phone: meta.phone || meta.mobile || '',
-                eircode: meta.eircode || '',
-                address: meta.address || '',
-                profilePhoto: meta.avatar_url || meta.picture || ''
-              },
+              user: profile,
               email: currentEmail,
               online,
               lastSeenTime,
-              street: meta.street || getResidentStreet({ address: meta.address || '' })
+              street: getResidentStreet(profile)
             });
           }
         }
@@ -612,19 +674,23 @@
       rows = rows.sort((a, b) => {
         const streetCompare = String(a.street || '').localeCompare(String(b.street || ''), undefined, { sensitivity:'base' });
         if(streetCompare) return streetCompare;
-        return String(a.user && a.user.name || '').localeCompare(String(b.user && b.user.name || ''), undefined, { sensitivity:'base' });
+        return String(getResidentName(a.user) || '').localeCompare(String(getResidentName(b.user) || ''), undefined, { sensitivity:'base' });
       });
 
       body.innerHTML = rows.map(row => {
         const u = row.user || {};
-        const name = u.name || u.fullName || u.displayName || row.email || 'Resident';
+        const name = getResidentName(u) || row.email || 'Resident';
+        const street = getResidentStreet(u);
+        const phone = getResidentPhone(u) || '—';
+        const eircode = getResidentEircode(u) || '—';
+        const address = getResidentAddress(u) || '—';
         return `
           <tr>
             <td title="${esc(name)}">${esc(name)}</td>
-            <td title="${esc(row.street)}">${esc(row.street)}</td>
-            <td title="${esc(u.phone || u.mobile || u.telephone || '')}">${esc(u.phone || u.mobile || u.telephone || '—')}</td>
-            <td title="${esc(u.eircode || '')}">${esc(u.eircode || '—')}</td>
-            <td title="${esc(u.address || u.fullAddress || u.propertyAddress || '')}">${esc(u.address || u.fullAddress || u.propertyAddress || '—')}</td>
+            <td title="${esc(street)}">${esc(street)}</td>
+            <td title="${esc(phone)}">${esc(phone)}</td>
+            <td title="${esc(eircode)}">${esc(eircode)}</td>
+            <td title="${esc(address)}">${esc(address)}</td>
             <td><span class="online-status"><span class="online-dot"></span> ON</span></td>
             <td>${esc(formatActiveAgo(row.online.lastSeen))}</td>
           </tr>`;
