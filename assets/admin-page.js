@@ -2551,6 +2551,7 @@
   let currentCategoryId = '';
   let currentItemId = '';
   let currentImageData = '';
+  let currentImageRemoved = false;
   let currentAttachments = [];
 
   const PRESET_CATEGORIES = ['General','Security','Parking','Emergency','Volunteering','Waste & Recycling','Community Services','Rules & Guidance'];
@@ -2881,6 +2882,7 @@
   function clearItemForm(){
     currentItemId = '';
     currentImageData = '';
+    currentImageRemoved = false;
     currentAttachments = [];
     if($id('hbSimpleItemTitle')) $id('hbSimpleItemTitle').value = '';
     if($id('hbSimpleItemSummary')) $id('hbSimpleItemSummary').value = '';
@@ -2902,9 +2904,10 @@
     if(!item) return;
     currentItemId = item.id;
     currentCategoryId = item.categoryId || currentCategoryId;
-    currentImageData = item.heroUrl || '';
+    currentImageData = item.imageData || item.heroUrl || item.heroImage || '';
+    currentImageRemoved = false;
     currentAttachments = Array.isArray(item.attachments) ? item.attachments.filter(Boolean) : [];
-    if($id('hbSimpleItemTitle')) $id('hbSimpleItemTitle').value = item.title;
+    if($id('hbSimpleItemTitle')) $id('hbSimpleItemTitle').value = item.title || item.name || '';
     if($id('hbSimpleItemSummary')) $id('hbSimpleItemSummary').value = item.summary || '';
     if($id('hbSimpleItemContent')) $id('hbSimpleItemContent').value = item.content || '';
     if($id('hbSimpleItemStatus')) $id('hbSimpleItemStatus').value = item.status || 'published';
@@ -2975,12 +2978,23 @@
     const active = !!($id('hbSimpleCatActive') && $id('hbSimpleCatActive').checked);
     const ensuredCategory = await ensureCategoryFromInput({ createIfMissing:true, active });
     const categoryId = String((ensuredCategory && ensuredCategory.id) || currentCategoryId || '').trim();
-    const title = String($id('hbSimpleItemTitle').value || '').trim();
-    const summary = String($id('hbSimpleItemSummary').value || '').trim();
-    const content = String($id('hbSimpleItemContent').value || '').trim();
-    const status = String($id('hbSimpleItemStatus').value || 'published');
-    const linkLabel = String($id('hbSimpleItemLinkLabel').value || '').trim();
-    const linkUrl = String($id('hbSimpleItemLinkUrl').value || '').trim();
+    const categories = getCategories();
+    const items = getItems();
+    const previous = items.find(entry => entry.id === currentItemId) || {};
+    const titleField = $id('hbSimpleItemTitle');
+    const summaryField = $id('hbSimpleItemSummary');
+    const contentField = $id('hbSimpleItemContent');
+    const statusField = $id('hbSimpleItemStatus');
+    const linkLabelField = $id('hbSimpleItemLinkLabel');
+    const linkUrlField = $id('hbSimpleItemLinkUrl');
+    const title = String((titleField && titleField.value) || previous.title || previous.name || '').trim();
+    const summary = String((summaryField && summaryField.value) || '').trim();
+    const content = String((contentField && contentField.value) || '').trim();
+    const status = String((statusField && statusField.value) || previous.status || 'published');
+    const linkLabel = String((linkLabelField && linkLabelField.value) || '').trim();
+    const linkUrl = String((linkUrlField && linkUrlField.value) || '').trim();
+    const savedImage = String(previous.imageData || previous.heroUrl || previous.heroImage || '').trim();
+    const effectiveImageData = currentImageData || (currentImageRemoved ? '' : savedImage);
     if(!categoryId){
       setItemMessage('Choose or type a category above first.');
       return;
@@ -2989,14 +3003,11 @@
       setItemMessage('Please enter a title.');
       return;
     }
-    if(!content && !linkUrl && !currentAttachments.length && !currentImageData){
+    if(!content && !linkUrl && !currentAttachments.length && !effectiveImageData){
       setItemMessage('Add content, a link, an image, or attachments before saving.');
       return;
     }
-    const categories = getCategories();
-    const items = getItems();
     const now = new Date().toISOString();
-    const previous = items.find(entry => entry.id === currentItemId) || {};
     const next = {
       id: currentItemId || ('hb-' + Date.now()),
       categoryId,
@@ -3009,14 +3020,20 @@
       type: linkUrl ? 'link' : 'page',
       url: linkUrl,
       linkLabel: linkLabel,
-      heroUrl: currentImageData || '',
-      imageData: currentImageData || '',
+      heroUrl: effectiveImageData || '',
+      imageData: effectiveImageData || '',
       attachments: currentAttachments.slice(),
       createdAt: previous.createdAt || now,
       updatedAt: now
     };
     handbook.items = items.filter(entry => entry.id !== next.id).concat(next);
-    await saveCombinedHandbook();
+    try{
+      await saveCombinedHandbook();
+    }catch(err){
+      const msg = err && err.message ? err.message : 'Could not save the handbook item.';
+      setItemMessage('Could not save. The image or attachment may be too large. Details: ' + msg);
+      return;
+    }
     renderItems();
     setItemMessage(currentItemId ? 'Item updated.' : 'Item saved.');
     fillItemForm(next.id);
@@ -3051,7 +3068,7 @@
       img.onerror = () => reject(new Error('Could not process the image.'));
       img.src = dataUrl;
     });
-    const maxWidth = 1400;
+    const maxWidth = 1000;
     const scale = image.width > maxWidth ? (maxWidth / image.width) : 1;
     const width = Math.round(image.width * scale);
     const height = Math.round(image.height * scale);
@@ -3062,7 +3079,7 @@
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(image, 0, 0, width, height);
-    return canvas.toDataURL('image/jpeg', 0.78);
+    return canvas.toDataURL('image/jpeg', 0.68);
   }
 
   async function handleImageUpload(event){
@@ -3070,10 +3087,12 @@
     if(!file) return;
     try{
       currentImageData = await compressImage(file);
+      currentImageRemoved = false;
       renderPreview();
       setItemMessage('Image ready.');
     }catch(err){
       currentImageData = '';
+      currentImageRemoved = false;
       renderPreview();
       setItemMessage(err && err.message ? err.message : 'Could not process the image.');
     }
@@ -3081,6 +3100,10 @@
 
   async function readAttachmentFiles(fileList){
     const files = Array.from(fileList || []).filter(Boolean);
+    const totalBytes = files.reduce((sum, file) => sum + Number(file.size || 0), 0);
+    if(totalBytes > 18 * 1024 * 1024){
+      throw new Error('Please choose attachments with a combined size under 18 MB.');
+    }
     const output = [];
     for(const file of files){
       if(file.size > 10 * 1024 * 1024){
@@ -3320,6 +3343,7 @@
     });
     $id('btnHbRemoveImage')?.addEventListener('click', function(){
       currentImageData = '';
+      currentImageRemoved = true;
       if($id('hbSimpleItemImage')) $id('hbSimpleItemImage').value = '';
       renderPreview();
       setItemMessage('Image removed from this draft.');
