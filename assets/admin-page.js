@@ -553,13 +553,20 @@
     if(!body) return;
 
     try{
+      // Make sure the current logged-in admin/owner writes presence before the table reads it.
+      try{
+        if(typeof window.anwMarkOnlineNow === 'function'){
+          await window.anwMarkOnlineNow(true);
+        }
+      }catch(_){ }
+
       const usersRaw = await anwLoadSafe(KEY_USERS, []);
       const presenceRaw = await anwLoadSafe(KEY_ONLINE_PRESENCE, {});
       const users = Array.isArray(usersRaw) ? usersRaw : [];
       const presence = presenceRaw && typeof presenceRaw === 'object' ? presenceRaw : {};
       const now = Date.now();
 
-      const rows = users
+      let rows = users
         .map(user => {
           const emails = getUserEmailsForAdmin(user);
           const matchedEmail = emails.find(email => presence[email] && presence[email].lastSeen) || emails[0] || '';
@@ -567,23 +574,52 @@
           const lastSeenTime = online && online.lastSeen ? Date.parse(online.lastSeen) : NaN;
           return { user, email: matchedEmail, online, lastSeenTime, street: getResidentStreet(user) };
         })
-        .filter(row => row.online && !Number.isNaN(row.lastSeenTime) && (now - row.lastSeenTime) < ONLINE_LIMIT_MS)
-        .sort((a, b) => {
-          const streetCompare = String(a.street || '').localeCompare(String(b.street || ''), undefined, { sensitivity:'base' });
-          if(streetCompare) return streetCompare;
-          return String(a.user && a.user.name || '').localeCompare(String(b.user && b.user.name || ''), undefined, { sensitivity:'base' });
-        });
+        .filter(row => row.online && !Number.isNaN(row.lastSeenTime) && (now - row.lastSeenTime) < ONLINE_LIMIT_MS);
+
+      // Fallback for Owner/Admin: if the current logged-in user is authenticated but
+      // is not matched in anw_users yet, still show that current user as ON.
+      try{
+        const current = getNetlifyCurrentUser();
+        const currentEmail = String((current && current.email) || '').trim().toLowerCase();
+        if(currentEmail && !rows.some(row => String(row.email || '').toLowerCase() === currentEmail)){
+          const meta = (current && (current.user_metadata || current.userMetadata || current.app_metadata)) || {};
+          const online = presence[currentEmail] || {
+            email: currentEmail,
+            status: 'on',
+            lastSeen: new Date().toISOString(),
+            path: location.pathname || ''
+          };
+          const lastSeenTime = Date.parse(online.lastSeen || '');
+          if(!Number.isNaN(lastSeenTime) && (now - lastSeenTime) < ONLINE_LIMIT_MS){
+            rows.push({
+              user: {
+                email: currentEmail,
+                name: meta.full_name || meta.fullName || meta.name || currentEmail,
+                phone: meta.phone || meta.mobile || '',
+                eircode: meta.eircode || '',
+                address: meta.address || '',
+                profilePhoto: meta.avatar_url || meta.picture || ''
+              },
+              email: currentEmail,
+              online,
+              lastSeenTime,
+              street: meta.street || getResidentStreet({ address: meta.address || '' })
+            });
+          }
+        }
+      }catch(_){ }
+
+      rows = rows.sort((a, b) => {
+        const streetCompare = String(a.street || '').localeCompare(String(b.street || ''), undefined, { sensitivity:'base' });
+        if(streetCompare) return streetCompare;
+        return String(a.user && a.user.name || '').localeCompare(String(b.user && b.user.name || ''), undefined, { sensitivity:'base' });
+      });
 
       body.innerHTML = rows.map(row => {
         const u = row.user || {};
         const name = u.name || u.fullName || u.displayName || row.email || 'Resident';
-        const photo = safeUrlForAdmin(u.profilePhoto || u.photo || u.photoURL || u.avatar || '');
-        const avatar = photo
-          ? `<img class="online-avatar" src="${esc(photo)}" alt="">`
-          : `<span class="online-avatar">${esc(initialsFromName(name))}</span>`;
         return `
           <tr>
-            <td>${avatar}</td>
             <td title="${esc(name)}">${esc(name)}</td>
             <td title="${esc(row.street)}">${esc(row.street)}</td>
             <td title="${esc(u.phone || u.mobile || u.telephone || '')}">${esc(u.phone || u.mobile || u.telephone || '—')}</td>
