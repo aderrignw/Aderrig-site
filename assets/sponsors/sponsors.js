@@ -2,11 +2,11 @@
   'use strict';
 
   const CONFIG = {
-    baseDir: '/assets/sponsors/',   // <- absoluto (IMPORTANTE no Netlify)
+    baseDir: '/assets/sponsors/',   // <- absolute path (IMPORTANT on Netlify)
     prefix: 'sponsor',
-    exts: ['png'],                 // <- como seus arquivos são .png
-    maxIndex: 10,                  // <- pode deixar 10 (ou 5)
-    stopAfterMisses: 2,            // <- para mais cedo
+    exts: ['png'],                 // <- because the files are .png
+    maxIndex: 10,                  // <- can remain 10 (or 5)
+    stopAfterMisses: 2,            // <- stops earlier after failed attempts
     footerCount: 4,
     pageCount: 1,
     sessionCount: 1,
