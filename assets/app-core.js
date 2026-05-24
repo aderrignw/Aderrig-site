@@ -37,7 +37,7 @@ function anwLoad(key, fallback) {
     if (!raw) return fallback;
     return JSON.parse(raw);
   } catch (e) {
-    console.warn("Erro ao carregar do storage:", e);
+    console.warn("Error loading from storage:", e);
     return fallback;
   }
 }
@@ -304,7 +304,7 @@ function anwGetLoggedRole() {
     if (normalized.includes("projects")) return "projects";
     return "resident";
   } catch (e) {
-    console.warn("Erro ao obter role do usuário:", e);
+    console.warn("Error retrieving user role:", e);
     return "resident";
   }
 }
@@ -459,7 +459,7 @@ async function anwInitStore(options) {
       }
     );
   } catch (e) {
-    console.warn("Erro ao inicializar store:", e);
+    console.warn("Error initialising store:", e);
     throw e;
   }
 }
@@ -500,7 +500,7 @@ function anwBindIdentitySync() {
         const email = anwNormEmail(user && user.email);
         if (email) anwSave(ANW_KEYS.SESSION, { email });
         anwBroadcastAuthEvent("login", { email });
-        try { await anwInitStore({ force: true }); } catch (e) { console.warn("Erro pós-login ao sincronizar store:", e); }
+        try { await anwInitStore({ force: true }); } catch (e) { console.warn("Post-login store synchronisation error:", e); }
       });
 
       window.netlifyIdentity.on("logout", () => {
@@ -512,12 +512,12 @@ function anwBindIdentitySync() {
         const email = anwNormEmail(user && user.email);
         if (email) {
           anwSave(ANW_KEYS.SESSION, { email });
-          try { await anwInitStore(); } catch (e) { console.warn("Erro ao sincronizar store no init:", e); }
+          try { await anwInitStore(); } catch (e) { console.warn("Error synchronising store on init:", e); }
         }
       });
     }
   } catch (e) {
-    console.warn("Erro ao bindar Netlify Identity:", e);
+    console.warn("Error binding Netlify Identity:", e);
   }
 }
 
