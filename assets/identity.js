@@ -131,7 +131,7 @@
       }
     } catch (e) {}
 
-    alert("Sessão encerrada por inatividade.");
+    alert("Your session has ended due to inactivity.");
 
     try {
       window.close();
