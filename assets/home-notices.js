@@ -1387,6 +1387,74 @@
     return raw.slice(0, Math.max(0, max - 1)).trim() + '…';
   }
 
+
+  function isLongNotice(it){
+    return smartNoticeMessage(it).length > 170;
+  }
+
+  function noticeTextToHtml(value){
+    const safe = esc(stripHtml(value)).replace(/\n/g, '<br>');
+    return safe.replace(/(https?:\/\/[^\s<]+)/g, (url) => {
+      const cleanUrl = url.replace(/[).,;!?]+$/g, '');
+      const trailing = url.slice(cleanUrl.length);
+      return `<a href="${esc(cleanUrl)}" target="_blank" rel="noopener noreferrer">${esc(cleanUrl)}</a>${esc(trailing)}`;
+    });
+  }
+
+  function getNoticeFullMessageRaw(it){
+    return String(it?._displayMessageHtml || it?.message || it?.text || it?.description || '');
+  }
+
+  function closeSmartNoticeModal(){
+    const overlay = document.getElementById('smartNoticeModal');
+    if (overlay) overlay.remove();
+  }
+
+  function openSmartNoticeModal(it){
+    if (!it) return;
+    closeSmartNoticeModal();
+    if(smartNoticeTimer) clearInterval(smartNoticeTimer);
+
+    const title = smartNoticeTitle(it);
+    const kicker = smartNoticeKicker(it);
+    const icon = smartNoticeIcon(it);
+    const messageHtml = noticeTextToHtml(getNoticeFullMessageRaw(it) || smartNoticeMessage(it));
+
+    const overlay = document.createElement('div');
+    overlay.id = 'smartNoticeModal';
+    overlay.className = 'smart-notice-modal-overlay open';
+    overlay.innerHTML = `
+      <div class="smart-notice-modal" role="dialog" aria-modal="true" aria-labelledby="smartNoticeModalTitle">
+        <div class="smart-notice-modal__header">
+          <div>
+            <div class="smart-notice-modal__kicker"><span aria-hidden="true">${icon}</span>${esc(kicker)}</div>
+            <h3 id="smartNoticeModalTitle" class="smart-notice-modal__title">${esc(title)}</h3>
+          </div>
+          <button type="button" class="smart-notice-modal__close" aria-label="Close notice">×</button>
+        </div>
+        <div class="smart-notice-modal__body">${messageHtml}</div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const closeBtn = overlay.querySelector('.smart-notice-modal__close');
+    if (closeBtn) closeBtn.focus();
+
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay || event.target.closest('.smart-notice-modal__close')) {
+        closeSmartNoticeModal();
+        startSmartNoticeRotation();
+      }
+    });
+
+    document.addEventListener('keydown', function onEsc(event){
+      if (event.key !== 'Escape') return;
+      document.removeEventListener('keydown', onEsc);
+      closeSmartNoticeModal();
+      startSmartNoticeRotation();
+    });
+  }
+
   function parkingNoticeImage(it){
     return String(it?.vehicle?.photoDataUrl || it?.photoDataUrl || it?.image || it?.photo || '').trim();
   }
@@ -1566,12 +1634,15 @@
   function smartNoticeFeaturedHtml(it, idx, total){
     const tone = esc(smartNoticeTone(it));
     const title = esc(shortText(smartNoticeTitle(it), 82));
-    const msg = esc(shortText(smartNoticeMessage(it), isParkingSmartNotice(it) ? 150 : 190));
+    const fullMsg = smartNoticeMessage(it);
+    const hasMore = isLongNotice(it);
+    const msg = esc(shortText(fullMsg, isParkingSmartNotice(it) ? 150 : 190));
     const icon = smartNoticeIcon(it);
     const kicker = esc(smartNoticeKicker(it));
     const vehicle = it?.vehicle || {};
     const meta = String(it?._displayMeta || '').trim();
     const cta = smartNoticeCta(it);
+    const openAttrs = `data-smart-open="${esc(String(it?.id || idx))}"`;
 
     const detailLine = vehicle && (vehicle.brand || vehicle.colour || vehicle.plateMasked || vehicle.street)
       ? `<div class="smart-board-details">
@@ -1583,16 +1654,17 @@
       : (meta ? `<div class="smart-board-details"><span>${esc(meta)}</span></div>` : '');
 
     return `
-      <div class="smart-board-feature smart-board-feature--${tone}">
+      <article class="smart-board-feature smart-board-feature--${tone}" ${openAttrs} role="button" tabindex="0" aria-label="Open full notice: ${title}">
         ${smartBoardMediaHtml(it)}
         <div class="smart-board-copy">
           <div class="smart-board-kicker smart-board-kicker--${tone}"><span aria-hidden="true">${icon}</span>${kicker}</div>
           <h4 class="smart-board-title">${title}</h4>
           <p class="smart-board-message">${msg}</p>
+          ${hasMore ? '<span class="smart-board-readmore">Click to read full notice</span>' : ''}
           ${detailLine}
           ${cta && cta.show ? `<button type="button" class="smart-board-btn" ${cta.attrs}>${esc(cta.label)}</button>` : ''}
         </div>
-      </div>
+      </article>
     `;
   }
 
@@ -1632,6 +1704,22 @@
         if(!smartNoticeItems.length) return;
         smartNoticeIndex = (smartNoticeIndex + offset) % smartNoticeItems.length;
         renderSmartNoticeBoard();
+      });
+    });
+
+    listEl.querySelectorAll('[data-smart-open]').forEach((card) => {
+      const open = (event) => {
+        if (event && event.target && event.target.closest && event.target.closest('button, a')) return;
+        const target = String(card.getAttribute('data-smart-open') || '');
+        const found = smartNoticeItems.find((it, i) => String(it?.id || i) === target) || smartNoticeItems[smartNoticeIndex];
+        openSmartNoticeModal(found);
+      };
+      card.addEventListener('click', open);
+      card.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          open(event);
+        }
       });
     });
 
