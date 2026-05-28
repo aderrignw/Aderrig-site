@@ -9,10 +9,18 @@
 import { getStore } from "@netlify/blobs";
 import { withSecurity, jsonResponse } from "./aderrig-security-layer.mjs";
 
-function getCentralStore(context){
-  const fixed = (process?.env?.CENTRAL_STORE_NAME || "").trim();
-  const storeName = fixed || (context?.site?.id ? `kv_${context.site.id}` : "kv_default");
-  return getStore(storeName);
+function getCentralStore(context) {
+  const configuredName = String(
+    process.env.CENTRAL_STORE_NAME ||
+    process.env.NETLIFY_BLOBS_STORE_NAME ||
+    process.env.STORE_NAME ||
+    ""
+  ).trim();
+
+  // Must match store.js exactly. Admin saves notices through /store;
+  // Home public feed reads them here. If these store names differ,
+  // the Admin page shows saved notices but Home receives an empty list.
+  return getStore(configuredName || "aderrig-nw");
 }
 
 const KEY_NOTICES = "anw_notices";
