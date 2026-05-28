@@ -539,10 +539,19 @@
   }
 
   function isBinNotice(it) {
-    const cat = normalizeText(it?.category);
     const type = normalizeText(it?.meta?.type);
     const title = normalizeText(it?.title);
-    return cat === 'bins' || type === 'bin_collection_import' || title.includes('bin collection');
+    const hasCollectionDate = !!(
+      it?.date ||
+      it?.collectionDate ||
+      it?.meta?.collectionDate ||
+      it?.meta?.date
+    );
+
+    // Only imported bin collection schedule items should be condensed into the bin summary card.
+    // Manual notices with category "Bins" (for example a waste collection delay notice)
+    // must remain visible as normal Home notices.
+    return type === 'bin_collection_import' || title.includes('bin collection') || hasCollectionDate;
   }
 
   function getBinDate(it) {
